@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-private xmlns="http://www.netbeans.org/ns/project-private/1">
+    <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="4">
+        <file>
+            <url>vendor/symfony/symfony/src/Symfony/Component/EventDispatcher/EventDispatcher.php</url>
+            <bookmark id="3">
+                <name/>
+                <line>163</line>
+                <key/>
+            </bookmark>
+        </file>
+        <file>
+            <url>src/kaamaa/FlyResBundle/Entities/DPCalendar.php</url>
+            <bookmark id="1">
+                <name/>
+                <line>76</line>
+                <key/>
+            </bookmark>
+        </file>
+    </editor-bookmarks>
+    <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
+        <group>
+            <file>file:/Users/Martin/Dropbox/symfony25/src/kaamaa/FlyResBundle/Entities/Bookings.php</file>
+            <file>file:/Users/Martin/Dropbox/symfony25/src/kaamaa/FlyResBundle/Entities/Users.php</file>
+        </group>
+    </open-files>
+</project-private>

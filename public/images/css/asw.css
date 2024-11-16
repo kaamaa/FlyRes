@@ -1,0 +1,272 @@
+@charset "utf-8";
+
+body
+{
+margin: 0;
+padding: 0;
+font-family: Arial, Helvetica;
+font-size: 13px;
+}
+
+a:link
+{
+color: #036;
+}
+
+a:visited
+{
+color: #066;
+}
+
+a:hover  a:active
+{
+color: #fff;
+background-color: #036;
+}
+
+ul{
+list-style-image:url(../images/blockblau2.gif);
+}
+
+/*========= CSS für asp.net Seiten ====================================== */
+
+#asp-body {
+background: #e5e8f1;
+margin: 0;
+padding: 0;
+font-family: Arial, Helvetica;
+font-size: 13px;
+}
+
+
+.tdtopmenu {
+	background-image: url(../images/menuheader_upper_light.jpg);
+}
+
+.tdtopmenuleft
+{
+}
+
+
+/*========= Navigation oben =============================== */
+
+div#navigationOben
+{
+	text-decoration: none; 
+	color:#FFF;	font-size:14px; 
+	font-family: trebuchet ms, Arial, Helvetica; 
+}
+
+div#navigationOben a
+{
+	text-decoration: none;
+	color:#FFF;	font-size:14px; 
+	font-family: trebuchet ms, Arial, Helvetica;
+}
+
+.tdsubmenu {
+	background-image: url(../images/menuheader_lower_dark_1.jpg);
+	height:27px;
+	padding-left:10px;
+	vertical-align:middle;
+}
+
+
+/* ==================== Formatierung des Linken Bereiches ==================================*/
+
+div#Links {
+padding:10px;
+}
+
+/*=========================== pretext ist der Titel im Loginfeld ==========================*/
+
+.LinksTitel, .pretext {
+color:#FFFFFF;
+background-color:#959595;
+border-bottom-style:solid;
+border-bottom-width:thin;
+border-bottom-color:#FFFFFF;
+font-size:16px;
+font-weight:700;
+font-size:16px;
+font-family: trebuchet ms, Arial, Helvetica;
+padding-bottom: 0.1em;
+padding-top: 0.1em;
+padding-left: 5px;
+padding-right: 5px;
+}
+
+/* Änderungen für das Loginfeld-Titel */
+
+.pretext {
+margin-right: -5px;
+margin-left: -5px;
+margin-top: -1em;
+}
+
+/* Form innerhlab des Loginfeldes */
+.userdata {
+	border:none;
+}
+
+
+.LinksContent, #login-form {
+background-color:#ebebeb;
+font-family:Arial,Helvetica;
+font-size:12px;
+padding-bottom:1em;
+padding-top:1em;
+padding-left: 5px;
+padding-right: 5px;
+margin-bottom: 1em;
+}
+
+/*==================== Inhaltsbreich ==================================*/
+
+/* blaue Box mit Hauptinhalt */
+.cat-children, .items-row, .login {
+background: #e5e8f1;
+margin-top: 0.8em;
+padding-left: 5px;
+padding-right: 5px;
+}
+
+.cat-children {
+	margin-bottom: 1em;
+	padding-bottom: 1em;
+}
+
+.items-row h2, .cat-children h3, .login h2 {
+background: #8c96bd;
+border-bottom-style:solid;
+border-bottom-width:thin;
+border-bottom-color:#FFFFFF;
+padding:0.1em;
+font-family: trebuchet ms, Arial, Helvetica;
+font-size:16px;
+margin-top:0px;
+
+color:#FFFFFF;
+font-weight:700;
+margin-left: -5px;
+margin-right: -5px;
+padding-left: 5px;
+padding-right: 5px;
+}
+
+.item-separator {
+	margin-top:2em;
+	height:1em;
+	background:#FFF;
+	margin-left: -5px;
+	margin-right: -5px;
+}
+
+
+/*========= Fusszeile =============================== */
+
+div#navigationUnten
+{
+list-style:none;
+list-style-image:none;
+/*display:inline-table;*/
+font-size:12px;
+background-image:url(../images/bg_footer.gif);
+width:100%;
+height:26px;
+text-align:center;
+}
+
+div#navigationUnten ul
+{
+list-style:none;
+list-style-image:none;
+padding: 0;
+margin: 0;
+}
+
+div#navigationUnten ul li
+{
+display:inline;
+list-style:none;
+list-style-image:none;
+font-size:10px;
+}
+
+/* Links in der Fusszeile */
+div#navigationUnten ul li a
+{
+list-style:none;
+list-style-image:none;
+float:left;
+padding: 4px 8px;
+text-decoration:underline;
+color:#B9B9B9;
+}
+
+/*============= Facile Forms Formulare ==========================*/
+
+.ff_hr {
+color: #000000;
+font-weight: bold;
+font-style: normal;
+font-size: 11pt;
+}
+
+.ff_h2 {
+color:#000000;
+font-family: Verdana, Arial, Helvetica, sans-serif;
+font-weight:normal;
+font-size: 11pt;
+}
+
+/*================ mod_wrapper für Flyres ==========================*/
+.myflyres /*div das mod_wrappe / iframe umgibt */
+{
+/*background-color:#33F; /*blau */
+margin-left: -5px;
+margin-right: -5px;
+margin-bottom:2em;
+}
+
+.wrapper_flyres /* iframe */
+{
+font-family: Arial, Helvetica;
+font-size: 13px;
+/*background-color:#F00; /* rot */
+}
+
+.flyres_div1
+{
+background-color:#E5E8F1;
+/*background-color:#3F0; /* grün */
+margin-bottom: 1em; 
+}
+
+
+/*===== Tabelle für Kostenübersichten im Contentbereich ============*/
+
+.content_table
+{
+	border-collapse:collapse;
+}
+
+.content_table td
+{
+	border:#000 solid 1px;
+	padding: 3px 10px 3px 10px; /* oben, rechts, unten, links */
+}
+
+/*===== Tabelle mit weißen Trennlinien ============*/
+
+.content_table_white
+{
+	border-collapse:collapse;
+	width:100%;
+}
+
+.content_table_white td
+{
+	border-bottom: #FFF solid 2px;
+	padding: 7px 10px 7px 10px; /* oben, rechts, unten, links */
+}

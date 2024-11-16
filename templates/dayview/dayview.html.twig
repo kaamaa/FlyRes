@@ -1,0 +1,88 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  <!-- ### Überschrift ### + Tag zurück und Tag vor -->
+  <table border="0" cellspacing="1" cellpadding="0" style="background-color: #186da4;" width="720">
+    <tr>
+      <td align='left'>
+        <table>
+          <tr>
+            <td>
+              <form action="dayview" name="prevDay" method="POST">
+                <input type="hidden" name="ts" value="{{FlugzeugID}}_{{prev}}">
+                <a href="javascript:document.prevDay.submit();">
+                  <img src='{{ asset('images/prev.gif') }}' border='0'>
+                </a>
+              </form>
+            </td>
+            <td>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+              <input style='background-color:#FF8040; color:white;' type='submit' name='back' value='zurück' onclick="window.location.href = 'weeksview';">
+            </td>
+          </tr>
+         </table>  
+       </td>
+      <td align="center">
+        <b>
+          <font color="#FFE75B" size="+1">{{ Flugzeug }}</font>
+          <font color="#FFE75B" size="+1">Reservierungen für den {{ Datum }}</font>
+        </b>
+      </td>
+      <td align='right'>
+        <form action="dayview" name="nextDay" method="POST">
+          <input type="hidden" name="ts" value="{{FlugzeugID}}_{{next}}>">
+          <a href="javascript:document.nextDay.submit();">
+            <img src='{{ asset('images/next.gif') }}' border='0'>
+          </a>
+        </form>
+      </td>
+    </tr>
+  </table>
+  <table border="0" cellspacing="1" cellpadding="0" style="background-color: #dee2e6;" width="720">
+    <tr bgcolor="#186da4">
+        <td align="center" colspan="2"><b><font color='#FFE75B'>Ortszeit</font></b></td>
+        <td align="center"><b><font color='#FFE75B'>Name</font></b></td>
+        <td align="center"><b><font color='#FFE75B'>Zielort / Flugart</font></b></td>
+        <td align="center"><b><font color="#FFE75B">Beschreibung</font></b></td>
+    </tr>
+    {% for bookingtime in bookingtimes %}
+      <tr>
+        <td valign='top' nowrap>
+           &nbsp;{{bookingtime.time }}&nbsp;
+        </td>
+        {% for booking in bookings %}
+          {% if bookingtime.time == booking.time %} 
+            <td valign='top' rowspan='{{ booking.rowspan }}' bgcolor="#eef2f6" nowrap>
+              &nbsp;{{ booking.start }}&nbsp;
+              <br>
+              &nbsp;{{ booking.end }}&nbsp;
+            </td>
+            <td valign='top' align="center" rowspan='{{ booking.rowspan }}' bgcolor="#eef2f6" nowrap>
+              <form novalidate="true" action="viewbookingdetails" name='form{{ booking.bookingid }}' method="POST">
+                <input type="hidden" name="ts" value='{{ booking.bookingid }}'>
+                <a href="javascript:document.form{{ booking.bookingid }}.submit();">
+                  &nbsp;{{booking.user}}&nbsp;
+                </a>
+              </form>
+            </td>
+            <td valign="top" align="center" rowspan='{{ booking.rowspan }}' bgcolor="#eeeecd" nowrap>
+              &nbsp;{{ booking.airfield }}&nbsp;
+              <br>
+              &nbsp;{{ booking.flightpurpose}}&nbsp;
+              {% if booking.isflighttraining == TRUE %} 
+                <br>
+                &nbsp;({{ booking.flightinstructor}})&nbsp;
+              {% endif %}   
+            </td>
+            <td valign="top" rowspan='{{ booking.rowspan }}' bgcolor="#ffeecd" width="100%">
+              <center>
+                &nbsp;{{ booking.description }}&nbsp;
+              </center>
+            </td>
+          {% endif %}  
+        {% endfor %} 
+      </tr> 
+    {% endfor %} 
+  </table>
+{% endblock %}
+

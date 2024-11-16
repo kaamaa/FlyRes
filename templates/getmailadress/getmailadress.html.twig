@@ -1,0 +1,14 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+<p><b>Mailadressen für Outlook (separiert mit Semikolon)*</b><br>
+  <textarea name="mails_outlook" cols="90" rows="25">{{mails_outlook }}</textarea>
+  </p>
+  <p><b>Mailadressen für Apple Mail (separiert mit Komma)*</b><br>
+    <textarea name="mails_apple" cols="90" rows="25">{{mails_apple }}</textarea>
+  </p>
+  <b>*) gesperrte Nutzer sind nicht in den Mailverteilern enthalten</b>
+  <br>
+  
+{% endblock %}
+

@@ -1,0 +1,131 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+
+<form novalidate="true" action="{{ path('_editaircraft') }}" method="POST" {#{ form_enctype(form) }#}>   
+  <table>
+    <tr bgcolor='#186FA3' height='25'>
+      <td>
+        <input style='background-color:#FF8040; color:white;' name="Speichern" value="Speichern" type="submit">
+        {% if is_granted('ROLE_ADMIN') and allowdelete == TRUE%}
+          <input style='background-color:#FF8040; color:white;' name="Löschen" value="Löschen" type="submit">
+        {% endif %}
+        <input style='background-color:#FF8040; color:white;' name='Zurück' value='Zurück'type="submit">
+      </td>
+    </tr>  
+    {% if form.vars.valid == false %}
+      <tr bgcolor='#186FA3'>
+        <td bgcolor="#D8E3E7" colspan="2">
+          <font style="color:red">
+            <br><b>&nbsp;&nbsp;Die Flugzeugdaten wurden nicht gespeichert:</b><br>
+            {{ form_errors(form) }}
+            {{ form_errors(form.aircraft) }}
+            {{ form_errors(form.kennung) }}
+            {{ form_errors(form.advancebooking) }}
+          </font>
+        </td>    
+      </tr>
+    {% endif %}
+    <tr bgcolor="#D8E3E7">
+      <td>
+        <table cellpadding="5" cellspacing="2" border="0" align="left" style="background-color: #D8E3E7" >
+          <tr align="center">
+            <td align="right">
+              <b>ID : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.id) }} 
+            </td>	
+          </tr>	
+          <tr align="center">
+            <td align="right">
+              <b>Name : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.aircraft) }} 
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Kennung : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.kennung) }}  
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Flugzeugtyp : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.aircrafttype) }}  
+            </td>
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Flugzeugstatus : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.status) }}  
+            </td>
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Admins : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.adminids, {'attr': {'size' : '12'}}) }} 
+            </td>	
+          </tr>	
+          <tr>
+              <td colspan = "2">
+                  <hr />
+              </td>
+          </tr>
+          <tr>
+              <td colspan = "2">
+                  Maximale Vorrausbuchungszeit in Tagen <br> (Null bedeutet keine Begrenzung)
+              </td>
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Vorrausbuchungszeit : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.advancebooking) }}  
+            </td>	
+          </tr>
+          <tr>
+              <td colspan = "2">
+                  <hr />
+              </td>
+          </tr>
+          <tr>
+            <td align="right">
+              <b>vergangene Res. : </b>
+            </td>
+            <td align="left">
+              {{ past }}
+            </td>
+          </tr>
+          <tr>
+            <td align="right">
+              <b>offene Res. : </b>
+            </td>
+            <td align="left">
+              {{ future }}
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2">
+              Warnung: Beim Löschen von Flugzeugen werden <br> auch alle zugehörigen Buchungen gelöscht
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  {{ form_rest(form) }}
+</form>
+
+{% endblock %}

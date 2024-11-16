@@ -1,0 +1,44 @@
+{% extends "layout.html.twig" %}
+
+{% set tablewidth = 572 %}
+{% set width = (100) %}
+{% set colors = { 'textWE' : '#FF0000', 'TextWT' : '#000000',
+                  'sonntag' : '#FF0000', 'samstag' : '#FF0000', 'wochentag' : '#B8CEDC', 
+                  'frei' : '#B8CEDC', 'reserviert' : 'FF8040', 'wartung' : '#800000', 'titel' : '#186FA3',
+                  'leer' : '#3ADF00', 'wenig' : '#A5DF00', 'mittel' : '#D7DF01', 'voll' : '#DBA901',
+                  'sehrvoll' : '#DF7401', 'ausgebucht' : '#DF3A01'} %}
+
+
+{% block content %}
+  <table border='0' cellspacing='10' cellpadding='0' style="background-color: #D8E3E7">
+   {% if titel is defined and titel != '' %}
+      <tr >  
+        <td>
+            <b>
+              {{ day }}
+            </b>
+        </td>   
+      </tr>
+    {% endif %}
+    {% for fi in fis %}
+     <tr>
+       <td bgcolor="{{ colors['wochentag'] }}" align="left" nowrap height="17">
+         <b> {{ fi.firstname }} </b>
+       </td>
+       <td bgcolor="{{ colors['wochentag'] }}" align="left" nowrap height="17">
+         <b>{{ fi.lastname }} </b>
+       </td>
+       <!-- Für jeden Tag die Buchungen ausgeben -->
+       {% for availability in availabilities %}
+        {% if availability.flightinstructor == fi.id %}
+          <td>
+            {{ availability.itemstart|date('l d.m.Y G:i') }}{{ availability.itemstop|date('l d.m.Y G:i') }}
+            {{ availability.width }}
+         </td>
+        {% endif %}
+       {% endfor %} 
+     </tr>
+    {% endfor %}
+  </table>
+  <br>
+{% endblock %}

@@ -1,0 +1,46 @@
+{#% extends "layout.html.twig" %#}
+
+{% block content %}
+
+{% if error %}
+  <div>
+    <font style="color:blue">
+      {{ error.message }}   
+    </font>
+  </div>          
+{% endif %}
+<br>
+
+<form method="post">
+    <label for="client">Benutzergruppe:</label><br>
+    <select name="client" style="width: 125px"> 
+      {% for client in clients %}
+        {% if client.name == selected %}
+          <option selected="selected">
+        {% else %}    
+          <option>
+        {% endif %}  
+          {{ client.name }} </option> 
+      {% endfor %}
+    </select>
+    <br>
+    <br>
+    <label for="username">Benutzername:</label><br>
+    <input type="text" id="username" name="_username" value="{{ last_username }}" />
+    <br>
+    <br>
+    <label for="password">Passwort:</label><br>
+    <input type="password" id="password" name="_password" />
+    <br>
+    <br>
+    <input type="checkbox" id="remember_me" name="_remember_me" checked/>
+    <label for="remember_me">Eingeloggt bleiben</label>
+    <br>
+    <br>
+    <button type="submit">Anmelden</button>
+    <input type="hidden" name="_target_path" value="/account"> 
+</form>
+    
+
+{% endblock %}
+

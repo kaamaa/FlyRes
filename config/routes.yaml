@@ -1,0 +1,198 @@
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
+_newnote:
+    path:  /newnote
+    controller: App\Controller\NoteController::NewAction 
+_savenote:
+    path:  /savenote
+    controller: App\Controller\NoteController::SaveAction    
+_notesgrid:
+    path:  /notesgrid/{command}
+    controller: App\Controller\NoteController::NotesGridAction  
+_editnote:
+    path:  /editnote/{id}
+    controller: App\Controller\NoteController::EditAction   
+_deletenote:
+    path:  /deletenote/{id}
+    controller: App\Controller\NoteController::DeleteAction       
+    
+
+_editbooking:
+    path:  /editbooking
+    controller: App\Controller\EditBookingController::EditAction
+_savebooking:
+    path:  /savebooking
+    controller: App\Controller\EditBookingController::SaveAction
+_newbooking:
+    path:  /newbooking
+    controller: App\Controller\EditBookingController::NewAction 
+_bookingAjaxDisplayAvailableFIs:
+    path:  /displayfi
+    controller: App\Controller\EditBookingController::BookingAjaxDisplayAvailableFIsAction
+    
+_viewbookingdetails:
+    path:  /viewbookingdetails
+    controller: App\Controller\ViewBookingDetailsController::ViewAction 
+_deletebookingdetails:
+    path:  /deletebookingdetails
+    controller: App\Controller\ViewBookingDetailsController::DeleteAction  
+_backbookingdetails:
+    path:  /backbookingdetails
+    controller: App\Controller\ViewBookingDetailsController::BackAction       
+    
+_monthview:
+    path:  /monthview
+    controller: App\Controller\MonthViewController::ViewAction 
+    
+_weeksview:
+    path:  /weeksview
+    controller: App\Controller\WeeksViewController::ViewAction
+ 
+  # wird das noch benötigt?
+_default:
+    path:  /
+    controller: App\Controller\MonthViewController:ViewAction
+    
+_dayview:
+    path:  /dayview
+    controller: App\Controller\DayViewController::ViewAction
+    
+_generalview:
+    path:  /generalview/{command}
+    controller: App\Controller\GeneralViewController::ViewAction 
+    
+# Flugzeuge    
+    
+_editaircraft:
+    path:  /editaircraft
+    controller: App\Controller\EditAircraftController::GlobalAction 
+_editaircraftwithid:
+    path:  /editaircraft/{id}
+    controller: App\Controller\EditAircraftController::GlobalWithIDAction 
+_newaircraft:
+    path:  /newaircraft
+    controller: App\Controller\EditAircraftController::NewAction
+_aircrafttable:
+    path:  /aircrafttable
+    controller: App\Controller\EditAircraftController::GridAction 
+    
+# Flugzeutypen    
+    
+_editaircrafttype:
+    path:  /editaircrafttype
+    controller: App\Controller\EditAircraftTypeController::GlobalAction
+_editaircrafttypewithid:
+    path:  /editaircrafttype/{id}
+    controller: App\Controller\EditAircraftTypeController::GlobalWithIDAction  
+_newaircrafttype:
+    path:  /newaircrafttype
+    controller: App\Controller\EditAircraftTypeController::NewAction
+_aircrafttypetable:
+    path:  /aircrafttypetable
+    controller: App\Controller\EditAircraftTypeController::GridAction     
+      
+# Nutzerdaten
+
+_mydata:
+    path:  /mydata
+    controller: App\Controller\EditUserController::MyDataAction  
+_usertable:
+    path:  /usertable
+    controller: App\Controller\EditUserController::GridAction      
+_edituser:
+    path:  /edituser
+    controller: App\Controller\EditUserController::GlobalAction    
+_edituserwithid:
+    path:  /edituser/{id}
+    controller: App\Controller\EditUserController::GlobalWithIDAction
+_newuser:
+    path:  /newuser
+    controller: App\Controller\EditUserController::NewAction       
+_getusermail:
+    path:  /getusermail
+    controller: App\Controller\GetUserMailController::ViewAction  
+    
+# Lizenzen    
+    
+_licencetable:
+    path:  /licencetable
+    controller: App\Controller\LicenceController::GridAction   
+_licencetablewithid:
+    path:  /licencetable/{id}
+    controller: App\Controller\LicenceController::GridWithIDAction 
+# Eigene Lizenzen bearbeiten
+_editlicence:
+    path:  /editlicence
+    controller: App\Controller\LicenceController::GlobalAction     
+_newlicence:
+    path:  /newlicence
+    controller: App\Controller\LicenceController::NewAction
+_listlicences:
+    path:  /listlicences
+    controller: App\Controller\LicenceController::LicenceListAction       
+_expiredlicences:
+    path:  /expiredlicences/{command}
+    controller: App\Controller\LicenceController::LicenceListAction      
+    
+# Lizenzen andere Nutzer bearbeiten (als Administrator)
+_editlicencewithid:
+    path:  /editlicence/{id}
+    controller: App\Controller\LicenceController::GlobalWithIDAction
+_newlicencewithid:
+    path:  /newlicence/{id}
+    controller: App\Controller\LicenceController::NewLicenceWithIDAction     
+    
+# Lizenztypen  
+_editlicencetype:
+    path:  /editlicencetype
+    controller: App\Controller\EditLicenceTypeController::GlobalAction
+_editlicencetypewithid:
+    path:  /editlicencetype/{id}
+    controller: App\Controller\EditLicenceTypeController::GlobalWithIDAction 
+_newlicencetype:
+    path:  /newlicencetype
+    controller: App\Controller\EditLicenceTypeController::NewAction
+_licencetypetable:
+    path:  /licencetypetable
+    controller: App\Controller\EditLicenceTypeController::GridAction      
+    
+app_login:
+    path:   /login
+    controller: App\Controller\LoginController::login   
+api_login:
+    path:   /loginwithcredentials
+    controller: App\Controller\LoginController::loginwithcredentials 
+#app_json:
+#    path:   /login_json
+#    controller: App\Controller\LoginController::login_json     
+    
+app_logout:
+    path:   /logout
+    methods: GET   
+#_notloggedin:
+#    path:   /notloggedin
+#    controller: App\Controller\SecurityController::NotLoggedInAction
+    
+_fi_newavailability:
+    path:  /newavailability/{command}
+    controller: App\Controller\FIAvailabilityController::newAction
+    
+_fi_saveavailability:
+    path:  /saveavailability
+    controller: App\Controller\FIAvailabilityController::saveAction
+_fi_editavailability:
+    path:  /editavailability/{id}
+    controller: App\Controller\FIAvailabilityController::editAction
+_fi_deleteavailability:
+    path:  /deleteavailability/{id}
+    controller: App\Controller\FIAvailabilityController::deleteAction
+#_fi_availabilityview:
+#    path:  /availabilityview/
+#    controller: App\Controller\FIAvailabilityController::FIAvailableViewAction
+
+_fi_availabilitygrid:
+    path:  /availabilitygrid/{command}
+    controller: App\Controller\FIAvailabilityController::AvailabilityGridAction  
+    
+    

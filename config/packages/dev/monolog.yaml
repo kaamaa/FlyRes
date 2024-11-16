@@ -1,0 +1,58 @@
+monolog:
+    handlers:
+        main:
+            type: fingers_crossed
+            action_level: debug
+            #handler: nested
+            handler: deduplicated
+            #excluded_http_codes: [404, 405]
+        deduplicated:
+            type:    deduplication
+            handler: swift
+        swift:
+            type:       symfony_mailer
+            from_email: "%mail_from%"
+            to_email:   'martin@kaamaa.de'
+            # or list of recipients
+            # to_email:   ['dev1@example.com', 'dev2@example.com', ...]
+            subject:    'An Error Occurred! %%message%%'
+            level:      error
+            formatter:  monolog.formatter.html
+            content_type: text/html    
+        nested:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.log"
+            level: error
+        console:
+            type: console
+            process_psr_3_messages: false
+            channels: ["!event", "!doctrine"]
+        deprecation:
+            type: stream
+            path: "%kernel.logs_dir%/%kernel.environment%.deprecations.log"
+        deprecation_filter:
+            type: filter
+            handler: deprecation
+            max_level: info
+            channels: ["php"]
+
+
+#monolog:
+#    handlers:
+#        main:
+#            type: stream
+#            path: "%kernel.logs_dir%/%kernel.environment%.log"
+#            level: debug
+#            channels: ["!event"]
+#        # uncomment to get logging in your browser
+#        # you may have to allow bigger header sizes in your Web server configuration
+#        #firephp:
+#        #    type: firephp
+#        #    level: info
+#        #chromephp:
+#        #    type: chromephp
+#        #    level: info
+#        console:
+#            type: console
+#            process_psr_3_messages: false
+#            channels: ["!event", "!doctrine", "!console"]

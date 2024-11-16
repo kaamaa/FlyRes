@@ -1,0 +1,73 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+
+<form novalidate="true" action="{{ path('_editaircrafttype') }}" method="POST" {#{ form_enctype(form) }#}>   
+  <table>
+    <tr bgcolor='#186FA3' height='25'>
+      <td>
+        <input style='background-color:#FF8040; color:white;' name="Speichern" value="Speichern" type="submit">
+        {% if is_granted('ROLE_ADMIN') and allowdelete == TRUE%}
+          <input style='background-color:#FF8040; color:white;' name="Löschen" value="Löschen" type="submit">
+        {% endif %}
+        <input style='background-color:#FF8040; color:white;' name='Zurück' value='Zurück'type="submit">
+      </td>
+    </tr>  
+    {% if form.vars.valid == false %}
+      <tr bgcolor='#186FA3'>
+        <td bgcolor="#D8E3E7" colspan="2">
+          <font style="color:red">
+            <br><b>&nbsp;&nbsp;Der Flugzeugtyp wurden nicht gespeichert:</b><br>
+            {{ form_errors(form) }}
+            {{ form_errors(form.shortname) }}
+            {{ form_errors(form.longname) }}
+          </font>
+        </td>    
+      </tr>
+    {% endif %}
+    <tr bgcolor="#D8E3E7">
+      <td>
+        <table cellpadding="5" cellspacing="2" border="0" align="left" style="background-color: #D8E3E7" >
+          <tr align="center">
+            <td align="right">
+              <b>ID : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.id) }} 
+            </td>	
+          </tr>	
+          <tr align="center">
+            <td align="right">
+              <b>Name : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.shortname) }} 
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Kennung : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.longname) }}  
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Benötigte Lizenzen : </b>
+            </td>
+            <td align="left">
+              {% for line in form.licencetypes %}
+                {{ form_widget(line) }}
+                {{ form_label(line) }}<br>
+              {% endfor %}
+            </td>	
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+  {{ form_rest(form) }}
+</form>
+
+{% endblock %}

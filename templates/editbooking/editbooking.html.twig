@@ -1,0 +1,261 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  
+<style>
+  table td, table td * {vertical-align: top;}
+  hr { margin-top: 0.1em; margin-bottom: 0.1em; }
+</style>  
+
+{% set pl_fi_title = 'Freie Flugzeuge und Fluglehrer' %}
+{% set pl_text = 'Verfügbare Flugzeuge werden ermittelt...' %}
+{% set fi_text = 'Verfügbare Fluglehrer werden ermittelt...' %}  
+  
+<form class="form-inline" novalidate="true" action="{{ path('_savebooking') }}" method="POST" {#{ form_enctype(form) }#}>
+    
+  <table>
+    <tr>
+      <td>
+        <table style="border-collapse:collapse" border='0' cellspacing='0' cellpadding='0' width='700'>
+          <tr bgcolor='#186FA3' height='25'>
+            <td>
+              <input style='background-color:#FF8040; color:white;' type='reset' name='back' value='zurück' onclick="javascript:history.back()">
+              <input style='background-color:#FF8040; color:white;' type='submit' name='save' value='speichern'>
+            </td>
+            <td>
+              <font color='#FFE75B'>
+                <b>Reservierung</b>
+              </font>
+            </td>
+          </tr>
+          {% if (form.vars.valid == false or form.flightpurposeid.vars.errors is not empty) %}
+          <tr>
+            <td bgcolor="#D8E3E7" colspan="3">
+              <font style="color:red">
+                <br><b>&nbsp;&nbsp;Die Reservierung wurde nicht gespeichert:</b><br>
+                {{ form_errors(form) }}
+                {{ form_errors(form.flightpurposeid) }}
+              </font>
+            </td>    
+          </tr>
+          {% endif %}
+          <tr>
+            <!-- Linke Seite -->
+            <td bgcolor="#D8E3E7">
+              <table border='0' cellspacing='2' cellpadding='2' width='350'>
+                <tr>
+                  <td>
+                    <b>Reservierung für</b> <br>
+                    {{ form_widget(form.createdbyuserid) }}
+                  </td>
+                </tr>
+                <!-- Flugzeug auswählen -->
+                <tr>
+                  <td>
+                    <table border='0' cellspacing='1' cellpadding='1'>
+                      <tr>
+                        <td>
+                            <b>Flugzeug</b><br>
+                            {{ form_widget(form.aircraftid) }}
+                        </td>
+                        <td>&nbsp;&nbsp;</td>
+                        <td>
+                          <b>Fluglehrer</b> <br>
+                          {{ form_widget(form.flightinstructor) }}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <b>Zielflugplatz</b> <br>
+                    {{ form_widget(form.airfieldid) }}
+                  </td>
+                </tr> 
+                <tr>
+                    <td>
+                        <table>
+                            <tr>
+                                <td style="vertical-align:middle">
+                                    <b>Startzeit:</b>
+                                </td>
+                                <td>
+                                    <div class="form-group">
+                                        <div class='input-group date' id='datetimepicker1'>
+                                            <span class="input-group-addon" style="background-color: white">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>    
+                                            {{ form_widget(form.itemstart, { 'attr': {'class': 'form-control input-sm', 'readonly': 'true'} }) }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align:middle">
+                                    <b>Endzeit:</b>
+                                </td>
+                                <td>
+                                    <div class="form-group">
+                                        <div class='input-group date' id='datetimepicker2'>
+                                            <span class="input-group-addon" style="background-color: white">
+                                                    <span class="glyphicon glyphicon-calendar"></span>
+                                            </span>    
+                                            {{ form_widget(form.itemstop, { 'attr': {'class': 'form-control input-sm', 'readonly': 'true'} }) }}
+                                        </div>
+                                    </div>
+                                    
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                  <td>
+                    <b>Flugtyp</b> <br>
+                    {% for name, formElement in form.flightpurposeid %}
+                      <div class="radio">
+                        <label>
+                          {{ form_widget(formElement) }}
+                          {{ form_label(formElement) }}
+                        </label>
+                      </div>
+                    {% endfor %}
+                  </td>
+                </tr> 
+                <tr>
+                  <td>
+                    <hr />
+                  </td>
+                </tr>  
+                <tr>
+                  <td>
+                    <b id="b1">{{ pl_fi_title }}</b><br>
+                    <div id="av_PL">
+                      {{ pl_text }}
+                    </div>
+                    <hr />
+                    <div id="av_FI">
+                      {{ fi_text }}
+                    </div>
+                  </td>
+                </tr>
+              </table>
+              <!-- ENDE Linke Seite -->
+            </td>
+            <td bgcolor="#D8E3E7">
+              <!-- Rechte Seite -->
+              <table border='0' cellspacing='5' cellpadding='0' width='350'>
+                <tr>
+                  <td>
+                    <b>Beschreibung: </b>
+                    {{ form_widget(form.description, {'attr': {'rows' : '4', 'cols' : '42'}}) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td >
+                    <table border='0' cellspacing='0' cellpadding='0' width='100%'>
+                      <tr>
+                        <td colspan='2' >
+                          <b>Informationen verschicken an :</b>
+                            {{ form_widget(form.emailinfoi, {'attr': {'size' : '12'}}) }}
+                          <br>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td >
+                          <br>
+                          <b>Info an externe E-Mail  versenden</b><br>
+                          (mehrere Maildressen mit Komma trennen)
+                          {{ form_widget(form.emailinfoe, {'attr': {'size' : '50'}}) }}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!-- ENDE Rechte Seite -->
+            </td>
+          </tr>
+        </table>  
+      </td>
+    </tr>
+  </table>  
+  {{ form_rest(form) }}  
+   <table cellspacing='1' cellpadding='1'>
+    <tr style='color:orange'>  
+      <td>
+        orange:
+      <td>  
+      <td>
+        auf Anfrage
+      </td> 
+    </tr>   
+  </table>
+</form>
+
+<script type="text/javascript">
+
+  $(function () {
+      $('#datetimepicker1').datetimepicker({"formatter":"js","format":"dd.mm.yyyy h:ii","weekStart":0,"autoclose":true,"startView":"month","minView":"hour","maxView":"decade","todayBtn":false,"todayHighlight":true,"keyboardNavigation":true,"language":"de","minuteStep":30,"viewSelect":"hour","showMeridian":false});
+  });
+
+  $(function () {
+      $('#datetimepicker2').datetimepicker({"formatter":"js","format":"dd.mm.yyyy h:ii","weekStart":0,"autoclose":true,"startView":"month","minView":"hour","maxView":"decade","todayBtn":false,"todayHighlight":true,"keyboardNavigation":true,"language":"de","minuteStep":30,"viewSelect":"hour","showMeridian":false});
+  });
+  
+  $('#datetimepicker1').change(function() {
+    DisplayAvailableFIs();
+  });
+  
+  $(document).ready(function() {
+    // Hier stehen die Anweisungen, die beim Ladeabschluss des DOM auszuführen sind.
+    DisplayAvailableFIs();
+  });
+  
+  function DisplayAvailableFIs()
+  {
+    $('div#av_PL').html('{{ pl_text }}');
+    $('div#av_FI').html('{{ fi_text }}');
+    $('b#b1').html('{{ pl_fi_title }}');
+    var d1 = $('#datetimepicker1').datetimepicker("getDate");
+    var d2 = $('#datetimepicker2').datetimepicker("getDate");
+    unix1 = d1.getTime()/1000;
+    unix2 = d2.getTime()/1000;
+    var v_url = "{{ path('_bookingAjaxDisplayAvailableFIs') }}";
+    
+    $.ajax({
+      type: "POST",
+      dataType: "json",
+      cache : false,
+      url: v_url,
+      data: {startdate: unix1, enddate: unix2},
+      success: function(data)
+        {
+          if(data.code==200 ){
+            //var startdate = new Date(data.data['startdate']*1000);
+            //var enddate = new Date(data.data['enddate']*1000);
+            $('div#av_PL').html(data.data['available_planes']);
+            $('div#av_FI').html(data.data['available_FIs']);
+            $('b#b1').html('{{ pl_fi_title }}' + " am " + d1.getDate() + "." + (d1.getMonth()+1) + "." + d1.getFullYear());
+          }
+          else if(data.code==400){//bad request
+               data.data['startdate']
+          }
+          else{
+               alert("Ein unerwarteter Fehler ist aufgetreten.");
+               
+          }
+
+        },
+      error: function(XMLHttpRequest, textStatus, errorThrown)
+        {
+          // 13.03.21: keine Fehlermeldung ausgeben, ich glaube das führt sonst zu gelegentlichen Alert-Meldungen ohne Text
+          //alert('Error : ' + errorThrown);
+        }
+      });
+  }
+
+</script>
+
+{% endblock %}

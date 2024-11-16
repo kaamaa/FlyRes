@@ -1,0 +1,113 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  
+<style>
+  table td, table td * {vertical-align: top;}
+  hr { margin-top: 0.1em; margin-bottom: 0.1em; }
+</style>  
+  
+<form class="form-inline" novalidate="true" action="{{ path('_fi_saveavailability') }}" method="POST" {#{ form_enctype(form) }#}>
+    
+  <table>
+    <tr>
+      <td>
+        <table style="border-collapse:collapse" border='0' cellspacing='0' cellpadding='0'>
+          <tr bgcolor='#186FA3' height='25'>
+            <td>
+              <input style='background-color:#FF8040; color:white;' type='reset' name='back' value='zurück' onclick="javascript:history.back()">
+              <input style='background-color:#FF8040; color:white;' type='submit' name='save' value='speichern'>
+            
+              <font color='#FFE75B'>
+                &nbsp; &nbsp; &nbsp;
+                <b>Verfügbarkeit</b>
+              </font>
+            </td>
+          </tr>
+          {% if (form.vars.valid == false) %}
+          <tr>
+            <td bgcolor="#D8E3E7" colspan="3">
+              <font style="color:red">
+                <br><b>&nbsp;&nbsp;Die Eintragung wurde nicht gespeichert:</b><br>
+                {{ form_errors(form) }}
+              </font>
+            </td>    
+          </tr>
+          {% endif %}
+          <tr>
+            <td bgcolor="#D8E3E7">
+                <table>
+                    {% if command is defined and command != 'my' %}
+                        <tr>
+                          <td style="vertical-align:middle">
+                            <b>Fluglehrer:</b>
+                          </td>
+                          <td>  
+                            {{ form_widget(form.flightinstructor) }}
+                          </td>
+                        </tr>
+                    {% endif %}
+                    <tr>
+                        <td style="vertical-align:middle">
+                            <b>Startzeit:</b>
+                        </td>
+                        <td>
+                            <div class="form-group">
+                                <div class='input-group date' id='datetimepicker1'>
+                                    <span class="input-group-addon" style="background-color: white">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>    
+                                    {{ form_widget(form.itemstart, { 'attr': {'class': 'form-control input-sm', 'readonly': 'true'} }) }}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="vertical-align:middle">
+                            <b>Endzeit:</b>
+                        </td>
+                        <td>
+                            <div class="form-group">
+                                <div class='input-group date' id='datetimepicker2'>
+                                    <span class="input-group-addon" style="background-color: white">
+                                            <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>    
+                                    {{ form_widget(form.itemstop, { 'attr': {'class': 'form-control input-sm', 'readonly': 'true'} }) }}
+                                </div>
+                            </div>
+
+                        </td>
+                    </tr>
+                    
+                    <tr>
+                      <td style="vertical-align:middle">
+                        <b>Status:</b>
+                      </td>
+                      <td>  
+                        {{ form_widget(form.typ) }}
+                      </td>
+                    </tr>
+                    
+                </table>
+            </td>
+          </tr>
+        </table>  
+      </td>
+    </tr>
+  </table>  
+  {{ form_rest(form) }}  
+</form>
+
+<script type="text/javascript">
+
+  $(function () {
+      $('#datetimepicker1').datetimepicker({"formatter":"js","format":"dd.mm.yyyy h:ii","weekStart":0,"autoclose":true,"startView":"month","minView":"hour","maxView":"decade","todayBtn":false,"todayHighlight":true,"keyboardNavigation":true,"language":"de","minuteStep":30,"viewSelect":"hour","showMeridian":false});
+  });
+
+  $(function () {
+      $('#datetimepicker2').datetimepicker({"formatter":"js","format":"dd.mm.yyyy h:ii","weekStart":0,"autoclose":true,"startView":"month","minView":"hour","maxView":"decade","todayBtn":false,"todayHighlight":true,"keyboardNavigation":true,"language":"de","minuteStep":30,"viewSelect":"hour","showMeridian":false});
+  });
+  
+</script>
+
+{% endblock %}

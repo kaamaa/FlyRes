@@ -1,0 +1,78 @@
+{% extends "layout.html.twig" %}
+
+{% set tablewidth = 900 %}
+{% set width = (100 / maxdyspermonth) %}
+{% set colors = { 'sonntag' : '#7db2ce', 'samstag' : '#a1cbe2', 'wochentag' : '#B8CEDC', 
+                 'frei' : '#B8CEDC', 'reserviert' : 'FF8040', 'wartung' : '#800000', 'titel' : '#186FA3',
+                 'leer' : '#3ADF00', 'wenig' : '#A5DF00', 'mittel' : '#D7DF01', 'voll' : '#DBA901',
+                 'sehrvoll' : '#DF7401', 'ausgebucht' : '#DF3A01'} %}
+
+{% block content %}
+  <!-- Titelleiste mit Monaten als Link -->
+  <table style="border-collapse:collapse" border='0' cellspacing='0' cellpadding='2' width="{{tablewidth}}">
+    <tr bgcolor='{{ colors['titel'] }}'>
+      {% for item in monate %}
+        <td align="center">
+          <form novalidate="true" action="monthview" name="month{{ item.index }}" method="POST">
+            <input type='hidden' name='ts' value="{{ item.index }}{{ year }}">
+            <a href="javascript:document.month{{ item.index }}.submit();">
+              <font color='#FFE75B'>
+                <b>{{ item.tag }}</b>
+              </font>
+            </a>
+          </form>
+        </td>
+      {% endfor %}
+    </tr>
+    <tr>
+      <td height="1px" >
+      </td>
+    </tr>
+    <!-- Überschrift mit Vor- und Zurück-Button sowie der Bezeichung des aktuellen Monats -->
+    <tr bgcolor='{{ colors['titel'] }}'>
+      <!-- Vor-Button -->
+      <td align='left'>
+        <form novalidate="true" action="monthview" name="prev" method="POST">
+          <input type="hidden" name="ts" value="{{ prev }}">
+            <a href="javascript:document.prev.submit();">
+              <img src="{{ asset('images/prev.gif') }}" border='0'>
+            </a>
+        </form>
+      </td>
+      <!-- Ausgabe des aktuell angezeigten Monats und Jahres -->
+      <td align='center' colspan='10'>
+        <font color='#FFE75B'>
+          <b>{{ aktmonat }}</b>
+        </font>
+      </td>
+      <!-- Zurück-Button -->
+      <td align='right'>
+        <form novalidate="true" action="monthview" name="next" method="POST">
+          <input type="hidden" name="ts" value="{{ next }}">
+            <a href="javascript:document.next.submit();">
+              <img src="{{ asset('images/next.gif') }}" border='0'>
+            </a>
+        </form>
+      </td>
+    </tr>
+  </table>
+  <!-- Tabelle für die Buchungsinformationen -->
+  <table border="0" cellspacing="1" cellpadding="1" width="{{tablewidth}}">
+    <tr>
+      <!-- Überschrift für die Flugzeuge -->
+      <td align="center" bgcolor="{{ colors['wochentag'] }}" colspan="2">
+        <b>Flugzeuge</b>
+      </td>
+      <!-- Überschrift mit allen Tagen des Monats -->
+      {% for day in month %}
+        <td width="{{ width }}%" bgcolor='{{ colors[day.color] }}' align='center'>
+          <font face='#E8F3F7'>
+            <b>{{ day.tag }}</b>
+          </font>
+        </td>
+      {% endfor %}
+    </tr>
+    <!-- Flugzeugnamen und Flugzeugkennung ausgeben -->
+    {% include "planes.html.twig" %} 
+  </table>
+{% endblock %}

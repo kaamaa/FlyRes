@@ -1,0 +1,91 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  
+<style>
+  table td, table td * {vertical-align: top;}
+  hr { margin-top: 0.1em; margin-bottom: 0.1em; }
+</style>  
+ 
+<form class="form-inline" novalidate="true" action="{{ path('_savenote') }}" method="POST" {#{ form_enctype(form) }#}>
+  <table style="border-collapse:collapse" border='0' cellspacing='0' cellpadding='0' width='400'>
+    <tr bgcolor='#186FA3' height='25'>
+      <td colspan="2">
+        <input style='background-color:#FF8040; color:white;' type='reset' name='back' value='zurück' onclick="javascript:history.back()">
+        <input style='background-color:#FF8040; color:white;' type='submit' name='save' value='speichern'>
+      </td>
+      <td>
+        
+      </td>
+    </tr>
+    {% if (form.vars.valid == false) %}
+    <tr>
+      <td bgcolor="#D8E3E7" colspan="3">
+        <font style="color:red">
+          <br><b>&nbsp;&nbsp;Die Notiz wurde nicht gespeichert:</b><br>
+          {{ form_errors(form) }}
+        </font>
+      </td>    
+    </tr>
+    {% endif %}
+    <tr bgcolor="#D8E3E7" height='10'>
+      <td colspan="2">
+      </td>
+    </tr>
+    <tr bgcolor="#D8E3E7">
+      <td align="right">
+        <b>Gültig bis:</b>
+      </td>
+      <td>
+          <div class="form-group">
+              <div class='input-group date' id='datetimepicker1'>
+                  <span class="input-group-addon" style="background-color: white">
+                          <span class="glyphicon glyphicon-calendar"></span>
+                  </span>    
+                  {{ form_widget(form.validuntil, { 'attr': {'class': 'form-control input-sm', 'readonly': 'true'} }) }}
+              </div>
+          </div>
+      </td>
+    </tr>
+    <tr bgcolor="#D8E3E7">  
+      <td>
+      </td>  
+      <td>
+        <p>
+          {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+            Systemadminstratoren dürfen Nachrichten anlegen, die länger als einen Monat angezeigt werden.
+          {% else %}
+            Eine Pinnwandeintrag kann maximal für einen Monat angezeigt werden. 
+          {% endif %}  
+        </p>  
+      </td>    
+    </tr>
+    <tr bgcolor="#D8E3E7">
+      <td align="right">
+        <b>Titel:</b>
+      </td> 
+      <td>
+        {{ form_widget(form.header, {'attr': {'size' : '50'}}) }} 
+      </td> 
+    </tr>  
+    <tr bgcolor="#D8E3E7">
+      <td align="right">
+        <b>Beschreibung: </b>
+      </td>
+      <td>
+        {{ form_widget(form.description, {'attr': {'rows' : '15', 'cols' : '60'}}) }}
+      </td>
+    </tr>
+  </table>  
+  {{ form_rest(form) }}  
+</form>
+
+<script type="text/javascript">
+
+  $(function () {
+      $('#datetimepicker1').datetimepicker({"formatter":"js","format":"dd.mm.yyyy","weekStart":0,"autoclose":true,"startView":"month","minView":"month","maxView":"decade","todayBtn":false,"todayHighlight":true,"keyboardNavigation":true,"language":"de","showMeridian":false});
+  });
+ 
+</script>
+
+{% endblock %}
