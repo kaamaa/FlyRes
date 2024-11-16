@@ -1,0 +1,143 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  <table border='0' cellspacing='10' cellpadding='0' style="background-color: #D8E3E7" width="395">
+    <tr bgcolor='#186FA3' height='25'>
+      <td align='center' colspan='2'>
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+          <tr>
+            <td>
+              <form novalidate="true" action="{{ BackRoute }}" name="back" method="POST">
+                <input style='background-color:#FF8040; color:white;' type='submit' name='back' value='zurück'>
+              </form>
+            </td>
+            <td></td>  
+            <td>
+              {% if modify == TRUE %} 
+                <form action="editbooking" name="edit" method="POST">
+                  <input style='background-color:#FF8040; color:white;' type='submit' name='edit' value='bearbeiten'>
+                  <input type='hidden' name='ts' value="{{ id }}">
+                </form>
+              {% endif %}  
+            </td>
+            <td>
+              {% if modify == TRUE %}
+                <form action="deletebookingdetails" name="edit" method="POST">
+                  <input style='background-color:#FF8040; color:white;' type='submit' name='delete' value='löschen'>
+                </form>
+              {% endif %}   
+            </td>
+            <td align="left" height="25" width="100%">
+              <font color='#FFE75B'>
+                <center><b>Details zur Reservierung</b></center>
+              </font>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr align='center'>
+      <td width="50%" align='right'><b>Flugzeug : </b></td>
+      <td width="50%" align='left'>{{flugzeug}}</td>
+    </tr>
+    {% if flightinstructor != "" %}
+      <tr align='center'>
+        <td width="50%" align='right'><b>Fluglehrer : </b></td>
+        <td width="50%" align='left'>{{flightinstructor}}</td>
+      </tr>
+    {% endif %}
+    <tr>
+      <td width="50%" align='right'><b>Zielflugplatz : </b></td>
+      <td width="50%" align='left'>{{airfield}}</td>
+    </tr>
+
+    <tr>
+      <td width="50%" align='right'><b>Flugzweck : </b></td>
+      <td width="50%" align='left'>{{flightpurpose}}</td>
+    </tr>
+
+    <tr>
+      <td colspan="2">
+        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+
+          <tr width="50%">
+            <td width="50%" align='right'><b>reserviert für :</b></td>
+            <td width="50%" align='left'>&nbsp;{{ReservedForUser}}</td>
+          </tr>
+
+          <tr>
+            <td width="50%" align="right"><b>am :</b></td>
+            <td width="50%" align="left">&nbsp;{{ReservedAt}}</td>
+          <tr>
+
+        </table>
+      </td>
+    </tr>
+
+    <tr>
+      <td colspan="2">
+        {% if ChangedFromUser != "" %} 
+          <table border="0" cellspacing="0" cellpadding="0" width="100%">
+
+            <tr>
+              <td width="50%" align="right"><b>zuletzt geändert von :</b></td>
+              <td width="50%" align="left">&nbsp;{{ChangedFromUser}}</td>
+            <tr>
+
+            <tr>
+              <td width="50%" align="right"><b>am :</b></td>
+              <td width="50%" align="left">&nbsp;{{ChangedAt}}</td>
+            <tr>
+
+          </table>
+        {% endif %}
+      </td>
+    </tr>
+
+    <tr>
+      <td width="50%" align='right'><b>Startdatum : </b></td>
+      <td width="50%" align='left'>{{start}}</td>
+    </tr>
+
+    <tr>
+      <td width="50%" align='right'><b>Enddatum : </b></td>
+      <td width="50%" align='left'>{{end}}</td>
+    </tr>
+
+    <tr>
+      <td align='center' colspan='2'><b>Kontaktdaten</b><br>
+    </tr>
+    <tr>
+      <td width="50%" align="right"><b>Telefon privat :</b></td>
+      <td width="50%" align="left">&nbsp;{{telhome}}</td>
+    </tr>
+    <tr>
+      <td width="50%" align="right"><b>Telefon geschäftlich :</b></td>
+      <td width="50%" align="left">&nbsp;{{teloffice}}</td>
+    </tr>
+    <tr>
+      <td width="50%" align="right"><b>Telefon mobil :</b></td>
+      <td width="50%" align="left">&nbsp;{{telmobile}}</td>
+    </tr>
+    <tr>
+      <td width="50%" align="right"><b>Mailadresse :</b></td>
+      <td width="50%" align="left">&nbsp;{{mail}}</td>
+    </tr>
+    <tr>
+      <td align='center' colspan='2'><b>Beschreibung</b><br>
+        {{description}}
+      </td>
+    </tr>
+
+    <tr>
+      <td align='center' colspan='2'><b>Folgende Adressen werden informiert : </b><br><br>
+        <b>Intern:<br></b>
+        {{EmailInfoIntern}}
+      <br>
+      <b>Extern:<br></b>
+        {{EmailInfoExtern}}
+      </td>
+    </tr>
+  </table>
+{% endblock %}

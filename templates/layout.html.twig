@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+
+<html>
+
+  <head>
+    <meta http-equiv="content-type" content="application/xhtml+xml;  charset=utf-8" />
+    <meta http-equiv="content-type" content="text/html;  charset=utf-8" />
+
+    <meta name="language" content="de-DE" />
+    <title>FlyRes - Flugzeugreservierung</title>
+ 
+    <link href="{{asset('bootstrap/dist/css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link href="{{asset('bootstrap-datetimepicker/css/bootstrap-datetimepicker.css') }}" rel="stylesheet" />
+    <link href="{{asset('images/css/flyres.css') }}" type="text/css" rel="stylesheet"> 
+    <link href="{{asset('images/css/calendarstyle.css') }}" type="text/css" rel="stylesheet"> 
+
+    
+  </head> 
+  <body>
+    <script type="application/javascript" src="{{asset('images/js/wz_tooltip.js')}}"></script>
+    <script type="application/javascript" src="{{asset('bootstrap/dist/js/jquery.min.js') }}"></script>
+    <script type="application/javascript" src="{{asset('bootstrap/dist/js/bootstrap.min.js') }}"></script> 
+    <script type="application/javascript" src="{{asset('bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js') }}"></script> 
+    <script type="application/javascript"  src="{{asset('bootstrap-datetimepicker/js/locales/bootstrap-datetimepicker.de.js') }}"></script> 
+   
+    
+    <div class="inhalt"> 
+      
+      {# zunächst prüfen, ob die Sitzung des Nutzers nicht schon abgelaufen ist und kein Token mehr existiert #}
+      {% if app.token is not null %}
+        {% block left %}
+           {{ render(controller('App\\Controller\\MenuViewController::ViewAction')) }}
+        {% endblock %}
+      {% endif %}  
+      
+      {# Gäste dürfen von Flyres nichts sehen aus dem Menü #}
+      {% if app.token is not null and app.user is not null and is_granted('ROLE_PILOT') %}
+        {% block content %}
+        {% endblock %} 
+      
+        
+        {% block bottom %}
+          {# die Lizenzen nur anzeigen, wenn Buchunngen aufgelistet oder eine neue Buchung eingetragen wird #}
+          {% set spath = app.request.attributes.get('_route') %}
+          {% if spath is defined %}
+              {% if 'weeksview' in spath or 'monthview' in spath or 'newbooking' in spath or 'generalview' in spath or 'savebooking' in spath%}
+                  <br><br>
+                  {{ render(controller('App\\Controller\\NoteController::ViewNotesAction'))}}
+                  <br><br>
+                  {{ render(controller('App\\Controller\\LicenceController::GridAction',{'standalone': false})) }}
+              {% endif %}
+          {% endif %}
+        {% endblock %}
+      {% endif %}  
+    </div> 
+    <br>
+  </body>
+</html>

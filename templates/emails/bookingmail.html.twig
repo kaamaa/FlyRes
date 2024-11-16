@@ -1,0 +1,122 @@
+<style type="text/css">
+  td { padding-right: 25px; }
+</style>
+
+<font style="color: blue">
+  <b>{{type}}:</b>
+</font>
+<br>
+<br>
+<table>
+  <tr>
+    <td>
+      <b>Reservierung für:</b>
+    </td>
+    <td>
+      {{primary_ReservedForUser}} 
+    </td>
+    <td>
+      {% if secondary_ReservedForUser is defined and secondary_ReservedForUser != primary_ReservedForUser %} (bisher: {{secondary_ReservedForUser}}) {% endif %}
+    </td>
+  </tr>  
+  <tr>
+    <td>
+      <b>Beginn:</b>
+    </td>
+    <td>
+      {{primary_start}}
+    <td>
+      {% if secondary_start is defined and secondary_start != primary_start %} (bisher: {{secondary_start}}) {% endif %}
+    <td>
+    </td>
+  </tr>  
+  <tr>
+    <td>
+      <b>Ende:</b>
+    </td>
+    <td>
+      {{primary_end}}
+    </td>
+    <td>
+      {% if secondary_end is defined and secondary_end != primary_end %} (bisher: {{secondary_end}}) {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Flugzeug:</b>
+    </td>
+    <td>
+      {{primary_flugzeug}}
+    </td>
+    <td>
+      {% if secondary_flugzeug is defined and secondary_flugzeug != primary_flugzeug %} (bisher: {{secondary_flugzeug}}) {% endif %}
+    </td>
+  </tr>
+  
+  {% if primary_flightinstructor is defined and primary_flightinstructor != '' %}
+    <tr>
+      <td>
+        <b>Fluglehrer:</b>
+      </td>
+      <td>
+        {{primary_flightinstructor}}
+      </td>
+      <td>
+        {% if secondary_flightinstructor is defined and secondary_flightinstructor != primary_flightinstructor %} (bisher: {{secondary_flightinstructor}}) {% endif %}
+      </td>
+    </tr>
+  {% endif %}
+    
+  <tr>
+    <td>
+      <b>Zielflugplatz:</b>
+    </td>
+    <td>
+      {{primary_airfield}}
+    </td>
+    <td>
+      {% if secondary_airfield is defined and secondary_airfield != primary_airfield %} (bisher: {{secondary_airfield}}) {% endif %} 
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Flugzweck:</b>
+    </td>
+    <td>
+      {{primary_flightpurpose}}
+    </td>
+    <td>
+      {% if secondary_flightpurpose is defined and secondary_flightpurpose != primary_flightpurpose %} (bisher: {{secondary_flightpurpose}}) {% endif %}
+    </td>
+  </tr>
+</table>
+<br>
+<b>Beschreibung:</b> 
+<br>
+{{primary_description}}
+<br>
+{% if secondary_description is defined and secondary_description != primary_description %} (bisher: {{secondary_description}}) {% endif %}
+<br>
+<br>
+<b>Informiert wurde(n):</b>
+<br>
+Intern:&nbsp;{{primary_EmailInfoIntern}}
+<br>
+{% if secondary_EmailInfoIntern is defined and secondary_EmailInfoIntern != primary_EmailInfoIntern %} (bisher:&nbsp;{{secondary_EmailInfoIntern}}) {% endif %}
+<br>
+Extern:&nbsp;{{primary_EmailInfoExtern}}
+<br>
+{% if secondary_EmailInfoExtern is defined and secondary_EmailInfoExtern != primary_EmailInfoExtern %} (bisher:&nbsp;{{secondary_EmailInfoExtern}}) {% endif %}
+<br>
+{#
+<br>
+Viele Grüße<br>
+<br>
+Aero-Service-Worms GmbH<br>
+Am Flugplatz 3<br>
+67547 Worms<br>
+<br>
+Telefon +49-6241-207333<br>
+Email: info@flugschule-worms.de<br>
+www.flugschule-worms.de<br>
+#}

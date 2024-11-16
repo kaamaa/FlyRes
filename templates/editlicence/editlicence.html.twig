@@ -1,0 +1,119 @@
+ {% extends "layout.html.twig" %}
+
+{% block content %}
+
+<form novalidate="true" action="{{ path('_editlicence') }}" method="POST" {#{ form_enctype(form) }#}>   
+  <table>
+    <tr bgcolor='#186FA3' height='25'>
+      <td>
+        <input style='background-color:#FF8040; color:white;' name="Speichern" value="Speichern" type="submit">
+        {% if allowdelete == TRUE%}
+          <input style='background-color:#FF8040; color:white;' name="Löschen" value="Löschen" type="submit">
+        {% endif %}
+        <input style='background-color:#FF8040; color:white;' name='Zurück' value='Zurück' type="submit">
+        {# Dieses Feld wird benötigt, um zu Erkennen, ob in der Listbox licenid eine Änderung erfolgt ist #}
+        <input type="hidden" name="licence_id_onchnage" value='ups'>
+      </td>
+    </tr>  
+    {% if form.vars.valid == false %}
+      <tr bgcolor='#186FA3'>
+        <td bgcolor="#D8E3E7" colspan="2">
+          <font style="color:red">
+            <br><b>&nbsp;&nbsp;Die Lizenzdaten wurden nicht gespeichert:</b><br>
+            {{ form_errors(form.wahrheitsgemaess) }}
+            {{ form_errors(form.licenceid) }}
+            {{ form_errors(form.validuntil) }}
+            {{ form_errors(form) }}
+          </font>
+        </td>    
+      </tr>
+    {% endif %}
+    <tr bgcolor="#D8E3E7">
+      <td>
+        <table cellpadding="5" cellspacing="2" border="0" align="left" style="background-color: #D8E3E7" >
+          <tr align="center">
+            <td align="right">
+              <b>Lizenz : </b>
+            </td>
+            <td align="left">
+              {# Die Auswahlbox Submitted das Formular, wenn eine Änderung erfolgt ist  #}
+              {{ form_widget(form.licenceid , {'attr': {'onchange': "this.form.submit()"}} )  }}  
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Erläuterung : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.description) }}  
+            </td>	
+          </tr>
+          <tr>
+            <td colspan = '2'>
+              <hr>
+            </td>
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Unbegrenzt gültig : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.validunlimited) }}
+            </td>
+          </tr>	
+          <tr>
+            <td align="right">
+              <b>oder gültig bis : </b>
+            </td>
+            <td align="left">
+                <div class="form-group">
+                    <div class='input-group date' id='datetimepicker1'>
+                        <span class="input-group-addon" style="background-color: white">
+                                <span class="glyphicon glyphicon-calendar"></span>
+                        </span>    
+                        {{ form_widget(form.validuntil, { 'attr': {'class': 'form-control input-sm'} }) }}
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    $(function () {
+                        $('#datetimepicker1').datetimepicker({"formatter":"js","format":"dd.mm.yyyy","weekStart":0,"autoclose":true,"startView":"decade","minView":"month","maxView":"decade","todayBtn":false,"todayHighlight":true,"keyboardNavigation":true,"language":"de"});
+                    });
+                </script>
+            </td>
+          </tr>	
+          <tr>
+            <td colspan = '2'>
+              <hr>
+            </td>
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Anmerkung:</b>
+            </td>
+            <td align="left">
+              <b>Bei Check- und Übungsflügen bitte Fluglehrer, Flugzeug und Flugschule angeben</b>
+              <br><br>
+              {{ form_widget(form.comment) }} 
+            </td>	
+          </tr>	
+          <tr>
+            <td colspan = '2'>
+              <hr>
+            </td>
+          </tr>
+          <tr align="center">
+            <td align="right">
+              {{ form_widget(form.wahrheitsgemaess) }} &nbsp &nbsp
+            </td>
+            <td align="left" width = '500'>
+              Alle Angaben sind wahrheitsgemäß erfolgt. Mir ist bekannt, dass Fliegen ohne gültige Lizenz eine Straftat nach § 60 LuftVG ist, die mit einer Freiheitsstrafe oder einer Geldstrafe bestraft werden kann.
+            </td>	
+          </tr>	
+        </table>
+      </td>
+    </tr>
+  </table>
+  {{ form_rest(form) }}
+</form>
+
+{% endblock %}

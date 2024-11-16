@@ -1,0 +1,95 @@
+<style type="text/css">
+  td { padding-right: 25px; }
+</style>
+
+<font style="color: blue">
+  <b>{{type}}:</b>
+</font>
+<br>
+<br>
+<table>
+  <tr>
+    <td>
+      <b>Berechtigung für:</b>
+    </td>
+    <td>
+      {{primary_Username}} 
+    </td>
+    <td>
+      {% if secondary_Username is defined and secondary_Username != primary_Username %} (bisher: {{secondary_Username}}) {% endif %}
+    </td>
+  </tr>  
+  <tr>
+    <td>
+      <b>geändert von:</b>
+    </td>
+    <td>
+      {{primary_ChangedBy}} 
+    </td>
+    <td>
+      {% if secondary_ChangedBy is defined and secondary_ChangedBy != primary_ChangedBy %} (bisher: {{secondary_ChangedBy}}) {% endif %}
+    </td>
+  </tr>  
+  <tr>
+    <td>
+      <b>geändert am:</b>
+    </td>
+    <td>
+      {{primary_ChangedAt}}
+    </td>
+    <td>
+      {% if secondary_ChangedAt is defined and secondary_ChangedAt != primary_ChangedAt %} (bisher: {{secondary_ChangedAt}}) {% endif %} 
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <b>Berechtigung:</b>
+    </td>
+    <td>
+      {{primary_Licence}}
+    <td>
+      {% if secondary_Licence is defined and secondary_Licence != primary_Licence %} (bisher: {{secondary_Licence}}) {% endif %}
+    <td>
+    </td>
+  </tr>  
+  
+  <tr>
+    <td>
+      <b>Unbegrenzt gültig:</b>
+    </td>
+    <td>
+      {{primary_Unlimited}}
+    </td>
+    <td>
+      {% if secondary_Unlimited is defined and secondary_Unlimited != primary_Unlimited %} (bisher: {{secondary_Unlimited}}) {% endif %}
+    </td>
+  </tr>
+ <tr>
+    <td>
+      <b>Gültig bis:</b>
+    </td>
+    <td>
+      {% if 'Ja' in primary_Unlimited %} <s> {% endif %}
+         {{primary_ValidUntil}}
+      {% if 'Ja' in primary_Unlimited %} </s> {% endif %}
+    </td>
+    <td>
+      {% if 'Ja' in primary_Unlimited %} <s> {% endif %}
+        {% if secondary_ValidUntil is defined and secondary_ValidUntil != primary_ValidUntil %} (bisher: {{secondary_ValidUntil}}) {% endif %}
+      {% if 'Ja' in primary_Unlimited %} </s> {% endif %}  
+    </td>
+  </tr>
+ 
+  <tr>
+    <td>
+      <b>Kommentar:</b>
+    </td>
+    <td>
+      {{primary_description}}
+    </td>
+    <td>
+      {% if secondary_description is defined and secondary_description != primary_description %} (bisher: {{secondary_description}}) {% endif %} 
+    </td>
+  </tr>
+  
+</table>

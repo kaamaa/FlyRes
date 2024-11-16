@@ -1,0 +1,21 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+  <table border='0' cellspacing='10' cellpadding='0' style="background-color: #D8E3E7">
+   {% if titel is defined and titel != '' %}
+      <tr >  
+        <td>
+            <b>
+              {{ titel }}
+            </b>
+        </td>   
+      </tr>
+    {% endif %}
+    <tr>  
+      <td>
+        {{ grid(grid) }}
+      </td>    
+    </tr>
+  </table>
+  <br>
+{% endblock %}

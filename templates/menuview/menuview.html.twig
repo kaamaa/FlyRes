@@ -1,0 +1,239 @@
+<style type="text/css">
+    /* ================================================================ 
+    This copyright notice must be untouched at all times.
+
+    The original version of this stylesheet and the associated (x)html
+    is available at http://www.cssplay.co.uk/menus/cssplay-ipad-dropdown-menu-fixed.html
+    Copyright (c) Stu Nicholls. All rights reserved.
+    This stylesheet and the associated (x)html may be modified in any 
+    way to fit your requirements.
+    =================================================================== */
+
+    .ipadmenu {position:relative; z-index:500;}
+    ul.menu {padding:0; margin:0; list-style:none;}
+    ul.menu ul {padding:0; margin:0; list-style:none; position:absolute; left:-9999px; top:41px; width:170px; background:url({{asset('images/background1.gif')}}) no-repeat left bottom; padding:2px 2px 10px 2px;}
+    ul.menu a {font:normal 12px arial, sans-serif; color:#fff; text-decoration:none;}
+    ul.menu a:hover {color:#000; text-decoration:none;}
+    ul.menu li:hover > a {color:#000;}
+
+    ul.menu li {float:left; margin-right:1px; position:relative;}
+    ul.menu li ul li {float:none;}
+
+    ul.menu li.nosub a {display:block; height:40px; line-height:40px; background:url({{asset('images/background1.gif')}}) no-repeat right top; padding:0 12px 0 0; float:left;}
+    ul.menu li.nosub a b {display:block; height:40px; background:url({{asset('images/background1.gif')}}) no-repeat left top; padding:0 0 0 12px; cursor:pointer; float:left;}
+    ul.menu li.liTop a.open {display:block; height:100%; line-height:40px; background:#009fec url({{asset('images/down.gif')}}) no-repeat right top; padding:0 30px 0 0; float:left;}
+    ul.menu li.liTop a.open b {display:block; background:url({{asset('images/background1.gif')}}) no-repeat left top; padding:0 0 0 12px; cursor:pointer}
+
+    ul.menu ul li a {display:block; padding:2px 10px; height:auto; line-height:16px;}
+    ul.menu ul li a:hover {background:#fffffe;}
+
+    ul.menu li.liTop:hover {position:relative; height:41px;}
+    ul.menu li.liTop:hover ul {left:0;}
+
+    /* for IE6 */
+    ul.menu table {border-collapse:collapse; width:0; height:0; position:absolute; left:0; top:0;}
+    ul.menu a ul li {float:left; width:170px;}
+    * html ul.menu li.liTop a:hover {direction:ltr; height:41px;}
+    ul.menu a:hover ul {left:0;}
+    ul.menu a:hover ul li a {width:150px;}
+    ul.menu a:hover ul li a:hover {height:auto;}
+
+    /* for the Safari mobile browser */
+    div.ipadmenu img.close {display:none; width:100%; height:100%; position:fixed; left:0; top:0; z-index:-1;}
+    div.ipadmenu ul:hover + img {display:block;}  
+    
+    ul.menu li .divider {
+      *width: 100%;
+      height: 1px;
+      margin: 5px 1px;
+      *margin: -5px 0 5px;
+      overflow: hidden;
+      background-color: #e5e5e5;
+      border-bottom: 1px solid #ffffff;
+    }
+</style>
+
+{% block left %}
+<div style="height: 10px"></div>
+
+<div class="ipadmenu">
+  <ul class="menu">
+    {% for menuitem in menu %}  
+      {% if menuitem['submenu'] is defined %}
+        {% if menuitem['command'] is defined %} 
+          <li class="liTop"><a class="open" href="{{ path(menuitem['link'], {'command': menuitem['command'] }) }}"><b>{{ menuitem['name']}}</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+        {% else %} 
+          {% if menuitem['link'] == '#' %}     
+            <li class="liTop"><a class="open" href="javascript:doNothing();"><b>{{ menuitem['name']}}</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+          {% else %}  
+            <li class="liTop"><a class="open" href="{{ path(menuitem['link']) }}"><b>{{ menuitem['name']}}</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+          {% endif %}    
+        {% endif %} 
+        <!--[if lte IE 6]><table><tr><td><![endif]-->      
+        <ul class="drop">
+          {% for submenuitem in menuitem['submenu'] %}
+            {% if submenuitem['name'] == 'divider' %} 
+              <li class="divider"></li>
+            {% else %}
+              {% if submenuitem['command'] is defined %}  
+                <li><a href="{{ path( submenuitem['link'], {'command': submenuitem['command'] }) }}">{{ submenuitem['name']}}</a></li>
+              {% else %}
+                <li><a href="{{ path( submenuitem['link'] ) }}">{{ submenuitem['name']}}</a></li>
+              {% endif %}
+            {% endif %}    
+          {% endfor %}     
+        </ul>
+        <!--[if lte IE 6]></td></tr></table></a><![endif]-->  
+      {% else %}  
+        {% if menuitem['command'] is defined %} 
+           <li class="nosub"><a class="open" href="{{ path(menuitem['link'], {'command': menuitem['command'] }) }}"><b>{{ menuitem['name']}}</b></a></li> 
+        {% else %}
+          <li class="nosub"><a class="open" href="{{ path(menuitem['link']) }}"><b>{{ menuitem['name']}}</b></a></li> 
+        {% endif %}
+      {% endif %}    
+    {% endfor %}
+  </ul>
+  <img class="close" src="{{asset('images/trans.gif')}}" />
+</div> 
+<br>
+<div style="height: 40px"></div>
+
+{% endblock %}
+         
+{#         
+      
+    <li class="nosub"><a class="open" href="index.html"><b>Home</b></a></li>
+    <li class="liTop"><a class="open" href="index.html"><b>Sales</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+    <!--[if lte IE 6]><table><tr><td><![endif]-->
+      <ul class="drop">
+        <li><a href="index.html">Digital SLR Cameras</a></li>
+        <li><a href="index.html">Interchangeable Lenses</a></li>
+        <li><a href="index.html">Flash Guns and Accessories</a></li>
+        <li><a href="index.html">Professional Tripods</a></li>
+        <li><a href="index.html">Filters &amp; Lens Hoods</a></li>
+      </ul>
+    <!--[if lte IE 6]></td></tr></table></a><![endif]-->
+    </li>
+    <li class="liTop"><a class="open" href="index.html"><b>Services</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+    <!--[if lte IE 6]><table><tr><td><![endif]-->
+      <ul class="drop">
+        <li><a href="index.html">Printing &amp; Framing</a></li>
+        <li><a href="index.html">Photo Editing</a></li>
+        <li><a href="index.html">Storage &amp; Backup</a></li>
+      </ul>
+    <!--[if lte IE 6]></td></tr></table></a><![endif]-->
+    </li>
+    <li class="liTop"><a class="open" href="index.html"><b>Contacts</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+    <!--[if lte IE 6]><table><tr><td><![endif]-->
+      <ul class="drop">
+        <li><a href="index.html">Support</a></li>
+        <li><a href="index.html">Sales</a></li>
+        <li><a href="index.html">Buying</a></li>
+        <li><a href="index.html">Photographers</a></li>
+        <li><a href="index.html">Stockist</a></li>
+        <li><a href="index.html">General</a></li>
+      </ul>
+    <!--[if lte IE 6]></td></tr></table></a><![endif]-->
+    </li>
+    <li class="liTop"><a class="open" href="index.html"><b>Stores Location</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+    <!--[if lte IE 6]><table><tr><td><![endif]-->
+      <ul class="drop">
+        <li><a href="index.html">South West Region</a></li>
+        <li><a href="index.html">North East Region</a></li>
+        <li><a href="index.html">Central Region</a></li>
+      </ul>
+    <!--[if lte IE 6]></td></tr></table></a><![endif]-->
+    </li>
+    <li class="liTop"><a class="open" href="index.html"><b>Contact Us</b><!--[if gte IE 7]><!--></a><!--<![endif]-->
+    <!--[if lte IE 6]><table><tr><td><![endif]-->
+      <ul class="drop">
+        <li><a href="index.html">Email Addresses</a></li>
+        <li><a href="index.html">By Post</a></li>
+        <li><a href="index.html">Telephone Numbers</a></li>
+      </ul>
+    <!--[if lte IE 6]></td></tr></table></a><![endif]-->
+    </li>
+    <li class="nosub"><a class="open" href="index.html"><b>Privacy Policy</b></a></li>
+</ul>
+<img class="close" src="ipad/trans.gif" />
+</div>
+#}
+
+{#
+{% block left %}
+<div id='cssmenu'>
+    <ul>
+      {% for menuitem in menu %}  
+        {% if menuitem['submenu'] is defined %}
+          {% if menuitem['command'] is defined %} 
+          <li class='has-sub '><a href="{{ path(menuitem['link'], {'command': menuitem['command'] }) }}"<span>{{ menuitem['name']}}</span></a>
+          {% else %}
+            {% if menuitem['link'] is defined %}
+              <li class='has-sub '><a href="{{ path(menuitem['link']) }}"<span>{{ menuitem['name']}}</span></a>
+            {% else %}
+              <li class='has-sub '><a <span>{{ menuitem['name']}}</span></a>
+            {% endif %}      
+          {% endif %}
+            <ul>
+              {% for submenuitem in menuitem['submenu'] %}
+                {% if submenuitem['command'] is defined %}  
+                <li><a href="{{ path( submenuitem['link'], {'command': submenuitem['command'] }) }}"><span>{{ submenuitem['name']}}</span></a></li>
+                {% else %}
+                <li><a href="{{ path( submenuitem['link'] ) }}"><span>{{ submenuitem['name']}}</span></a></li>
+                {% endif %}
+              {% endfor %}    
+            </ul>  
+          </li>
+          {% else %}
+            {% if menuitem['command'] is defined %} 
+            <li class='active '><a href="{{ path(menuitem['link'], {'command': menuitem['command'] }) }}"<span>{{ menuitem['name']}}</span></a></li>
+            {% else %}
+            <li class='active '><a href="{{ path(menuitem['link']) }}"<span>{{ menuitem['name']}}</span></a></li>
+            {% endif %}
+          {% endif %} 
+     {% endfor %}     
+    </ul>
+</div>
+{% endblock %}
+#}
+
+{#
+{% block left %}
+  <br>
+  {% for menuitem in menu %}
+    <div class="btn-group" style="float: left;">
+      
+      {% if menuitem['command'] is defined %}
+      <button class="btn" ><a style="text-decoration: none;" href="{{ path(menuitem['link'], {'command': menuitem['command'] }) }}"> {{ menuitem['name']}}</a></button>
+      {% else %}
+      <button class="btn" ><a style="text-decoration: none;" href="{{ path(menuitem['link']) }}"> {{ menuitem['name']}}</a></button>
+      {% endif %}
+      
+      <button class="btn dropdown-toggle" data-toggle="dropdown"><span class="caret"></span></button>
+      {% if menuitem['submenu'] is defined %}
+        <ul class="dropdown-menu" align="left">
+          {% for submenuitem in menuitem['submenu'] %}
+            {% if submenuitem['name'] == 'divider' %} 
+              <li class="divider"></li>
+            {% else %}
+              <li>
+               
+                {% if submenuitem['command'] is defined %}  
+                <a style="text-decoration: none;" href="{{ path( submenuitem['link'], {'command': submenuitem['command'] }) }}">{{ submenuitem['name']}}</a>
+                {% else %}
+                <a style="text-decoration: none;" href="{{ path( submenuitem['link'] ) }}"> {{ submenuitem['name']}} </a>
+                {% endif %}
+                
+              </li> 
+            {% endif %}
+          {% endfor %} 
+        </ul>  
+      {% endif %} 
+    </div>
+  {% endfor %} 
+  <br>
+  <br>
+  <br>
+{% endblock %}
+#}
+

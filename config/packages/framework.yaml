@@ -1,0 +1,35 @@
+framework:
+  
+    secret: '%env(APP_SECRET)%'
+    #csrf_protection: true
+    #http_method_override: true
+
+    # Enables session support. Note that the session will ONLY be started if you read or write from it.
+    # Remove or comment this section to explicitly disable session support.
+    session:
+        enabled: true
+        use_cookies: true
+        cookie_secure: auto
+        cookie_samesite: lax
+        handler_id: 'session.handler.native_file'
+        save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
+
+    php_errors:
+        log: true
+        
+    router:
+        strict_requirements: true
+        
+    form:
+      csrf_protection: ~
+      #  enabled: false
+      
+    validation:      
+      enable_annotations: true
+
+    default_locale:  "%locale%"
+    # trusted_hosts:   ~
+    # trusted_proxies: ~
+
+    fragments:       ~
+    http_method_override: true    

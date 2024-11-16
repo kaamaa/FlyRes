@@ -1,0 +1,66 @@
+{% extends "layout.html.twig" %}
+
+{% set tablewidth = 572 %}
+{% set width = (100 / numberofdays) %}
+{% set colors = { 'textWE' : '#FF0000', 'TextWT' : '#000000',
+                  'sonntag' : '#FF0000', 'samstag' : '#FF0000', 'wochentag' : '#B8CEDC', 
+                  'frei' : '#B8CEDC', 'reserviert' : 'FF8040', 'wartung' : '#800000', 'titel' : '#186FA3',
+                  'leer' : '#3ADF00', 'wenig' : '#A5DF00', 'mittel' : '#D7DF01', 'voll' : '#DBA901',
+                  'sehrvoll' : '#DF7401', 'ausgebucht' : '#DF3A01'} %}
+
+{% block content %}
+  <!-- Titelleiste mit Monaten als Link -->
+  <table style="border-collapse:collapse" border='0' cellspacing='0' cellpadding='2' width="{{tablewidth}}">
+    <tr bgcolor='{{ colors['titel'] }}'>
+     
+    </tr>
+    <tr>
+      <td height="1px" >
+      </td>
+    </tr>
+    <!-- Überschrift mit Vor- und Zurück-Button sowie der Bezeichung des aktuellen Monats -->
+    <tr bgcolor='{{ colors['titel'] }}'>
+      <!-- Vor-Button -->
+      <td align='left' colspan="2">
+        <form novalidate="true" action="weeksview" name="prev" method="POST">
+          <input type="hidden" name="ts" value="{{ prev }}">
+            <a href="javascript:document.prev.submit();">
+              <img src="{{ asset('images/prev.gif') }}" border='0'>
+            </a>
+        </form>
+      </td>
+      <!-- Ausgabe des aktuell angezeigten Monats und Jahres -->
+      
+      <!-- Zurück-Button -->
+      <td align='right'>
+        <form novalidate="true" action="weeksview" name="next" method="POST">
+          <input type="hidden" name="ts" value="{{ next }}">
+            <a href="javascript:document.next.submit();">
+              <img src="{{ asset('images/next.gif') }}" border='0'>
+            </a>
+        </form>
+      </td>
+    </tr>
+  </table>
+  <!-- Tabelle für die Buchungsinformationen -->
+  <table border="0" cellspacing="1" cellpadding="1" width="{{tablewidth}}">
+    <tr>
+      <!-- Überschrift für die Flugzeuge -->
+      <td align="center" bgcolor="{{ colors['wochentag'] }}" colspan="2">
+        <b>Flugzeuge</b>
+      </td>
+      <!-- Überschrift mit allen Tagen des Monats -->
+      {% for day in weeks %}
+        <td width="{{ width }}%" bgcolor='{{ colors['wochentag'] }}' align='center'>
+          <font color='{{ colors[day.color] }}'>
+            <b>{{ day.wochentag }}</b><br>
+            <b>{{ day.tag }}</b><br>
+            {{ day.monat }}
+          </font>
+        </td>
+      {% endfor %}
+    </tr>
+    <!-- Flugzeugnamen und Flugzeugkennung ausgeben -->
+    {% include "planes.html.twig" %}
+  </table>
+{% endblock %}

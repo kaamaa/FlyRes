@@ -1,0 +1,71 @@
+security:
+    enable_authenticator_manager: true
+      
+    providers:
+      app_user_provider:
+          entity:
+              class: App\Entity\FresAccounts
+       
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+            id: 'App\Security\Hasher\CustomPasswordHasher'    
+   
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false 
+              
+        main:
+            custom_authenticators:
+              - App\Security\LoginFormAuthenticator 
+                
+            lazy: true
+            provider: app_user_provider
+            logout: true
+            
+            remember_me:
+                secret:   '%kernel.secret%'
+                lifetime: 2592000 
+                # 30 days in seconds
+                
+            stateless: false
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                default_target_path: _weeksview
+                always_use_default_target_path: true
+                #enable_csrf: true
+                
+            #json_login:
+                # api_login is a route we will create below
+                #check_path: app_json
+                #remember_me: true
+                #username_path: username
+                #password_path: password
+                
+
+    access_control:
+        # Die Liste ist nicht vollständig
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/notloggedin, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        # auskommentieren dieser Zeilen führt dazu, dass Login über Joomla funktioniert
+        #- { path: ^/loginwithcredentials, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        #- { path: ^/login_json, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/start_session, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login_check, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/logout, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/, roles: ROLE_GUEST }  
+        - { path: ^/editaircraft, roles: ROLE_SYSTEM_ADMIN }  
+        - { path: ^/getusermail, roles: ROLE_SYSTEM_ADMIN }  
+        - { path: ^/admin, roles: ROLE_ADMIN }
+
+        
+    role_hierarchy:
+        ROLE_GUEST:
+        ROLE_PILOT:        [ROLE_GUEST]
+        ROLE_FI:           [ROLE_PILOT, ROLE_GUEST]
+        ROLE_ADMIN:        [ROLE_FI, ROLE_PILOT, ROLE_GUEST]
+        ROLE_SYSTEM_ADMIN: [ROLE_ADMIN, ROLE_FI, ROLE_PILOT, ROLE_GUEST]
+        ROLE_GLOBAL_ADMIN: [ROLE_SYSTEM_ADMIN, ROLE_ADMIN, ROLE_FI, ROLE_PILOT, ROLE_GUEST, ROLE_ALLOWED_TO_SWITCH]
+       
+       

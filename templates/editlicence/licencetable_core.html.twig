@@ -1,0 +1,45 @@
+{% block content %}
+  <table border='0' cellspacing='10' cellpadding='0' style="background-color: #D8E3E7">
+   {% if name is defined and name != '' %}
+        <tr >  
+          <td>
+              <b>
+                Lizenzübersicht für {{ name }}
+              </b>
+          </td>   
+        </tr>
+    {% endif %}
+    <tr>  
+      <td>
+        {{ grid(grid) }}
+      </td>    
+    </tr>
+  </table>
+  <br>
+  <table cellspacing='1' cellpadding='1'>
+    <tr>  
+      <td>
+        grün:
+      <td>  
+      <td>
+        Berechtigung noch mehr als 12 Monate gültig
+      </td>  
+    </tr>  
+    <tr>  
+      <td>
+        gelb:
+      <td>  
+      <td>
+        Berechtigung zwischen 3 und 12 Monaten gültig
+      </td>  
+    </tr>  
+    <tr>  
+      <td>
+        rot:
+      <td>  
+      <td>
+        Berechtigung weniger als 3 Monate gültig oder bereits abgelaufen
+      </td>  
+    </tr>  
+  </table>
+{% endblock %}

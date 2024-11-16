@@ -1,0 +1,42 @@
+App\Entity\FresBooking:                
+  properties:
+      flightpurposeid:
+          - NotNull: 
+              message: "Ein Flugzweck (Charter, Schulung...) muss angegeben werden"
+          - Choice: 
+              choices: [1,2,3,4,5] 
+              message: "Ein Flugzweck (Charter, Schulung...) muss angegeben werden"
+
+App\Entity\FresAccounts:                
+    properties:
+        firstname:
+            - NotBlank: 
+                message: "Der Vorname muss angegeben werden"
+        lastname:
+            - NotBlank: 
+                message: "Der Nachname muss angegeben werden"
+        username:
+            - NotBlank: 
+                message: "Der Nutzername muss angegeben werden" 
+        email:
+            - NotBlank: 
+                message: "Die Mailadresse muss angegeben werden"
+
+App\Entity\FresAircraft:                
+    properties:
+        aircraft:
+            - NotBlank: 
+                message: "Der Flugzeugname muss angegeben werden"
+        kennung:
+            - NotBlank: 
+                message: "Die Flugzeugkennung muss angegeben werden"
+        advancebooking:
+            - NotBlank: 
+                message: "Die Vorrausbuchungszeit muss angegeben werden"
+            - Range:
+                min: 0
+                max: 999
+                minMessage: Die Vorrausbuchungszeit beträgt minimal 0 Tage
+                maxMessage: Die Vorrausbuchungszeit beträgt maximal 999 Tage 
+                invalidMessage: Die Vorrausbuchungszeit "{{ value }}" ist kein gültiger Wert 
+

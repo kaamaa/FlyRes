@@ -1,0 +1,50 @@
+<style>
+  summary {
+    display: list-item
+  }
+  
+  details summary { 
+    cursor: pointer;
+  }
+  
+  .chrome {
+    color: #23527c /*#0000EE;*/
+  }
+  .chrome:hover {
+    text-decoration: underline;
+  }
+</style>
+
+{% block content %}
+  <table border="0" cellspacing="1" cellpadding="4" width='572px'>
+    <tr bgcolor='#186FA3' height='25'>
+      <td>
+        <font color='#FFE75B'>
+          <b>Pinnwand</b>
+        </font>
+      </td>
+    </tr>
+    {% if notes is empty %}
+      <tr bgcolor="#D8E3E7">
+        <td>
+          <p>keine Einräge</p>
+        </td>
+      </tr>  
+    {% endif %}  
+    {% for note in notes %}
+      <tr bgcolor="#D8E3E7">
+        <td>
+          <details>
+            <summary>
+              <span class="chrome">
+                {{ note.user.firstname }} {{ note.user.lastname }} : {{ note.header }}
+              </span>  
+            </summary>
+            <p>{{ note.description | raw }}</p>
+          </details>
+        </td>
+      </tr>
+    {% endfor %} 
+  </table>  
+{% endblock %}
+

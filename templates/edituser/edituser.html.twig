@@ -1,0 +1,239 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+
+{% set size = 35 %}     
+
+<form novalidate="true" action="{{ path('_edituser') }}" method="POST" {#{ form_enctype(form) }#}>   
+  <table>
+    <tr bgcolor='#186FA3' height='25'>
+      <td>
+        <input style='background-color:#FF8040; color:white;' name="Speichern" value="Speichern" type="submit">
+        {% if is_granted('ROLE_ADMIN') and allowdelete == TRUE%}
+          <input style='background-color:#FF8040; color:white;' name="Löschen" value="Löschen" type="submit">
+        {% endif %}
+        <input style='background-color:#FF8040; color:white;' name='Zurück' value='Zurück'type="submit">
+      </td>
+    </tr>  
+    {% if form.vars.valid == false %}
+      <tr bgcolor='#186FA3'>
+        <td bgcolor="#D8E3E7" colspan="2">
+          <font style="color:red">
+            <br><b>&nbsp;&nbsp;Die Nutzerdaten wurden nicht gespeichert:</b><br>
+            {{ form_errors(form.firstname) }}
+            {{ form_errors(form.lastname) }}
+            {{ form_errors(form.username) }}
+            {{ form_errors(form.email) }}
+            {{ form_errors(form) }}
+          </font>
+        </td>    
+      </tr>
+    {% endif %}
+    <tr bgcolor="#D8E3E7">
+      <td>
+        <table cellpadding="5" cellspacing="2" border="0" align="left" style="background-color: #D8E3E7" >
+          <tr align="center">
+            <td align="right">
+              <b>ID : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.id, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>	
+          <tr align="center">
+            <td align="right">
+              <b>Vorname : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.firstname, {'attr': {'size' : size}}) }} 
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Nachname : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.lastname, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Benutzername : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.username, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Password : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.password, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Passwort wiederholen : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.password_check, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>E-Mail : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.email, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Telefonnummer Privat : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.phone_number_home, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Telefonnummer Büro : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.phone_number_office, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr align="center">
+            <td align="right">
+              <b>Telefonnummer Mobil : </b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.phone_number_mobile, {'attr': {'size' : size}}) }}
+            </td>	
+          </tr>
+          <tr>
+              <td colspan = "2">
+                  <hr />
+              </td>
+          </tr>
+          <tr align="center">
+            <td align ="right">
+              <b>Buchungsmails:&nbsp</b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.getbookingmails) }}
+            </td>
+          </tr>
+          <tr>
+            <td align ="right">
+              <b>Lizenzmails:&nbsp</b>
+            </td>
+            <td align="left">
+              {{ form_widget(form.getlicencemails) }}
+          </tr>
+          
+          {% if isFi == TRUE %}
+            <tr>
+              <td colspan = "2">
+                  <hr />
+              </td>
+            </tr>
+            <tr align="center">
+              <td align="right">
+                <b>Fluglehrer</b><br><br>
+              </td>
+              <td>
+              </td>
+            </tr>
+            <tr>
+              <td align="right">
+                <b>Immer verfügbar für:</b>
+              </td>
+              <td align="left">
+                {{ form_widget(form.fiallwaysavailable) }}
+              </td>
+            </tr>
+            <tr>
+              <td align="right">
+                <b>Zeitgleiche Buchungen:</b>
+              </td>
+              <td align="left">
+                {{ form_widget(form.fiparallelbookings, {'attr': {'size' : size}}) }}
+              </td>
+            </tr>  
+            <tr>
+              <td align="right">
+                <b>Buchbar "auf Anfrage":</b>
+              </td>
+              <td align="left">
+                {{ form_widget(form.fibookableifonrequest, {'attr': {'size' : size}}) }}
+              </td>
+            </tr>  
+          {% endif %}
+            
+          {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+            <tr>
+                <td colspan = "2">
+                    <hr />
+                </td>
+            </tr>
+            <tr align="center">
+              <td align="right">
+                <b>Nutzer ist gesperrt : &nbsp&nbsp</b>
+              </td>
+              <td align="left">
+                {{ form_widget(form.islocked, {'attr': {'size' : size}}) }}
+              </td>	
+            </tr>
+            <tr>
+                <td colspan = "2">
+                    <hr />
+                </td>
+            </tr>
+            <tr align="center">
+              <td align="right">
+                <b>Berechtigungen : &nbsp&nbsp</b>
+              </td>
+              <td align="left">
+                {% for field in form.function %}
+                  <li style="display: block">
+                    {{ form_widget(field) }}
+                    {{ form_label(field) }}
+                  </li>
+                {% endfor %}
+                
+              </td>	
+            </tr>
+            <tr>
+                <td colspan = "2">
+                    <hr />
+                </td>
+            </tr>
+
+            <tr>
+              <td align="right">
+                <b>vergangene Res. : </b>
+              </td>
+              <td align="left">
+                {{ past }}
+              </td>
+            </tr>
+            <tr>
+              <td align="right">
+                <b>offene Res. : </b>
+              </td>
+              <td align="left">
+                {{ future }}
+              </td>
+            </tr>
+          {% endif %}
+        </table>
+      </td>
+    </tr>
+  </table>
+  {{ form_rest(form) }}
+</form>
+
+
+{% endblock %}
