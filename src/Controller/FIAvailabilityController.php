@@ -42,6 +42,7 @@ class FIAvailabilityController extends AbstractController
     $builder->add('itemstart', DateTimeType::class, array('html5' => false, 'format' => FIAvailabilityController::BookingDateFormat1, 'widget' => 'single_text')); 
     $builder->add('itemstop', DateTimeType::class, array('html5' => false, 'format' => FIAvailabilityController::BookingDateFormat1, 'widget' => 'single_text'));
     $builder->add('typ', ChoiceType::class, array ('choices' => FIAvailability::GetAllAvailabilityStates($em)));  
+    $builder->add('comment', TextType::class, array('label' => 'Kommentar', 'required' => false, 'attr' => array('size' => 30)));
     $form = $builder->getForm();
     return $form;
   }

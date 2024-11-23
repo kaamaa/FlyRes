@@ -87,7 +87,14 @@
                         {{ form_widget(form.typ) }}
                       </td>
                     </tr>
-                    
+                    <tr>
+                      <td style="vertical-align:middle">
+                          <b>Kommentar:</b>
+                      </td>
+                      <td>  
+                          {{ form_widget(form.comment, { 'attr': {'class': 'form-control input-sm'} }) }}
+                      </td>
+                  </tr>
                 </table>
             </td>
           </tr>
