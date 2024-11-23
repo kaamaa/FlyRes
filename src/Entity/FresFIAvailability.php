@@ -77,10 +77,16 @@ class FresFIAvailability
     /**
      * @var string $status
      *
-     * @ORM\Column(name="status", type="string", length=30, nullable=false)
-     * @GRID\Column(visible=true, visible=false, filterable = false)
+     * @ORM\Column(name="Status", type="string", length=30, nullable=false)
+     * @GRID\Column(visible=false, filterable = false)
      */
     private $status;
+
+     /**
+     * @ORM\Column(name="comment", type="string", length=255, nullable=true)
+     * @GRID\Column(title="Kommentar", visible=true, filterable = false)
+     */
+    private $comment;
 
     
     /**
@@ -211,5 +217,22 @@ class FresFIAvailability
     public function getStatus()
     {
         return $this->status;
+    }
+
+    public function getComment(): ?string
+    {
+        return $this->comment;
+    }
+
+    /**
+     * Set comment
+     *
+     * @param string $comment
+     */
+    public function setComment(?string $comment): self
+    {
+        $this->comment = $comment;
+
+        return $this;
     }
 }
