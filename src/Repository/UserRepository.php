@@ -21,11 +21,13 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
         parent::__construct($registry, FresAccounts::class);
     }
     
+  
     public function setClient($client) 
     {
       // Wir vom Loginformular gesetzt
       $this->client = $client;
     }
+
 
     public function loadUserByIdentifier(string $username): ?FresAccounts
     {
@@ -37,7 +39,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
                 u.clientid = :client'
             )
             ->setParameter('query', $username)
-            ->setParameter('client', $this->client)
+            ->setParameter('client', "1") // $this->client)
             ->getOneOrNullResult();
         if($user)
         {

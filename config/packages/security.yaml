@@ -5,6 +5,7 @@ security:
       app_user_provider:
           entity:
               class: App\Entity\FresAccounts
+              property: username
        
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
@@ -22,11 +23,6 @@ security:
             lazy: true
             provider: app_user_provider
             logout: true
-            
-            remember_me:
-                secret:   '%kernel.secret%'
-                lifetime: 2592000 
-                # 30 days in seconds
                 
             stateless: false
             form_login:
@@ -35,6 +31,16 @@ security:
                 default_target_path: _weeksview
                 always_use_default_target_path: true
                 #enable_csrf: true
+
+            remember_me:
+                secret:   '%kernel.secret%'
+                lifetime: 2592000 
+                # 30 days in seconds
+                path: /
+                always_remember_me: true   
+                user_provider: app_user_provider
+                #service: App\Security\CustomRememberMeService
+   
                 
             #json_login:
                 # api_login is a route we will create below

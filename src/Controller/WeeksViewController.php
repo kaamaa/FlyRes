@@ -14,12 +14,20 @@ use App\Entities\Bookings;
 use App\Logging;
 use Symfony\Component\Security\Core\User\UserInterface;
 use DateTimeZone;
+use Symfony\Component\HttpFoundation\Response;
 
 class WeeksViewController extends AbstractController
 {
     
     public function ViewAction(Request $request, UserInterface $loggedin_user)
     {
+      /*
+      // Alle Cookies abrufen 
+      $cookies = $request->cookies->all(); 
+      // Cookies anzeigen (beispielsweise im Response-Content oder über Logging) 
+      return new Response('<pre>' . print_r($cookies, true) . '</pre>');
+      */
+
       //Übergabe: Monat als Zahl (zweistellig) plus Jahr (vierstellig)
       $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
       $sd = ViewHelper::GetSessionDataObject($request->getSession());

@@ -4,6 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 
+# Die Reihenfolge der Parameter ist relvant, eine falsche Reihenfolge führt zu Fehlermedungen
+
 framework:
     translator:      { fallback: de }
       
@@ -18,12 +20,13 @@ parameters:
     mail_from: noreply@flugschule-worms.de
 
 services:
+    
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
-        public: true
-    
+        public: true    
+
     App\:
         resource: '../src/'
         exclude:
@@ -36,4 +39,28 @@ services:
             - '../src/SessionData.php'
             - '../src/TimeFunctions.php'
             - '../src/ViewHelper.php'
-   
+
+    # Custom Remember Me Service for handling user authentication persistence
+    # This service manages the remember me functionality, ensuring users stay logged in
+    # for a specified duration (lifetime) and handles the necessary security aspects.
+    #App\Security\CustomRememberMeService:
+    #    arguments: 
+    #        $userProviders: ['@security.user.provider.concrete.app_user_provider'] 
+    #        $secret: '%kernel.secret%' 
+    #        $providerKey: 'main'
+    #        $options: 
+    #            name: 'REMEMBERME' 
+    #            secret:   '%kernel.secret%'
+    #            lifetime: 2592000 
+    #            # 30 days in seconds
+    #            path: /
+    #            user_provider: app_user_provider
+    #            always_remember_me: true     
+    #        $entityManager: '@doctrine.orm.entity_manager'       
+
+
+    # Custom Remember Me Handler for handling user authentication persistence
+    #App\Security\CustomRememberMeHandler:
+    #    arguments:
+    #        $rememberMeServices: 'App\Security\CustomRememberMeService'
+         
