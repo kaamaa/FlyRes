@@ -10,6 +10,7 @@ use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\PassportInterface;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
 use Doctrine\ORM\EntityManagerInterface;
@@ -46,8 +47,13 @@ class LoginFormAuthenticator extends AbstractAuthenticator
       $this->entityManager->getRepository(FresAccounts::class)->setClient($clientid);
       
       $ub = new UserBadge($username);
+
+      $passport =  new Passport($ub, new PasswordCredentials($password), 
+      [
+        //new CsrfTokenBadge('authenticate', $request->get('_csrf_token')),      
+        new RememberMeBadge()
+      ]);  
               
-      $passport =  new Passport($ub, new PasswordCredentials($password), [new RememberMeBadge()]);  
       return $passport;
     }
 
@@ -87,7 +93,7 @@ class LoginFormAuthenticator extends AbstractAuthenticator
     
     public function supportsRememberMe()
     {
-      return null;
+      return true;
     }
     
     public function createAuthenticatedToken(PassportInterface $passport, string $firewallName): TokenInterface

@@ -21,7 +21,7 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
  * @GRID\Source(groupBy={"id"})
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
 */
-class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface 
+class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface, \Serializable 
 {
 
   /**
@@ -186,6 +186,28 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface
      // Initialize collection
      $this->function = new ArrayCollection();
    }
+
+   public function serialize()
+    {
+        return serialize([
+            $this->clientid,
+            $this->id,
+            $this->username,
+            $this->password,
+            // Fügen Sie hier weitere Eigenschaften hinzu, die serialisiert werden sollen
+        ]);
+    }
+
+    public function unserialize($serialized)
+    {
+        list (
+            $this->clientid,
+            $this->id,
+            $this->username,
+            $this->password,
+            // Fügen Sie hier weitere Eigenschaften hinzu, die deserialisiert werden sollen
+        ) = unserialize($serialized, ['allowed_classes' => false]);
+    }
    
   /**
    * Set clientid

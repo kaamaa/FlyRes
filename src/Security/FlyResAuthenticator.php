@@ -11,11 +11,14 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\PassportInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
+use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use App\LogonType;
 
 class FlyResAuthenticator extends AbstractAuthenticator
 {
+    // Dieser Authenticator wird bei Logn von der Webseite der Flugschule genutzt
+    
     private $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
@@ -38,16 +41,21 @@ class FlyResAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
+      $username = $request->request->get('_username');
+      $password = $request->request->get('_password');
+      $client = $request->request->get('client');
+      $clientid = Clients::GetClientIdByName ($this->entityManager, $client);
+      $this->entityManager->getRepository(FresAccounts::class)->setClient($clientid);
       
-      $ary = $request->query->all();
-      $str = array_key_first($ary);
-      
-      $parameters = json_decode($str, true);
-      $username = $parameters['username'];
-      $password = $parameters['password'];
-      $passport = new Passport(new UserBadge($username), new PasswordCredentials($password));
+      $ub = new UserBadge($username);
               
+      $passport =  new Passport($ub, new PasswordCredentials($password), 
+      [
+        //new CsrfTokenBadge('authenticate', $request->get('_csrf_token')),      
+        new RememberMeBadge()
+      ]);  
       return $passport;
+      
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
@@ -86,7 +94,7 @@ class FlyResAuthenticator extends AbstractAuthenticator
     
     public function supportsRememberMe()
     {
-      return null;
+      return true;
     }
     
     public function createAuthenticatedToken(PassportInterface $passport, string $firewallName): TokenInterface

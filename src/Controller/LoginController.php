@@ -19,6 +19,7 @@ class LoginController extends AbstractController
 {
   public function login(Request $request, AuthenticationUtils $authenticationUtils): Response
   {
+    
     $em = $this->getDoctrine()->getManager();
     // get the login error if there is one
     $error = $authenticationUtils->getLastAuthenticationError();
