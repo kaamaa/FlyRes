@@ -40,27 +40,4 @@ services:
             - '../src/TimeFunctions.php'
             - '../src/ViewHelper.php'
 
-    # Custom Remember Me Service for handling user authentication persistence
-    # This service manages the remember me functionality, ensuring users stay logged in
-    # for a specified duration (lifetime) and handles the necessary security aspects.
-    #App\Security\CustomRememberMeService:
-    #    arguments: 
-    #        $userProviders: ['@security.user.provider.concrete.app_user_provider'] 
-    #        $secret: '%kernel.secret%' 
-    #        $providerKey: 'main'
-    #        $options: 
-    #            name: 'REMEMBERME' 
-    #            secret:   '%kernel.secret%'
-    #            lifetime: 2592000 
-    #            # 30 days in seconds
-    #            path: /
-    #            user_provider: app_user_provider
-    #            always_remember_me: true     
-    #        $entityManager: '@doctrine.orm.entity_manager'       
-
-
-    # Custom Remember Me Handler for handling user authentication persistence
-    #App\Security\CustomRememberMeHandler:
-    #    arguments:
-    #        $rememberMeServices: 'App\Security\CustomRememberMeService'
-         
+    
