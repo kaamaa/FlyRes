@@ -37,7 +37,7 @@ security:
                 lifetime: 2592000 
                 # 30 days in seconds
                 path: /
-                always_remember_me: true   
+                # always_remember_me: true   
                 user_provider: app_user_provider
                 #service: App\Security\CustomRememberMeService
    

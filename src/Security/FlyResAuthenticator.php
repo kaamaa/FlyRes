@@ -44,7 +44,7 @@ class FlyResAuthenticator extends AbstractAuthenticator
       $username = $request->request->get('_username');
       $password = $request->request->get('_password');
       $client = $request->request->get('client');
-      $clientid = Clients::GetClientIdByName ($this->entityManager, $client);
+      $clientid = Clients::GetClientIdByName($this->entityManager, $client);
       $this->entityManager->getRepository(FresAccounts::class)->setClient($clientid);
       
       $ub = new UserBadge($username);
