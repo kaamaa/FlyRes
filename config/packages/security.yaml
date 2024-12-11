@@ -39,7 +39,6 @@ security:
                 path: /
                 # always_remember_me: true   
                 user_provider: app_user_provider
-                #service: App\Security\CustomRememberMeService
    
                 
             #json_login:
