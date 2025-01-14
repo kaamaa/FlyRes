@@ -46,11 +46,12 @@ class LoginFormAuthenticator extends AbstractAuthenticator
       $clientid = Clients::GetClientIdByName ($this->entityManager, $client);
       $this->entityManager->getRepository(FresAccounts::class)->setClient($clientid);
       
-      $ub = new UserBadge($username);
+      $ub = new UserBadge($username, function($username) {
+        return $this->entityManager->getRepository(FresAccounts::class)->loadUserByIdentifier($username);
+      });
 
       $passport =  new Passport($ub, new PasswordCredentials($password), 
       [
-        //new CsrfTokenBadge('authenticate', $request->get('_csrf_token')),      
         new RememberMeBadge()
       ]);  
               

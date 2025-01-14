@@ -1,0 +1,9 @@
+HELI_IDENT	RMK_SEQ	REMARK	CYCLE_DATE
+IZ00011	1	IFR TAKE-OFF MINIMUMS AND DEPARTURE PROCEDURES   04106  LZ, 200-1*  *or standardwith minimum climb rate of 270 ft/NM to 2800 between headings 150 -195  from center of landing area.  TAKE-OFF Obstacles:  LZ:  TACAN 2540'MSL (40 AGL), 376' b	200602
+IZ00011	2	earing 270  from center of landing area.  Power line 2677' MSL, 4883' bearing 173  from center of landing area.	200602
+US03248	1	IFR TAKE-OFF MINIMUMS:  Rwy 14-32, climb to 3200 direct HGT NDB and hold SE, LT,295  inbound.	200208
+US03665	1	IFR TAKEOFF MINIMUMS AND (OBSTACLE) DEPARTURE PROCEDURES    TAKEOFF MINIMUMS:  VFR only	200403
+US08330	1	IFR TAKE-OFF MINIMUMS AND (OBSTACLE) DEPARTURE PROCEDURES:    Diverse Departuresnot assessed.	200211
+US09362	1	ALTERNATE MINIMUMS NA:  COPTER NDB 303   COPTER VOR or GPS 226     TAKEOFF OBSTACLE NOTES:  RWY 22 multiple trees beginning 25 feet from DER, 200 feet right of centerline, up to 12 feet AGL/604 feet MSL.	200506
+US11752	1	ALTERNATE MINIMUMS NA:  COPTER VOR 262	200301
+YI00003	1	IFR TAKE-OFF MINIMUMS AND DEPARTURE PROCEDURES   03163  Diverse departure not authorized.  1500-1600M or standard with minimum climb rate of 500 ft/NM to 7000.	200602
