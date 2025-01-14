@@ -31,7 +31,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
 
     public function loadUserByIdentifier(string $username): ?FresAccounts
     {
-      // Der Client wurde vorher in der Klasse gespeichert
+        // Der Client wurde vorher in der Klasse gespeichert
         $user = $this->entityManager->createQuery(
                 'SELECT u
                 FROM App\Entity\FresAccounts u

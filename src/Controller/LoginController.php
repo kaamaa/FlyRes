@@ -40,6 +40,7 @@ class LoginController extends AbstractController
                                        UserAuthenticatorInterface $userAuthenticator, 
                                        FlyResAuthenticator $LoginAuthenticator) : Response
   {
+    // Die Funktion wird von Joomla direkt aufgerufen
     $session = $request->getSession();
     $em = $this->getDoctrine()->getManager();
     

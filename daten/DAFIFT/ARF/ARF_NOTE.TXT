@@ -1,0 +1,119 @@
+ARF_IDENT	DIRECTION	ICAO	FT_TYPE	FT_NO	RMK_SEQ	REMARKS	CYCLE_DATE
+AR101	N	KZME	ARCP                	1	1	SOUTH ARCP-Between 1500-1630Z++ limited to either buddy, on course or enroute cell rendezvous.	200203
+AR101	N	KZME	EXIT                	2	1	SOUTH EXIT-When refueling on the southbound track, aircraft will exit the track with turns to the right unless otherwise authorized by ATC.	200203
+AR101	N	KZME	REFUELING ALTITUDES 	3	1	Refueling is prohibited between 1900Z++ and 2100Z++.	200203
+AR101	N	KZME	ASSIGNED ARTCC      	4	1	SOUTH ASSIGNED ARTCC-ARCP-123.75; use ARIP 306.9/120.85 between 1500-1630Z++ or when buddy, on course or enroute cell is planned.	200203
+AR101	S	KZME	ARCP                	1	1	SOUTH ARCP-Between 1500-1630Z++ limited to either buddy, on course or enroute cell rendezvous.	200203
+AR101	S	KZME	EXIT                	2	1	SOUTH EXIT-When refueling on the southbound track, aircraft will exit the track with turns to the right unless otherwise authorized by ATC.	200203
+AR101	S	KZME	REFUELING ALTITUDES 	3	1	Refueling is prohibited between 1900Z++ and 2100Z++.	200203
+AR101	S	KZME	ASSIGNED ARTCC      	4	1	SOUTH ASSIGNED ARTCC-ARCP-123.75; use ARIP 306.9/120.85 between 1500-1630Z++ or when buddy, on course or enroute cell is planned.	200203
+AR112L	E	KZFW	REFUELING ALTITUDES 	1	1	Or as assigned by ATC.	200602
+AR112L	W	KZFW	REFUELING ALTITUDES 	1	1	Or as assigned by ATC.	200602
+AR114		KZFW	NAVIGATION CHECK POI	1	1	Aircraft when reversing the track at the Navigation Check Point 1 will make a 15degrees bank left turn and roll out with approximately a 15 degrees intercept to course centerline.	200203
+AR125V	S	KZAB	ARIP                	1	1	Alternate North ARIP-ONM VORTAC 301/47 N34-52-36 W107-29-54, ARCP-ONM VORTAC 297/41 N34-46-54 W107-27-42, EXIT-ONM VORTAC, 273/27, N34-27-18 W107-20-12.	200203
+AR125V	S	KZAB	ARIP                	2	1	Alternate South ARIP-ONM VORTAC 273/27 N34-27-18 W107-20-12, ARCP-ONM VORTAC 282/31 N34-33-06 W107-22-24, EXIT-ONM VORTAC 301/47 N34-52-36 W107-29-54.	200203
+AR135V	N	KZAB	NAVIGATION CHECK POI	1	1	AR135V is designed to be used in either direction on a magnetic course of 324.4 or 144.4 . The total length of the track is 30.5 NM, the width is 2 NM either side of centerline. VFR use only.	200406
+AR135V	N	KZAB	NAVIGATION CHECK POI	2	1	CAUTION: AR 135V penetrates normal route width of VR239/244. Monitor 379.4. See and Avoid concept is paramount.	200406
+AR135V	N	KZAB	REFUELING ALTITUDES 	3	1	Refueling altitudes are normally below Albuquerque Center and beyond Tucson TRACON radar advisory service capabilities.	200406
+AR135V	N	KZAB	SCHEDULING UNIT     	4	1	Continuous times of operation.	200406
+AR135V	S	KZAB	NAVIGATION CHECK POI	1	1	AR135V is designed to be used in either direction on a magnetic course of 324.4 or 144.4 . The total length of the track is 30.5 NM, the width is 2 NM either side of centerline. VFR use only.	200406
+AR135V	S	KZAB	NAVIGATION CHECK POI	2	1	CAUTION: AR 135V penetrates normal route width of VR239/244. Monitor 379.4. See and Avoid concept is paramount.	200406
+AR135V	S	KZAB	REFUELING ALTITUDES 	3	1	Refueling altitudes are normally below Albuquerque Center and beyond Tucson TRACON radar advisory service capabilities.	200406
+AR135V	S	KZAB	SCHEDULING UNIT     	4	1	Continuous times of operation.	200406
+AR136V	N	KZAB	NAVIGATION CHECK POI	1	1	AR136V is designed to be used in either direction on a magnetic course of 319.5 or 139.5 . The total length of the track is 59.7 NM, the width is 2 NM either side of centerline. VFR use only.	200406
+AR136V	N	KZAB	NAVIGATION CHECK POI	2	1	CAUTION: Rapidly rising terrain.	200406
+AR136V	N	KZAB	NAVIGATION CHECK POI	3	1	San Manuel airport (E77) may be used by fire fighting aircraft during fire season (Apr-Sep). Call Arizona State Fire Dispatch at C800-309-7081.	200406
+AR136V	N	KZAB	REFUELING ALTITUDES 	4	1	Refueling altitudes are normally below Albuquerque Center radar advisory servicecapabilities.	200406
+AR136V	N	KZAB	SCHEDULING UNIT     	5	1	Continuous times of operation.	200406
+AR136V	N	KZAB	ASSIGNED ARTCC      	6	1	CAUTION: AR136V crosses numerous MTR's. See and Avoid concept is paramount.  Monitor 379.4 for VR239 deconfliction calls.	200406
+AR136V	S	KZAB	NAVIGATION CHECK POI	1	1	AR136V is designed to be used in either direction on a magnetic course of 319.5 or 139.5 . The total length of the track is 59.7 NM, the width is 2 NM either side of centerline. VFR use only.	200406
+AR136V	S	KZAB	NAVIGATION CHECK POI	2	1	CAUTION: Rapidly rising terrain.	200406
+AR136V	S	KZAB	NAVIGATION CHECK POI	3	1	San Manuel airport (E77) may be used by fire fighting aircraft during fire season (Apr-Sep). Call Arizona State Fire Dispatch at C800-309-7081.	200406
+AR136V	S	KZAB	REFUELING ALTITUDES 	4	1	Refueling altitudes are normally below Albuquerque Center radar advisory servicecapabilities.	200406
+AR136V	S	KZAB	SCHEDULING UNIT     	5	1	Continuous times of operation.	200406
+AR136V	S	KZAB	ASSIGNED ARTCC      	6	1	CAUTION: AR136V crosses numerous MTR's. See and Avoid concept is paramount.  Monitor 379.4 for VR239 deconfliction calls.	200406
+AR137V	N	KZAB	ARIP                	1	1	AR137V is designed to be used in either direction on a magnetic course of 341  or 161 . The total length of the track is 40.5 NM, the width is 4 NM either side of centerline. Air Refueling may be conducted anywhere within the confines of th	200508
+AR137V	N	KZAB	NAVIGATION CHECK POI	2	1	CAUTION: AR137V crosses numerous MTR's. See and Avoid concept is paramount.	200508
+AR137V	N	KZAB	NAVIGATION CHECK POI	3	1	CAUTION: Rapidly rising terrain.	200508
+AR137V	N	KZAB	REFUELING ALTITUDES 	4	1	Refueling altitudes are normally below Albuquerque Center radar advisory servicecapabilities.	200508
+AR137V	N	KZAB	SCHEDULING UNIT     	5	1	Continuous times of operations.	200508
+AR137V	S	KZAB	ARIP                	1	1	AR137V is designed to be used in either direction on a magnetic course of 341  or 161 . The total length of the track is 40.5 NM, the width is 4 NM either side of centerline. Air Refueling may be conducted anywhere within the confines of th	200508
+AR137V	S	KZAB	NAVIGATION CHECK POI	2	1	CAUTION: AR137V crosses numerous MTR's. See and Avoid concept is paramount.	200508
+AR137V	S	KZAB	NAVIGATION CHECK POI	3	1	CAUTION: Rapidly rising terrain.	200508
+AR137V	S	KZAB	REFUELING ALTITUDES 	4	1	Refueling altitudes are normally below Albuquerque Center radar advisory servicecapabilities.	200508
+AR137V	S	KZAB	SCHEDULING UNIT     	5	1	Continuous times of operations.	200508
+AR15V	N	KZMA	ASSIGNED ARTCC      	1	1	Airspace delegated to Patrick AFB RAPCON. Restricted to 1 FW and 301 RQS assigned units only. Protected airspace is 4 NM either side of centerline. Air refueling aircraft may include multiple tankers and receivers.	200203
+AR15V	S	KZMA	ASSIGNED ARTCC      	1	1	Airspace delegated to Patrick AFB RAPCON. Restricted to 1 FW and 301 RQS assigned units only. Protected airspace is 4 NM either side of centerline. Air refueling aircraft may include multiple tankers and receivers.	200203
+AR18V	N	KZNY	ASSIGNED ARTCC      	1	1	Airspace delegated to Cherry Point MCAS RATCF.	200203
+AR18V	S	KZNY	ASSIGNED ARTCC      	1	1	Airspace delegated to Cherry Point MCAS RATCF.	200203
+AR20	NE	KZBW	CR PLAN             	1	1	Alternate Primary freq: 305.5. Alternate Backup freq: 265.65	200509
+AR20	NE	KZBW	REFUELING ALTITUDES 	2	1	AR20 (SOUTHWEST) REFUELING ALTITUDES: BTN FL230 and FL250, or BTN FL260 and FL280.	200509
+AR20	SW	KZQX	CR PLAN             	1	1	Alternate Primary freq: 305.5. Alternate Backup freq: 265.65	200509
+AR20	SW	KZQX	REFUELING ALTITUDES 	2	1	AR20 (SOUTHWEST) REFUELING ALTITUDES: BTN FL230 and FL250, or BTN FL260 and FL280.	200509
+AR202S	S	KZJX	EXIT                	1	1	Alternate Exit	200203
+AR225V	N	KZOA	ARCP                	1	1	Normally 6 NM downtrack of the ARIP.	200203
+AR225V	N	KZOA	NAVIGATION CHECK POI	2	1	AR225V is designed to be used in either direction on a magnetic course of 155 degree or 335 degree. The northern end of the track is overhead Pigeon Point Lighthouse. The southern end of the track is a geographical coordinate totally over w	200203
+AR225V	N	KZOA	REFUELING ALTITUDES 	3	1	Air traffic and VFR weather conditons permitting air refueling pilots are requested to maintain a minimum of 2000' AWL while conducting refueling training over the Monterey Bay National Marine Sanctuary.	200203
+AR225V	N	KZOA	SCHEDULING UNIT     	4	1	Restricted to H-60 and C-130 refueling operations. May include multiple tankers/or receivers. Continuous times of operations.	200203
+AR225V	N	KZOA	ASSIGNED ARTCC      	5	1	Refueling altitudes are normally below Oakland Center radar advisory service capabilities. Traffic permitting, Monterey Approach Control 127.15/302.0 may provide radar advisory service.	200203
+AR225V	S	KZOA	ARCP                	1	1	Normally 6 NM downtrack of the ARIP.	200203
+AR225V	S	KZOA	NAVIGATION CHECK POI	2	1	AR225V is designed to be used in either direction on a magnetic course of 155 degree or 335 degree. The northern end of the track is overhead Pigeon Point Lighthouse. The southern end of the track is a geographical coordinate totally over w	200203
+AR225V	S	KZOA	REFUELING ALTITUDES 	3	1	Air traffic and VFR weather conditons permitting air refueling pilots are requested to maintain a minimum of 2000' AWL while conducting refueling training over the Monterey Bay National Marine Sanctuary.	200203
+AR225V	S	KZOA	SCHEDULING UNIT     	4	1	Restricted to H-60 and C-130 refueling operations. May include multiple tankers/or receivers. Continuous times of operations.	200203
+AR225V	S	KZOA	ASSIGNED ARTCC      	5	1	Refueling altitudes are normally below Oakland Center radar advisory service capabilities. Traffic permitting, Monterey Approach Control 127.15/302.0 may provide radar advisory service.	200203
+AR230V		KZLA	ASSIGNED ARTCC      	1	1	Advise Los Angeles ARTCC on 124.2/343.6 prior to entry.	200203
+AR242V	N	KZOA	NAVIGATION CHECK POI	1	1	AR242V is designed to be used in either direction on a magnetic course of 141 degree or 321 degree. The northern end of the track is 9 NM south-southwest of LosBanos, CA and about 3 NM west of Interstate 5. The southern  end of the track i	200203
+AR242V	N	KZOA	REFUELING ALTITUDES 	2	1	Restricted to H-60 helicopter and C-130 refueling operations. May include multiple tankers and/or receivers. Continuous times of operations.	200203
+AR242V	N	KZOA	ASSIGNED ARTCC      	3	1	Refueling altitudes are normally below Stockton Approach Control radar advisory service capabilities.	200203
+AR242V	S	KZOA	NAVIGATION CHECK POI	1	1	AR242V is designed to be used in either direction on a magnetic course of 141 degree or 321 degree. The northern end of the track is 9 NM south-southwest of LosBanos, CA and about 3 NM west of Interstate 5. The southern  end of the track i	200203
+AR242V	S	KZOA	REFUELING ALTITUDES 	2	1	Restricted to H-60 helicopter and C-130 refueling operations. May include multiple tankers and/or receivers. Continuous times of operations.	200203
+AR242V	S	KZOA	ASSIGNED ARTCC      	3	1	Refueling altitudes are normally below Stockton Approach Control radar advisory service capabilities.	200203
+AR243V	N	KZOA	NAVIGATION CHECK POI	1	1	AR243V is designed to be used in either direction on a magnetic course of 128 degree or 308 degree. The northern end of the track is 12 NM northeast of King City, CA. The southern end of the track is 1 NM northeast of Shandon, CA. The total	200203
+AR243V	N	KZOA	REFUELING ALTITUDES 	2	1	Restricted to H-60G and C-130 refueling operations. May include multiple tankersand/or receivers. Continuous time of operations.	200203
+AR243V	N	KZOA	ASSIGNED ARTCC      	3	1	Refueling altitudes are normally below Oakland Center radar advisory service capabilities.	200203
+AR243V	S	KZOA	NAVIGATION CHECK POI	1	1	AR243V is designed to be used in either direction on a magnetic course of 128 degree or 308 degree. The northern end of the track is 12 NM northeast of King City, CA. The southern end of the track is 1 NM northeast of Shandon, CA. The total	200203
+AR243V	S	KZOA	REFUELING ALTITUDES 	2	1	Restricted to H-60G and C-130 refueling operations. May include multiple tankersand/or receivers. Continuous time of operations.	200203
+AR243V	S	KZOA	ASSIGNED ARTCC      	3	1	Refueling altitudes are normally below Oakland Center radar advisory service capabilities.	200203
+AR302	E	KZHU	REFUELING ALTITUDES 	1	1	8000 through 14,000 restricted to C-130 receivers only, scheduled by 16th SOW Hurlburt Field, FL DSN 589-7812 or 7813.	200305
+AR302	E	KZHU	REFUELING ALTITUDES 	2	1	FL 190/FL 230 scheduled by 93 BS/DOS, Barksdale AFB , LA DSN 781-2394/4804, C318-456-2394/4804.	200203
+AR302	E	KZHU	ASSIGNED ARTCC      	3	1	Refueling is prohibited at FL 240 or above between 1900 and 2100Z++.	200411
+AR302	W	KZHU	REFUELING ALTITUDES 	1	1	8000 through 14,000 restricted to C-130 receivers only, scheduled by 16th SOW Hurlburt Field, FL DSN 589-7812 or 7813.	200305
+AR302	W	KZHU	REFUELING ALTITUDES 	2	1	FL 190/FL 230 scheduled by 93 BS/DOS, Barksdale AFB , LA DSN 781-2394/4804, C318-456-2394/4804.	200203
+AR302	W	KZHU	ASSIGNED ARTCC      	3	1	Refueling is prohibited at FL 240 or above between 1900 and 2100Z++.	200411
+AR601		KZJX	EXIT POINTS         	1	1	Or as directed by ATC	200203
+AR617		KZMA	ENTRY POINT(S)      	1	1	Tankers.	200203
+AR617		KZMA	ENTRY POINT(S)      	2	1	Receivers.	200203
+AR62	E	CZCZ	SCHEDULING UNIT     	1	1	Primary means of scheduling track reservation requests is email to: 62OSS.OSOO@McChord.af.mil	200507
+AR62	W	CZCZ	SCHEDULING UNIT     	1	1	Primary means of scheduling track reservation requests is email to: 62OSS.OSOO@McChord.af.mil	200507
+AR620		KZMA	ENTRY POINT(S)      	1	1	Tankers. To be used only by MacDill based aircraft.	200203
+AR620		KZMA	ENTRY POINT(S)      	2	1	Receivers. Placid MOA unusable refueling operations.	200203
+AR623		KZAB	ASSIGNED ARTCC      	1	1	Westbound (North) leg: Tanker holding point is CIM 094/35 (Anchor Point), inbound course 277 degrees, 20 NM legs, left turns. Receiver holding point is CIM 094/93, inbound course 277 degrees, 10 NM legs, left turns. All holding pattern turn	200412
+AR623		KZAB	ASSIGNED ARTCC      	2	1	Eastbound (South) leg: Tanker holding point is PNH 282/130 (Anchor Point), inbound course 095 degrees, 20 NM legs, left turns. Receiver holding point is PNH 280/189, inbound course 095 degrees, 10 NM legs, left turns. All holding pattern tu	200412
+AR633A		KZTL	ENTRY POINT(S)      	1	1	Tanker.	200203
+AR633B		KZTL	ENTRY POINT(S)      	1	1	Tanker.	200203
+AR638		KZMA	ENTRY POINT(S)      	1	1	Tankers.	200203
+AR638		KZMA	ENTRY POINT(S)      	2	1	Receivers.	200203
+AR643		KZDV	ENTRY POINT(S)      	1	1	Or as directed by ATC	200203
+AR646		KZHU	ENTRY POINT(S)      	1	1	Primary Tanker/Receiver.	200203
+AR646		KZHU	ENTRY POINT(S)      	2	1	Tanker Alternate.	200203
+AR646		KZHU	ENTRY POINT(S)      	3	1	Receiver Alternate.	200203
+AR650		KZAB	ENTRY POINT(S)      	1	1	Tankers.	200203
+AR650		KZAB	ENTRY POINT(S)      	2	1	Receivers.	200203
+AR650		KZAB	ARIP                	3	1	Reciever Holding (Non-RADAR)	200503
+AR653		KZKC	ENTRY POINT(S)      	1	1	Tanker.	200203
+AR653		KZKC	ENTRY POINT(S)      	2	1	Receiver.	200203
+AR655		KZMA	ENTRY POINT(S)      	1	1	Tankers.	200203
+AR655		KZMA	ENTRY POINT(S)      	2	1	Receivers. a.-Receiver holdings shall be at anchor point right turns. b.-Miami ARTCC radar must be operational. c.-Operations by MRU must be individually coordinated. d.-ATC may assign altitudes below FL 240.	200203
+AR662V		KZOA	ANCHOR PATTERN      	1	1	AR662V is designed to be used in a left-hand racetrack with a pattern length of 8 NM on an inbound magnetic course of 118 degree. The northwest end of the anchor (ARIP) is 15 NM on the 107 degree radial from the Panoche VORTAC, 12 NM southw	200406
+AR662V		KZOA	ANCHOR PATTERN      	2	1	The northwest leg parallels the southeast leg and is offset to the east about 7 NM. While operating on the anchor, every attempt should be made to fly over the defined centerline of the parallel tracks.	200406
+AR662V		KZOA	SCHEDULING UNIT     	3	1	Restricted to H-60 helicopter and C-130 refueling operations. May include multiple tankers and/or receivers.	200406
+AR662V		KZOA	ASSIGNED ARTCC      	4	1	Aircraft shall contact Lemoore Approach Control on 318.8/124.1 prior to commencing/terminating refueling operations. Lemoore Approach Control shall provide radar advisory service upon request to aircraft operating in AR662V.	200203
+AR667		KZLA	ENTRY POINT(S)      	1	1	Entry/Exit  Point(s) for Rwy 32 departures/arrivals.	200203
+AR667		KZLA	ENTRY POINT(S)      	2	1	Entry/Exit Point(s) for Rwy 14 departures/arrivals.	200203
+AR667		KZLA	TIMES OF OPERATION  	3	1	Non-operational on all federal holidays as follows: a.-Closed 0200Z++ Thursday until 1600Z++ Monday if holiday is observed on Friday; b.-Closed 0200Z++ Friday until 1600Z++ Tuesday if holiday is observed on Monday; c.-Closed 0200Z++ day pri	200203
+AR719		PAZA	EXIT POINTS         	1	1	Or as assigned by ATC	200203
+AR722	NE	PAZA	EXIT POINTS         	1	1	Or as assigned by ATC	200203
+AR722	SW	PAZA	EXIT POINTS         	1	1	Or as assigned by ATC	200203
+AR723		PAZA	EXIT POINTS         	1	1	Or as assigned by ATC	200203
+AR725	NW	PAZA	EXIT POINTS         	1	1	Or as assigned by ATC	200203
+AR725	SE	PAZA	EXIT POINTS         	1	1	Or as assigned by ATC	200203
