@@ -354,11 +354,11 @@ class Users
     $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid));
     $query->setCacheable(true);
     $users = $query->getResult();
-    foreach ($users as $user) 
-    {
-      $userlist[$user->getlastname() . ', ' . $user->getfirstname()] = $user->getId();
-    }
-    return $userlist;
+      foreach ($users as $user) 
+      {
+        $userlist[$user->getlastname() . ', ' . $user->getfirstname()] = $user->getId();
+      }
+      return $userlist;
   }
   
   public static function GetAllUsers ($em, $clientid)

@@ -14,11 +14,18 @@ class ToolsCountryRepository extends ServiceEntityRepository
         parent::__construct($registry, ToolsCountry::class);
     }
 
-    public function findAllCountries()
+    public static function GetAllCountriesForListbox ($em)
     {
-        return $this->createQueryBuilder('c')
-            ->orderBy('c.name', 'ASC')
-            ->getQuery()
-            ->getResult();
+        $countrylist = array();
+        $querystring = "SELECT b FROM App\Entity\ToolsCountry b ORDER BY b.Country_Name ASC";
+        $query = $em->createQuery($querystring);
+        $query->setCacheable(true);
+        $countries = $query->getResult();
+        foreach ($countries as $country) 
+        {
+            $countrylist[$country->getCountryName()] = $country->getId();
+        }
+
+        return $countrylist;
     }
 }
