@@ -15,11 +15,11 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 /**
  * App\Entity\FresAccounts
  *
- * @ORM\Table(name="FRes_accounts")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * @GRID\Source(groupBy={"id"})
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
+  * @ORM\Table(name="FRes_accounts")
+  * @ORM\Entity
+  * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
+  * @GRID\Source(groupBy={"id"})
+  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
 */
 class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface, \Serializable 
 {
