@@ -39,7 +39,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
                 u.clientid = :client'
             )
             ->setParameter('query', $username)
-            ->setParameter('client', "1") // $this->client)
+            ->setParameter('client', $this->client) // "1")
             ->getOneOrNullResult();
         if($user)
         {
@@ -50,10 +50,11 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
         }
         return null;
     }
+
     
     public function find($id, $lockMode = null, $lockVersion = null)
     {
-        // holt den User basierend auf einer ID (clientID wird dazu nicht benötugt weil die ID eindeutig idt)
+        // holt den User basierend auf einer ID (clientID wird dazu nicht benötigt weil die ID eindeutig ist)
         $user = $this->entityManager->createQuery(
                 'SELECT u
                 FROM App\Entity\FresAccounts u

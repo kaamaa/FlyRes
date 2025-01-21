@@ -6,7 +6,7 @@ class SessionData
 {
   // Diese Versionsnummer hochzählen, wenn Änderungen an den Daten des SessionData-Objektes
   // vorgenommen werden
-  const version = 2.1;
+  const version = 2.2;
   
   const day = 1;
   const week = 2;
@@ -66,6 +66,7 @@ class SessionData
     $this->SetDay($day, SessionData::week);
     $this->SetDay($day, SessionData::month);
     $this->SetDay($day, SessionData::fi);
+
   }
   
   public static function IsValid($sd)
@@ -354,5 +355,4 @@ class SessionData
   {
     return $this->m_FIAvailabiltyCommand;
   }
- 
 }

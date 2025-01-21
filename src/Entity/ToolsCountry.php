@@ -8,7 +8,6 @@ use Doctrine\ORM\Mapping as ORM;
  * @ORM\Table(name="tools_countries")
  * @ORM\Entity
  * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  */
 class ToolsCountry
 {
@@ -38,6 +37,11 @@ class ToolsCountry
      * @ORM\Column(type="string", length=100, nullable=true)
      */
     private $Usage;
+
+    /**
+     * @ORM\Column(type="string", length=40, nullable=true)
+     */
+    private $Timezone;
 
     // Getter und Setter...
 
@@ -90,6 +94,18 @@ class ToolsCountry
     public function setUsage(?string $Usage): self
     {
         $this->Usage = $Usage;
+
+        return $this;
+    }
+
+    public function getTimezone(): ?string
+    {
+        return $this->Timezone;
+    }
+
+    public function setTimezone(?string $Timezone): self
+    {
+        $this->Timezone = $Timezone;
 
         return $this;
     }
