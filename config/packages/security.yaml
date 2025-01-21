@@ -22,7 +22,10 @@ security:
                 
             lazy: true
             provider: app_user_provider
-            logout: true
+            logout: 
+                invalidate_session: true
+                handlers: 
+                    - App\Security\CustomLogoutHandler
                 
             stateless: false
             form_login:

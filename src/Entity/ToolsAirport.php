@@ -5,17 +5,17 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\AirportRepository")
  * @ORM\Table(name="tools_airports")
+ * @ORM\Entity
+ * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
 class ToolsAirport
 {
     /**
      * @ORM\Id()
-     * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      */
-        private $id;
+    private $id;
 
     /**
      * @ORM\Column(type="string", length=2, nullable=true)
@@ -48,12 +48,12 @@ class ToolsAirport
     private $Continent;
 
     /**
-     * @ORM\Column(type="string", length=20, nullable=true)
+     * @ORM\Column(name="sLat", type="string", length=20, nullable=true)
      */
     private $sLat;
 
     /**
-     * @ORM\Column(type="string", length=20, nullable=true)
+     * @ORM\Column(name="sLong", type="string", length=20, nullable=true)
      */
     private $sLong;
 
@@ -106,6 +106,71 @@ class ToolsAirport
      * @ORM\Column(type="string", length=10, nullable=true)
      */
     private $ICAO1;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $ARPT_IDENT;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $ICAO_gen;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $ALT_NAME;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $CITY_CROSS_REF;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $ISL_GROUP;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $NOTAM;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $OPR_HRS;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $CLEAR_STATUS;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $UTM_GRID;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $TIME;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $DAYLIGHT_SAVE;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     */
+    private $FLIP_PUB;
+
+    /**
+     * @ORM\Column(type="integer", nullable=true)
+     */
+    private $CYCLE_DATE;
 
     // Getter und Setter...
 
@@ -326,6 +391,162 @@ class ToolsAirport
     public function setICAO1(?string $ICAO1): self
     {
         $this->ICAO1 = $ICAO1;
+
+        return $this;
+    }
+
+    public function getArptIdent(): ?string
+    {
+        return $this->ARPT_IDENT;
+    }
+
+    public function setArptIdent(?string $ARPT_IDENT): self
+    {
+        $this->ARPT_IDENT = $ARPT_IDENT;
+
+        return $this;
+    }
+
+    public function getIcaoGen(): ?string
+    {
+        return $this->ICAO_gen;
+    }
+
+    public function setIcaoGen(?string $ICAO_gen): self
+    {
+        $this->ICAO_gen = $ICAO_gen;
+
+        return $this;
+    }
+
+    public function getAltName(): ?string
+    {
+        return $this->ALT_NAME;
+    }
+
+    public function setAltName(?string $ALT_NAME): self
+    {
+        $this->ALT_NAME = $ALT_NAME;
+
+        return $this;
+    }
+
+    public function getCityCrossRef(): ?string
+    {
+        return $this->CITY_CROSS_REF;
+    }
+
+    public function setCityCrossRef(?string $CITY_CROSS_REF): self
+    {
+        $this->CITY_CROSS_REF = $CITY_CROSS_REF;
+
+        return $this;
+    }
+
+    public function getIslGroup(): ?string
+    {
+        return $this->ISL_GROUP;
+    }
+
+    public function setIslGroup(?string $ISL_GROUP): self
+    {
+        $this->ISL_GROUP = $ISL_GROUP;
+
+        return $this;
+    }
+
+    public function getNotam(): ?string
+    {
+        return $this->NOTAM;
+    }
+
+    public function setNotam(?string $NOTAM): self
+    {
+        $this->NOTAM = $NOTAM;
+
+        return $this;
+    }
+
+    public function getOprHrs(): ?string
+    {
+        return $this->OPR_HRS;
+    }
+
+    public function setOprHrs(?string $OPR_HRS): self
+    {
+        $this->OPR_HRS = $OPR_HRS;
+
+        return $this;
+    }
+
+    public function getClearStatus(): ?string
+    {
+        return $this->CLEAR_STATUS;
+    }
+
+    public function setClearStatus(?string $CLEAR_STATUS): self
+    {
+        $this->CLEAR_STATUS = $CLEAR_STATUS;
+
+        return $this;
+    }
+
+    public function getUtmGrid(): ?string
+    {
+        return $this->UTM_GRID;
+    }
+
+    public function setUtmGrid(?string $UTM_GRID): self
+    {
+        $this->UTM_GRID = $UTM_GRID;
+
+        return $this;
+    }
+
+    public function getTime(): ?string
+    {
+        return $this->TIME;
+    }
+
+    public function setTime(?string $TIME): self
+    {
+        $this->TIME = $TIME;
+
+        return $this;
+    }
+
+    public function getDaylightSave(): ?string
+    {
+        return $this->DAYLIGHT_SAVE;
+    }
+
+    public function setDaylightSave(?string $DAYLIGHT_SAVE): self
+    {
+        $this->DAYLIGHT_SAVE = $DAYLIGHT_SAVE;
+
+        return $this;
+    }
+
+    public function getFlipPub(): ?string
+    {
+        return $this->FLIP_PUB;
+    }
+
+    public function setFlipPub(?string $FLIP_PUB): self
+    {
+        $this->FLIP_PUB = $FLIP_PUB;
+
+        return $this;
+    }
+
+    public function getCycleDate(): ?int
+    {
+        return $this->CYCLE_DATE;
+    }
+
+    public function setCycleDate(?int $CYCLE_DATE): self
+    {
+        $this->CYCLE_DATE = $CYCLE_DATE;
 
         return $this;
     }
