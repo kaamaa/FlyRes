@@ -23,7 +23,6 @@ security:
             lazy: true
             provider: app_user_provider
             logout: 
-                invalidate_session: true
                 handlers: 
                     - App\Security\CustomLogoutHandler
                 
@@ -42,6 +41,7 @@ security:
                 path: /
                 # always_remember_me: true   
                 user_provider: app_user_provider
+                #signature_properties: ['username', 'clientid']
    
                 
             #json_login:
@@ -53,6 +53,7 @@ security:
                 
 
     access_control:
+        - { path: ^/sunrise_sunset, roles: PUBLIC_ACCESS }
         # Die Liste ist nicht vollständig
         - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
         - { path: ^/notloggedin, roles: IS_AUTHENTICATED_ANONYMOUSLY }
@@ -66,7 +67,7 @@ security:
         - { path: ^/editaircraft, roles: ROLE_SYSTEM_ADMIN }  
         - { path: ^/getusermail, roles: ROLE_SYSTEM_ADMIN }  
         - { path: ^/admin, roles: ROLE_ADMIN }
-
+       
         
     role_hierarchy:
         ROLE_GUEST:

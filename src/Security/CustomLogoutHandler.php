@@ -26,5 +26,12 @@ class CustomLogoutHandler implements LogoutHandlerInterface
 
         // Optionally clear other cookies or perform additional cleanup
         $response->headers->clearCookie('REMEMBERME');
+
+        // Destroy the session 
+        $session = $request->getSession();
+        if ($session) 
+        { 
+            $session->clear(); 
+        }
     }
 }
