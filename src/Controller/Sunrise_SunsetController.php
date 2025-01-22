@@ -19,6 +19,7 @@ use Doctrine\Persistence\ManagerRegistry;
 use App\ViewHelper;
 use App\SessionData;
 use DateTimeZone;
+use DateTime;
 
 class Sunrise_SunsetController extends AbstractController
 { 
@@ -128,6 +129,69 @@ class Sunrise_SunsetController extends AbstractController
     return $decimal;
   }
 
+  function getUtcOffsetFormat($timezone)
+  {
+      // Die Funktion gibt das Format für die UTC-Offset-Anzeige basierend auf der PHP Zeitzone zurück
+      // (z.B. UTC+1(+2DT))  
+
+      $dateTime = new DateTime();
+      $timezoneObject = new DateTimeZone($timezone);
+  
+      // Standardzeit (ohne Sommerzeit)
+      $transitions = $timezoneObject->getTransitions();
+      $stdOffset = null;
+      $dstOffset = null;
+  
+      foreach ($transitions as $transition) {
+          if ($transition['isdst'] === false) {
+              $stdOffset = $transition['offset'];
+          } elseif ($transition['isdst'] === true) {
+              $dstOffset = $transition['offset'];
+          }
+          if ($stdOffset !== null && $dstOffset !== null) {
+              break;
+          }
+      }
+  
+      // Umwandlung der Sekunden in Stunden
+      $stdOffsetHours = $stdOffset !== null ? $stdOffset / 3600 : 0;
+      $dstOffsetHours = $dstOffset !== null ? $dstOffset / 3600 : $stdOffsetHours;
+  
+      $format = sprintf("(UTC%+d(%+dDT))", $stdOffsetHours, $dstOffsetHours);
+  
+      return $format;
+  }
+
+  
+  function hasDst($timezone)
+  {
+    /**
+     * Funktion zur Überprüfung, ob eine gegebene Zeitzone jemals Sommerzeit (DST) verwendet.
+     *
+     * @param string $timezone Die PHP-Zeitzone.
+     * @return bool Gibt true zurück, wenn die Zeitzone jemals DST verwendet, andernfalls false.
+     */
+
+    // Erstelle ein DateTimeZone-Objekt für die angegebene Zeitzone.
+    $timezoneObject = new DateTimeZone($timezone);
+
+    // Hole alle Übergänge (Transitions) für die Zeitzone.
+    $transitions = $timezoneObject->getTransitions();
+
+    // Schleife durch alle Übergänge.
+    foreach ($transitions as $transition) {
+        // Überprüfe, ob der Übergang DST (Sommerzeit) verwendet.
+        if ($transition['isdst']) {
+            // Wenn DST gefunden wird, gebe true zurück.
+            return true;
+        }
+    }
+
+    // Wenn kein DST gefunden wird, gebe false zurück.
+    return false;
+  }
+
+
 protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitude, $timezone, $offsets, $offsetstr) 
 {
     // Setze die Locale-Einstellung auf Deutsch
@@ -137,6 +201,8 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
     $date = new \DateTime($date->format('Y-m-01'));
     // Holen des letzten Tages im Monat
     $endOfMonth = (clone $date)->modify('last day of this month');
+
+    $offsetstr = $this->getUtcOffsetFormat($timezone);
     
     // Erzeugen des HTML-Tabellen-Starts
     $html = '<style> .hp { padding-left: 5px; padding-right: 5px; } .th { text-align: center; } </style>';
@@ -147,23 +213,7 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
     $html .= '<th class="th"colspan="6">MEZ/MESZ (UTC+1(+2DT))</th>';
     $html .= '<th class="th"colspan="3">Local ' . $offsetstr . '</th>';
     $html .= '</tr>';
-    /*
-    $html .= '<tr>';
-    $html .= '<td class="hp"><strong>Datum</strong></td>';
-    $html .= '<td class="hp"><strong>Wochentag</strong></td>';
-    $html .= '<td class="hp"><strong>Sonnenaufgang</strong></td>';
-    $html .= '<td class="hp"><strong>Sonnenuntergang</strong></td>';
-    $html .= '<td class="hp"><strong>bürgerliche Morgendämmerung</strong></td>';
-    $html .= '<td class="hp"><strong>Sonnenaufgang</strong></td>';
-    $html .= '<td class="hp"><strong>Sonnenuntergang</strong></td>';
-    $html .= '<td class="hp"><strong>Bürgerliche Abenddämmerung</strong></td>';
-    $html .= '<td class="hp"><strong>Tageslänge</strong></td>';
-    $html .= '<td class="hp"><strong>Sommerzeit</strong></td>';
-    $html .= '<td class="hp"><strong>Sonnenaufgang</strong></td>';
-    $html .= '<td class="hp"><strong>Sonnenuntergang</strong></td>';
-    $html .= '<td class="hp"><strong>Sommerzeit</strong></td>';
-    $html .= '</tr>';
-    */
+  
     $html .= '<tr>';
     $html .= '<td class="hp"><strong>Date</strong></td>';
     $html .= '<td class="hp"><strong>Weekday</strong></td>';
@@ -252,29 +302,33 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
 
           // MEZ / MESZ
           $timezoneOffset1 = $MEZDate->getOffset();
-          $sunriseUtcPlus1 = date('H:i', $sunrise1);
-          $sunsetUtcPlus1 = date('H:i', $sunset1);
+          $sunriseUtcPlus1 = date('H:i', $sunrise1 + $timezoneOffset1);
+          $sunsetUtcPlus1 = date('H:i', $sunset1 + $timezoneOffset1);
           $civilTwilightBeginUtcPlus1 = date('H:i', $civilTwilightBegin1);
           $civilTwilightEndUtcPlus1 = date('H:i', $civilTwilightEnd1);
 
+          // Lokale Zeit
           $Locdst = "";
           $LocDate = clone $date;
           $LocTimezone = new DateTimeZone($timezone); 
           $LocDate->setTimezone($LocTimezone);
           $isDST = $LocDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
-          if ($isDST) {
-            $Locdst = "Sommerzeit";
-          } else {
-            $Locdst = "Winterzeit";
+          if ($this->hasDst($timezone) )
+          {
+            if ($isDST) {
+              $Locdst = "Sommerzeit";
+            } else {
+              $Locdst = "Winterzeit";
+            }
+          } else 
+          { 
+            $Locdst = "N/A"; 
           }
           
-          // Kein Offsite das Zeit eingestellt
-          //$utcOffsetSeconds = $LocDate->getOffset();
-          //$sunriseCustomStandard = date('H:i', $sunrise1 + $utcOffsetSeconds);
-          //$sunsetCustomStandard = date('H:i', $sunset1 + $utcOffsetSeconds);
+          $utcOffsetSeconds = $LocDate->getOffset();
+          $sunriseCustomStandard = date('H:i', $sunrise1 + $utcOffsetSeconds);
+          $sunsetCustomStandard = date('H:i', $sunset1 + $utcOffsetSeconds);
 
-          $sunriseCustomStandard = date('H:i', $sunrise1);
-          $sunsetCustomStandard = date('H:i', $sunset1);
         }
 
         // Hintergrundfarbe für Wochenenden und das aktuelle Datum

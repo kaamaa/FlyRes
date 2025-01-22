@@ -208,6 +208,12 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
             // Fügen Sie hier weitere Eigenschaften hinzu, die deserialisiert werden sollen
         ) = unserialize($serialized, ['allowed_classes' => false]);
     }
+
+    public function eraseCredentials() 
+    { 
+      // Lösche temporäre oder sensible Daten 
+      //$this->temporaryData = null; 
+    }
    
   /**
    * Set clientid
@@ -566,11 +572,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
   {
     // später zu füllen
     //return $this->salt;
-  }
-  
-  public function eraseCredentials()
-  {
-    // später zu füllen
   }
   
   public function getRoles(): array 
