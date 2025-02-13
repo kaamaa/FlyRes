@@ -248,6 +248,42 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
         $sunrise1 = $sunInfo['sunrise'];
         $sunset1 = $sunInfo['sunset'];
 
+        // MEZ / MESZ - Sommerzeit / Winterzeit
+        $MEZdst = "";
+        $MEZDate = clone $date;
+        $berlinTimezone = new DateTimeZone('Europe/Berlin'); 
+        $MEZDate->setTimezone($berlinTimezone);
+        $isDST = $MEZDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
+        if ($this->hasDst('Europe/Berlin') )
+        {  
+          if ($isDST) {
+            $MEZdst = "Summer time";
+          } else {
+            $MEZdst = "Winter time";
+          }
+        } else 
+        { 
+          $MEZdst = "N/A"; 
+        }
+
+        // Lokale Zeit
+        $Locdst = "";
+        $LocDate = clone $date;
+        $LocTimezone = new DateTimeZone($timezone); 
+        $LocDate->setTimezone($LocTimezone);
+        $isDST = $LocDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
+        if ($this->hasDst($timezone) )
+        {
+          if ($isDST) {
+            $Locdst = "Summer time";
+          } else {
+            $Locdst = "Winter time";
+          }
+        } else 
+        { 
+          $Locdst = "N/A"; 
+        }
+
         if (($sunrise1 === false && $sunset1 === false) or ($sunrise1 === true && $sunset1 === true)) 
         {
           if ($sunrise1 === false && $sunset1 === false) 
@@ -262,7 +298,6 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
             $dst = '';
             $sunriseCustomStandard = 'Polar Night';
             $sunsetCustomStandard = 'Polar Night';
-            $Locdst = '';
           }
           if ($sunrise1 === true && $sunset1 === true) 
           { 
@@ -276,7 +311,6 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
             $dst = '';
             $sunriseCustomStandard = 'Polar Day';
             $sunsetCustomStandard = 'Polar Day';
-            $Locdst = '';
           }
         }
         else 
@@ -285,49 +319,22 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
           // Länge des Tages
           $dayLength1 = gmdate('H:i', $sunset1 - $sunrise1);
 
-          // Zeitumrechnungen 
+          // UTC 
           $sunriseUtc1 = date('H:i', $sunrise1);
           $sunsetUtc1 = date('H:i', $sunset1);
           
-          $dst = "";
-          $MEZDate = clone $date;
-          $berlinTimezone = new DateTimeZone('Europe/Berlin'); 
-          $MEZDate->setTimezone($berlinTimezone);
-          $isDST = $MEZDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
-          if ($isDST) {
-            $dst = "Sommerzeit";
-          } else {
-            $dst = "Winterzeit";
-          }
+         
+          // MEZ / MESZ 
+          $MEZtimezoneOffset1 = $MEZDate->getOffset();
+          $sunriseUtcPlus1 = date('H:i', $sunrise1 + $MEZtimezoneOffset1);
+          $sunsetUtcPlus1 = date('H:i', $sunset1 + $MEZtimezoneOffset1);
+          $civilTwilightBeginUtcPlus1 = date('H:i', $civilTwilightBegin1 + $MEZtimezoneOffset1);
+          $civilTwilightEndUtcPlus1 = date('H:i', $civilTwilightEnd1 + $MEZtimezoneOffset1);
 
-          // MEZ / MESZ
-          $timezoneOffset1 = $MEZDate->getOffset();
-          $sunriseUtcPlus1 = date('H:i', $sunrise1 + $timezoneOffset1);
-          $sunsetUtcPlus1 = date('H:i', $sunset1 + $timezoneOffset1);
-          $civilTwilightBeginUtcPlus1 = date('H:i', $civilTwilightBegin1);
-          $civilTwilightEndUtcPlus1 = date('H:i', $civilTwilightEnd1);
-
-          // Lokale Zeit
-          $Locdst = "";
-          $LocDate = clone $date;
-          $LocTimezone = new DateTimeZone($timezone); 
-          $LocDate->setTimezone($LocTimezone);
-          $isDST = $LocDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
-          if ($this->hasDst($timezone) )
-          {
-            if ($isDST) {
-              $Locdst = "Sommerzeit";
-            } else {
-              $Locdst = "Winterzeit";
-            }
-          } else 
-          { 
-            $Locdst = "N/A"; 
-          }
-          
-          $utcOffsetSeconds = $LocDate->getOffset();
-          $sunriseCustomStandard = date('H:i', $sunrise1 + $utcOffsetSeconds);
-          $sunsetCustomStandard = date('H:i', $sunset1 + $utcOffsetSeconds);
+          // Lokalzeit
+          $LocOffsetSeconds = $LocDate->getOffset();
+          $sunriseCustomStandard = date('H:i', $sunrise1 + $LocOffsetSeconds);
+          $sunsetCustomStandard = date('H:i', $sunset1 + $LocOffsetSeconds);
 
         }
 
@@ -351,7 +358,7 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
         $html .= '<td>' . $sunsetUtcPlus1 . '</td>';
         $html .= '<td>' . $civilTwilightEndUtcPlus1 . '</td>';
         $html .= '<td>' . $dayLength1 . '</td>';
-        $html .= '<td>' . $dst . '</td>';
+        $html .= '<td>' . $MEZdst . '</td>';
         $html .= '<td>' . $sunriseCustomStandard . '</td>';
         $html .= '<td>' . $sunsetCustomStandard . '</td>';
         $html .= '<td>' . $Locdst . '</td>';
@@ -370,7 +377,8 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
   public function ViewAction(Request $request)
   {
     ini_set('memory_limit', '256M');
-    date_default_timezone_set('Europe/Berlin');
+    // Setze die Standardzeitzone auf UTC 
+    date_default_timezone_set('UTC');
 
     $em = $this->getDoctrine()->getManager();
     $form = $this->createFormBuilder()->getForm();
@@ -412,25 +420,33 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
               
     ->getForm();
     
-    $airport_obj = ToolsAirportRepository::findCoordinatesByAirportName($em, $airport);
-    $firstElement = reset($airport_obj);
-
-    $offsets = $this->getTimezoneOffsets($firstElement->getTime());
-    if ($firstElement->getTime() != null) 
+    if (!empty($airportlist)) 
     {
-      $offsetstr = "(" . $firstElement->getTime() . ")";
-    } else {  
-      $offsetstr = "(N/A)";
-    }
-   
-    $decimalLatitude = $this->convertToDecimal($firstElement->getsLat());
-    $decimalLongitude = $this->convertToDecimal($firstElement->getsLong());
-    $timezone = ToolsCountryRepository::GetTimeZone($em, $firstElement->getCountry());
-    $htmlTable = $this->generateMonthlyTable($dateTime, $decimalLatitude, $decimalLongitude, $timezone, $offsets, $offsetstr);
-    $title = "Sunrise and Sunset für " . $airport . " im Monat " . $dateTime->format('m.Y');
-    $title .= "</br> Breitengrad / Längengrad: " . $this->decimalToDMS($decimalLatitude, true) . " " . $this->decimalToDMS($decimalLongitude, false);
+        
+        
+      $airport_obj = ToolsAirportRepository::findCoordinatesByAirportName($em, $airport);
+      $firstElement = reset($airport_obj);
 
+      $offsets = $this->getTimezoneOffsets($firstElement->getTime());
+      if ($firstElement->getTime() != null) 
+      {
+        $offsetstr = "(" . $firstElement->getTime() . ")";
+      } else {  
+        $offsetstr = "(N/A)";
+      }
     
+      $decimalLatitude = $this->convertToDecimal($firstElement->getsLat());
+      $decimalLongitude = $this->convertToDecimal($firstElement->getsLong());
+      $timezone = ToolsCountryRepository::GetTimeZone($em, $firstElement->getCountry());
+      $htmlTable = $this->generateMonthlyTable($dateTime, $decimalLatitude, $decimalLongitude, $timezone, $offsets, $offsetstr);
+      $title = "Sunrise and Sunset for " . $airport . " in the Month " . $dateTime->format('m.Y');
+      $title .= "</br> Latitute/Breitengrad & Longitude/Längengrad: " . $this->decimalToDMS($decimalLatitude, true) . " " . $this->decimalToDMS($decimalLongitude, false);
+    }
+    else
+    {
+      $htmlTable = "";
+      $title = "No Airports available";
+    }
     return $this->render('sunrise_sunset/view.html.twig', [ 
       'form' => $form->createView(), 'htmlTable' => $htmlTable, 'title' => $title
     ]);
