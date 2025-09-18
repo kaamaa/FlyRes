@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping http://doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+  <entity name="FresBooking" table="FRes_booking">
+    <id name="id" type="integer" column="id">
+      <generator strategy="IDENTITY"/>
+    </id>
+    <field name="clientid" type="integer" column="clientid" nullable="false"/>
+    <field name="changeddate" type="datetime" column="changedDate" nullable="false"/>
+    <field name="changedbyuserid" type="integer" column="changedByUserID" nullable="true"/>
+    <field name="createddate" type="datetime" column="createdDate" nullable="false"/>
+    <field name="createdbyuserid" type="integer" column="createdByUserID" nullable="true"/>
+    <field name="aircraftid" type="integer" column="aircraftID" nullable="false"/>
+    <field name="airfieldid" type="integer" column="airfieldID" nullable="true"/>
+    <field name="flightpurposeid" type="integer" column="flightPurposeID" nullable="true"/>
+    <field name="itemstart" type="datetime" column="itemstart" nullable="false"/>
+    <field name="itemstop" type="datetime" column="itemstop" nullable="false"/>
+    <field name="description" type="text" column="description" nullable="true"/>
+    <field name="emailinfoi" type="text" column="emailinfoi" nullable="true"/>
+    <field name="emailinfoe" type="text" column="emailinfoe" nullable="true"/>
+    <field name="status" type="string" column="status" length="30" nullable="false"/>
+    <field name="flightinstructor" type="integer" column="flightinstructor" nullable="true"/>
+  </entity>
+</doctrine-mapping>
