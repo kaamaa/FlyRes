@@ -25,15 +25,7 @@ class Sunrise_SunsetController extends AbstractController
 { 
   const DateFormat = 'MM.yyyy';
 
-  
   function parseTimezone($timezone) 
-  /**
-   * Parses a timezone string to extract standard and daylight saving time offsets.
-   *
-   * @param string $timezone The timezone string in the format 'UTC+4:30(+5:30DT)'
-   * @return array An array containing the standard offset and daylight saving time offset (if present)
-   *               First element is the standard offset, second is the DST offset or null
-   */
   {
     // Die Funktion zerlegt einen String im Muster 'UTC+4:30(+5:30DT)' in seine Bestandteile
     $pattern = '/UTC([+-]\d{1,2}(:\d{2})?)(\(([+-]\d{1,2}(:\d{2})?)DT\))?/';
@@ -46,12 +38,6 @@ class Sunrise_SunsetController extends AbstractController
   }
   
   function calculateOffsetInMinutes($offset) 
-  /**
-   * Calculates the timezone offset in minutes from a given offset string.
-   *
-   * @param string $offset The timezone offset string (e.g. '+4:30' or '-2')
-   * @return int The total offset in minutes, with sign preserved
-   */
   {
     $sign = $offset[0];
     $offset = substr($offset, 1);
@@ -176,6 +162,7 @@ class Sunrise_SunsetController extends AbstractController
       return $format;
   }
 
+  
   function hasDst($timezone)
   {
     /**
@@ -205,21 +192,6 @@ class Sunrise_SunsetController extends AbstractController
   }
 
 
-/**
- * Generates a monthly table with sunrise, sunset, and daylight information for a specific location.
- *
- * This method creates an HTML table displaying detailed solar information for each day of a given month,
- * including sunrise and sunset times in UTC, MEZ/MESZ, and local time, along with day length and daylight saving time status.
- *
- * @param \DateTime $date The starting date for the monthly calculation
- * @param float $decimalLatitude The latitude of the location
- * @param float $decimalLongitude The longitude of the location
- * @param string $timezone The timezone identifier for the location
- * @param mixed $offsets Optional timezone offset information
- * @param string $offsetstr Optional timezone offset string
- *
- * @return string HTML table with monthly sunrise and sunset information
- */
 protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitude, $timezone, $offsets, $offsetstr) 
 {
     // Setze die Locale-Einstellung auf Deutsch
@@ -402,16 +374,6 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
     return $html;
   }
   
-  /**
-   * Handles the view action for sunrise and sunset information.
-   *
-   * This method processes user requests to display sunrise, sunset, and twilight times
-   * for a selected airport and date range. It creates a form for country and airport selection,
-   * retrieves astronomical data, and generates an HTML table with the results.
-   *
-   * @param Request $request The HTTP request containing form data
-   * @return string HTML table with sunrise and sunset information
-   */
   public function ViewAction(Request $request)
   {
     ini_set('memory_limit', '256M');

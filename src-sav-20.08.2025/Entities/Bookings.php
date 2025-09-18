@@ -413,22 +413,19 @@ class Bookings
     }  
     return false;
   }
-
-  public static function IsFlightinstructorNotBooked ($em, $newBooking, $parallelSoloAndDual = false)
+  
+  public static function IsFlightinstructorNotBooked ($em, $newBooking)
   {
     // Prüft, ob der Fluglehrer nicht schon anderweitig gebucht ist
-    // Parallel Soloflüge von Flugschülern werden in Abhängigkeit der Einstellung $parallelSoloAndDual zugelassen
-    // Rückgabe ist NULL, wenn der Fluglehrer frei ist, ansonsten eine Fehlermeldung
+    // Parallel Soloflüge von Flugschülern werden zugelassen
     
     define('message1', 'Zu diesem Zeitpunkt hat der ausgewählte Fluglehrer bereits eine eigene Reservierung.');
     define('message2', 'Zu diesem Zeitpunkt ist der ausgewählte Fluglehrer schon für einen anderen Schulflug gebucht.');
-
-    // Wenn parallele Solo- und Dualflüge zugelassen sind und der Flugschüler der neuen Buchung Solo fliegt, 
-    // dann gilt der Fluglehrer als frei
-    if ($parallelSoloAndDual && FlightPurposes::IsSolo($newBooking->getFlightpurposeid())) return NULL;
+    
+    if (FlightPurposes::IsSolo($newBooking->getFlightpurposeid())) return NULL;
     
     $bookings = NULL;
-    $fid = $newBooking->getFlightinstructor();  
+    $fid = $newBooking->getFlightinstructor();
     if (!empty($fid))
     {
       // Prüfen ob der Fluglehrer Doppelbuchungen zulässt
@@ -454,29 +451,13 @@ class Bookings
       $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
       
       $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
-      $querystring .= "b.flightinstructor = :flightinstructor and b.id <> :bookingID";
-      // Solo-Flüge von Flugschülern werden parallel nicht zugelassen, daher die folgende Zeile auskommentieren
-
-      if ($parallelSoloAndDual)
-      {
-        // Wenn parallele Solo- und Dualflüge zugelassen sind, dann müssem Solo-Flüge von Flugschülern 
-        // aus der Abfrage ausgeschlossen werden
-        $querystring .= " and b.flightpurposeid <> :soloID";
-        $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
+      $querystring .= "b.flightinstructor = :flightinstructor and b.id <> :bookingID and b.flightpurposeid <> :soloID";
+      
+      $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
                                                                    'flightinstructor' => $fid,
                                                                    'clientID' => $newBooking->getClientid(),
                                                                    'soloID' => FlightPurposes::GetSoloID(),
                                                                    'bookingID' => $id));
-      }
-      else
-      {
-        // Wenn parallele Solo- und Dualflüge nicht zugelassen sind, dann müssen alle Flüge herausgesucht werden 
-        $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
-                                                                   'flightinstructor' => $fid,
-                                                                   'clientID' => $newBooking->getClientid(),
-                                                                   'bookingID' => $id));
-      }
-      
       $query->setCacheable(true);
       $bookings = $query->getResult();
       //var_dump($bookings);

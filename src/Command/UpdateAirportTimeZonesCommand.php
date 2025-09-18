@@ -16,7 +16,7 @@ class UpdateAirportTimeZonesCommand extends Command
     private $entityManager;
     private $username = 'kaamaa'; // GeoNames Benutzername
 
-    public function __construct(EntityManagerInterface $entityManager)
+    public function __construct(EntityManagerInterface $entityManager)              
     {
         parent::__construct();
 
