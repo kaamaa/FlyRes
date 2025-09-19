@@ -26,6 +26,7 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class EditUserController extends AbstractController
 {
@@ -93,10 +94,9 @@ class EditUserController extends AbstractController
           
     return $fb->getForm();
   }
- 
-  public function ShowForm($form, $user, $allowDelete = true)
+
+  public function ShowForm($form, $user, EntityManagerInterface $em, $allowDelete = true)
   {
-    $em = $this->getDoctrine()->getManager();
     // Anzahl der Buchungen für den Nutzer ermitteln
     $data = Bookings::CountAllBookingsForAUser($em, $user->getClientid(), $user->getId());
     // Basisdaten für das Formual ermittekn
@@ -145,12 +145,11 @@ class EditUserController extends AbstractController
    
     return $this->forward('App\Controller\EditUserController::EditAction');
   }
-  
-  public function DeleteAction(Request $request, UserInterface $loggedin_user)
+
+  public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $userid = $sd->GetUserID();
-    $em = $this->getDoctrine()->getManager();
     
     Users::DeleteUser($em, $loggedin_user->getClientid(), $userid);
     
@@ -162,12 +161,11 @@ class EditUserController extends AbstractController
     
     return $this->redirect($sd->GetBookingDetailBackRoute());
   }
-  
-  public function EditAction(Request $request, UserInterface $loggedin_user, $allowDelete = true)
+
+  public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = true)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-   
+    $em->getConnection()->exec('SET NAMES "UTF8"');
+
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $userid = $sd->GetUserID();
     if ($userid != 0) 
@@ -179,7 +177,7 @@ class EditUserController extends AbstractController
         die('unerlaubter Zugriff!');
       
       $form = $this->BuildForm($em, $user, $loggedin_user);
-      $response = $this->ShowForm($form, $user, $allowDelete);
+      $response = $this->ShowForm($form, $user, $em, $allowDelete);
       $response->setExpires(new \DateTime());
       return $response;
     } 
@@ -198,10 +196,9 @@ class EditUserController extends AbstractController
     return $user;
   }
 
-  public function NewAction(Request $request, UserInterface $loggedin_user)
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -209,16 +206,15 @@ class EditUserController extends AbstractController
     $user = $this->CreateUser($request, $loggedin_user);
     
     $form = $this->BuildForm($em, $user, $loggedin_user);
-    $response = $this->ShowForm($form, $user, FALSE);
+    $response = $this->ShowForm($form, $user, $em, FALSE);
     $response->setExpires(new \DateTime());
     return $response;
   }
 
-  public function SaveAction(Request $request, UserInterface $loggedin_user, UserPasswordEncoderInterface $passwordEncoder)
+  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder)
   {
     // Wird ausgefrufen, wenn der Save-Button gedrückt wurde
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     
     // UserID des bisherigen Datensatzes aus dem Sessionobjekt holen
@@ -272,13 +268,12 @@ class EditUserController extends AbstractController
       
       return $this->redirect($sd->GetBookingDetailBackRoute());
     }
-    return $this->ShowForm($form, $user);
+    return $this->ShowForm($form, $user, $em);
   }
-  
-  public function GridAction(RequestStack $requestStack, grid $grid, UserInterface $loggedin_user)
+
+  public function GridAction(RequestStack $requestStack, grid $grid, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $request = $requestStack->getCurrentRequest();
-    $em = $this->getDoctrine()->getManager();
     self::$em = $em;
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());

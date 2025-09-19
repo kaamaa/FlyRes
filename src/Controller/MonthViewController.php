@@ -13,14 +13,15 @@ use App\Entities\Airfields;
 use App\Entities\Bookings;
 use App\Logging;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class MonthViewController extends AbstractController
 {
     
-    public function ViewAction(Request $request, UserInterface $loggedin_user)
+    public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
       //Übergabe: Monat als Zahl (zweistellig) plus Jahr (vierstellig)
-      $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
+      $em->getConnection()->exec('SET NAMES "UTF8"');
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       
       if ($request->getMethod() == 'POST') {
@@ -33,8 +34,6 @@ class MonthViewController extends AbstractController
       if (isset($str)) $sd->SetBookingDetailBackRoute($this->generateUrl($str));
       
       ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
-      
-      $em = $this->getDoctrine()->getManager();
       
       $monate = ViewHelper::GetAllMonthForHeader($sd->GetiYear(SessionData::month));
       $aktmonat = ViewHelper::GetActualMonthForHeader($sd->GetsMonth(SessionData::month), $sd->GetsYear(SessionData::month));

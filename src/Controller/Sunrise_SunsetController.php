@@ -16,6 +16,7 @@ use App\Repository\ToolsCountryRepository;
 use App\Repository\ToolsAirportRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\EntityManagerInterface;
 use App\ViewHelper;
 use App\SessionData;
 use DateTimeZone;
@@ -412,13 +413,12 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
    * @param Request $request The HTTP request containing form data
    * @return string HTML table with sunrise and sunset information
    */
-  public function ViewAction(Request $request)
+  public function ViewAction(Request $request, EntityManagerInterface $em)
   {
     ini_set('memory_limit', '256M');
     // Setze die Standardzeitzone auf UTC 
     date_default_timezone_set('UTC');
 
-    $em = $this->getDoctrine()->getManager();
     $form = $this->createFormBuilder()->getForm();
     $form->handleRequest($request);
     $data = $request->request->all('form');

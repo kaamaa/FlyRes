@@ -13,14 +13,14 @@ use App\Entities\Users;
 use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
 use App\LogonType;
+use Doctrine\ORM\EntityManagerInterface;
 
 
 class LoginController extends AbstractController
 {
-  public function login(Request $request, AuthenticationUtils $authenticationUtils): Response
+  public function login(Request $request, AuthenticationUtils $authenticationUtils, EntityManagerInterface $em): Response
   {
     
-    $em = $this->getDoctrine()->getManager();
     // get the login error if there is one
     $error = $authenticationUtils->getLastAuthenticationError();
 
@@ -40,11 +40,11 @@ class LoginController extends AbstractController
   public function loginwithcredentials(Request $request,
                                        UserCheckerInterface $checker, 
                                        UserAuthenticatorInterface $userAuthenticator, 
-                                       FlyResAuthenticator $LoginAuthenticator) : Response
+                                       FlyResAuthenticator $LoginAuthenticator, 
+                                       EntityManagerInterface $em) : Response
   {
     // Die Funktion wird von Joomla direkt aufgerufen
     $session = $request->getSession();
-    $em = $this->getDoctrine()->getManager();
     
     $str = $_SERVER['QUERY_STRING'];
     $str1 = str_replace("%22", '"', $str);

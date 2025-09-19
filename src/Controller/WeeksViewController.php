@@ -15,11 +15,12 @@ use App\Logging;
 use Symfony\Component\Security\Core\User\UserInterface;
 use DateTimeZone;
 use Symfony\Component\HttpFoundation\Response;
+use Doctrine\ORM\EntityManagerInterface;
 
 class WeeksViewController extends AbstractController
 {
-    
-    public function ViewAction(Request $request, UserInterface $loggedin_user)
+
+    public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
       /*
       // Alle Cookies abrufen 
@@ -28,8 +29,8 @@ class WeeksViewController extends AbstractController
       return new Response('<pre>' . print_r($cookies, true) . '</pre>');
       */
 
+      $em->getConnection()->exec('SET NAMES "UTF8"');
       //Übergabe: Monat als Zahl (zweistellig) plus Jahr (vierstellig)
-      $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       
       if ($request->getMethod() == 'POST') {
@@ -44,8 +45,6 @@ class WeeksViewController extends AbstractController
       if (isset($str)) $sd->SetBookingDetailBackRoute($this->generateUrl($str));
       
       ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
-      
-      $em = $this->getDoctrine()->getManager();
       
       $NumberOfdays = 15;
       $weeks = ViewHelper::GetAllDaysOfWeeksForHeader($sd->GetiDay(SessionData::week), $sd->GetiMonth(SessionData::week), $sd->GetiYear(SessionData::week),'+15 days');

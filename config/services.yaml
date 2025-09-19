@@ -16,7 +16,7 @@ parameters:
     mailer_password: '6QE2Z#wXugd'
     locale: de_DE
     secret: d08eed6a99e70ea6cd41c29c3fabe26d44e574aa
-    program_version: 'FlyRes 5.4'
+    program_version: 'FlyRes 6.4'
     mail_from: noreply@flugschule-worms.de
 
 services:

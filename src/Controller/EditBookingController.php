@@ -22,13 +22,14 @@ use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
+use Doctrine\ORM\EntityManagerInterface;
 
 use Symfony\Component\Form\FormError;
 
 class EditBookingController extends AbstractController
 {
   const BookingDateFormat1 = 'dd.MM.yyyy HH:mm'; // Darstellung für Formulare
-  const BookingDateFormat2 = 'd.m.Y H:i';  // Darstellung für DateTime->createFromFormat
+  //const BookingDateFormat2 = 'd.m.Y H:i';  // Darstellung für DateTime->createFromFormat
   
   
   public function BuildForm($em, $booking)
@@ -49,10 +50,8 @@ class EditBookingController extends AbstractController
     return $form;
   }
  
-  public function NewAction(Request $request, UserInterface $loggedin_user)
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
 
@@ -82,10 +81,9 @@ class EditBookingController extends AbstractController
     return $response;
   }
 
-  public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user)
+  public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $bookingID = ViewHelper::GetBookingID($request); 
 
@@ -137,10 +135,12 @@ class EditBookingController extends AbstractController
       $form->addError(new FormError('Mindestens eine externe Mailadresse ist keine korrekte Mailadresse'));
 
     // Das Datum kann nicht aus dem $form entnommen werden, weil beim Kopieren in das Formular bereits Korrekturen durchgeführt wurden
-    $ary = $request->request->get('form');
+    //$ary = $request->request->get('form');
+    $dateStart = $booking->getItemstart();
+    $dateEnd = $booking->getItemstop();
 
-    $dateStart = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstart']);
-    $dateEnd = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstop']);
+    //$dateStart = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstart']);
+    //$dateEnd = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstop']);
     $isSchulung = FlightPurposes::IsSchulung($booking->getflightpurposeid());
 
     if ($dateStart == false)
@@ -187,10 +187,9 @@ class EditBookingController extends AbstractController
     return $this->render('editbooking/editbooking.html.twig', array('form' => $form->createView()));
   }
 
-  public function EditAction(Request $request, UserInterface $loggedin_user)
+  public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $bookingID = ViewHelper::GetBookingID($request); 
 
@@ -201,12 +200,12 @@ class EditBookingController extends AbstractController
     $form = $this->BuildForm($em, $booking);
     return $this->render('editbooking/editbooking.html.twig', array('form' => $form->createView()));        
   }
-  
-  public function BookingAjaxDisplayAvailableFIsAction(Request $request, UserInterface $loggedin_user)
+
+  public function BookingAjaxDisplayAvailableFIsAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   //Controller wird per ajax aufgerufen, wenn ein Datum zu einer Buchung verändert wird
   {        
     date_default_timezone_set('Europe/Berlin');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $startdate = new \DateTime();
     $startdate->setTimestamp(intval($request->request->get('startdate')));
     $enddate = new \DateTime();

@@ -17,6 +17,7 @@ use APY\DataGridBundle\Grid\Action\RowAction;
 use APY\DataGridBundle\Grid\Column\ActionsColumn;
 use APY\DataGridBundle\Grid\Grid;
 use Symfony\Component\Form\FormError;
+use Doctrine\ORM\EntityManagerInterface;
 
 class NoteController extends AbstractController
 {
@@ -33,12 +34,10 @@ class NoteController extends AbstractController
     return $form;
   }
 
-  public function NewAction(Request $request, UserInterface $loggedin_user)
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
     // new Note
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $note = new \App\Entity\FresNote();
     $note->setClientid($loggedin_user->getClientid());
     
@@ -51,11 +50,9 @@ class NoteController extends AbstractController
     return $this->render('note/editnote.html.twig', array('form' => $form->createView()));  
   }
 
-  public function SaveAction(Request $request, UserInterface $loggedin_user)
+  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $noteid = $sd->GetNoteID();
 
@@ -118,12 +115,11 @@ class NoteController extends AbstractController
     return $this->render('note/editnote.html.twig', array('form' => $form->createView()));
   }
   
-  public function ViewNotesAction(Request $request, UserInterface $loggedin_user)
+  public function ViewNotesAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Zeigt die Pinnwand auf der Startseite an
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    
-    $notes = Notes::GetAllActiveNotesAsObject($this->getDoctrine()->getManager());
+    $em->getConnection()->exec('SET NAMES "UTF8"');
+    $notes = Notes::GetAllActiveNotesAsObject($em);
     foreach ($notes as $note) 
     {
       $note->setDescription(nl2br($note->getDescription(), true));
@@ -131,12 +127,10 @@ class NoteController extends AbstractController
     
     return $this->render('note/shownote.html.twig', array('notes' => $notes));
   }
-  
-  public function EditAction(Request $request, $id, UserInterface $loggedin_user)
-  {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
 
+  public function EditAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
+  {
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $note = Notes::GetNoteObject($em, $loggedin_user->getClientid(), $id);
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
@@ -147,11 +141,9 @@ class NoteController extends AbstractController
     return $this->render('note/editnote.html.twig', array('form' => $form->createView()));        
   }
   
-  public function DeleteAction(Request $request, $id, UserInterface $loggedin_user)
+  public function DeleteAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"'); 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetNoteID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -167,12 +159,12 @@ class NoteController extends AbstractController
     
     return $this->redirect($url);
   }
-  
-  public function NotesGridAction(Request $request, Grid $grid, UserInterface $loggedin_user, $command = NULL)
+
+  public function NotesGridAction(Request $request, Grid $grid, UserInterface $loggedin_user, EntityManagerInterface $em, $command = NULL)
   {
     // Diese Liste zeigt wahlweise alle Notizen oder nur meine Notizen an
-     
-    $em = $this->getDoctrine()->getManager();
+
+    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     // Creates a simple grid based on your entity (ORM)
     $source = new Entity('App\Entity\FresNote');

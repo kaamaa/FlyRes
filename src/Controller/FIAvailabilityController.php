@@ -20,12 +20,12 @@ use APY\DataGridBundle\Grid\Action\RowAction;
 use APY\DataGridBundle\Grid\Column\ActionsColumn;
 use APY\DataGridBundle\Grid\Grid;
 use Symfony\Component\Form\FormError;
+use Doctrine\ORM\EntityManagerInterface;
 
 class FIAvailabilityController extends AbstractController
 {
   const BookingDateFormat1 = 'dd.MM.yyyy HH:mm'; // Darstellung für Formulare
-  const BookingDateFormat2 = 'd.m.Y H:i';  // Darstellung für DateTime->createFromFormat
-  
+  //const BookingDateFormat2 = 'd.m.Y H:i';  // Darstellung für DateTime->createFromFormat
   
   public function BuildForm($em, $request, $availability)
   {  
@@ -47,11 +47,10 @@ class FIAvailabilityController extends AbstractController
     return $form;
   }
 
-  public function NewAction(Request $request, UserInterface $loggedin_user, string $command)
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, string $command)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
+
     ViewHelper::SetFIAvailabiltyCommand($request, $command);
     
     // Neue Buchungen erhalten zunächt die ID 0. Beim Speichern wird von der Datenbank die finale ID vergeben
@@ -81,10 +80,9 @@ class FIAvailabilityController extends AbstractController
     return $response;
   }
 
-  public function SaveAction(Request $request, UserInterface $loggedin_user)
+  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
 
     $availabilityID = $sd->GetAvailabilityID();
@@ -115,10 +113,12 @@ class FIAvailabilityController extends AbstractController
     // Eingegebene Daten validieren
     
     // Das Datum kann nicht aus dem $form entnommen werden, weil beim Kopieren in das Formular bereits Korrekturen durchgeführt wurden
-    $ary = $request->request->get('form');
+    //$ary = $request->request->get('form');
+    $dateStart = $availability->getItemstart();
+    $dateEnd = $availability->getItemstop();
 
-    $dateStart = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstart']);
-    $dateEnd = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstop']);
+    //$dateStart = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstart']);
+    //$dateEnd = \DateTime::createFromFormat(EditBookingController::BookingDateFormat2, $ary['itemstop']);
     
     if ($dateStart == false)
     {
@@ -181,11 +181,10 @@ class FIAvailabilityController extends AbstractController
     return $this->render('fiavailability/fiavailability.html.twig', array('form' => $form->createView()));
   }
 
-  public function EditAction(Request $request, UserInterface $loggedin_user, $id)
+  public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $id)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
+
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     
     $availabilty = FIAvailability::GetAvailabilityObject($em, $loggedin_user->getClientid(), $id);
@@ -198,11 +197,10 @@ class FIAvailabilityController extends AbstractController
     $response->setExpires(new \DateTime());
     return $response;
   }
-  
-  public function DeleteAction(Request $request, UserInterface $loggedin_user, $id)
+
+  public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $id)
   {
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
-    $em = $this->getDoctrine()->getManager();
     
     FIAvailability::DeleteAvailability($em, $loggedin_user->getClientid(), $id);
     $com = ViewHelper::GetFIAvailabiltyCommand($request);
@@ -214,38 +212,6 @@ class FIAvailabilityController extends AbstractController
     $response = $this->redirectToRoute('_fi_availabilitygrid', array('command' => $com));
     return $response;
   }
-  
-  /*
-  public function FIAvailableViewAction(Request $request, UserInterface $loggedin_user)
-  {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $sd = ViewHelper::GetSessionDataObject($request->getSession());
-
-    if ($request->getMethod() == 'POST') {
-
-      $sDate = $request->get('ts');
-      $sd->SetYear(substr($sDate, 4, 4));
-      $sd->SetMonth(substr($sDate, 2, 2));
-      $sd->SetDay(substr($sDate, 0, 2));
-
-    } 
-    //$str = $request->attributes->get('_route');
-    //if (isset($str)) $sd->SetBookingDetailBackRoute($this->generateUrl($str));
-
-    ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
-
-    $em = $this->getDoctrine()->getManager();
-
-    $params = FIAvailability::GetAvailabilityForOneDayAsObjectsWithWidth($em, 
-                                                                         $loggedin_user->getClientid(), 
-                                                                         $sd->GetiYear(SessionData::day), 
-                                                                         $sd->GetiMonth(SessionData::day), 
-                                                                         $sd->GetiDay(SessionData::day));
-
-    return $this->render('fiavailability/availabilitytable.html.twig', $params);
-  }
-   * 
-   */
   
   protected static function GetRowFunction()
   {
@@ -281,8 +247,6 @@ class FIAvailabilityController extends AbstractController
     
     ViewHelper::SetFIAvailabiltyCommand($request, $command);
     
-    //$em = $this->getDoctrine()->getManager();
-
     // Creates a simple grid based on your entity (ORM)
     $source = new Entity('App\Entity\FresFIAvailability');
     

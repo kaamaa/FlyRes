@@ -7,14 +7,13 @@ use App\ViewHelper;
 use Symfony\Component\HttpFoundation\Request;
 use App\Entities\Users;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class GetUserMailController extends AbstractController
 {
-  public function ViewAction(Request $request, UserInterface $loggedin_user)
+  public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $Mails_Outlook = Users::GetAllValidMailsadresses($em, $loggedin_user->getClientid(), '; ');
     $Mails_Apple = Users::GetAllValidMailsadresses($em, $loggedin_user->getClientid(), ', ');
