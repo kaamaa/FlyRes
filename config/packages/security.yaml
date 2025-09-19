@@ -39,8 +39,15 @@ security:
                 # always_remember_me: true   
                 user_provider: app_user_provider
                 #signature_properties: ['username', 'clientid']
-   
-                
+
+            logout:
+                path: app_logout          # Route-Name ODER Pfadname, s. Punkt 2
+                target: homepage          # Route-Name oder URL
+                invalidate_session: true
+                delete_cookies:
+                    REMEMBERME: ~
+                clear_site_data: ['cookies', 'storage', 'executionContexts'] # optional (>=6.3)
+
             #json_login:
                 # api_login is a route we will create below
                 #check_path: app_json
