@@ -4,7 +4,8 @@ namespace App\Entities;
 
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+//use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Security\User\WebserviceUser;
 use App\Entities\Clients;
 use App\ViewHelper;
@@ -102,12 +103,12 @@ class Users
     return $haserrors;  
   }
   
-  public static function CreateNewPassword ($user, UserPasswordEncoderInterface $passwordEncoder, $pass)
+  public static function CreateNewPassword ($user, UserPasswordHasherInterface $passwordEncoder, $pass)
   {
     if (isset($pass))
     {  
       // Das Passwort wurde  geändert daher Passwort codieren
-      $encoded = $passwordEncoder->encodePassword($user, trim($pass), '');
+      $encoded = $passwordEncoder->hashPassword($user, trim($pass));
       return $encoded;
     }  
     return NULL;  

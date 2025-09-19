@@ -181,17 +181,17 @@ app_logout:
     
 _fi_newavailability:
     path:  /newavailability/{command}
-    controller: App\Controller\FIAvailabilityController::newAction
+    controller: App\Controller\FIAvailabilityController::NewAction
     
 _fi_saveavailability:
     path:  /saveavailability
-    controller: App\Controller\FIAvailabilityController::saveAction
+    controller: App\Controller\FIAvailabilityController::SaveAction
 _fi_editavailability:
     path:  /editavailability/{id}
-    controller: App\Controller\FIAvailabilityController::editAction
+    controller: App\Controller\FIAvailabilityController::EditAction
 _fi_deleteavailability:
     path:  /deleteavailability/{id}
-    controller: App\Controller\FIAvailabilityController::deleteAction
+    controller: App\Controller\FIAvailabilityController::DeleteAction
 #_fi_availabilityview:
 #    path:  /availabilityview/
 #    controller: App\Controller\FIAvailabilityController::FIAvailableViewAction

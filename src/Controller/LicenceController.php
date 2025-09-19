@@ -170,8 +170,8 @@ class LicenceController extends AbstractController
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserLicenceID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
-    
-    $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user, $accountID);
+
+    $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user, $em, $accountID);
     $form = $this->BuildForm($em, $userLicence);
     $response = $this->ShowForm($form, FALSE);
     $response->setExpires(new \DateTime());
@@ -185,7 +185,7 @@ class LicenceController extends AbstractController
     $sd->SetUserLicenceID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
     
-    $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user);
+    $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user, $em);
     $form = $this->BuildForm($em, $userLicence);
     $response = $this->ShowForm($form, FALSE);
     $response->setExpires(new \DateTime());
@@ -215,7 +215,7 @@ class LicenceController extends AbstractController
     return $this->redirect($sd->GetBookingDetailBackRoute());
   }
 
-  public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, )
+  public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
@@ -228,7 +228,7 @@ class LicenceController extends AbstractController
       $userLicence_old = clone $userLicence;
     }
     else {
-      $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user);
+      $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user, $em);
       $userLicence_old = NULL;
     }
     
@@ -306,7 +306,7 @@ class LicenceController extends AbstractController
    
     // Das alte Objekt laden
     if ($licenceID != 0) $userLicence = Licenses::GetUserLicenceObject($em, $loggedin_user->getClientid(), $licenceID);
-    else $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user);
+    else $userLicence = $this->CreateNewLicenceObject($request, $loggedin_user, $em);
     
     $form = $this->BuildForm($em, $userLicence);
     //$form->bind($request);
@@ -452,7 +452,7 @@ class LicenceController extends AbstractController
     return $response;  
   }
 
-  public function LicenceListAction(Request $request, Grid $grid, UserInterface $loggedin_user, $command = NULL)
+  public function LicenceListAction(Request $request, Grid $grid, UserInterface $loggedin_user, EntityManagerInterface $em, $command = NULL)
   {
     // Diese Liste zeigt wahlweise alle Lizenzen oder alle abgelaufenen Lizenzen an
     if ($this->isGranted('ROLE_ADMIN'))
@@ -463,8 +463,6 @@ class LicenceController extends AbstractController
         else $route = $this->generateUrl($route);
       if (isset($route)) $sd->SetBookingDetailBackRoute($route);
       ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
-
-      $em = $this->getDoctrine()->getManager();
 
       // Creates a simple grid based on your entity (ORM)
       $source = new Entity('App\Entity\FresUserlicences');

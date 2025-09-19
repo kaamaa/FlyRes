@@ -92,7 +92,7 @@ class EditLicenceTypeController extends AbstractController
     return $this->redirect($sd->GetBookingDetailBackRoute());    
   }
 
-  public function SaveAction(Request $request)
+  public function SaveAction(Request $request, EntityManagerInterface $em)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!');
 

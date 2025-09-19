@@ -97,7 +97,7 @@ class EditAircraftController extends AbstractController
     $aircraft->setStatus(0);
     
     $form = $this->BuildForm($em, $aircraft);
-    return $this->ShowForm($form, $aircraft, FALSE);
+    return $this->ShowForm($form, $aircraft, $em, FALSE);
   }
   
   public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
@@ -112,7 +112,7 @@ class EditAircraftController extends AbstractController
     return $this->redirect('weeksview');
   }
 
-  public function SaveAction(Request $request, UserInterface $loggedin_user)
+  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
@@ -139,7 +139,7 @@ class EditAircraftController extends AbstractController
       return $this->redirect($sd->GetBookingDetailBackRoute());
     }
     //$form = $this->BuildForm($em, $aircraft);
-    return $this->ShowForm($form, $aircraft);
+    return $this->ShowForm($form, $aircraft, $em);
   }
 
   public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = true)
@@ -150,7 +150,7 @@ class EditAircraftController extends AbstractController
     if ($aircraftid != 0) $aircraft = Planes::GetPlaneObject($em, $loggedin_user->getClientid(), $aircraftid, true);
     
     $form = $this->BuildForm($em, $aircraft);
-    return $this->ShowForm($form, $aircraft, $allowDelete);  
+    return $this->ShowForm($form, $aircraft, $em, $allowDelete);  
  }
   
   public function GridAction(RequestStack $requestStack, grid $grid, UserInterface $loggedin_user)

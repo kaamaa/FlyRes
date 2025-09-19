@@ -36,7 +36,6 @@ App\Entity\FresAircraft:
             - Range:
                 min: 0
                 max: 999
-                minMessage: Die Vorrausbuchungszeit beträgt minimal 0 Tage
-                maxMessage: Die Vorrausbuchungszeit beträgt maximal 999 Tage 
+                notInRangeMessage: "Die Vorausbuchungszeit muss zwischen {{ min }} und {{ max }} Tagen liegen." 
                 invalidMessage: Die Vorrausbuchungszeit "{{ value }}" ist kein gültiger Wert 
 
