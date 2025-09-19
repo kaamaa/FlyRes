@@ -429,59 +429,60 @@ class Bookings
     
     $bookings = NULL;
     $fid = $newBooking->getFlightinstructor();  
-    if (!empty($fid))
-    {
-      // Prüfen ob der Fluglehrer Doppelbuchungen zulässt
-      if (Users::AllowDoubleBookingsforFlightinstructor($em, $fid)) return Null;
-      
-      // Prüfen ob der Fluglehrer eine eigene Reservierung hat
-      if (Bookings::HasFlightinstructorOwnBooking($em, $newBooking)) return message1;
-      
-      // Doctrine kann nicht mit Null umgehen, daher den Wert 0 setzen
-      $id = $newBooking->getId();
-      if (empty($id)) $id = 0;
-      
-      $querystring = "SELECT b FROM App\Entity\FresBooking b WHERE ";
-      //Buchungen finden: Buchung startet vor und endet nach der geplanten Buchung
-      $querystring .= "((b.itemstart <= :booking_start and b.itemstop >= :booking_end) or "; 
-      
-      //Buchungen finden: Buchung liegt innerhalb der Zeit, in der geflogen werden soll 
-      $querystring .= "(b.itemstart >= :booking_start and b.itemstop <= :booking_end) or ";
-      
-      //Buchungen finden: Buchung startet in der Zeit, in der geflogen werden soll 
-      $querystring .= "(:booking_start >= b.itemstart and :booking_start < b.itemstop) or ";
-      //Buchungen finden: Buchung endet in der Zeit, in der geflogen werden soll 
-      $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
-      
-      $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
-      $querystring .= "b.flightinstructor = :flightinstructor and b.id <> :bookingID";
-      // Solo-Flüge von Flugschülern werden parallel nicht zugelassen, daher die folgende Zeile auskommentieren
+    // Kein FI gesetzt -> kein Konflikt
+    if (empty($fid)) return NULL;
+    
+    // Prüfen ob der Fluglehrer Doppelbuchungen zulässt
+    if (Users::AllowDoubleBookingsforFlightinstructor($em, $fid)) return Null;
+    
+    // Prüfen ob der Fluglehrer eine eigene Reservierung hat
+    if (Bookings::HasFlightinstructorOwnBooking($em, $newBooking)) return message1;
+    
+    // Doctrine kann nicht mit Null umgehen, daher den Wert 0 setzen
+    $id = $newBooking->getId();
+    if (empty($id)) $id = 0;
+    
+    $querystring = "SELECT b FROM App\Entity\FresBooking b WHERE ";
+    //Buchungen finden: Buchung startet vor und endet nach der geplanten Buchung
+    $querystring .= "((b.itemstart <= :booking_start and b.itemstop >= :booking_end) or "; 
+    
+    //Buchungen finden: Buchung liegt innerhalb der Zeit, in der geflogen werden soll 
+    $querystring .= "(b.itemstart >= :booking_start and b.itemstop <= :booking_end) or ";
+    
+    //Buchungen finden: Buchung startet in der Zeit, in der geflogen werden soll 
+    $querystring .= "(:booking_start >= b.itemstart and :booking_start < b.itemstop) or ";
+    //Buchungen finden: Buchung endet in der Zeit, in der geflogen werden soll 
+    $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
+    
+    $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
+    $querystring .= "b.flightinstructor = :flightinstructor and b.id <> :bookingID";
+    // Solo-Flüge von Flugschülern werden parallel nicht zugelassen, daher die folgende Zeile auskommentieren
 
-      if ($parallelSoloAndDual)
-      {
-        // Wenn parallele Solo- und Dualflüge zugelassen sind, dann müssem Solo-Flüge von Flugschülern 
-        // aus der Abfrage ausgeschlossen werden
-        $querystring .= " and b.flightpurposeid <> :soloID";
-        $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
-                                                                   'flightinstructor' => $fid,
-                                                                   'clientID' => $newBooking->getClientid(),
-                                                                   'soloID' => FlightPurposes::GetSoloID(),
-                                                                   'bookingID' => $id));
-      }
-      else
-      {
-        // Wenn parallele Solo- und Dualflüge nicht zugelassen sind, dann müssen alle Flüge herausgesucht werden 
-        $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
-                                                                   'flightinstructor' => $fid,
-                                                                   'clientID' => $newBooking->getClientid(),
-                                                                   'bookingID' => $id));
-      }
-      
-      $query->setCacheable(true);
-      $bookings = $query->getResult();
-      //var_dump($bookings);
-      if ($bookings) return message2;
-    }  
+    if ($parallelSoloAndDual)
+    {
+      // Wenn parallele Solo- und Dualflüge zugelassen sind, dann müssem Solo-Flüge von Flugschülern 
+      // aus der Abfrage ausgeschlossen werden
+      $querystring .= " and b.flightpurposeid <> :soloID";
+      $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
+                                                                  'flightinstructor' => $fid,
+                                                                  'clientID' => $newBooking->getClientid(),
+                                                                  'soloID' => FlightPurposes::GetSoloID(),
+                                                                  'bookingID' => $id));
+    }
+    else
+    {
+      // Wenn parallele Solo- und Dualflüge nicht zugelassen sind, dann müssen alle Flüge herausgesucht werden 
+      $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
+                                                                  'flightinstructor' => $fid,
+                                                                  'clientID' => $newBooking->getClientid(),
+                                                                  'bookingID' => $id));
+    }
+    
+    $query->setCacheable(true);
+    $bookings = $query->getResult();
+    //var_dump($bookings);
+    if ($bookings) return message2;
+     
     return null;
   }
   
