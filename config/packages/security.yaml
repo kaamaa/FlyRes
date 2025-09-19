@@ -23,8 +23,12 @@ security:
             lazy: true
             provider: app_user_provider
             logout: 
-                handlers: 
-                    - App\Security\CustomLogoutHandler
+                invalidate_session: true
+                delete_cookies:
+                    remember_me: ~   # falls gebraucht
+
+                #handlers: 
+                #    - App\Security\CustomLogoutHandler
                 
             stateless: false
             form_login:
