@@ -17,6 +17,7 @@ use APY\DataGridBundle\Grid\Grid;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class EditAircraftController extends AbstractController
 {
@@ -43,10 +44,9 @@ class EditAircraftController extends AbstractController
         
     return $form;
   }
-  
-  public function ShowForm($form, $aircraft, $allowDelete = true)
+
+  public function ShowForm($form, $aircraft, EntityManagerInterface $em, $allowDelete = true)
   {
-    $em = $this->getDoctrine()->getManager();
     // Anzahl der Buchungen für das Flugzeug ermitteln
     $data = Bookings::CountAllBookingsForAPlane($em, $aircraft->getClientid(), $aircraft->getId());
     // Basisdaten für das Formual ermitteln
@@ -85,11 +85,9 @@ class EditAircraftController extends AbstractController
     die('unerlaubter Zugriff!');
   }
 
-  public function NewAction(Request $request, UserInterface $loggedin_user)
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetPlaneID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -102,20 +100,20 @@ class EditAircraftController extends AbstractController
     return $this->ShowForm($form, $aircraft, FALSE);
   }
   
-  public function DeleteAction(Request $request, UserInterface $loggedin_user)
+  public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
     $sd->SetPlaneID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
 
-    Planes::DeletePlane($this->getDoctrine()->getManager(), $loggedin_user->getClientid(), $aircraftid);
+    Planes::DeletePlane($em, $loggedin_user->getClientid(), $aircraftid);
     return $this->redirect('weeksview');
   }
 
   public function SaveAction(Request $request, UserInterface $loggedin_user)
   {
-    $em = $this->getDoctrine()->getManager();
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
@@ -144,11 +142,9 @@ class EditAircraftController extends AbstractController
     return $this->ShowForm($form, $aircraft);
   }
 
-  public function EditAction(Request $request, UserInterface $loggedin_user, $allowDelete = true)
+  public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = true)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-   
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
     if ($aircraftid != 0) $aircraft = Planes::GetPlaneObject($em, $loggedin_user->getClientid(), $aircraftid, true);

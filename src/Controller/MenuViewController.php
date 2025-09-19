@@ -8,6 +8,7 @@ use App\Entities\Users;
 use Symfony\Component\HttpFoundation\Session\Session;
 use App\LogonType;
 use App\Logging;
+use Doctrine\ORM\EntityManagerInterface;
 
 class MenuViewController extends AbstractController
 {

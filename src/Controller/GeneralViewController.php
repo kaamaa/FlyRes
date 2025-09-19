@@ -9,13 +9,14 @@ use App\Entities\Users;
 use App\ViewHelper;
 use App\SessionData;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 class GeneralViewController extends AbstractController
 {
     
-    public function ViewAction(Request $request, $command, UserInterface $loggedin_user)
+    public function ViewAction(Request $request, $command, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
-      $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
+      $em->getConnection()->exec('SET NAMES "UTF8"');
       
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       // Für den Back-Button im View ViewBookingDetails speichern, wohin zurückgekehrt werden soll
@@ -24,7 +25,6 @@ class GeneralViewController extends AbstractController
       
       ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
       
-      $em = $this->getDoctrine()->getManager();
       $user = $loggedin_user;
       $bookings = Bookings::GetBookingsForGeneralView($em, $command, $user->getClientid(), $user->getId());
      

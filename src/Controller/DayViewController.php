@@ -10,20 +10,20 @@ use App\Entities\Bookings;
 use App\SessionData;
 use Symfony\Component\Security\Core\User\UserInterface;
 use App\Logging;
+use Doctrine\ORM\EntityManagerInterface;
 
 class DayViewController extends AbstractController
 {
     
-    public function ViewAction(Request $request, UserInterface $loggedin_user)
+    public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
       //Übergabe: FlugzeugID (ohne Stellenanzahl) Underscore und Datum im Format dd-mm-jjjj
+      $em->getConnection()->exec('SET NAMES "UTF8"');
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       
       // Für den Back-Button im View ViewBookingDetails speichern, wohin zurückgekehrt werden soll
       $str = $request->attributes->get('_route');
       if (isset($str)) $sd->SetBookingDetailBackRoute($this->generateUrl($str));
-      
-      $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
       
       if ($request->getMethod() == 'POST') {
         
@@ -51,7 +51,6 @@ class DayViewController extends AbstractController
         // Es muss ein Post sein, hier sollten wir nie hinkommen
       
       }
-      $em = $this->getDoctrine()->getManager();
       
       $FlugzeugName = Planes::GetPlaneNameAndKennung($em, $loggedin_user->getClientid(), $sd->GetPlaneID());
       $nextDay = ViewHelper::GetNextDayButtonTag($sd->GetiDay(SessionData::day), $sd->GetiMonth(SessionData::day), $sd->GetiYear(SessionData::day));

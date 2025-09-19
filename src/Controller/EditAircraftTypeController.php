@@ -14,6 +14,7 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Doctrine\ORM\EntityManagerInterface;
 
 use APY\DataGridBundle\Grid\Source\Entity;
 use APY\DataGridBundle\Grid\Action\RowAction;
@@ -51,10 +52,9 @@ class EditAircraftTypeController extends AbstractController
     $data = array_merge(array('allowdelete' => $allowDelete), $data);
     return $this->render('editaircrafttype/editaircrafttype.html.twig', $data);
   }
-  
-  public function GlobalWithIDAction(Request $request, $id)
+
+  public function GlobalWithIDAction(Request $request, EntityManagerInterface $em, $id)
   {
-    //Licenses::GetAllLicencesForAircraftType($this->getDoctrine()->getManager(), 1, 93, 1, '2013-01-01');
     // Einstiegspunkt für die Flugzeugtypen, bei der die ID des zu bearbeiteten Flugzegstypen übergeben wird
     if ($this->isGranted('ROLE_ADMIN'))
     { 
@@ -78,10 +78,8 @@ class EditAircraftTypeController extends AbstractController
     return $this->forward('App\Controller\EditAircraftTypeController::EditAction');
   }
 
-  public function NewAction(Request $request, UserInterface $loggedin_user)
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetAircraftTypeID(0);
@@ -95,21 +93,19 @@ class EditAircraftTypeController extends AbstractController
     return $this->ShowForm($form, FALSE);
   }
   
-  public function DeleteAction(Request $request, UserInterface $loggedin_user)
+  public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircrafttypeid = $sd->GetAircraftTypeID();
     $sd->SetAircraftTypeID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
 
-    Licenses::DeleteAircraftType($this->getDoctrine()->getManager(), $loggedin_user->getClientid(), $aircrafttypeid);
+    Licenses::DeleteAircraftType($em, $loggedin_user->getClientid(), $aircrafttypeid);
     return $this->redirect($sd->GetBookingDetailBackRoute());
   }
 
-  public function SaveAction(Request $request, UserInterface $loggedin_user)
+  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em = $this->getDoctrine()->getManager();
-    
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircrafttypeid = $sd->GetAircraftTypeID();
     
@@ -141,11 +137,8 @@ class EditAircraftTypeController extends AbstractController
     return $this->ShowForm($form, $aircrafttype);
   }
 
-  public function EditAction(Request $request, UserInterface $loggedin_user, $allowDelete = true)
+  public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = true)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-   
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircrafttypeid = $sd->GetAircraftTypeID();
     if ($aircrafttypeid != 0) $aircrafttype = Planes::GetAircraftTypeObject($em, $aircrafttypeid, $loggedin_user->getClientid());

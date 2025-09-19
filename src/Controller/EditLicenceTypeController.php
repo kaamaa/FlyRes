@@ -17,6 +17,8 @@ use APY\DataGridBundle\Grid\Source\Entity;
 use APY\DataGridBundle\Grid\Action\RowAction;
 use APY\DataGridBundle\Grid\Column\ActionsColumn;
 use APY\DataGridBundle\Grid\Grid;
+use Doctrine\ORM\EntityManagerInterface;
+
 
 class EditLicenceTypeController extends AbstractController
 {
@@ -64,12 +66,11 @@ class EditLicenceTypeController extends AbstractController
     return $this->forward('App\Controller\EditLicenceTypeController::EditAction');
   }
 
-  public function NewAction(Request $request)
+  public function NewAction(Request $request, EntityManagerInterface $em)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!');
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
+
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetLicenceTypeID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -80,22 +81,20 @@ class EditLicenceTypeController extends AbstractController
     $form = $this->BuildForm($em, $licencetype);
     return $this->ShowForm($form, FALSE);
   }
-  
-  public function DeleteAction(Request $request)
+
+  public function DeleteAction(Request $request, EntityManagerInterface $em)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!'); 
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licensetypeid = $sd->GetLicenceTypeID();
-    Licensetype::SetLicensetypeToInactive($this->getDoctrine()->getManager(), $licensetypeid);
+    Licensetype::SetLicensetypeToInactive($em, $licensetypeid);
     return $this->redirect($sd->GetBookingDetailBackRoute());    
   }
 
   public function SaveAction(Request $request)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!');
-    
-    $em = $this->getDoctrine()->getManager();
 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licensetypeid = $sd->GetLicenceTypeID();
@@ -118,12 +117,10 @@ class EditLicenceTypeController extends AbstractController
     return $this->ShowForm($form, $licencetype);
   }
 
-  public function EditAction(Request $request, $allowDelete = true)
+  public function EditAction(Request $request, EntityManagerInterface $em, $allowDelete = true)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!');
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
-
+    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licencetypeid = $sd->GetLicenceTypeID();

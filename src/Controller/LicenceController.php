@@ -18,6 +18,7 @@ use Symfony\Component\Form\FormError;
 use App\Entity\FresUserlicences;
 use Symfony\Component\Mailer\MailerInterface;
 use DateTime;
+use Doctrine\ORM\EntityManagerInterface;
 
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
@@ -80,11 +81,11 @@ class LicenceController extends AbstractController
     $data = array_merge(array('allowdelete' => $allowDelete), $data);
     return $this->render('editlicence/editlicence.html.twig', $data);
   }
-  
-  public function GlobalWithIDAction(Request $request, $id, UserInterface $loggedin_user)
+
+  public function GlobalWithIDAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Einstiegspunkt für die Lizenzliste, bei der die ID des zu bearbeiteten Lizenz übergeben wird
-   $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     // aktuellen Nutzer ermittelen
     if ($loggedin_user)
     {  
@@ -103,13 +104,14 @@ class LicenceController extends AbstractController
       } else die ("Fehler, die Lizenz existiert nicht");
     } else die ("Fehler, der Nutzer existiert nicht");
   }
-  
-  public function NewLicenceWithIDAction(Request $request, $id)
+
+  public function NewLicenceWithIDAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Einstiegspunkt für das Erstellen einer neuen Lizenz, bei der die ID des Nutzers übergeben wird
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     if ($this->isGranted('ROLE_ADMIN'))
     { 
-      $em = $this->getDoctrine()->getManager();
+      //$em = $this->getDoctrine()->getManager();
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       $sd->SetUserLicenceID($id);
       ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -135,11 +137,11 @@ class LicenceController extends AbstractController
     
     return $this->forward('App\Controller\LicenceController::EditAction');
   }
-  
-  protected function CreateNewLicenceObject(Request $request, $loggedin_user, $accountID = null)
+
+  protected function CreateNewLicenceObject(Request $request, $loggedin_user, EntityManagerInterface $em, $accountID = null)
   {
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
+
     $userLicence = new FresUserlicences();
     $userLicence->setClientid($loggedin_user->getClientid());
     $userLicence->setLicenceid(1);
@@ -161,11 +163,10 @@ class LicenceController extends AbstractController
     return $userLicence;
   }
 
-  public function NewUserLicenceAction(Request $request, UserInterface $loggedin_user, $accountID = null)
+  public function NewUserLicenceAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $accountID = null)
   {
     // TODO: Mit NewAction (unten) zusammenfassen
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+   
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserLicenceID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -176,11 +177,10 @@ class LicenceController extends AbstractController
     $response->setExpires(new \DateTime());
     return $response;
   }
-  
-  public function NewAction(Request $request, UserInterface $loggedin_user)
+
+  public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserLicenceID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -191,10 +191,10 @@ class LicenceController extends AbstractController
     $response->setExpires(new \DateTime());
     return $response;
   }
-  
-  public function DeleteAction(MailerInterface $mailer,  Request $request, UserInterface $loggedin_user)
+
+  public function DeleteAction(MailerInterface $mailer,  Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
     $sd->SetUserLicenceID(0);
@@ -215,10 +215,9 @@ class LicenceController extends AbstractController
     return $this->redirect($sd->GetBookingDetailBackRoute());
   }
 
-  public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user)
+  public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, )
   {
-    $em = $this->getDoctrine()->getManager();
-    
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
     
@@ -285,10 +284,9 @@ class LicenceController extends AbstractController
     return $this->ShowForm($form);
   }
 
-  public function EditAction(Request $request, UserInterface $loggedin_user, $allowDelete = TRUE)
+  public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = TRUE)
   {
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
    
@@ -298,12 +296,11 @@ class LicenceController extends AbstractController
     
     return $this->ShowForm($form, $allowDelete);  
    }
- 
-  public function LicenceChangedAction(Request $request, UserInterface $loggedin_user)
+
+  public function LicenceChangedAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Diese Funktion wird aufgerufen, wenn in der Auswahlbox für die Lizenz etwas geändert wird
-    $this->getDoctrine()->getConnection()->exec('SET NAMES "UTF8"');
-    $em = $this->getDoctrine()->getManager();
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
    
@@ -324,13 +321,14 @@ class LicenceController extends AbstractController
  
     return $this->ShowForm($form, FALSE);  
   }
-  
-  public function GridWithIDAction(Request $request, $id)
+
+  public function GridWithIDAction(Request $request, EntityManagerInterface $em, $id)
   {
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     if ($this->isGranted('ROLE_ADMIN'))
     { 
       // Einstiegspunkt für die Lizenzliste, bei der die ID des zu bearbeiteten Lizenz übergeben wird
-      $em = $this->getDoctrine()->getManager();
+      //$em = $this->getDoctrine()->getManager();
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       $sd->SetUserID($id);
       ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -370,17 +368,17 @@ class LicenceController extends AbstractController
     };
   }
 
-  public function GridAction(Request $request, Grid $grid, UserInterface $loggedin_user, $id = NULL, $standalone = TRUE)
+  public function GridAction(Request $request, Grid $grid, UserInterface $loggedin_user, EntityManagerInterface $em, $id = NULL, $standalone = TRUE)
   {
     // Standalone = 0 zeigt an, dass die Lizenzen als Ergänzung zur Buchungsliste 
     // ohne Änderungsmöglichkeit angezeigt werden
+    $em->getConnection()->exec('SET NAMES "UTF8"');
     
     // Route explizit setzen, damit das Grid nach einem Forward keine Fehlermeldung produziert (Workaround)
     $request->attributes->set('_route', '_licencetable');
-    
-    $em = $this->getDoctrine()->getManager();
-    
-    
+
+    //$em = $this->getDoctrine()->getManager();
+
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $str = $request->attributes->get('_route');
     
