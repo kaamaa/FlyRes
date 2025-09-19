@@ -21,3 +21,8 @@
 npm-debug.log
 yarn-error.log
 ###< symfony/webpack-encore-bundle ###
+
+# Ignore environment files
+.env
+.env.*
+!.env.example
