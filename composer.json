@@ -1,94 +1,87 @@
 {
-    "name": "symfony/framework-standard-edition",
-    "license": "MIT",
-    "type": "project",
-    "description": "The \"Symfony Standard Edition\" distribution",
-    "autoload": {
-        "psr-4": {
-            "App\\": "src/"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "App\\Tests\\": "tests/"
-        }
-    },
-    "require": {
-        "php": ">=8",
-        "symfony/console": "5.4.*",
-        "symfony/framework-bundle": "5.4.*",
-        "symfony/dependency-injection": "5.4.*",
-        "symfony/yaml": "5.4.*",
-        "symfony/form": "5.4.*",
-        "doctrine/orm": "*.*",
-        "doctrine/doctrine-bundle": "*.*",
-        "symfony/maker-bundle": "*.*",
-        "symfony/monolog-bundle": "*.*",
-        "symfony/templating": "5.4.*",
-        "symfony/validator": "5.4.*",
-        "doctrine/annotations": "*.*",
-        "symfony/apache-pack": "*.*",
-        "symfony/dotenv": "5.4.*",
-        "symfony/error-handler": "5.4.*",
-        "symfony/web-profiler-bundle": "*.*",
-        "symfony/asset": "5.4.*",
-        "symfony/webpack-encore-bundle": "*.*",
-        "symfony/security-bundle": "5.4.*",
-        "twig/twig": "~2.0",
-        "twig/extra-bundle": "*.*",
-        "symfony/security-core": "5.4.*",
-        "symfony/security-http": "5.4.*",
-        "symfony/security-guard": "5.4.*",
-        "symfony/security-csrf": "5.4.*",
-        "symfony/translation": "5.4.*",
-        
-        "symfony/twig-bridge": "5.4.*",
-        "symfony/twig-bundle": "5.4.*",
-        
-        "symfony/cache": "5.4.*",
-        "symfony/config": "5.4.*",
-        "symfony/event-dispatcher": "5.4.*",
-        "symfony/filesystem": "5.4.*",
-        "symfony/finder": "5.4.*",
-        "symfony/http-foundation": "5.4.*",
-        "symfony/http-kernel": "5.4.*",
-        "symfony/mailer": "5.4.*",
-        "symfony/mime": "5.4.*",
-        "symfony/options-resolver": "5.4.*",
-        "symfony/password-hasher": "5.4.*",
-        "symfony/phpunit-bridge": "*.*",
-        "symfony/property-access": "5.4.*",
-        "symfony/property-info": "5.4.*",
-        "symfony/routing": "5.4.*",
-        "symfony/stopwatch": "5.4.*",
-        "symfony/string": "5.4.*",
-        "symfony/var-dumper": "5.4.*",
-        "symfony/var-exporter": "5.4.*",
-        "symfony/web-profiler-bundle": "5.4.*",
-        
-        "apy/datagrid-bundle": "dev-master"
-        
-      
-    },
-    "require-dev": {
-        "symfony/phpunit-bridge": "*.*",
-        "symfony/profiler-pack": "*.*"
-    },
-    "conflict": {
-        "symfony/symfony": "*"
-    },
-    "scripts": {
-        "auto-scripts": {
-            "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd",
-            "security-checker security:check": "script"
-        }
-    },
-    "config": {
-        "bin-dir": "bin/",
-        "config-dir": "config/",
-        "src-dir": "src/",
-        "var-dir": "var/",
-        "public-dir": "public/"
+  "name": "symfony/framework-standard-edition",
+  "license": "MIT",
+  "type": "project",
+  "description": "The \"Symfony Standard Edition\" distribution",
+  "require": {
+    "php": "^8.1",
+    "symfony/framework-bundle": "^6.4",
+    "symfony/console": "^6.4",
+    "symfony/dependency-injection": "^6.4",
+    "symfony/yaml": "^6.4",
+    "symfony/form": "^6.4.6",
+    "symfony/validator": "^6.4",
+    "symfony/translation": "^6.4",
+    "symfony/twig-bundle": "^6.4",
+    "twig/twig": "^3.8",
+    "twig/extra-bundle": "^3.8",
+    "symfony/asset": "^6.4",
+    "symfony/security-bundle": "^6.4",
+    "symfony/security-csrf": "^6.4",
+    "symfony/security-http": "^6.4",
+    "symfony/security-core": "^6.4",
+    "symfony/routing": "^6.4",
+    "symfony/http-foundation": "^6.4",
+    "symfony/http-kernel": "^6.4",
+    "symfony/event-dispatcher": "^6.4",
+    "symfony/filesystem": "^6.4",
+    "symfony/finder": "^6.4",
+    "symfony/cache": "^6.4",
+    "symfony/config": "^6.4",
+    "symfony/dotenv": "^6.4",
+    "symfony/error-handler": "^6.4",
+    "symfony/mailer": "^6.4",
+    "symfony/mime": "^6.4",
+    "symfony/options-resolver": "^6.4",
+    "symfony/password-hasher": "^6.4",
+    "symfony/property-access": "^6.4",
+    "symfony/property-info": "^6.4",
+    "symfony/stopwatch": "^6.4",
+    "symfony/string": "^6.4",
+    "symfony/var-dumper": "^6.4",
+    "symfony/var-exporter": "^6.4",
+
+    "doctrine/orm": "^2.16",
+    "doctrine/dbal": "^3.6",
+    "doctrine/doctrine-bundle": "^2.14",
+    "doctrine/annotations": "^1.14 || ^2.0",
+
+    "symfony/webpack-encore-bundle": "^2.1",
+    "symfony/apache-pack": "^1.0",
+
+    "apy/datagrid-bundle": "^7.0",
+    "symfony/flex": "^2.8",
+    "symfony/monolog-bundle": "^3.8"
+  },
+  "require-dev": {
+    "symfony/phpunit-bridge": "^6.4",
+    "symfony/web-profiler-bundle": "^6.4",
+    "symfony/maker-bundle": "^1.60",
+    "phpunit/phpunit": "^10.5"
+  },
+  "conflict": {
+    "symfony/symfony": "*"
+  },
+  "autoload": {
+    "psr-4": { "App\\": "src/" }
+  },
+  "autoload-dev": {
+    "psr-4": { "App\\Tests\\": "tests/" }
+  },
+  "scripts": {
+    "auto-scripts": {
+      "cache:clear": "symfony-cmd",
+      "assets:install %PUBLIC_DIR%": "symfony-cmd"
     }
+  },
+  "config": {
+    "allow-plugins": {
+      "symfony/flex": true
+    }
+  },
+  "extra": {
+    "symfony": {
+      "require": "^6.4"
+    }
+  }
 }
