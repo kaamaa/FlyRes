@@ -3,7 +3,8 @@
 namespace App\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+//use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\ViewHelper;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -211,7 +212,7 @@ class EditUserController extends AbstractController
     return $response;
   }
 
-  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, UserPasswordEncoderInterface $passwordEncoder)
+  public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, UserPasswordHasherInterface $passwordEncoder)
   {
     // Wird ausgefrufen, wenn der Save-Button gedrückt wurde
     $em->getConnection()->exec('SET NAMES "UTF8"');
@@ -252,12 +253,22 @@ class EditUserController extends AbstractController
         $user->setPassword(Users::CreateNewPassword($loggedin_user, $passwordEncoder, $pass));
       }
    
+      /*
       if ($user->GetId() == $this->get('security.token_storage')->getToken()->getUser()->getId() &&
           $user->getUsername() != $this->get('security.token_storage')->getToken()->getUser()->getUsername())
       {
         // Der Nutzername wurde verändert
         $suser = $this->get('security.token_storage')->getToken()->getUser();
         $suser->setUsername($user->getUsername());
+      }
+      */
+      $current = $this->getUser();
+      if ($current instanceof \App\Entity\User && 
+          $user->getId() === $current->getId() && 
+          $user->getUsername() !== $current->getUsername()) 
+      {
+        // Der Nutzername wurde verändert
+        $current->setUsername($user->getUsername());
       }
       
       // Buchung ist vollständig und wird gespeichert
