@@ -4,6 +4,7 @@ namespace App\Security;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
@@ -62,34 +63,20 @@ class LoginFormAuthenticator extends AbstractAuthenticator
     {
       $session = $request->getSession();
       LogonType::defineStandalone($session);
-      return null;
+      // Nach Login wohin? (früher: default_target_path bei form_login)
+      return $this->redirectToRoute('_weeksview');
+       
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-      return null;  
-    }
-    
-    public function getUser($credentials, UserProviderInterface $userProvider)
-    {
-      return null;
-    }
-    
-    public function getCredentials(Request $request)
-    {
-      return null;
-    }
-    
-    public function checkCredentials($credentials, UserInterface $user)
-    {
-      return false;
+      return $this->redirectToRoute('app_login');
     }
     
     public function start(Request $request, AuthenticationException $authException = null)
     {
-      return new RedirectResponse(
-            $this->router->generate('app_login')
-        );
+      // Wird aufgerufen, wenn eine geschützte Seite ohne Login aufgerufen wird
+      return $this->redirectToRoute('app_login');
     }
     
     public function supportsRememberMe()
