@@ -24,13 +24,6 @@ security:
             stateless: false
             provider: app_user_provider
                 
-            #form_login:
-            #    login_path: app_login
-            #    check_path: app_login
-            #    default_target_path: _weeksview
-            #    always_use_default_target_path: true
-            #    #enable_csrf: true
-
             remember_me:
                 secret:   '%kernel.secret%'
                 lifetime: 2592000 
@@ -62,16 +55,14 @@ security:
         - { path: ^/notloggedin, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: PUBLIC_ACCESS }
         # auskommentieren dieser Zeilen führt dazu, dass Login über Joomla funktioniert
-        #- { path: ^/loginwithcredentials, roles: PUBLIC_ACCESS }
-        #- { path: ^/login_json, roles: PUBLIC_ACCESS }
-        - { path: ^/start_session, roles: PUBLIC_ACCESS }
-        - { path: ^/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/loginwithcredentials, roles: PUBLIC_ACCESS }
+        #- { path: ^/start_session, roles: PUBLIC_ACCESS }
+        #- { path: ^/login_check, roles: PUBLIC_ACCESS }
+        - { path: ^/, roles: ROLE_GUEST } 
+        - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/editaircraft, roles: ROLE_SYSTEM_ADMIN }  
         - { path: ^/getusermail, roles: ROLE_SYSTEM_ADMIN }  
-        - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/, roles: ROLE_GUEST }  
-       
-        
+
     role_hierarchy:
         ROLE_GUEST:
         ROLE_PILOT:        [ROLE_GUEST]
