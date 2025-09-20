@@ -7,7 +7,7 @@ security:
               property: username
        
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 
             id: 'App\Security\Hasher\CustomPasswordHasher'    
    
     firewalls:
@@ -18,11 +18,12 @@ security:
         main:
             custom_authenticators:
               - App\Security\LoginFormAuthenticator 
-                
+      
+            entry_point: App\Security\LoginFormAuthenticator   # <- WICHTIG    
             lazy: true
+            stateless: false
             provider: app_user_provider
                 
-            stateless: false
             #form_login:
             #    login_path: app_login
             #    check_path: app_login
@@ -65,10 +66,10 @@ security:
         #- { path: ^/login_json, roles: PUBLIC_ACCESS }
         - { path: ^/start_session, roles: PUBLIC_ACCESS }
         - { path: ^/login_check, roles: PUBLIC_ACCESS }
-        - { path: ^/, roles: ROLE_GUEST }  
         - { path: ^/editaircraft, roles: ROLE_SYSTEM_ADMIN }  
         - { path: ^/getusermail, roles: ROLE_SYSTEM_ADMIN }  
         - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/, roles: ROLE_GUEST }  
        
         
     role_hierarchy:

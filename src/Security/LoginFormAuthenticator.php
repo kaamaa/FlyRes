@@ -15,18 +15,18 @@ use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\RememberMeBadge;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use App\Entities\Clients;
 use App\Entity\FresAccounts;
+use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
 use App\LogonType;
 
-class LoginFormAuthenticator extends AbstractAuthenticator
+class LoginFormAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface 
 {
-    private $entityManager;
-
-    public function __construct(EntityManagerInterface $entityManager)
-    {
-        $this->entityManager = $entityManager; 
-    }
+    public function __construct(
+        private UrlGeneratorInterface $urlGenerator,
+        private EntityManagerInterface $entityManager) 
+    {}
     
     /** 
      * Called on every request to decide if this authenticator should be
@@ -35,8 +35,10 @@ class LoginFormAuthenticator extends AbstractAuthenticator
      */
     public function supports(Request $request): ?bool
     {
-      // Wird vom Loginform aufgerufen
-      return ($request->getPathInfo() === '/login' && $request->isMethod('POST'));
+      // Passe route + method an dein Formular an:
+      $value = $request->attributes->get('_route') === 'app_login'
+            && $request->isMethod('POST');
+      return $value;
     }
 
     public function authenticate(Request $request): Passport
@@ -64,19 +66,31 @@ class LoginFormAuthenticator extends AbstractAuthenticator
       $session = $request->getSession();
       LogonType::defineStandalone($session);
       // Nach Login wohin? (früher: default_target_path bei form_login)
-      return $this->redirectToRoute('_weeksview');
-       
+      // Erst Ziel-URL aus der Session (falls geschützte Seite vorher aufgerufen wurde)
+      $targetPath = $request->getSession()->get('_security.' . $firewallName . '.target_path');
+
+      if ($targetPath) {
+          return new RedirectResponse($targetPath);
+      }
+
+      // Projektspezifische Session-Initialisierung
+      LogonType::defineStandalone($request->getSession());
+
+      // Fallback-Ziel nach dem Login
+      return new RedirectResponse($this->urlGenerator->generate('_weeksview'));
+     
     }
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-      return $this->redirectToRoute('app_login');
+
+      return new RedirectResponse($this->urlGenerator->generate('app_login'));
     }
     
-    public function start(Request $request, AuthenticationException $authException = null)
+    public function start(Request $request, AuthenticationException $authException = null) : Response
     {
       // Wird aufgerufen, wenn eine geschützte Seite ohne Login aufgerufen wird
-      return $this->redirectToRoute('app_login');
+      return new RedirectResponse($this->urlGenerator->generate('app_login'));
     }
     
     public function supportsRememberMe()
@@ -84,8 +98,8 @@ class LoginFormAuthenticator extends AbstractAuthenticator
       return true;
     }
     
-    public function createAuthenticatedToken(PassportInterface $passport, string $firewallName): TokenInterface
-    {
+    public function createAuthenticatedToken(Passport $passport, string $firewallName): TokenInterface
+   {
       $token = parent::createAuthenticatedToken($passport, $firewallName);
       return $token;
     }
