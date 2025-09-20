@@ -57,7 +57,7 @@ _weeksview:
   # wird das noch benötigt?
 _default:
     path:  /
-    controller: App\Controller\MonthViewController:ViewAction
+    controller: App\Controller\MonthViewController::ViewAction
     
 _dayview:
     path:  /dayview

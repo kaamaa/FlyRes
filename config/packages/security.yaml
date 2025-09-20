@@ -1,5 +1,4 @@
 security:
-    enable_authenticator_manager: true
       
     providers:
       app_user_provider:
@@ -24,12 +23,12 @@ security:
             provider: app_user_provider
                 
             stateless: false
-            form_login:
-                login_path: app_login
-                check_path: app_login
-                default_target_path: _weeksview
-                always_use_default_target_path: true
-                #enable_csrf: true
+            #form_login:
+            #    login_path: app_login
+            #    check_path: app_login
+            #    default_target_path: _weeksview
+            #    always_use_default_target_path: true
+            #    #enable_csrf: true
 
             remember_me:
                 secret:   '%kernel.secret%'
@@ -42,7 +41,7 @@ security:
 
             logout:
                 path: app_logout          # Route-Name ODER Pfadname, s. Punkt 2
-                target: homepage          # Route-Name oder URL
+                target: app_login         # Route-Name oder URL
                 invalidate_session: true
                 delete_cookies:
                     REMEMBERME: ~
@@ -58,15 +57,14 @@ security:
 
     access_control:
         - { path: ^/sunrise_sunset, roles: PUBLIC_ACCESS }
-        # Die Liste ist nicht vollständig
-        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/notloggedin, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login, roles: PUBLIC_ACCESS }
+        - { path: ^/notloggedin, roles: PUBLIC_ACCESS }
+        - { path: ^/logout, roles: PUBLIC_ACCESS }
         # auskommentieren dieser Zeilen führt dazu, dass Login über Joomla funktioniert
-        #- { path: ^/loginwithcredentials, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        #- { path: ^/login_json, roles: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/start_session, role: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/login_check, role: IS_AUTHENTICATED_ANONYMOUSLY }
-        - { path: ^/logout, role: IS_AUTHENTICATED_ANONYMOUSLY }
+        #- { path: ^/loginwithcredentials, roles: PUBLIC_ACCESS }
+        #- { path: ^/login_json, roles: PUBLIC_ACCESS }
+        - { path: ^/start_session, roles: PUBLIC_ACCESS }
+        - { path: ^/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_GUEST }  
         - { path: ^/editaircraft, roles: ROLE_SYSTEM_ADMIN }  
         - { path: ^/getusermail, roles: ROLE_SYSTEM_ADMIN }  
