@@ -510,6 +510,7 @@ class Bookings
 
   public static function _cmpStartDateDesc($m, $n): int
   {
+      // Sortieren nach Datum DESC, Uhrzeit ASC und Flugzeug ASC
       $am = $m->getItemstart(); // DateTimeInterface
       $an = $n->getItemstart();
 

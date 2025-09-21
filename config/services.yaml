@@ -12,8 +12,7 @@
 parameters:
     locale: de_DE
     program_version: 'FlyRes 6.4'
-    mail_from: flyres@kaamaa.de
-    #mail_from: '%env(MAIL_FROM)%'
+    mail_from: '%env(MAIL_FROM)%'
    
 services:
     # default configuration for services in *this* file
