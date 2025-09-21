@@ -507,6 +507,22 @@ class Bookings
     }
     return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
   }
+
+  public static function _cmpStartDateDesc($m, $n): int
+  {
+      $am = $m->getItemstart(); // DateTimeInterface
+      $an = $n->getItemstart();
+
+      // 1) Tag DESC (neueste zuerst)
+      $byDay = $an->format('Ymd') <=> $am->format('Ymd');
+      if ($byDay !== 0) return $byDay;
+
+      // 2) AircraftID ASC
+      $byAircraft = (string)$m->getAircraftid() <=> (string)$n->getAircraftid();
+      if ($byAircraft !== 0) return $byAircraft;
+
+      return $am <=> $an; // Uhrzeit ASC
+  }
   
   public static function _cmpAircraft($m, $n) {
     // Sortieren nach Flugzeug und Datum
@@ -717,6 +733,9 @@ class Bookings
           self::$em = $em;
           usort($bookings, 'self::_cmpUser');
           break; 
+        case 'own_history':
+          usort($bookings, 'self::_cmpStartDateDesc');
+          break;    
         default:
           usort($bookings, 'self::_cmpStartDate');
           break;  

@@ -5,22 +5,17 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 
 # Die Reihenfolge der Parameter ist relvant, eine falsche Reihenfolge führt zu Fehlermedungen
+# Nach jeder Änderung sicherheitshalber:
+# php bin/console cache:clear
+   
 
-framework:
-    translator:      { fallback: de }
-      
 parameters:
-    mailer_transport: smtp
     locale: de_DE
-    mailer_host: '%env(MAILER_HOST)%'
-    mailer_user: '%env(MAILER_USER)%'
-    mailer_password: '%env(MAILER_PASSWORD)%'
-    secret: '%env(MAILER_SECRET)%'
     program_version: 'FlyRes 6.4'
-    mail_from: noreply@flugschule-worms.de
-
+    mail_from: flyres@kaamaa.de
+    #mail_from: '%env(MAIL_FROM)%'
+   
 services:
-    
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
@@ -39,5 +34,3 @@ services:
             - '../src/SessionData.php'
             - '../src/TimeFunctions.php'
             - '../src/ViewHelper.php'        
-
-    

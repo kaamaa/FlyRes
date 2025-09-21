@@ -15,11 +15,11 @@ framework:
     #    handler_id: 'session.handler.native_file'
     #    save_path: '%kernel.project_dir%/var/sessions/%kernel.environment%'
 
-    framework:
-      session:
-        name: PHPSESSID
-        cookie_samesite: lax
-        cookie_path: '/'
+    
+    session:
+      name: PHPSESSID
+      cookie_samesite: lax
+      cookie_path: '/'
 
     php_errors:
         log: true

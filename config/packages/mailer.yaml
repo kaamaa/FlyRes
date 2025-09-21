@@ -7,3 +7,16 @@ when@dev:
         mailer:
             envelope:
                 recipients: ['martin@kaamaa.de']
+
+
+#framework:
+#    mailer:
+#        dsn: '%env(MAILER_DSN)%'
+#        #envelope:
+#            #mail_from: '%env(MAIL_FROM)%'  
+#        
+#when@dev:
+#    framework:
+#        mailer:
+#            envelope:
+#                recipients: ['martin@kaamaa.de']
