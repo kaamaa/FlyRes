@@ -1,5 +1,6 @@
 
-###> symfony/framework-bundle ###
+###> symfony/framework-bundle ##
+*.sqlite*
 /.env.local
 /.env
 /.env.local.php

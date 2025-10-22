@@ -1,199 +1,172 @@
 {% extends "layout.html.twig" %}
 
 {% block content %}
-  <table border="1" cellspacing="1" cellpadding="4" width='570px'>
-    {% set group1  = '' %}
-    {% set group2  = '' %}  
-      
-    {% if command in ['own', 'own_history', 'date', 'today', 'tomorrow', 'thisweek', 'weekafter', 'thisweekend', 'nextweekend', 'training'] %}
-      
-    {% for booking in bookings %}
+  <div class="gv container-fluid px-0 d-flex justify-content-center">
+    <div class="table-responsive" style="max-width:570px;">
+      <table class="table table-sm table-striped table-hover align-middle mb-0 border w-100" cellspacing="1" cellpadding="4">
+        {% set group1  = '' %}
+        {% set group2  = '' %}
 
-        {% if group1 != booking.date %}
-          {% set group1  = booking.date %}
-          <tr>
-            <td colspan="4" style=" background-color: #bbb">
-              {{ booking.date }}
-              {% set group2  = '' %}  
-            </td>
-          </tr>
-        {% endif %}
-        {% if group2 != booking.flugzeug %}
-          {% set group2  = booking.flugzeug %}
-          <tr>
-            <td colspan="4">
-              <b>{{ booking.flugzeug }}</b>
-            </td>
-          </tr>
-        {% endif %}  
-
-        <tr>
-          <td nowrap="nowrap">
-            <form action="{{ path('_viewbookingdetails') }}" name='form{{ booking.random }}' method="POST">
-              <input type="hidden" name="ts" value='{{ booking.bookingid }}'>
-              <a href="javascript:document.form{{ booking.random }}.submit();">
-                {{ booking.start }} - {{ booking.end }}
-              </a>
-            </form>
-          </td>
-          <td>
-            {{ booking.user }}
-          </td>
-          <td>
-            {{ booking.flightpurpose }}
-            {% if booking.isflighttraining == TRUE %} 
-              <br>
-              ({{ booking.flightinstructor}})
-            {% endif %} 
-          </td>
-          <td>
-            {{ booking.description }}
-          </td>
-        </tr>
-
-      {% endfor %} 
-    {% endif %}
-    
-    {% if command in ['fi'] %}
-      {% for booking in bookings %}
-
-        {% if group1 != booking.flightinstructor %}
-          {% set group1  = booking.flightinstructor %}
-          <tr>
-            <td colspan="5" style=" background-color: #bbb">
-              {{ booking.flightinstructor }}
-              {% set group2  = '' %}  
-            </td>
-          </tr>
-        {% endif %}
-        {% if group2 != booking.date %}
-          {% set group2  = booking.date %}
-          <tr>
-            <td colspan="5">
-              <b>{{ booking.date }}</b>
-            </td>
-          </tr>
-        {% endif %}  
-
-        <tr>
-          <td nowrap="nowrap">
-            <form novalidate="true" action="{{ path('_viewbookingdetails') }}" name='form{{ booking.random }}' method="POST">
-              <input type="hidden" name="ts" value='{{ booking.bookingid }}'>
-              <a href="javascript:document.form{{ booking.random }}.submit();">
-                {{ booking.start }} - {{ booking.end }}
-              </a>
-            </form>
-          </td>
-          <td>
-            {{ booking.flugzeug }}
-          </td>
-          <td>
-            {{ booking.user }}
-          </td>
-          <td>
-            {{ booking.flightpurpose }}
-          </td>
-          <td>
-            {{ booking.description }}
-          </td>
-        </tr>
-      {% endfor %} 
-    {% endif %}
-
-    {% if command in ['planes'] %}
-      {% for booking in bookings %}
-
-        {% if group1 != booking.flugzeug %}
-          {% set group1  = booking.flugzeug %}
-          <tr>
-            <td colspan="4" style=" background-color: #bbb">
-              {{ booking.flugzeug }}
-              {% set group2  = '' %}  
-            </td>
-          </tr>
-        {% endif %}
-        {% if group2 != booking.date %}
-          {% set group2  = booking.date %}
-          <tr>
-            <td colspan="4">
-              <b>{{ booking.date }}</b>
-            </td>
-          </tr>
-        {% endif %}  
-
-        <tr>
-          <td nowrap="nowrap">
-            <form novalidate="true" action="{{ path('_viewbookingdetails') }}" name='form{{ booking.random }}' method="POST">
-              <input type="hidden" name="ts" value='{{ booking.bookingid }}'>
-              <a href="javascript:document.form{{ booking.random }}.submit();">
-                {{ booking.start }} - {{ booking.end }}
-              </a>
-            </form>
-          </td>
-          <td>
-            {{ booking.user }}
-          </td>
-          <td>
-            {{ booking.flightpurpose }}
-            {% if booking.isflighttraining == TRUE %} 
-              <br>
-              ({{ booking.flightinstructor}})
+        {# ------------------------------------------------------------
+           A) Standard-Ansichten (Datum -> Flugzeug -> Zeilen)
+           ------------------------------------------------------------ #}
+        {% if command in ['own','own_history','date','today','tomorrow','thisweek','weekafter','thisweekend','nextweekend','training'] %}
+          {% for booking in bookings %}
+            {% if group1 != booking.date %}
+              {% set group1  = booking.date %}
+              <tr class="bg-dark text-white fw-bold">
+                <td colspan="4"><strong>{{ booking.date }}</strong></td>
+                {% set group2  = '' %}
+              </tr>
             {% endif %}
-          </td>
-          <td>
-            {{ booking.description }}
-          </td>
-        </tr>
-      {% endfor %} 
-    {% endif %}  
 
-    {% if command in ['users'] %}
-      {% for booking in bookings %}
-
-        {% if group1 != booking.user %}
-          {% set group1  = booking.user %}
-          <tr>
-            <td colspan="4" style=" background-color: #bbb">
-              {{ booking.user }}
-              {% set group2  = '' %}  
-            </td>
-          </tr>
-        {% endif %}
-        {% if group2 != booking.date %}
-          {% set group2  = booking.date %}
-          <tr>
-            <td colspan="4">
-              <b>{{ booking.date }}</b>
-            </td>
-          </tr>
-        {% endif %}  
-
-        <tr>
-          <td nowrap="nowrap">
-            <form novalidate="true" action="{{ path('_viewbookingdetails') }}" name='form{{ booking.random }}' method="POST">
-              <input type="hidden" name="ts" value='{{ booking.bookingid }}'>
-              <a href="javascript:document.form{{ booking.random }}.submit();">
-                {{ booking.start }} - {{ booking.end }}
-              </a>
-            </form>
-          </td>
-          <td>
-            {{ booking.flugzeug }}
-          </td>
-          <td>
-            {{ booking.flightpurpose }}
-            {% if booking.isflighttraining == TRUE %} 
-              <br>
-              ({{ booking.flightinstructor}})
+            {% if group2 != booking.flugzeug %}
+              {% set group2  = booking.flugzeug %}
+              <tr class="table-secondary">
+                <td colspan="4">{{ booking.flugzeug }}</td>
+              </tr>
             {% endif %}
-          </td>
-          <td>
-            {{ booking.description }}
-          </td>
-        </tr>
-      {% endfor %}   
-    {% endif %} 
-  </table>  
 
+            <tr>
+              <td class="text-nowrap">
+                <form action="{{ path('_viewbookingdetails') }}" name="form{{ booking.random }}" method="POST">
+                  <input type="hidden" name="ts" value="{{ booking.bookingid }}">
+                  <a href="javascript:document.form{{ booking.random }}.submit();" class="btn btn-primary btn-sm">
+                    {{ booking.start }} - {{ booking.end }}
+                  </a>
+                </form>
+              </td>
+              <td>{{ booking.user }}</td>
+              <td>
+                {{ booking.flightpurpose }}
+                {% if booking.isflighttraining == TRUE %}
+                  <br><span class="badge bg-warning text-dark">FI: {{ booking.flightinstructor }}</span>
+                {% endif %}
+              </td>
+              <td>{{ booking.description }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+
+        {# ------------------------------------------------------------
+           B) Nach Fluglehrer (FI -> Datum -> Zeilen)
+           ------------------------------------------------------------ #}
+        {% if command in ['fi'] %}
+          {% for booking in bookings %}
+            {% if group1 != booking.flightinstructor %}
+              {% set group1  = booking.flightinstructor %}
+              <tr class="bg-dark text-white fw-bold">
+                <td colspan="5"><strong>{{ booking.flightinstructor }}</strong></td>
+                {% set group2  = '' %}
+              </tr>
+            {% endif %}
+
+            {% if group2 != booking.date %}
+              {% set group2  = booking.date %}
+              <tr class="table-secondary">
+                <td colspan="5">{{ booking.date }}</td>
+              </tr>
+            {% endif %}
+
+            <tr>
+              <td class="text-nowrap">
+                <form novalidate="true" action="{{ path('_viewbookingdetails') }}" name="form{{ booking.random }}" method="POST">
+                  <input type="hidden" name="ts" value="{{ booking.bookingid }}">
+                  <a href="javascript:document.form{{ booking.random }}.submit();" class="btn btn-primary btn-sm">
+                    {{ booking.start }} - {{ booking.end }}
+                  </a>
+                </form>
+              </td>
+              <td>{{ booking.flugzeug }}</td>
+              <td>{{ booking.user }}</td>
+              <td>{{ booking.flightpurpose }}</td>
+              <td>{{ booking.description }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+
+        {# ------------------------------------------------------------
+           C) Nach Flugzeugen (Flugzeug -> Datum -> Zeilen)
+           ------------------------------------------------------------ #}
+        {% if command in ['planes'] %}
+          {% for booking in bookings %}
+            {% if group1 != booking.flugzeug %}
+              {% set group1  = booking.flugzeug %}
+              <tr class="bg-dark text-white fw-bold">
+                <td colspan="4"><strong>{{ booking.flugzeug }}</strong></td>
+                {% set group2  = '' %}
+              </tr>
+            {% endif %}
+
+            {% if group2 != booking.date %}
+              {% set group2  = booking.date %}
+              <tr class="table-secondary">
+                <td colspan="4">{{ booking.date }}</td>
+              </tr>
+            {% endif %}
+
+            <tr>
+              <td class="text-nowrap">
+                <form novalidate="true" action="{{ path('_viewbookingdetails') }}" name="form{{ booking.random }}" method="POST">
+                  <input type="hidden" name="ts" value="{{ booking.bookingid }}">
+                  <a href="javascript:document.form{{ booking.random }}.submit();" class="btn btn-primary btn-sm">
+                    {{ booking.start }} - {{ booking.end }}
+                  </a>
+                </form>
+              </td>
+              <td>{{ booking.user }}</td>
+              <td>
+                {{ booking.flightpurpose }}
+                {% if booking.isflighttraining == TRUE %}
+                  <br><span class="badge bg-warning text-dark">FI: {{ booking.flightinstructor }}</span>
+                {% endif %}
+              </td>
+              <td>{{ booking.description }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+
+        {# ------------------------------------------------------------
+           D) Nach Benutzern (User -> Datum -> Zeilen)
+           ------------------------------------------------------------ #}
+        {% if command in ['users'] %}
+          {% for booking in bookings %}
+            {% if group1 != booking.user %}
+              {% set group1  = booking.user %}
+              <tr class="bg-dark text-white fw-bold">
+                <td colspan="4"><strong>{{ booking.user }}</strong></td>
+                {% set group2  = '' %}
+              </tr>
+            {% endif %}
+
+            {% if group2 != booking.date %}
+              {% set group2  = booking.date %}
+              <tr class="table-secondary">
+                <td colspan="4">{{ booking.date }}</td>
+              </tr>
+            {% endif %}
+
+            <tr>
+              <td class="text-nowrap">
+                <form novalidate="true" action="{{ path('_viewbookingdetails') }}" name="form{{ booking.random }}" method="POST">
+                  <input type="hidden" name="ts" value="{{ booking.bookingid }}">
+                  <a href="javascript:document.form{{ booking.random }}.submit();" class="btn btn-primary btn-sm">
+                    {{ booking.start }} - {{ booking.end }}
+                  </a>
+                </form>
+              </td>
+              <td>{{ booking.flugzeug }}</td>
+              <td>
+                {{ booking.flightpurpose }}
+                {% if booking.isflighttraining == TRUE %}
+                  <br><span class="badge bg-warning text-dark">FI: {{ booking.flightinstructor }}</span>
+                {% endif %}
+              </td>
+              <td>{{ booking.description }}</td>
+            </tr>
+          {% endfor %}
+        {% endif %}
+      </table>
+    </div>
+  </div>
 {% endblock %}
-
