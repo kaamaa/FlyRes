@@ -1,9 +1,24 @@
 {% extends "layout.html.twig" %}
 
 {% block content %}
-  <div class="gv container-fluid px-0 d-flex justify-content-center">
+  <style>
+    .group-header-1 {
+      background-color: #d1e7ff !important;
+      color: #0a3d80 !important;
+      font-size: 1.1em;
+      font-weight: bold;
+      padding: 8px !important;
+    }
+    .group-header-2 {
+      background-color: #e9ecef !important;
+      color: #495057 !important;
+      font-weight: 600;
+      padding: 6px 8px !important;
+    }
+  </style>
+  <div class="gv">
     <div class="table-responsive" style="max-width:570px;">
-      <table class="table table-sm table-striped table-hover align-middle mb-0 border w-100" cellspacing="1" cellpadding="4">
+      <table class="table table-sm table-striped table-hover align-middle mb-0 border" cellspacing="1" cellpadding="4">
         {% set group1  = '' %}
         {% set group2  = '' %}
 
@@ -14,7 +29,7 @@
           {% for booking in bookings %}
             {% if group1 != booking.date %}
               {% set group1  = booking.date %}
-              <tr class="bg-dark text-white fw-bold">
+              <tr class="group-header-1">
                 <td colspan="4"><strong>{{ booking.date }}</strong></td>
                 {% set group2  = '' %}
               </tr>
@@ -22,7 +37,7 @@
 
             {% if group2 != booking.flugzeug %}
               {% set group2  = booking.flugzeug %}
-              <tr class="table-secondary">
+              <tr class="group-header-2">
                 <td colspan="4">{{ booking.flugzeug }}</td>
               </tr>
             {% endif %}
@@ -55,7 +70,7 @@
           {% for booking in bookings %}
             {% if group1 != booking.flightinstructor %}
               {% set group1  = booking.flightinstructor %}
-              <tr class="bg-dark text-white fw-bold">
+              <tr class="group-header-1">
                 <td colspan="5"><strong>{{ booking.flightinstructor }}</strong></td>
                 {% set group2  = '' %}
               </tr>
@@ -63,7 +78,7 @@
 
             {% if group2 != booking.date %}
               {% set group2  = booking.date %}
-              <tr class="table-secondary">
+              <tr class="group-header-2">
                 <td colspan="5">{{ booking.date }}</td>
               </tr>
             {% endif %}
@@ -92,7 +107,7 @@
           {% for booking in bookings %}
             {% if group1 != booking.flugzeug %}
               {% set group1  = booking.flugzeug %}
-              <tr class="bg-dark text-white fw-bold">
+              <tr class="group-header-1">
                 <td colspan="4"><strong>{{ booking.flugzeug }}</strong></td>
                 {% set group2  = '' %}
               </tr>
@@ -100,7 +115,7 @@
 
             {% if group2 != booking.date %}
               {% set group2  = booking.date %}
-              <tr class="table-secondary">
+              <tr class="group-header-2">
                 <td colspan="4">{{ booking.date }}</td>
               </tr>
             {% endif %}
@@ -133,7 +148,7 @@
           {% for booking in bookings %}
             {% if group1 != booking.user %}
               {% set group1  = booking.user %}
-              <tr class="bg-dark text-white fw-bold">
+              <tr class="group-header-1">
                 <td colspan="4"><strong>{{ booking.user }}</strong></td>
                 {% set group2  = '' %}
               </tr>
@@ -141,7 +156,7 @@
 
             {% if group2 != booking.date %}
               {% set group2  = booking.date %}
-              <tr class="table-secondary">
+              <tr class="group-header-2">
                 <td colspan="4">{{ booking.date }}</td>
               </tr>
             {% endif %}
