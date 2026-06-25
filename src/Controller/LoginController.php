@@ -12,6 +12,8 @@ use App\Entities\Clients;
 use App\Entities\Users;
 use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use App\LogonType;
 use Doctrine\ORM\EntityManagerInterface;
 
@@ -79,9 +81,120 @@ class LoginController extends AbstractController
         }
       }
     }
-    return new Response('Login fehlgeschlagen');        
+    return new Response('Login fehlgeschlagen');
   }
-  
+
+  /**
+   * Saubere JSON-Login-API fuer das Joomla-Login-Modul.
+   *
+   * Aufruf browser-seitig per fetch() (gleiche Domain), z.B.:
+   *   fetch('/api/login', {
+   *     method: 'POST',
+   *     headers: { 'Content-Type': 'application/json' },
+   *     credentials: 'same-origin',
+   *     body: JSON.stringify({ username, password })
+   *   })
+   *
+   * Bei Erfolg wird das Session-Cookie als First-Party-Cookie im Browser gesetzt,
+   * sodass FlyRes anschliessend im iframe (gleiche Domain) eingeloggt laeuft.
+   *
+   * Antwort: { "success": true } bzw. { "success": false, "error": "<code>" }
+   */
+  public function apiLogin(Request $request,
+                          UserCheckerInterface $checker,
+                          UserAuthenticatorInterface $userAuthenticator,
+                          FlyResAuthenticator $loginAuthenticator,
+                          UserPasswordHasherInterface $passwordHasher,
+                          EntityManagerInterface $em): JsonResponse
+  {
+    $data = json_decode($request->getContent(), true);
+    $username   = $data['username'] ?? null;
+    $password   = $data['password'] ?? null;
+    $clientName = $data['client']   ?? null;
+
+    if (!$username || !$password) {
+      return new JsonResponse(['success' => false, 'error' => 'missing_credentials'], 400);
+    }
+
+    // Mandant: per Name aufloesen, sonst Default-Mandant "1" (Homepage Flugschule-Worms)
+    $clientid = $clientName ? Clients::GetClientIdByName($em, $clientName) : 1;
+
+    $user = Users::GetUserObjectByName($em, $username, $clientid);
+    if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+      return new JsonResponse(['success' => false, 'error' => 'invalid_credentials'], 401);
+    }
+    if (Users::isDeleted($user) || Users::isLocked($user)) {
+      return new JsonResponse(['success' => false, 'error' => 'account_locked'], 403);
+    }
+    try {
+      $checker->checkPreAuth($user);
+    } catch (\Throwable $e) {
+      return new JsonResponse(['success' => false, 'error' => 'account_not_allowed'], 403);
+    }
+
+    // Programmatischer Login: setzt das Security-Token -> Session-Cookie wird automatisch gesetzt.
+    $userAuthenticator->authenticateUser($user, $loginAuthenticator, $request);
+    LogonType::defineInFrame($request->getSession());
+
+    return new JsonResponse(['success' => true]);
+  }
+
+  /**
+   * JSON-Logout-API fuer das Joomla-Login-Modul.
+   *
+   * Aufruf browser-seitig per fetch('/api/logout', { method: 'POST', credentials: 'same-origin' }).
+   * Invalidiert die Session und loescht das RememberMe-Cookie.
+   */
+  public function apiLogout(Request $request, Security $security): JsonResponse
+  {
+    if ($security->getUser()) {
+      // Feuert das LogoutEvent -> Session wird gemaess Firewall-Config invalidiert.
+      $security->logout(false);
+    }
+    $response = new JsonResponse(['success' => true]);
+    $response->headers->clearCookie('REMEMBERME', '/');
+    return $response;
+  }
+
+  /**
+   * Zustandslose Pruefung von Zugangsdaten (KEIN Login, KEIN Cookie).
+   *
+   * Wird vom Joomla-Modul server-seitig aufgerufen, um vor dem Anmelden des
+   * technischen Joomla-Accounts sicherzustellen, dass ein gueltiger FlyRes-Login
+   * vorliegt. Gibt bei Erfolg minimale Userdaten zurueck.
+   *
+   * Antwort: { "success": true, "user": { "username": "..." } } bzw.
+   *          { "success": false, "error": "<code>" }
+   */
+  public function apiVerify(Request $request,
+                           UserPasswordHasherInterface $passwordHasher,
+                           EntityManagerInterface $em): JsonResponse
+  {
+    $data = json_decode($request->getContent(), true);
+    $username   = $data['username'] ?? null;
+    $password   = $data['password'] ?? null;
+    $clientName = $data['client']   ?? null;
+
+    if (!$username || !$password) {
+      return new JsonResponse(['success' => false, 'error' => 'missing_credentials'], 400);
+    }
+
+    $clientid = $clientName ? Clients::GetClientIdByName($em, $clientName) : 1;
+
+    $user = Users::GetUserObjectByName($em, $username, $clientid);
+    if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+      return new JsonResponse(['success' => false, 'error' => 'invalid_credentials'], 401);
+    }
+    if (Users::isDeleted($user) || Users::isLocked($user)) {
+      return new JsonResponse(['success' => false, 'error' => 'account_locked'], 403);
+    }
+
+    return new JsonResponse([
+      'success' => true,
+      'user'    => ['username' => $user->getUsername()],
+    ]);
+  }
+
   /*
   public function login_json(Session $session, Request $request) : Response
   {

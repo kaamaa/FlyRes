@@ -1,0 +1,19 @@
+# Eigene Regeln NUR fuer den /app/-Ordner (die PWA). Wird beim Build nach
+# public/app/.htaccess kopiert und ueberschreibt dort die Rewrite-/Index-Regeln
+# der Eltern-.htaccess, sodass statische Dateien direkt ausgeliefert werden und
+# nicht an Symfony gehen. Bewusst OHNE RewriteBase -> funktioniert unter jedem
+# Unterordner (z.B. /flyres/app/).
+
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Existierende Dateien/Verzeichnisse direkt ausliefern
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Alles andere auf die App-Shell (relativ, kein RewriteBase noetig)
+    RewriteRule ^ index.html [L]
+</IfModule>

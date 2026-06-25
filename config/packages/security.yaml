@@ -56,6 +56,13 @@ security:
         - { path: ^/logout, roles: PUBLIC_ACCESS }
         # auskommentieren dieser Zeilen führt dazu, dass Login über Joomla funktioniert
         - { path: ^/loginwithcredentials, roles: PUBLIC_ACCESS }
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/logout, roles: PUBLIC_ACCESS }
+        - { path: ^/api/verify, roles: PUBLIC_ACCESS }
+        # iPhone-PWA JSON-API (M1): PUBLIC_ACCESS, damit die Controller bei fehlendem
+        # Login sauberes JSON (401) statt eines HTML-Login-Redirects liefern koennen.
+        # Die Zugriffspruefung (angemeldet + ROLE_PILOT) erfolgt in App\Controller\Api.
+        - { path: ^/api/(me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability)(/|$), roles: PUBLIC_ACCESS }
         #- { path: ^/start_session, roles: PUBLIC_ACCESS }
         #- { path: ^/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_GUEST } 

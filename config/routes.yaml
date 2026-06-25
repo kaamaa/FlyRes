@@ -167,7 +167,19 @@ app_login:
     controller: App\Controller\LoginController::login   
 api_login:
     path:   /loginwithcredentials
-    controller: App\Controller\LoginController::loginwithcredentials 
+    controller: App\Controller\LoginController::loginwithcredentials
+api_login_v2:
+    path:   /api/login
+    controller: App\Controller\LoginController::apiLogin
+    methods: POST
+api_logout_v2:
+    path:   /api/logout
+    controller: App\Controller\LoginController::apiLogout
+    methods: POST
+api_verify_v2:
+    path:   /api/verify
+    controller: App\Controller\LoginController::apiVerify
+    methods: POST
 #app_json:
 #    path:   /login_json
 #    controller: App\Controller\LoginController::login_json     

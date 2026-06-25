@@ -1,6 +1,10 @@
 doctrine:
   orm:
-    auto_generate_proxy_classes: false
+    # true, weil dieser Server per FTP (ohne Konsole/cache:warmup) deployt wird:
+    # so erzeugt Doctrine fehlende Proxy-Klassen zur Laufzeit selbst, statt mit
+    # "Failed opening required ...Proxies/__CG__...php" abzustürzen, wenn var/cache
+    # geleert wurde. Minimaler Performance-Aufwand, fuer diese App vernachlaessigbar.
+    auto_generate_proxy_classes: true
     metadata_cache_driver:
       type: pool
       pool: doctrine.system_cache_pool

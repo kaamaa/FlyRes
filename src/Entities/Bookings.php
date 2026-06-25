@@ -604,14 +604,19 @@ class Bookings
       case 'fi':
       case 'planes':
       case 'users':
-      case 'training':  
-      case 'own':  
+      case 'training':
+      case 'own':
+      case 'own_fi':       // wie 'own', aber inkl. Buchungen, bei denen man Fluglehrer ist (PWA)
         $day_start_ux = mktime ( 0,0,0 , date("m"), date("j"), date("Y"));
         $day_end_ux = mktime ( 23,59,59 , 01, 01, 9999);
         break;
-      case 'own_history':  
+      case 'own_history':
         $day_start_ux = mktime ( 0,0,0 , 01, 01, 1980);
         $day_end_ux = mktime ( 23,59,59 , 01, 01, 9999);
+        break;
+      case 'own_fi_history':   // PWA "Vergangene": eigene + FI-Buchungen, aber nur vor heute
+        $day_start_ux = mktime ( 0,0,0 , 01, 01, 1980);
+        $day_end_ux = mktime ( 0,0,0 , date("m"), date("j"), date("Y")) - 1;  // gestern 23:59:59
         break;
       case 'today':
         $day_start_ux = mktime ( 0,0,0 , date("m"), date("j"), date("Y"));
@@ -654,9 +659,15 @@ class Bookings
     
     $querystring .= "and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and b.clientid = :clientID "; 
     if ($command == 'training' or $command == 'fi') $querystring .= "and (b.flightpurposeid = 2 or b.flightpurposeid = 5 or b.flightinstructor IS NOT NULL) "; 
-    if ($command == 'own' or $command == 'own_history') 
+    if ($command == 'own' or $command == 'own_history')
     {
-      $querystring .= " and b.createdbyuserid = :userid "; 
+      $querystring .= " and b.createdbyuserid = :userid ";
+      $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 'day_end' => $day_end, 'clientID' =>  $clientid, 'userid' => $userID));
+    }
+    elseif ($command == 'own_fi' or $command == 'own_fi_history')
+    {
+      // PWA "Meine Flüge": eigene Buchungen UND solche, in denen man als Fluglehrer zugewiesen ist
+      $querystring .= " and (b.createdbyuserid = :userid or b.flightinstructor = :userid) ";
       $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 'day_end' => $day_end, 'clientID' =>  $clientid, 'userid' => $userID));
     }
       else  $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 'day_end' => $day_end, 'clientID' =>  $clientid));
@@ -735,8 +746,9 @@ class Bookings
           usort($bookings, 'self::_cmpUser');
           break; 
         case 'own_history':
+        case 'own_fi_history':
           usort($bookings, 'self::_cmpStartDateDesc');
-          break;    
+          break;
         default:
           usort($bookings, 'self::_cmpStartDate');
           break;  
