@@ -3,7 +3,7 @@
 
 CREATE TABLE FRes_api_tokens (
     id            BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
-    user_id       INT UNSIGNED      NOT NULL,
+    user_id       INT               NOT NULL,
     token_hash    CHAR(64)          NOT NULL,
     device_name   VARCHAR(100)      DEFAULT NULL,
     user_agent    VARCHAR(255)      DEFAULT NULL,
