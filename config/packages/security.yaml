@@ -71,6 +71,7 @@ security:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout, roles: PUBLIC_ACCESS }
         - { path: ^/api/verify, roles: PUBLIC_ACCESS }
+        - { path: ^/api/tokens$, methods: [POST], roles: PUBLIC_ACCESS }
         # iPhone-PWA JSON-API (M1): PUBLIC_ACCESS, damit die Controller bei fehlendem
         # Login sauberes JSON (401) statt eines HTML-Login-Redirects liefern koennen.
         # Die Zugriffspruefung (angemeldet + ROLE_PILOT) erfolgt in App\Controller\Api.
