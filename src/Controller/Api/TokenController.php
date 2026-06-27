@@ -111,4 +111,40 @@ class TokenController extends ApiController
 
         return new JsonResponse(null, Response::HTTP_NO_CONTENT);
     }
+
+    public function list(Request $request): JsonResponse
+    {
+        $user = $this->requirePilot();
+        if ($user instanceof JsonResponse) return $user;
+
+        $currentId = $request->attributes->get(BearerTokenAuthenticator::REQUEST_ATTR);
+
+        $items = $this->tokens->findBy(['user' => $user], ['lastUsedAt' => 'DESC', 'createdAt' => 'DESC']);
+        $out = [];
+        foreach ($items as $t) {
+            $out[] = [
+                'id'           => $t->getId(),
+                'device_name'  => $t->getDeviceName(),
+                'created_at'   => $t->getCreatedAt()->format(\DateTimeInterface::ATOM),
+                'last_used_at' => $t->getLastUsedAt()?->format(\DateTimeInterface::ATOM),
+                'last_ip'      => $t->getLastIp(),
+                'is_current'   => $t->getId() === $currentId,
+            ];
+        }
+        return $this->json($out);
+    }
+
+    public function revoke(Request $request, int $id): JsonResponse
+    {
+        $user = $this->requirePilot();
+        if ($user instanceof JsonResponse) return $user;
+
+        $token = $this->tokens->find($id);
+        if ($token === null || $token->getUser()->getId() !== $user->getId()) {
+            return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+        }
+        $this->tokens->delete($token);
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 }

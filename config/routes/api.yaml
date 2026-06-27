@@ -110,3 +110,15 @@ api_tokens_revoke_current:
     path: /api/tokens/current
     controller: App\Controller\Api\TokenController::revokeCurrent
     methods: DELETE
+
+api_tokens_list:
+    path: /api/tokens
+    controller: App\Controller\Api\TokenController::list
+    methods: GET
+
+api_tokens_revoke:
+    path: /api/tokens/{id}
+    controller: App\Controller\Api\TokenController::revoke
+    methods: DELETE
+    requirements:
+        id: '\d+'
