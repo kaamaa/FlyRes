@@ -276,7 +276,7 @@ defineExpose({ submit: save })
 </script>
 
 <template>
-  <div class="body">
+  <div class="body bookform">
     <!-- Flugzeug + Fluglehrer -->
     <div class="ftitle"><Icon name="plane" /> Flugzeug &amp; Fluglehrer</div>
     <div class="formgroup">
@@ -341,17 +341,15 @@ defineExpose({ submit: save })
         </div>
         <div class="av3axis"><span v-for="(t, i) in axisTicks" :key="i">{{ t }}</span></div>
       </div>
-      <div v-if="selMarker" class="av3verdict" :class="selFree === false ? 'bad' : 'ok'">
-        <template v-if="selFree === false">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</template>
-        <template v-else>✓ {{ startTime }}–{{ endTime }} frei.</template>
-      </div>
+      <!-- Nur Warnung bei Konflikt; "frei" waere redundant zum ausgewaehlten Block oben. -->
+      <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
 
-      <!-- Vergleich anderer Fluglehrer (reine Ansicht, aendert die Auswahl oben nicht) -->
-      <div class="cmptoggle" @click="toggleCmpFi">{{ showCmpFi ? '▾' : '▸' }} Andere Fluglehrer vergleichen</div>
-      <div v-if="showCmpFi" class="cmppanel">
-        <div v-if="cmpFiLoading" class="cmpempty">wird geladen…</div>
+      <!-- Vergleich anderer Flugzeuge -->
+      <div class="cmptoggle" :class="{ open: showCmpAc }" @click="toggleCmpAc"><span>Andere Flugzeuge vergleichen</span><span class="ar">{{ showCmpAc ? '▾' : '▸' }}</span></div>
+      <div v-if="showCmpAc" class="cmppanel">
+        <div v-if="cmpAcLoading" class="cmpempty">wird geladen…</div>
         <template v-else>
-          <div v-for="r in cmpFi" :key="r.id" class="av3row" :class="{ cmpsel: r.selected }">
+          <div v-for="r in cmpAc" :key="r.id" class="av3row" :class="{ cmpsel: r.selected }">
             <div class="av3lab">{{ r.name }}</div>
             <div class="av3bar"><div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div></div>
           </div>
@@ -359,12 +357,12 @@ defineExpose({ submit: save })
         </template>
       </div>
 
-      <!-- Vergleich anderer Flugzeuge -->
-      <div class="cmptoggle" @click="toggleCmpAc">{{ showCmpAc ? '▾' : '▸' }} Andere Flugzeuge vergleichen</div>
-      <div v-if="showCmpAc" class="cmppanel">
-        <div v-if="cmpAcLoading" class="cmpempty">wird geladen…</div>
+      <!-- Vergleich anderer Fluglehrer (reine Ansicht, aendert die Auswahl oben nicht) -->
+      <div class="cmptoggle" :class="{ open: showCmpFi }" @click="toggleCmpFi"><span>Andere Fluglehrer vergleichen</span><span class="ar">{{ showCmpFi ? '▾' : '▸' }}</span></div>
+      <div v-if="showCmpFi" class="cmppanel">
+        <div v-if="cmpFiLoading" class="cmpempty">wird geladen…</div>
         <template v-else>
-          <div v-for="r in cmpAc" :key="r.id" class="av3row" :class="{ cmpsel: r.selected }">
+          <div v-for="r in cmpFi" :key="r.id" class="av3row" :class="{ cmpsel: r.selected }">
             <div class="av3lab">{{ r.name }}</div>
             <div class="av3bar"><div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div></div>
           </div>

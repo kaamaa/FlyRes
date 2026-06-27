@@ -642,6 +642,10 @@ class Bookings
         $day_start_ux = mktime ( 0,0,0 , date("m",strtotime("sunday +1 week -1 day")),date("j",strtotime("sunday +1 week -1 day")),date("Y",strtotime("sunday +1 week -1 day")));
         $day_end_ux = mktime ( 23,59,59 , date("m",strtotime("sunday +1 week")),date("j",strtotime("sunday +1 week")),date("Y",strtotime("sunday +1 week")));
         break;
+      case 'thismonth':
+        $day_start_ux = mktime ( 0,0,0 , date("m"), 1, date("Y"));
+        $day_end_ux = mktime ( 23,59,59 , date("m"), date("t"), date("Y"));  // t = letzter Tag des Monats
+        break;
 
       default:
         die;

@@ -41,6 +41,7 @@ class BookingController extends ApiController
         'weekafter'    => 'weekafter',
         'thisweekend'  => 'thisweekend',
         'nextweekend'  => 'nextweekend',
+        'thismonth'    => 'thismonth',
         'all'          => 'date',
     ];
 

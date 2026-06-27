@@ -117,9 +117,9 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .av3lab{flex:0 0 80px;font-size:12px;font-weight:600;color:var(--ios-label2);line-height:1.15;}
 .av3lab small{font-weight:500;color:var(--ios-gray);}
 .av3lab.strong{color:var(--ios-label);font-weight:700;}
-.av3bar{position:relative;flex:1;height:18px;border-radius:6px;background:#e7f8ec;overflow:hidden;}
+.av3bar{position:relative;flex:1;height:18px;border-radius:6px;background:#34c759;overflow:hidden;}
 .av3bar.combo{height:24px;}
-.av3seg{position:absolute;top:0;height:100%;background:repeating-linear-gradient(45deg,#e3e3e8,#e3e3e8 5px,#d7d7dc 5px,#d7d7dc 10px);}
+.av3seg{position:absolute;top:0;height:100%;background:#eceef2;}
 .av3sel{position:absolute;top:-3px;height:30px;border:2.5px solid var(--ios-blue);border-radius:8px;background:rgba(10,132,255,.10);}
 .av3sel.bad{border-color:var(--ios-red);background:rgba(255,59,48,.12);}
 .av3axis{display:flex;justify-content:space-between;font-size:10px;color:var(--ios-gray2);margin-left:90px;}
@@ -144,7 +144,7 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .av3lg{font-size:11px;color:var(--ios-label2);margin-top:4px;margin-left:90px;}
 .av3lg i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin:0 4px 0 10px;}
 .av3lg i.lg-sel{background:rgba(10,132,255,.5);border:1.5px solid var(--ios-blue);}
-.av3lg i.lg-busy{background:#d7d7dc;}
+.av3lg i.lg-busy{background:#eceef2;border:1px solid var(--ios-sep);}
 
 /* Vergleich anderer Fluglehrer / Flugzeuge (Option B1) */
 .cmptoggle{display:block;margin:10px 16px 0;font-size:13px;font-weight:600;color:var(--ios-blue);cursor:pointer;}
@@ -152,6 +152,42 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .cmppanel .av3row{margin-bottom:9px;}
 .cmppanel .cmpsel{background:rgba(10,132,255,.08);border-radius:8px;padding:5px 7px;margin:0 -7px 8px;}
 .cmppanel .cmpsel .av3lab{color:var(--ios-label);font-weight:700;}
+
+/* ===== Reservieren-Maske: Design "Akzent-Leiste" (Variante C) – NUR Optik =====
+   Gleiche Abschnitte/Reihenfolge/Felder wie bisher; die Abschnitts-Titel werden
+   zu farbigen Kopf-Leisten, der jeweils folgende Inhalt dockt nahtlos an. Gescopt
+   auf .bookform, damit andere Sheets (Detail/Bearbeiten-Listen) unveraendert bleiben. */
+.bookform .ftitle{
+  font-size:14px;font-weight:700;color:#fff;background:var(--ios-blue);
+  text-transform:none;letter-spacing:0;
+  margin:16px 16px 0;padding:9px 13px;border-radius:11px 11px 0 0;
+}
+.bookform .ftitle .ic{color:#fff;}
+/* Karten-Inhalt direkt unter den farbigen Kopf "andocken" */
+.bookform .ftitle + .formgroup,
+.bookform .ftitle + .av3box{
+  margin:0 16px;border-radius:0 0 12px 12px;border:1px solid var(--ios-sep);border-top:none;box-shadow:none;
+}
+/* Flex-Inhalte (freie Bloecke, Flugzweck) in einen angedockten Kasten fassen */
+.bookform .ftitle + .tblocks,
+.bookform .ftitle + .segpurpose{
+  margin:0 16px;padding:12px;background:#fff;border:1px solid var(--ios-sep);border-top:none;border-radius:0 0 12px 12px;
+}
+/* Flugzweck-Buttons flach (sonst Karte-in-Karte) */
+.bookform .segpurpose .pp{box-shadow:none;background:#f2f3f5;border-color:transparent;}
+.bookform .segpurpose .pp.on{background:#eaf3ff;border-color:var(--ios-blue);}
+/* "Andere Fluglehrer/Flugzeuge vergleichen": je ein Accordion – IMMER blaue Leiste
+   (auch zugeklappt), mit deutlichem, button-artigem Aufklapp-Hinweis rechts, damit
+   man sie von den statischen Abschnitts-Koepfen unterscheidet. */
+.bookform .cmptoggle{display:flex;align-items:center;justify-content:space-between;
+  background:var(--ios-blue);color:#fff;font-weight:700;font-size:13px;
+  margin:12px 16px 0;padding:10px 11px 10px 13px;border:none;border-radius:11px;cursor:pointer;}
+.bookform .cmptoggle .ar{flex:0 0 auto;width:23px;height:23px;border-radius:50%;
+  background:rgba(255,255,255,.22);display:inline-flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;line-height:1;}
+/* offen: Kopf oben anrunden, Inhalt dockt an */
+.bookform .cmptoggle.open{border-radius:11px 11px 0 0;}
+.bookform .cmptoggle.open + .cmppanel{margin:0 16px;background:#fff;border:1px solid var(--ios-sep);border-radius:0 0 12px 12px;border-top:none;}
 .cmpempty{color:var(--ios-label2);font-size:13px;text-align:center;padding:6px;}
 
 /* ===== Flotten-Monatsübersicht (Design A: Polished Grid) ===== */
@@ -283,9 +319,9 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .fli{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:.5px solid var(--ios-sep);font-size:16px;cursor:pointer;}
 .fli:last-child{border-bottom:none;}
 .fli.on{color:var(--ios-blue);font-weight:600;}
-.fseg{display:flex;background:#e3e3e8;border-radius:9px;padding:2px;margin:10px 12px;}
-.fseg button{flex:1;text-align:center;font-size:14px;font-weight:600;padding:8px 4px;border-radius:7px;border:none;background:none;font-family:inherit;cursor:pointer;}
-.fseg button.on{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.fseg{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;padding:2px 13px 14px;}
+.fseg button{text-align:center;font-size:12px;font-weight:600;line-height:1.15;padding:12px 2px;border-radius:11px;border:none;background:#fff;color:var(--ios-label);box-shadow:0 1px 4px rgba(0,0,0,.14);font-family:inherit;cursor:pointer;}
+.fseg button.on{background:#eaf3ff;color:var(--ios-blue);box-shadow:0 0 0 2px var(--ios-blue);}
 
 /* detail */
 .dhero{padding:calc(var(--safe-top) + 16px) 16px 20px;color:#fff;}

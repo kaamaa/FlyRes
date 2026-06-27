@@ -37,7 +37,12 @@ const count = computed(() =>
 )
 
 const summary = computed(() => {
-  const vmap = { today: 'Heute', tomorrow: 'Morgen', thisweek: 'Diese Woche', all: 'Alle' }
+  const vmap = {
+    today: 'Heute', tomorrow: 'Morgen',
+    thisweekend: 'Dieses WE', nextweekend: 'Nächstes WE',
+    thisweek: 'Diese Woche', weekafter: 'Nächste Woche',
+    thismonth: 'Dieser Monat', all: 'Alle',
+  }
   const parts = []
   if (filters.value.view !== 'all') parts.push(vmap[filters.value.view] || '')
   const a = props.md.aircraft.find((x) => x.id === filters.value.aircraft)

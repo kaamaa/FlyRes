@@ -6,7 +6,12 @@ const emit = defineEmits(['close', 'apply'])
 
 const f = ref({ ...props.filters })
 const open = ref('')
-const views = [['today', 'Heute'], ['tomorrow', 'Morgen'], ['thisweek', 'Diese Woche'], ['all', 'Alle']]
+const views = [
+  ['today', 'Heute'], ['tomorrow', 'Morgen'],
+  ['thisweekend', 'Dieses WE'], ['nextweekend', 'Nächstes WE'],
+  ['thisweek', 'Diese Woche'], ['weekafter', 'Nächste Woche'],
+  ['thismonth', 'Dieser Monat'], ['all', 'Alle'],
+]
 
 function toggle(k) { open.value = open.value === k ? '' : k }
 function nameOf(list, id, key = 'name') {
