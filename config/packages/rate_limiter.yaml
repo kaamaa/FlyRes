@@ -1,0 +1,8 @@
+# config/packages/rate_limiter.yaml
+# Brute-Force-Schutz fuer POST /api/tokens (App-Login).
+framework:
+    rate_limiter:
+        api_token_login:
+            policy: 'token_bucket'
+            limit: 5
+            rate: { interval: '1 minute', amount: 5 }
