@@ -92,4 +92,23 @@ class TokenController extends ApiController
             ],
         ]);
     }
+
+    public function revokeCurrent(Request $request): JsonResponse
+    {
+        $user = $this->requirePilot();
+        if ($user instanceof JsonResponse) return $user;
+
+        $currentId = $request->attributes->get(BearerTokenAuthenticator::REQUEST_ATTR);
+        if ($currentId === null) {
+            return $this->json(['error' => 'no_token_in_request'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $token = $this->tokens->find($currentId);
+        if ($token === null || $token->getUser()->getId() !== $user->getId()) {
+            return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
+        }
+        $this->tokens->delete($token);
+
+        return new JsonResponse(null, Response::HTTP_NO_CONTENT);
+    }
 }

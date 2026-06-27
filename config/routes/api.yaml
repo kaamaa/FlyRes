@@ -105,3 +105,8 @@ api_tokens_create:
     path: /api/tokens
     controller: App\Controller\Api\TokenController::create
     methods: POST
+
+api_tokens_revoke_current:
+    path: /api/tokens/current
+    controller: App\Controller\Api\TokenController::revokeCurrent
+    methods: DELETE
