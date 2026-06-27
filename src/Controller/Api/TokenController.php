@@ -104,7 +104,7 @@ class TokenController extends ApiController
         }
 
         $token = $this->tokens->find($currentId);
-        if ($token === null || $token->getUser()->getId() !== $user->getId()) {
+        if ($token === null || (int) $token->getUser()->getId() !== (int) $user->getId()) {
             return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
         }
         $this->tokens->delete($token);
@@ -140,7 +140,7 @@ class TokenController extends ApiController
         if ($user instanceof JsonResponse) return $user;
 
         $token = $this->tokens->find($id);
-        if ($token === null || $token->getUser()->getId() !== $user->getId()) {
+        if ($token === null || (int) $token->getUser()->getId() !== (int) $user->getId()) {
             return $this->json(['error' => 'not_found'], Response::HTTP_NOT_FOUND);
         }
         $this->tokens->delete($token);

@@ -62,8 +62,11 @@ class BearerTokenAuthenticator extends AbstractAuthenticator
         // brauchen keinen Origin-Check (mobile App sendet keinen Origin-Header).
         $request->attributes->set(self::REQUEST_ATTR, $apiToken->getId());
 
-        $username = $apiToken->getUser()->getUsername();
-        return new SelfValidatingPassport(new UserBadge($username));
+        $user = $apiToken->getUser();
+        return new SelfValidatingPassport(new UserBadge(
+            $user->getUserIdentifier(),
+            fn () => $user
+        ));
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
