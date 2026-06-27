@@ -20,7 +20,8 @@ security:
               
         main:
             custom_authenticators:
-              - App\Security\LoginFormAuthenticator 
+              - App\Security\BearerTokenAuthenticator
+              - App\Security\LoginFormAuthenticator
       
             entry_point: App\Security\LoginFormAuthenticator   # <- WICHTIG
             lazy: true
