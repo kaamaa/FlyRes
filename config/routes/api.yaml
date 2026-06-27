@@ -4,9 +4,24 @@
 # Dateien aus config/routes/ werden von Symfony automatisch geladen.
 # ---------------------------------------------------------------------------
 
+api_clients:
+    path: /api/clients
+    controller: App\Controller\Api\AccountController::clients
+    methods: GET
+
 api_me:
     path: /api/me
     controller: App\Controller\Api\AccountController::me
+    methods: GET
+
+api_fleet:
+    path: /api/fleet
+    controller: App\Controller\Api\FleetController::month
+    methods: GET
+
+api_fleet_day:
+    path: /api/fleet/day
+    controller: App\Controller\Api\FleetController::day
     methods: GET
 
 api_aircraft:

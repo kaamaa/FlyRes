@@ -4,10 +4,10 @@
 const bus = new EventTarget()
 export const onUnauthorized = (cb) => bus.addEventListener('unauthorized', cb)
 
-// API-Basis aus dem aktuellen Pfad ableiten: die App liegt unter ".../app/",
-// die API unter ".../api/". Funktioniert damit unter jedem Unterordner
-// (z.B. /flyres/app/ -> /flyres/api/) und im Dev (/app/ -> /api/).
-const API_BASE = (location.pathname.replace(/\/app\/.*$/, '/') || '/') + 'api/'
+// API-Basis aus dem aktuellen Pfad ableiten: die PWA liegt unter ".../mobile/",
+// die API unter ".../api/". Funktioniert unter jedem Unterordner
+// (z.B. flyres.../mobile/ -> flyres.../api/) und im Dev (/mobile/ -> /api/).
+const API_BASE = (location.pathname.replace(/\/mobile(\/.*)?$/, '/') || '/') + 'api/'
 
 async function handle(res) {
   const ct = res.headers.get('content-type') || ''
@@ -44,7 +44,8 @@ function qs(params) {
 
 export const api = {
   me:          () => GET(API_BASE + 'me'),
-  login:       (username, password, client) => SEND('POST', API_BASE + 'login', { username, password, client }),
+  clients:     () => GET(API_BASE + 'clients'),
+  login:       (username, password, client, remember) => SEND('POST', API_BASE + 'login', { username, password, client, remember }),
   logout:      () => SEND('POST', API_BASE + 'logout'),
 
   aircraft:    () => GET(API_BASE + 'aircraft'),
@@ -52,6 +53,9 @@ export const api = {
   pilots:      () => GET(API_BASE + 'pilots'),
   purposes:    () => GET(API_BASE + 'flightpurposes'),
   airfields:   () => GET(API_BASE + 'airfields'),
+
+  fleet:       (month) => GET(API_BASE + 'fleet' + qs({ month })),
+  fleetDay:    (aircraft, date) => GET(API_BASE + 'fleet/day' + qs({ aircraft, date })),
 
   bookings:    (params = {}) => GET(API_BASE + 'bookings' + qs(params)),
   booking:     (id) => GET(API_BASE + 'bookings/' + id),

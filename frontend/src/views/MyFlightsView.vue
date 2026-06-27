@@ -4,7 +4,7 @@ import { api } from '../api.js'
 import { badgeClass, barColor, dayLabel } from '../util.js'
 import DayHeader from '../components/DayHeader.vue'
 
-const emit = defineEmits(['open', 'reserve'])
+const emit = defineEmits(['open', 'reserve', 'logout'])
 const tab = ref('mine')
 const items = ref([])
 const loading = ref(true)
@@ -32,7 +32,7 @@ const grouped = computed(() => {
 
 <template>
   <div class="nav">
-    <div class="row"><span></span><button class="action bold" @click="emit('reserve')">+ Neu</button></div>
+    <div class="row"><button class="action muted" @click="emit('logout')">Abmelden</button><button class="action bold" @click="emit('reserve')">+ Neu</button></div>
     <div class="large">Meine Flüge</div>
   </div>
   <div class="seg">

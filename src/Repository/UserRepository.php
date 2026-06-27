@@ -29,9 +29,22 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
     }
 
 
-    public function loadUserByIdentifier(string $username): ?FresAccounts
+    public function loadUserByIdentifier(string $identifier): ?FresAccounts
     {
-        // Der Client wurde vorher in der Klasse gespeichert
+        // Mandantenfaehiger Identifier "clientid:username" (siehe FresAccounts::getUserIdentifier).
+        // Damit laedt auch Remember-Me / der Provider exakt den richtigen Mandanten.
+        // Fallback: per setClient() gesetzter Mandant (Login-Formular), falls kein ":" enthalten.
+        $clientid = $this->client;
+        $username = $identifier;
+        if (str_contains($identifier, ':')) {
+            [$clientid, $username] = explode(':', $identifier, 2);
+        }
+
+        // Ohne Mandant keine eindeutige Identitaet -> nicht laden
+        if ($clientid === null || $clientid === '') {
+            return null;
+        }
+
         $user = $this->entityManager->createQuery(
                 'SELECT u
                 FROM App\Entity\FresAccounts u
@@ -39,7 +52,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
                 u.clientid = :client'
             )
             ->setParameter('query', $username)
-            ->setParameter('client', $this->client) // "1")
+            ->setParameter('client', $clientid)
             ->getOneOrNullResult();
         if($user)
         {

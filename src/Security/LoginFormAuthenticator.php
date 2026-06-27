@@ -48,9 +48,12 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
       $client = $request->request->get('client');
       $clientid = Clients::GetClientIdByName ($this->entityManager, $client);
       $this->entityManager->getRepository(FresAccounts::class)->setClient($clientid);
-      
-      $ub = new UserBadge($username, function($username) {
-        return $this->entityManager->getRepository(FresAccounts::class)->loadUserByIdentifier($username);
+
+      // Mandantenfaehiger Identifier "clientid:username" -> identisch zu
+      // FresAccounts::getUserIdentifier(); so passen Login, Session und Remember-Me zusammen.
+      $identifier = $clientid . ':' . $username;
+      $ub = new UserBadge($identifier, function($identifier) {
+        return $this->entityManager->getRepository(FresAccounts::class)->loadUserByIdentifier($identifier);
       });
 
       $passport =  new Passport($ub, new PasswordCredentials($password), 

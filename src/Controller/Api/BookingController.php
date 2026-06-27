@@ -123,6 +123,7 @@ class BookingController extends ApiController
                 'flightpurposeId'  => $entity->getFlightpurposeid(),
                 'airfieldId'       => $entity->getAirfieldid(),
                 'date'             => $entity->getItemstart()->format('Y-m-d'),
+                'endDate'          => $entity->getItemstop()->format('Y-m-d'),
                 'startTime'        => $entity->getItemstart()->format('H:i'),
                 'endTime'          => $entity->getItemstop()->format('H:i'),
                 'description'      => $entity->getDescription(),

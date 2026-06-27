@@ -62,10 +62,16 @@ const grouped = computed(() => {
 
 <template>
   <div class="nav"><div class="large">Alle Reservierungen</div></div>
-  <div class="filterbar" @click="sheet = true">
-    <div class="fb-ic">⚙︎</div>
-    <div class="fb-sum">{{ summary }}</div>
-    <div v-if="count" class="fb-count">{{ count }}</div>
+  <div class="filterbtn-b" @click="sheet = true">
+    <span class="fb-ico">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
+    </span>
+    <span class="fb-txt">
+      <span class="fb-t">Filter</span>
+      <span class="fb-s">{{ summary }}</span>
+    </span>
+    <span v-if="count" class="fb-count">{{ count }}</span>
+    <span class="fb-chev">›</span>
   </div>
   <div class="body">
     <div v-if="loading" class="center">Lädt…</div>

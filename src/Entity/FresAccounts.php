@@ -330,7 +330,10 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
   */
   public function getUserIdentifier(): string
   {
-      return (string) $this->username;
+      // Mandantenfaehig: global eindeutige Identitaet "clientid:username".
+      // Verhindert, dass Remember-Me/Provider einen gleichnamigen Nutzer eines
+      // ANDEREN Mandanten laedt (sonst "Sprung" zwischen Clients).
+      return $this->clientid . ':' . $this->username;
   }
 
   /**

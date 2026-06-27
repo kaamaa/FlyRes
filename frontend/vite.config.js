@@ -7,10 +7,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 const API_TARGET = process.env.VITE_API_TARGET || 'http://127.0.0.1:8000'
 
 // command === 'build'  -> relative Pfade ('./'), damit die App unter JEDEM
-//                         Unterordner laeuft (z.B. /flyres/app/) ohne Neubau.
-// command === 'serve'  -> fester Basis-Pfad '/app/' fuer den Dev-Server.
+//                         Unterordner laeuft (z.B. /mobile/) ohne Neubau.
+// command === 'serve'  -> fester Basis-Pfad '/mobile/' fuer den Dev-Server.
 export default defineConfig(({ command }) => ({
-  base: command === 'build' ? './' : '/app/',
+  base: command === 'build' ? './' : '/mobile/',
   server: {
     proxy: {
       '/api': {
@@ -54,7 +54,7 @@ export default defineConfig(({ command }) => ({
     }),
   ],
   build: {
-    outDir: '../public/app',
+    outDir: '../public/mobile',
     emptyOutDir: true,
   },
 }))

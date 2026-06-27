@@ -12,7 +12,7 @@ const form = ref(null)
     <div class="nav">
       <div class="row">
         <button class="action" @click="emit('close')">Abbrechen</button>
-        <button class="action bold" @click="form && form.submit()">Speichern</button>
+        <span></span>
       </div>
       <div class="large">Bearbeiten</div>
     </div>

@@ -12,6 +12,7 @@ use App\Entities\Clients;
 use App\Entities\Users;
 use Symfony\Component\Security\Core\User\UserCheckerInterface;
 use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
+use Symfony\Component\Security\Http\RememberMe\RememberMeHandlerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use App\LogonType;
@@ -105,12 +106,14 @@ class LoginController extends AbstractController
                           UserAuthenticatorInterface $userAuthenticator,
                           FlyResAuthenticator $loginAuthenticator,
                           UserPasswordHasherInterface $passwordHasher,
+                          RememberMeHandlerInterface $rememberMeHandler,
                           EntityManagerInterface $em): JsonResponse
   {
     $data = json_decode($request->getContent(), true);
     $username   = $data['username'] ?? null;
     $password   = $data['password'] ?? null;
     $clientName = $data['client']   ?? null;
+    $remember   = !empty($data['remember']);
 
     if (!$username || !$password) {
       return new JsonResponse(['success' => false, 'error' => 'missing_credentials'], 400);
@@ -135,6 +138,12 @@ class LoginController extends AbstractController
     // Programmatischer Login: setzt das Security-Token -> Session-Cookie wird automatisch gesetzt.
     $userAuthenticator->authenticateUser($user, $loginAuthenticator, $request);
     LogonType::defineInFrame($request->getSession());
+
+    // "Angemeldet bleiben": dauerhaftes Remember-Me-Cookie (30 Tage, s. security.yaml)
+    // erzeugen. Das Cookie wird vom Security-ResponseListener an die Antwort gehaengt.
+    if ($remember) {
+      $rememberMeHandler->createRememberMeCookie($user);
+    }
 
     return new JsonResponse(['success' => true]);
   }

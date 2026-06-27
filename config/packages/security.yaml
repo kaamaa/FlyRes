@@ -4,7 +4,10 @@ security:
       app_user_provider:
           entity:
               class: App\Entity\FresAccounts
-              property: username
+              # KEIN 'property' -> der Provider nutzt UserRepository::loadUserByIdentifier
+              # (mandantenfaehig, "clientid:username"). Mit 'property: username' wuerde
+              # er per findOneBy(username) laden und bei gleichem Namen den falschen
+              # Mandanten treffen (Remember-Me-"Sprung").
        
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 
@@ -62,7 +65,7 @@ security:
         # iPhone-PWA JSON-API (M1): PUBLIC_ACCESS, damit die Controller bei fehlendem
         # Login sauberes JSON (401) statt eines HTML-Login-Redirects liefern koennen.
         # Die Zugriffspruefung (angemeldet + ROLE_PILOT) erfolgt in App\Controller\Api.
-        - { path: ^/api/(me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability)(/|$), roles: PUBLIC_ACCESS }
+        - { path: ^/api/(clients|me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability|fleet)(/|$), roles: PUBLIC_ACCESS }
         #- { path: ^/start_session, roles: PUBLIC_ACCESS }
         #- { path: ^/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_GUEST } 

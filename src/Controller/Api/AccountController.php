@@ -3,6 +3,8 @@
 namespace App\Controller\Api;
 
 use App\Entity\FresAccounts;
+use App\Entities\Clients;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
@@ -13,6 +15,23 @@ use Symfony\Component\HttpFoundation\JsonResponse;
  */
 class AccountController extends ApiController
 {
+    /**
+     * GET /api/clients – Mandantenliste fuer die Login-Auswahl.
+     *
+     * Bewusst OHNE Anmeldepruefung: wird vor dem Login geladen, damit der
+     * Nutzer in der PWA den richtigen Mandanten waehlen kann. Der Login selbst
+     * loest den Mandanten dann per Name auf (Clients::GetClientIdByName).
+     */
+    public function clients(EntityManagerInterface $em): JsonResponse
+    {
+        $out = [];
+        foreach ((Clients::GetAllClientsForListbox($em) ?: []) as $c) {
+            $out[] = ['id' => $c['id'], 'name' => $c['name']];
+        }
+
+        return $this->json($out);
+    }
+
     public function me(): JsonResponse
     {
         $user = $this->getUser();
