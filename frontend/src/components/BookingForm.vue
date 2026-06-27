@@ -142,14 +142,24 @@ const axisTicks = computed(() => {
   const b = dayBounds.value; if (!b) return []
   return [0, 1, 2, 3, 4].map((i) => String(Math.round((b.s + (b.e - b.s) * i / 4) / 60)).padStart(2, '0'))
 })
+// 2-Std-Block-Vorschlaege an den tatsaechlich freien Fenstern ausrichten
+// (statt starrem 9-Uhr-Raster). Pro freiem Fenster werden ab Fensterbeginn
+// 2-Std-Bloecke gelegt, solange sie ganz hineinpassen. Startzeit auf :00/:30
+// gerundet (saubere Labels), nie vor 9 Uhr / Tagesbeginn.
+const BLOCK_MIN = 120
+function blkLabel(m) { const h = Math.floor(m / 60), mm = m % 60; return mm ? `${h}:${String(mm).padStart(2, '0')}` : `${h}` }
 const freeBlocks = computed(() => {
   if (!avail.value || !dayBounds.value) return []
-  const free = (avail.value.freeSlots || []).map((s) => [toMin(s.start), toMin(s.end)])
+  const floor = Math.max(9 * 60, dayBounds.value.s)
+  const dayEnd = dayBounds.value.e
   const out = []
-  for (let s = 9 * 60; s + 120 <= dayBounds.value.e; s += 120) {
-    if (s < dayBounds.value.s) continue
-    const e = s + 120
-    if (free.some(([fs, fe]) => fs <= s && fe >= e)) out.push({ s, start: toHHMM(s), end: toHHMM(e), label: (s / 60) + '–' + (e / 60) })
+  for (const w of (avail.value.freeSlots || [])) {
+    let s = Math.ceil(Math.max(toMin(w.start), floor) / 30) * 30 // auf :00/:30 hoch
+    const we = Math.min(toMin(w.end), dayEnd)
+    while (s + BLOCK_MIN <= we) {
+      out.push({ s, start: toHHMM(s), end: toHHMM(s + BLOCK_MIN), label: blkLabel(s) + '–' + blkLabel(s + BLOCK_MIN) })
+      s += BLOCK_MIN
+    }
   }
   return out
 })
@@ -319,30 +329,38 @@ defineExpose({ submit: save })
 
     <!-- Einzeltag: freie 2-Std-Blöcke ZUERST, dann die Verfügbarkeits-Grafik -->
     <template v-else-if="!isMulti && avail && dayBounds">
-      <div v-if="freeBlocks.length" class="ftitle"><Icon name="blocks" /> Freie 2-Std-Blöcke</div>
-      <div v-if="freeBlocks.length" class="tblocks">
-        <div v-for="b in freeBlocks" :key="b.s" class="tblk" :class="{ sel: startTime === b.start && endTime === b.end }" @click="pickBlock(b)">{{ b.label }}</div>
-      </div>
+      <!-- Verfuegbarkeit/freie Bloecke sind erst sinnvoll, wenn ein Flugzeug gewaehlt ist.
+           Ohne Flugzeug liefert die API keine Einschraenkung -> alles "frei" (irrefuehrend). -->
+      <template v-if="aircraftId">
+        <div v-if="freeBlocks.length" class="ftitle"><Icon name="blocks" /> Freie 2-Std-Blöcke</div>
+        <div v-if="freeBlocks.length" class="tblocks">
+          <div v-for="b in freeBlocks" :key="b.s" class="tblk" :class="{ sel: startTime === b.start && endTime === b.end }" @click="pickBlock(b)">{{ b.label }}</div>
+        </div>
 
-      <div class="ftitle"><Icon name="chart" /> Verfügbarkeit</div>
-      <div class="av3box">
-        <div v-for="r in availRows" :key="r.key" class="av3row">
-          <div class="av3lab">{{ r.t }}<br><small>{{ r.sub }}</small></div>
-          <div class="av3bar">
-            <div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
+        <div class="ftitle"><Icon name="chart" /> Verfügbarkeit</div>
+        <div class="av3box">
+          <div v-for="r in availRows" :key="r.key" class="av3row">
+            <div class="av3lab">{{ r.t }}<br><small>{{ r.sub }}</small></div>
+            <div class="av3bar">
+              <div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
+            </div>
           </div>
-        </div>
-        <div class="av3row">
-          <div class="av3lab strong">{{ availRows.length > 1 ? 'Beide frei' : 'Frei' }}</div>
-          <div class="av3bar combo">
-            <div v-for="(seg, i) in comboBusy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
-            <div v-if="selMarker" class="av3sel" :class="{ bad: selFree === false }" :style="{ left: selMarker.left + '%', width: selMarker.width + '%' }"></div>
+          <div class="av3row">
+            <div class="av3lab strong">{{ availRows.length > 1 ? 'Beide frei' : 'Frei' }}</div>
+            <div class="av3bar combo">
+              <div v-for="(seg, i) in comboBusy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
+              <div v-if="selMarker" class="av3sel" :class="{ bad: selFree === false }" :style="{ left: selMarker.left + '%', width: selMarker.width + '%' }"></div>
+            </div>
           </div>
+          <div class="av3axis"><span v-for="(t, i) in axisTicks" :key="i">{{ t }}</span></div>
         </div>
-        <div class="av3axis"><span v-for="(t, i) in axisTicks" :key="i">{{ t }}</span></div>
-      </div>
-      <!-- Nur Warnung bei Konflikt; "frei" waere redundant zum ausgewaehlten Block oben. -->
-      <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+        <!-- Nur Warnung bei Konflikt; "frei" waere redundant zum ausgewaehlten Block oben. -->
+        <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+      </template>
+      <template v-else>
+        <div class="ftitle"><Icon name="chart" /> Verfügbarkeit</div>
+        <div class="muted">Bitte zuerst ein Flugzeug wählen.</div>
+      </template>
 
       <!-- Vergleich anderer Flugzeuge -->
       <div class="cmptoggle" :class="{ open: showCmpAc }" @click="toggleCmpAc"><span>Andere Flugzeuge vergleichen</span><span class="ar">{{ showCmpAc ? '▾' : '▸' }}</span></div>
@@ -371,8 +389,8 @@ defineExpose({ submit: save })
       </div>
     </template>
 
-    <!-- Mehrtägig: ein Zeitstrahl pro Tag -->
-    <template v-else-if="isMulti && multiRows.length">
+    <!-- Mehrtägig: ein Zeitstrahl pro Tag (nur mit gewähltem Flugzeug aussagekräftig) -->
+    <template v-else-if="isMulti && aircraftId && multiRows.length">
       <div class="ftitle"><Icon name="chart" /> Verfügbarkeit · gesamter Zeitraum</div>
       <div class="av3box">
         <div v-for="r in multiRows" :key="r.key" class="av3row">
@@ -389,6 +407,10 @@ defineExpose({ submit: save })
         <template v-if="periodFree">✓ Im gesamten Zeitraum frei.</template>
         <template v-else>⚠ Zeitraum ist nicht durchgehend frei.</template>
       </div>
+    </template>
+    <template v-else-if="isMulti && !aircraftId">
+      <div class="ftitle"><Icon name="chart" /> Verfügbarkeit · gesamter Zeitraum</div>
+      <div class="muted">Bitte zuerst ein Flugzeug wählen.</div>
     </template>
 
     <!-- Flugzweck -->
