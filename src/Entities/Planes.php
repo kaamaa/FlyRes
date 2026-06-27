@@ -130,9 +130,9 @@ class Planes
   public static function GetAllAircraftTypes ($em, $clientid)
   {
     $aircraftTypeList = array ();
-    $querystring = "SELECT b FROM App\Entity\FresAircrafttype b WHERE b.clientid = :ClientId";
+    $querystring = "SELECT b FROM App\Entity\FresAircrafttype b WHERE b.clientid = :ClientId and b.status <> 'geloescht'";
     $query = $em->createQuery($querystring)->setParameters(array('ClientId' => $clientid));
-    
+
     //$query = $em->createQuery($querystring);
     $query->setCacheable(true);
     $aircfraftTypes = $query->getResult();

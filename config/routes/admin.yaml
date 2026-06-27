@@ -1,0 +1,41 @@
+# ---------------------------------------------------------------------------
+# Zentrale Konfiguration (Mandanten + Einstellungen). Eigene Datei, damit die
+# bestehende config/routes.yaml unangetastet bleibt. Zugriff: ROLE_GLOBAL_ADMIN
+# (siehe security.yaml access_control ^/config).
+# ---------------------------------------------------------------------------
+
+_config_mandanten:
+    path: /config/mandanten
+    controller: App\Controller\AdminConfigController::mandanten
+    methods: GET
+
+_config_mandant_new:
+    path: /config/mandant/new
+    controller: App\Controller\AdminConfigController::new
+    methods: GET
+
+_config_mandant_edit:
+    path: /config/mandant/{id}
+    controller: App\Controller\AdminConfigController::edit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+_config_mandant_create:
+    path: /config/mandant
+    controller: App\Controller\AdminConfigController::save
+    methods: POST
+
+_config_mandant_save:
+    path: /config/mandant/{id}
+    controller: App\Controller\AdminConfigController::save
+    methods: POST
+    requirements:
+        id: '\d+'
+
+_config_mandant_toggle:
+    path: /config/mandant/{id}/toggle
+    controller: App\Controller\AdminConfigController::toggleActive
+    methods: POST
+    requirements:
+        id: '\d+'

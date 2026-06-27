@@ -296,7 +296,7 @@ class Bookings
     $mindate = clone $date;
     $srary = TimeFunctions::GetDayStart($date);
     $mindate->setTime ( $srary[0] , $srary[1]);
-    
+
     $maxdate = clone $date;
     $srary = TimeFunctions::GetDayEnd($date);
     $maxdate->setTime ( $srary[0] , $srary[1]);
@@ -851,7 +851,7 @@ class Bookings
   public static function GetBookingsForAllPlanes ($em, $startdate, $int_duration, $clientid)
   {
     setlocale(LC_TIME, 'de_DE@euro', 'de_DE', 'deu_deu');
-    
+
     $planes = $em->getRepository('App\Entity\FresAircraft')->findBy(array('clientid' => $clientid));
     if ($planes) 
     {
@@ -1257,9 +1257,9 @@ class Bookings
     $mails = array_merge($mails, array($mailOldFI));
     // Doppelte Array-Einträge löschen
     $mails = array_unique($mails);
-    
+
     //Mails versenden
-    foreach ($mails as $mail) 
+    foreach ($mails as $mail)
     {
       if (Users::IsMailAdressValid($mail))
       {

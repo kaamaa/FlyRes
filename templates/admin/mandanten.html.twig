@@ -1,0 +1,42 @@
+{% extends "layout.html.twig" %}
+
+{% block content %}
+<div style="margin:14px;">
+  <h2 style="color:#186FA3;margin-top:6px;">Konfiguration — Mandanten</h2>
+  <p style="color:#666;">Flugschulen anlegen und pflegen. Flugplatz &amp; Öffnungszeiten je Mandant ersetzen die bisher fest hinterlegten Worms-Werte.</p>
+
+  <p><a href="{{ path('_config_mandant_new') }}" class="btn btn-primary btn-sm">+ Neuer Mandant</a></p>
+
+  <table class="table table-striped table-bordered" style="background:#fff;">
+    <thead>
+      <tr style="background:#D8E3E7;">
+        <th>Name</th><th>Nutzer</th><th>Flugzeuge</th><th>Status</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clients %}
+      <tr{% if not c.active %} style="opacity:.5;"{% endif %}>
+        <td><b>{{ c.name }}</b></td>
+        <td>{{ stats[c.id].users }}</td>
+        <td>{{ stats[c.id].aircraft }}</td>
+        <td>
+          {% if c.active %}<span class="label label-success">aktiv</span>
+          {% else %}<span class="label label-danger">inaktiv</span>{% endif %}
+        </td>
+        <td style="white-space:nowrap;">
+          <a href="{{ path('_config_mandant_edit', {id: c.id}) }}" class="btn btn-default btn-xs">Bearbeiten</a>
+          <form method="post" action="{{ path('_config_mandant_toggle', {id: c.id}) }}" style="display:inline;">
+            <input type="hidden" name="_token" value="{{ csrf_token('mandant_toggle') }}">
+            {% if c.active %}
+              <button type="submit" class="btn btn-warning btn-xs">Deaktivieren</button>
+            {% else %}
+              <button type="submit" class="btn btn-success btn-xs">Aktivieren</button>
+            {% endif %}
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

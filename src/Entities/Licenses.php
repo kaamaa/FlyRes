@@ -154,14 +154,12 @@ class Licenses
     $aircrafttype = $em->getRepository('App\Entity\FresAircrafttype')->findOneBy(array('clientid' => $clientid, 'id' => $id));
     if ($aircrafttype)
     {
-      //$aircrafttype->setStatus('geloescht');
-      //$em->persist($aircrafttype);
-      $em->remove($aircrafttype);
+      // Soft-Delete (rueckgaengig machbar): Status setzen statt physisch loeschen.
+      // Die Lizenz-Zuordnungen (FresAircrafttype2licences) bleiben bewusst erhalten,
+      // damit ein Wiederherstellen den Typ samt seinen Anforderungen zurueckbringt.
+      $aircrafttype->setStatus('geloescht');
+      $em->persist($aircrafttype);
       $em->flush();
-      
-      $querystring = "DELETE App\Entity\FresAircrafttype2licences a WHERE a.aircrafttypeid = :ID";
-      $query = $em->createQuery($querystring)->setParameters(array('ID' => $id));
-      $query->execute();
     }
   }
   
@@ -319,19 +317,19 @@ class Licenses
     $mails = array_merge($adminMails, array ($inform_sender_mail));
     // Doppelte Array-Einträge löschen
     $mails = array_unique($mails);
-    
+
     //Mails versenden
     foreach ($mails as $mail) {
       if (Users::IsMailAdressValid($mail))
       {
         $message = (new Email())
-          //->setContentType("text/html")    
+          //->setContentType("text/html")
           ->subject($type . ' ' . $parameter['program_version'])
           ->html($twig->render('emails/licencemail.html.twig', $data))
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])
           ->to($mail);
-        
+
         $mailer->send($message);
       }
     }

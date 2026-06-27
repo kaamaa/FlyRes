@@ -7,7 +7,8 @@ class Clients
 {
   public static function GetAllClientsForListbox ($em)
   {
-    $clients = $em->getRepository('App\Entity\FresClient')->findAll();
+    // Nur AKTIVE Mandanten im Login anbieten – deaktivierte ausblenden.
+    $clients = $em->getRepository('App\Entity\FresClient')->findBy(['active' => true], ['name' => 'ASC']);
 
     if ($clients) {
       foreach ($clients as $client) {

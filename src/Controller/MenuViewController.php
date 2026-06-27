@@ -107,20 +107,70 @@ class MenuViewController extends AbstractController
     }
       
     if ($this->isGranted('ROLE_SYSTEM_ADMIN'))
-    {  
+    {
       $menuList[] = array ('name' => 'Flugzeuge verwalten', 'link' => '#', 'submenu' => $submenuListAircraft);
-    }  
-    
-    // Nur wenn Flyres nicht in einem IFrame läuft, wird der Button abmelden angezeigt. Sonst läuft das Abmelden 
+    }
+
+    if ($this->isGranted('ROLE_GLOBAL_ADMIN'))
+    {
+      $submenuConfig[] = array ('name' => 'Mandanten verwalten', 'link' => '_config_mandanten');
+      $submenuConfig[] = array ('name' => 'Neuer Mandant', 'link' => '_config_mandant_new');
+      $menuList[] = array ('name' => 'Konfiguration', 'link' => '#', 'submenu' => $submenuConfig);
+    }
+
+    // Nur wenn Flyres nicht in einem IFrame läuft, wird der Button abmelden angezeigt. Sonst läuft das Abmelden
     // über die Rahmenseite (Joomla basierter Frame)
     if (LogonType::isStandalone($session))
     {        
       $menuList[] = array ('name' => 'Abmelden', 'link' => 'app_logout');
     }
     
-    return $menuList;
+    // Robustheit: Menüeintraege mit nicht (mehr) existierender Route entfernen,
+    // damit ein fehlendes Routing (z.B. nicht hochgeladene config/routes/admin.yaml)
+    // nie die komplette Seite per Twig-Fehler abstuerzen laesst.
+    return $this->filterMenu($menuList);
   }
-    
+
+  /** Prueft, ob fuer ein Menue-Link eine URL erzeugt werden kann ('#'/leer = ok). */
+  private function routeOk($link, $command = null): bool
+  {
+    if ($link === '#' || $link === '' || $link === null) {
+      return true;
+    }
+    try {
+      $this->generateUrl($link, $command !== null ? ['command' => $command] : []);
+      return true;
+    } catch (\Throwable $e) {
+      return false; // unbekannte Route -> Eintrag weglassen statt Seite crashen
+    }
+  }
+
+  /** Entfernt Menue-/Submenue-Eintraege mit unbekannter Route. */
+  private function filterMenu(array $menu): array
+  {
+    $out = [];
+    foreach ($menu as $item) {
+      if (isset($item['submenu'])) {
+        $sub = [];
+        foreach ($item['submenu'] as $s) {
+          if (($s['name'] ?? '') === 'divider' || $this->routeOk($s['link'] ?? '', $s['command'] ?? null)) {
+            $sub[] = $s;
+          }
+        }
+        // Eltern-Eintrag nur behalten, wenn noch ein "echter" Untereintrag uebrig ist.
+        $hasReal = false;
+        foreach ($sub as $s) { if (($s['name'] ?? '') !== 'divider') { $hasReal = true; break; } }
+        if ($hasReal) {
+          $item['submenu'] = $sub;
+          $out[] = $item;
+        }
+      } elseif ($this->routeOk($item['link'] ?? '', $item['command'] ?? null)) {
+        $out[] = $item;
+      }
+    }
+    return $out;
+  }
+
     public function ViewAction(Request $request)
     {
       $session = $request->getSession();

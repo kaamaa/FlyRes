@@ -68,6 +68,7 @@ class EditAircraftTypeController extends AbstractController
   
   public function GlobalAction(Request $request)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     // Das ist der Einstiegspunkt aus dem Formular aus dem das Flugzeugtyp bearbeitet werden kann. Je nach verwendeter Schaltfläche
     // wird die entsprechende Aktion ausgelöst
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
@@ -80,7 +81,7 @@ class EditAircraftTypeController extends AbstractController
 
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetAircraftTypeID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -95,6 +96,7 @@ class EditAircraftTypeController extends AbstractController
   
   public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircrafttypeid = $sd->GetAircraftTypeID();
     $sd->SetAircraftTypeID(0);
@@ -106,9 +108,10 @@ class EditAircraftTypeController extends AbstractController
 
   public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircrafttypeid = $sd->GetAircraftTypeID();
-    
+
     if ($aircrafttypeid != 0) $aircrafttype = Planes::GetAircraftTypeObject($em, $aircrafttypeid, $loggedin_user->getClientid());
     else {
       $aircrafttype = new FresAircrafttype(); 
@@ -149,6 +152,7 @@ class EditAircraftTypeController extends AbstractController
   
   public function GridAction(Request $request, Grid $grid, UserInterface $loggedin_user)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $str = $request->attributes->get('_route');
     if (isset($str)) $sd->SetBookingDetailBackRoute($this->generateUrl($str));

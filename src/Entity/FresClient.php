@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
- * App\Entity\FresClient
+ * App\Entity\FresClient — Mandant (Flugschule).
  *
  * @ORM\Table(name="FRes_client")
  * @ORM\Entity
@@ -14,10 +14,8 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
  */
 class FresClient
 {
-    
     /**
      * @var integer $id
-     *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
@@ -26,39 +24,18 @@ class FresClient
 
     /**
      * @var string $name
-     *
      * @ORM\Column(name="name", type="string", length=120, nullable=true)
      */
     private $name;
-    
-    /**
-     * Get id
-     *
-     * @return integer 
-     */
-    public function getId()
-    {
-        return $this->id;
-    }
 
-    /**
-     * Set name
-     *
-     * @param string $aircraft
-     */
-    public function setName($name)
-    {
-        $this->name = $name;
-    }
+    /** @ORM\Column(name="active", type="boolean", nullable=false, options={"default":1}) */
+    private $active = true;
 
-    /**
-     * Get name
-     *
-     * @return string 
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
+    public function getId() { return $this->id; }
 
+    public function getName() { return $this->name; }
+    public function setName($name) { $this->name = $name; return $this; }
+
+    public function isActive() { return (bool) $this->active; }
+    public function setActive($v) { $this->active = (bool) $v; return $this; }
 }

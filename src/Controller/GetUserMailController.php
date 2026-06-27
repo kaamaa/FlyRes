@@ -13,6 +13,7 @@ class GetUserMailController extends AbstractController
 {
   public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
     $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $Mails_Outlook = Users::GetAllValidMailsadresses($em, $loggedin_user->getClientid(), '; ');

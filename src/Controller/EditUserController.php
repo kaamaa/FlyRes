@@ -149,9 +149,10 @@ class EditUserController extends AbstractController
 
   public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $userid = $sd->GetUserID();
-    
+
     Users::DeleteUser($em, $loggedin_user->getClientid(), $userid);
     
     if ($userid != 0) 
@@ -199,6 +200,7 @@ class EditUserController extends AbstractController
 
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserID(0);
@@ -224,6 +226,8 @@ class EditUserController extends AbstractController
       // Datensatz lesen
       $user = Users::GetUserObject($em, $loggedin_user->getClientid(), $userid);
     } else {
+      // Neuanlage nur durch Admins (SaveAction wird auch fuer "Meine Daten" genutzt)
+      $this->denyAccessUnlessGranted('ROLE_ADMIN');
       // neuen Datensatz erzeugen
       $user = $this->CreateUser($request, $loggedin_user);
     }
@@ -284,6 +288,7 @@ class EditUserController extends AbstractController
 
   public function GridAction(RequestStack $requestStack, grid $grid, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $request = $requestStack->getCurrentRequest();
     self::$em = $em;
     

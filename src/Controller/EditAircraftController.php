@@ -87,6 +87,7 @@ class EditAircraftController extends AbstractController
 
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetPlaneID(0);
@@ -102,6 +103,7 @@ class EditAircraftController extends AbstractController
   
   public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
@@ -114,10 +116,10 @@ class EditAircraftController extends AbstractController
 
   public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
-    
+
     if ($aircraftid != 0) $aircraft = Planes::GetPlaneObject($em, $loggedin_user->getClientid(), $aircraftid, true);
     else {
       $aircraft = new FresAircraft(); 
@@ -155,6 +157,7 @@ class EditAircraftController extends AbstractController
   
   public function GridAction(RequestStack $requestStack, grid $grid, UserInterface $loggedin_user)
   {
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
     //$grid = $this->grid;
     $request = $requestStack->getCurrentRequest();
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
