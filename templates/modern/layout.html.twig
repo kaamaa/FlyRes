@@ -1,0 +1,42 @@
+{# ===========================================================================
+   Modernes Layout (Variante A, Sidebar) – Vorschau-Scheibe.
+   Eigenstaendig (extends NICHT das alte layout.html.twig), damit der Bestand
+   unberuehrt bleibt. Laedt ausschliesslich modern.css.
+   =========================================================================== #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlyRes</title>
+  <link href="{{ asset('images/css/modern.css') }}?v={{ 'now'|date('YmdHis') }}" rel="stylesheet">
+</head>
+<body class="fr-modern">
+  <div class="fr-app">
+    {{ include('modern/_sidebar.html.twig') }}
+    <div class="fr-main">
+      <div class="fr-top">
+        <h2 class="fr-ptitle">{% block ptitle %}FlyRes{% endblock %}</h2>
+        <div class="fr-topactions">{% block topactions %}{% endblock %}</div>
+      </div>
+      <div class="fr-body">
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+
+  {# Auto-Hoehe an ein einbettendes iframe melden (Joomla), schlank gehalten. #}
+  <script>
+  (function(){
+    if (window.parent === window) return;
+    var last = 0;
+    function send(){
+      var h = Math.ceil(document.documentElement.scrollHeight) + 8;
+      if (Math.abs(h - last) > 2){ last = h; window.parent.postMessage({ flyresHeight: h }, '*'); }
+    }
+    window.addEventListener('load', send);
+    if (window.ResizeObserver){ try { new ResizeObserver(send).observe(document.body); } catch(e){} }
+  })();
+  </script>
+</body>
+</html>

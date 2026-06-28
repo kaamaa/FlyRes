@@ -1,0 +1,335 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Reservieren{% endblock %}
+
+{% block content %}
+<form class="fr-form" action="#" method="post">
+
+  <div class="fr-formsec">Flugzeug &amp; Fluglehrer</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Flugzeug</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+        <select name="aircraftid" id="r_aircraft">
+          <option value="0">Bitte wählen…</option>
+          {% for label, id in aircraft %}<option value="{{ id }}" {{ id == preAircraft ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Fluglehrer</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <select name="flightinstructor" id="r_fi">
+          <option value="">(keiner)</option>
+          {% for label, id in instructors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Zeitraum</div>
+  <div class="fr-card">
+    {% set icCal %}<span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>{% endset %}
+    {% set icClock %}<span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>{% endset %}
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Von · Datum</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="startdate" id="r_startdate" value="{{ today }}"><div class="fr-calpop" hidden></div></div></div>
+      <div class="fr-frow"><label>Von · Zeit</label><div class="fr-ctrl dt fr-combo">{{ icClock|raw }}<input type="text" name="starttime" id="r_starttime" value="10:00" autocomplete="off" inputmode="numeric" placeholder="HH:MM"><button type="button" class="fr-comboar" tabindex="-1">▾</button><div class="fr-combolist" hidden></div></div></div>
+    </div>
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Bis · Datum</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="enddate" id="r_enddate" value="{{ today }}"><div class="fr-calpop" hidden></div></div></div>
+      <div class="fr-frow"><label>Bis · Zeit</label><div class="fr-ctrl dt fr-combo">{{ icClock|raw }}<input type="text" name="endtime" id="r_endtime" value="12:00" autocomplete="off" inputmode="numeric" placeholder="HH:MM"><button type="button" class="fr-comboar" tabindex="-1">▾</button><div class="fr-combolist" hidden></div></div></div>
+    </div>
+    <div class="fr-hint">Dropdown in 30-Min-Schritten (Öffnungszeiten) – freie Eingabe (HH:MM) ebenfalls möglich.</div>
+  </div>
+
+  <div class="fr-formsec">Verfügbarkeit</div>
+  <div class="fr-card" id="r_avail">
+    <div class="fr-avhint">Bitte zuerst ein Flugzeug wählen.</div>
+  </div>
+  <div class="fr-avlegend">
+    <span class="fr-avlg-note">Fluglehrer: Vollton = direkt buchbar · gestreift = nach Absprache · grau = nicht buchbar</span>
+    <span><i class="s-frei"></i>frei</span>
+    <span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span>
+    <span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span>
+    <span><i class="s-solo"></i>Solo-parallel</span>
+    <span><i class="nb"></i>nicht buchbar</span>
+  </div>
+
+  <button type="button" class="fr-cmptoggle" id="r_cmpAcToggle"><span>Andere Flugzeuge vergleichen</span><span class="ar">▸</span></button>
+  <div class="fr-cmppanel" id="r_cmpAc" hidden></div>
+
+  <button type="button" class="fr-cmptoggle" id="r_cmpFiToggle"><span>Andere Fluglehrer vergleichen</span><span class="ar">▸</span></button>
+  <div class="fr-cmppanel" id="r_cmpFi" hidden></div>
+
+  <div class="fr-formsec">Flugzweck</div>
+  <div class="fr-purposes">
+    {% for label, id in purposes %}
+      <label class="fr-pp"><input type="radio" name="flightpurposeid" value="{{ id }}" {{ loop.first ? 'checked' : '' }}>{{ label }}</label>
+    {% endfor %}
+  </div>
+
+  <div class="fr-formsec">Flugplatz</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Ziel</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+        <select name="airfieldid">{% for label, id in airfields %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+      </div>
+    </div>
+  </div>
+
+  {# --- Zusatzfelder aus dem klassischen Web-Frontend (in der PWA nicht vorhanden) --- #}
+  <div class="fr-formsec">Im Namen &amp; Benachrichtigung <span class="fr-tagweb">nur Web</span></div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Reserviert für</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <select name="createdbyuserid">
+          {% for label, id in users %}<option value="{{ id }}" {{ id == myId ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <small class="fr-hint">Standard: du selbst. Für Buchungen im Namen eines anderen Mitglieds.</small>
+    </div>
+    <div class="fr-frow">
+      <label>E-Mail-Info intern</label>
+      <div class="fr-box">
+        <select name="emailinfoi[]" multiple size="5">
+          {% for label, id in mailusers %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <small class="fr-hint">Mehrfachauswahl (Cmd/Strg-Klick) – diese Mitglieder werden per E-Mail informiert.</small>
+    </div>
+    <div class="fr-frow">
+      <label>E-Mail-Info extern</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+        <input type="text" name="emailinfoe" placeholder="z. B. name@example.com; weitere@…">
+      </div>
+      <small class="fr-hint">Externe Adressen, durch Semikolon getrennt.</small>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Beschreibung</div>
+  <div class="fr-card">
+    <div class="fr-frow"><div class="fr-box"><textarea name="description" rows="3" placeholder="z. B. Platzrunden, Überlandflug …"></textarea></div></div>
+  </div>
+
+  <div id="r_msg" class="fr-msg" hidden></div>
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn" id="r_save">Reservierung speichern</button>
+    <a class="fr-clear" href="javascript:history.back()">Abbrechen</a>
+  </div>
+  <div class="fr-detmeta">Speichern läuft über die geprüfte API (POST /api/bookings) – inkl. Konflikt-, Verfügbarkeits- und Lizenzprüfung sowie E-Mail-Infos.</div>
+</form>
+
+<script>
+(function(){
+  var ac=document.getElementById('r_aircraft'), fi=document.getElementById('r_fi'),
+      sd=document.getElementById('r_startdate'), st=document.getElementById('r_starttime'),
+      ed=document.getElementById('r_enddate'), et=document.getElementById('r_endtime'),
+      box=document.getElementById('r_avail');
+  var lastData=null, timeOpts=[], combos=[];
+
+  // Zeit-Optionen (30-Min) im Öffnungszeit-Fenster setzen; offene Listen neu aufbauen
+  function fillTimes(sMin,eMin){
+    var s=Math.ceil(sMin/30)*30, e=Math.floor(eMin/30)*30; timeOpts=[];
+    for(var m=s;m<=e;m+=30) timeOpts.push(toHHMM(m));
+    combos.forEach(function(c){ if(!c.list.hidden) c.build(); });
+  }
+  // Eigenes Combobox-Dropdown (zuverlässig + freie Eingabe bleibt möglich)
+  function setupCombo(inp){
+    var wrap=inp.closest('.fr-combo'), list=wrap.querySelector('.fr-combolist'), btn=wrap.querySelector('.fr-comboar');
+    function build(){ list.innerHTML=timeOpts.map(function(t){ return '<div class="fr-comboitem'+(t===inp.value?' sel':'')+'" data-t="'+t+'">'+t+'</div>'; }).join(''); }
+    function open(){ build(); list.hidden=false; }
+    function close(){ list.hidden=true; }
+    btn.addEventListener('mousedown',function(e){ e.preventDefault(); list.hidden?open():close(); });
+    inp.addEventListener('click',open);
+    list.addEventListener('mousedown',function(e){ var it=e.target.closest('.fr-comboitem'); if(it){ e.preventDefault(); inp.value=it.dataset.t; close(); inp.dispatchEvent(new Event('change')); } });
+    document.addEventListener('click',function(e){ if(!wrap.contains(e.target)) close(); });
+    combos.push({list:list,build:build});
+  }
+
+  function toMin(t){ if(!t) return null; var p=t.split(':'); return (+p[0])*60+(+p[1]); }
+  function toHHMM(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
+  function blk(m){ var h=Math.floor(m/60),mm=m%60; return mm? h+':'+String(mm).padStart(2,'0') : ''+h; }
+  function busy(free,s,e){ var f=(free||[]).map(function(w){return [toMin(w.start),toMin(w.end)];}).sort(function(a,b){return a[0]-b[0];}); var out=[],cur=s; f.forEach(function(x){ if(x[0]>cur)out.push([cur,x[0]]); cur=Math.max(cur,x[1]); }); if(cur<e)out.push([cur,e]); return out; }
+  function freeBlocks(slots,dS,dE){ var floor=Math.max(540,toMin(dS)),end=toMin(dE),out=[]; (slots||[]).forEach(function(w){ var s=Math.ceil(Math.max(toMin(w.start),floor)/30)*30, we=Math.min(toMin(w.end),end); while(s+120<=we){ out.push({start:toHHMM(s),end:toHHMM(s+120),label:blk(s)+'–'+blk(s+120)}); s+=120; } }); return out; }
+  // Fluglehrer-Zustandsbalken: Hintergrund grau (nicht buchbar), farbige Segmente je Zustand
+  var STCLS={frei:'s-frei',anfrage_direkt:'s-anfrageD',anfrage_absprache:'s-anfrageA',solo:'s-solo'};
+  function stateBar(segs,s,e){ var span=e-s||1; function pct(m){return (m-s)/span*100;} var inner=(segs||[]).map(function(g){ var a=toMin(g.start),b=toMin(g.end),cl=STCLS[g.state]||'s-frei'; return '<div class="fr-avseg '+cl+'" style="left:'+pct(a)+'%;width:'+(pct(b)-pct(a))+'%"></div>'; }).join(''); return '<div class="fr-avbar nb">'+inner+'</div>'; }
+
+  function render(d){
+    if(!d){ box.innerHTML='<div class="fr-avhint">Bitte zuerst ein Flugzeug wählen.</div>'; return; }
+    var sMin=toMin(d.dayStart), eMin=toMin(d.dayEnd), span=eMin-sMin||1;
+    fillTimes(sMin,eMin);   // Zeit-Dropdown auf Öffnungszeiten des Tages setzen
+    function pct(m){ return (m-sMin)/span*100; }
+    function segs(arr){ return arr.map(function(x){ return '<div class="fr-avseg" style="left:'+pct(x[0])+'%;width:'+(pct(x[1])-pct(x[0]))+'%"></div>'; }).join(''); }
+
+    // freie 2-Std-Bloecke
+    var blocks=freeBlocks(d.freeSlots,d.dayStart,d.dayEnd);
+    var sNow=st.value, eNow=et.value;
+    var blkHtml=blocks.length? blocks.map(function(b){ var on=(b.start===sNow&&b.end===eNow)?' on':''; return '<button type="button" class="fr-blk'+on+'" data-s="'+b.start+'" data-e="'+b.end+'">'+b.label+'</button>'; }).join('') : '<span class="fr-avhint">Keine freien 2-Std-Blöcke.</span>';
+
+    // Balken (mit konkreten Namen aus der Auswahl)
+    var acName=(ac.value!=='0'&&ac.selectedIndex>0)?ac.options[ac.selectedIndex].text:'';
+    var fiName=(fi.value!==''&&fi.selectedIndex>0)?fi.options[fi.selectedIndex].text:'';
+    var rows='';
+    if(d.aircraftFree){ rows+='<div class="fr-avrow"><div class="fr-avlab">Flugzeug<small>'+acName+'</small></div><div class="fr-avbar">'+segs(busy(d.aircraftFree,sMin,eMin))+'</div></div>'; }
+    if(d.instructorSegments){ rows+='<div class="fr-avrow"><div class="fr-avlab">Fluglehrer<small>'+fiName+'</small></div>'+stateBar(d.instructorSegments,sMin,eMin)+'</div>'; }
+    var bothLabel=(d.aircraftFree&&d.instructorFree)?'Beide frei':'Frei';
+    // Kombi "Frei" + Auswahlmarker
+    var s=toMin(sNow), e=toMin(eNow), selHtml='', conflict=false;
+    var comboBusy=busy(d.freeSlots,sMin,eMin);
+    if(s!=null&&e!=null&&e>s){ conflict=!(d.freeSlots||[]).some(function(w){return toMin(w.start)<=s&&toMin(w.end)>=e;}); selHtml='<div class="fr-avsel'+(conflict?' bad':'')+'" style="left:'+pct(s)+'%;width:'+(pct(e)-pct(s))+'%"></div>'; }
+    rows+='<div class="fr-avrow"><div class="fr-avlab strong">'+bothLabel+'</div><div class="fr-avbar combo">'+segs(comboBusy)+selHtml+'</div></div>';
+    // Achse
+    var ticks=[0,1,2,3,4].map(function(i){ return '<span>'+String(Math.round((sMin+span*i/4)/60)).padStart(2,'0')+'</span>'; }).join('');
+
+    box.innerHTML =
+      '<div class="fr-blocks">'+blkHtml+'</div>'+
+      '<div class="fr-avbox">'+rows+'<div class="fr-avaxis">'+ticks+'</div></div>'+
+      (conflict?'<div class="fr-avwarn">⚠ '+sNow+'–'+eNow+' ist (teils) belegt.</div>':'');
+
+    box.querySelectorAll('.fr-blk').forEach(function(b){ b.addEventListener('click',function(){ st.value=this.dataset.s; et.value=this.dataset.e; if(ed.value<sd.value||!ed.value)ed.value=sd.value; render(lastData); }); });
+  }
+
+  function load(){
+    var aid=parseInt(ac.value||'0',10);
+    if(!aid){ lastData=null; render(null); return; }
+    box.innerHTML='<div class="fr-avhint">Verfügbarkeit wird geladen…</div>';
+    var qs='date='+encodeURIComponent(sd.value)+'&aircraft='+aid+'&fi='+(parseInt(fi.value||'0',10)||0);
+    fetch('/api/availability?'+qs,{credentials:'same-origin',headers:{'Accept':'application/json'}})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ lastData=j; render(j); })
+      .catch(function(){ box.innerHTML='<div class="fr-avhint">Verfügbarkeit konnte nicht geladen werden.</div>'; });
+  }
+
+  // ---- Vergleich: andere Flugzeuge / Fluglehrer ----
+  var cmpAcT=document.getElementById('r_cmpAcToggle'), cmpAcP=document.getElementById('r_cmpAc'),
+      cmpFiT=document.getElementById('r_cmpFiToggle'), cmpFiP=document.getElementById('r_cmpFi');
+  function opts(sel,skipZero){ return Array.from(sel.options).filter(function(o){ return skipZero ? parseInt(o.value||'0',10)>0 : o.value!==''; }).map(function(o){ return {id:parseInt(o.value,10), label:o.textContent.trim()}; }); }
+
+  function loadCmp(kind){
+    var panel=kind==='ac'?cmpAcP:cmpFiP, list=kind==='ac'?opts(ac,true):opts(fi,false);
+    var selId=kind==='ac'?parseInt(ac.value||'0',10):parseInt(fi.value||'0',10), date=sd.value;
+    panel.innerHTML='<div class="fr-avhint">wird geladen…</div>';
+    Promise.all(list.map(function(o){
+      var qs=kind==='ac'?('date='+date+'&aircraft='+o.id+'&fi=0'):('date='+date+'&aircraft=0&fi='+o.id);
+      return fetch('/api/availability?'+qs,{credentials:'same-origin'}).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});
+    })).then(function(res){
+      var bounds=null, rows=[];
+      res.forEach(function(d,i){ if(!d)return; if(!bounds)bounds=[toMin(d.dayStart),toMin(d.dayEnd)]; rows.push({id:list[i].id,name:list[i].label, free:kind==='ac'?(d.aircraftFree||[]):null, segs:kind==='fi'?(d.instructorSegments||[]):null}); });
+      if(!bounds){ panel.innerHTML='<div class="fr-avhint">Keine Daten.</div>'; return; }
+      var sMin=bounds[0],eMin=bounds[1],span=eMin-sMin||1; function pct(m){return (m-sMin)/span*100;}
+      rows.sort(function(a,b){ return (b.id===selId?1:0)-(a.id===selId?1:0); });
+      var html=rows.map(function(r){
+        var bar = kind==='fi'
+          ? stateBar(r.segs,sMin,eMin)
+          : '<div class="fr-avbar">'+busy(r.free,sMin,eMin).map(function(x){return '<div class="fr-avseg" style="left:'+pct(x[0])+'%;width:'+(pct(x[1])-pct(x[0]))+'%"></div>';}).join('')+'</div>';
+        return '<div class="fr-avrow'+(r.id===selId?' cmpsel':'')+'"><div class="fr-avlab">'+r.name+'</div>'+bar+'</div>';
+      }).join('');
+      var ticks=[0,1,2,3,4].map(function(i){return '<span>'+String(Math.round((sMin+span*i/4)/60)).padStart(2,'0')+'</span>';}).join('');
+      panel.innerHTML='<div class="fr-avbox">'+html+'<div class="fr-avaxis">'+ticks+'</div></div>';
+    });
+  }
+  function toggle(kind){
+    var t=kind==='ac'?cmpAcT:cmpFiT, p=kind==='ac'?cmpAcP:cmpFiP, open=p.hidden;
+    p.hidden=!open; t.classList.toggle('open',open); t.querySelector('.ar').textContent=open?'▾':'▸';
+    if(open) loadCmp(kind);
+  }
+  cmpAcT.addEventListener('click',function(){ toggle('ac'); });
+  cmpFiT.addEventListener('click',function(){ toggle('fi'); });
+  function refreshCmp(){ if(!cmpAcP.hidden) loadCmp('ac'); if(!cmpFiP.hidden) loadCmp('fi'); }
+
+  // ---- Eigener Kalender-Picker (großes Monatsraster im Design) ----
+  var SERVER_TODAY='{{ today }}';
+  function pad2(n){ return (n<10?'0':'')+n; }
+  function setupDate(wrap){
+    var inp=wrap.querySelector('input[type=hidden]'), disp=wrap.querySelector('.fr-datedisp'), pop=wrap.querySelector('.fr-calpop');
+    var WD=['So','Mo','Di','Mi','Do','Fr','Sa'], MON=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'], view={};
+    function fmt(iso){ if(!iso) return '—'; var p=iso.split('-'); return WD[new Date(+p[0],+p[1]-1,+p[2]).getDay()]+' '+p[2]+'.'+p[1]+'.'+p[0]; }
+    function refresh(){ disp.textContent=fmt(inp.value); }
+    function build(){
+      var first=new Date(view.y,view.m-1,1), lead=(first.getDay()+6)%7, dim=new Date(view.y,view.m,0).getDate();
+      var cells=Math.ceil((lead+dim)/7)*7, start=new Date(view.y,view.m-1,1-lead);
+      var h='<div class="cal-head"><button type="button" data-nav="-1">‹</button><b>'+MON[view.m-1]+' '+view.y+'</b><button type="button" data-nav="1">›</button></div><div class="cal-grid">';
+      ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function(w){ h+='<span class="cal-wd">'+w+'</span>'; });
+      for(var i=0;i<cells;i++){
+        var dt=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+        var iso=dt.getFullYear()+'-'+pad2(dt.getMonth()+1)+'-'+pad2(dt.getDate());
+        var c='cal-day'+((dt.getMonth()+1!==view.m||dt.getFullYear()!==view.y)?' out':'');
+        if(iso===inp.value)c+=' sel'; if(iso===SERVER_TODAY)c+=' today';
+        h+='<button type="button" class="'+c+'" data-iso="'+iso+'">'+dt.getDate()+'</button>';
+      }
+      pop.innerHTML=h+'</div>';
+    }
+    function open(){ var p=(inp.value||SERVER_TODAY).split('-'); view={y:+p[0],m:+p[1]}; build(); pop.hidden=false; }
+    function close(){ pop.hidden=true; }
+    wrap.addEventListener('click',function(e){ if(e.target.closest('.fr-calpop')) return; pop.hidden?open():close(); });
+    pop.addEventListener('click',function(e){
+      e.stopPropagation();   // Klicks im Popup nicht zum Toggle/Close-Handler durchlassen
+      var nav=e.target.closest('[data-nav]'); if(nav){ view.m+=+nav.dataset.nav; if(view.m<1){view.m=12;view.y--;} if(view.m>12){view.m=1;view.y++;} build(); return; }
+      var day=e.target.closest('[data-iso]'); if(day){ inp.value=day.dataset.iso; refresh(); close(); inp.dispatchEvent(new Event('change')); }
+    });
+    document.addEventListener('click',function(e){ if(!wrap.contains(e.target)) close(); });
+    wrap._set=function(iso){ inp.value=iso; refresh(); };
+    refresh();
+  }
+  document.querySelectorAll('.fr-date').forEach(setupDate);
+
+  // Von-Datum ändern -> Bis-Datum gleichsetzen (inkl. Anzeige)
+  sd.addEventListener('change',function(){ var w=ed.closest('.fr-date'); if(w&&w._set){ w._set(sd.value); } else { ed.value=sd.value; } });
+
+  setupCombo(st); setupCombo(et);   // Zeit-Comboboxen aktivieren
+
+  // ---- Speichern über die API (POST /api/bookings) ----
+  var form=ac.closest('form'), saveBtn=document.getElementById('r_save'), msg=document.getElementById('r_msg');
+  function q(sel){ return form.querySelector(sel); }
+  function val(sel){ var el=q(sel); return el?el.value:''; }
+  function normTime(t){ var p=(t||'').split(':'); if(p.length<2) return t; return ('0'+p[0]).slice(-2)+':'+('0'+p[1]).slice(-2); }
+  function showMsg(html,kind){ msg.className='fr-msg '+kind; msg.innerHTML=html; msg.hidden=false; }
+  function buildBody(){
+    var purpose=q('input[name="flightpurposeid"]:checked'), emi=q('select[name="emailinfoi[]"]');
+    var emails=emi?Array.prototype.slice.call(emi.selectedOptions).map(function(o){return parseInt(o.value,10);}):[];
+    return {
+      aircraftId: parseInt(ac.value||'0',10),
+      flightinstructor: fi.value?parseInt(fi.value,10):null,
+      start: sd.value+' '+normTime(st.value),
+      end: ed.value+' '+normTime(et.value),
+      flightpurposeId: purpose?parseInt(purpose.value,10):0,
+      airfieldId: parseInt(val('select[name="airfieldid"]')||'0',10),
+      description: val('textarea[name="description"]'),
+      createdForUserId: parseInt(val('select[name="createdbyuserid"]')||'0',10),
+      emailInternUserIds: emails,
+      emailInfoExtern: val('input[name="emailinfoe"]')
+    };
+  }
+  form.addEventListener('submit',function(e){
+    e.preventDefault();
+    var body=buildBody(), errs=[];
+    if(!body.aircraftId) errs.push('Bitte ein Flugzeug wählen.');
+    if(!st.value||!et.value) errs.push('Bitte Von-/Bis-Zeit angeben.');
+    if(errs.length){ showMsg(errs.join('<br>'),'err'); return; }
+    saveBtn.disabled=true; saveBtn.textContent='Speichern…'; msg.hidden=true;
+    fetch('/api/bookings',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body)})
+      .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; },function(){ return {ok:r.ok,j:null}; }); })
+      .then(function(res){
+        if(res.ok && res.j && res.j.id){ window.location.href='/modern/buchung/'+res.j.id; return; }
+        saveBtn.disabled=false; saveBtn.textContent='Reservierung speichern';
+        var e=(res.j&&(res.j.errors||(res.j.error?[res.j.error]:null)))||['Speichern fehlgeschlagen.'];
+        showMsg('Reservierung nicht möglich:<br>'+e.join('<br>'),'err');
+      })
+      .catch(function(){ saveBtn.disabled=false; saveBtn.textContent='Reservierung speichern'; showMsg('Netzwerkfehler beim Speichern.','err'); });
+  });
+
+  [ac,fi,sd].forEach(function(el){ el.addEventListener('change',function(){ load(); refreshCmp(); }); });
+  [st,et].forEach(function(el){ el.addEventListener('change',function(){ render(lastData); }); });
+  fillTimes(6*60,22*60);   // Standard-Optionen, bis Verfügbarkeit (Öffnungszeiten) geladen ist
+  load();
+})();
+</script>
+{% endblock %}

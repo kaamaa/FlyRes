@@ -1,0 +1,33 @@
+# ---------------------------------------------------------------------------
+# Vorschau "modernes Web-Design" (Variante A). Eigene Datei, damit
+# config/routes.yaml unangetastet bleibt. Zugriff: eingeloggt (ROLE_PILOT),
+# Pruefung im Controller. Filter laufen ueber Query-Parameter
+# (?zeitraum=&umfang=&zweck=&gruppieren=&q=).
+# ---------------------------------------------------------------------------
+
+modern_bookings:
+    path: /modern
+    controller: App\Controller\ModernPreviewController::bookings
+    methods: GET
+
+modern_overview:
+    path: /modern/auslastung
+    controller: App\Controller\ModernPreviewController::overview
+    methods: GET
+
+modern_day:
+    path: /modern/tag
+    controller: App\Controller\ModernPreviewController::day
+    methods: GET
+
+modern_booking:
+    path: /modern/buchung/{id}
+    controller: App\Controller\ModernPreviewController::booking
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_reserve:
+    path: /modern/reservieren
+    controller: App\Controller\ModernPreviewController::reserve
+    methods: GET

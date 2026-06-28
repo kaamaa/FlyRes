@@ -115,6 +115,11 @@ function busyIntervals(freeWindows, s, e) {
 const dayBounds = computed(() => avail.value ? { s: toMin(avail.value.dayStart), e: toMin(avail.value.dayEnd) } : null)
 function pct(min) { const b = dayBounds.value; return ((min - b.s) / (b.e - b.s)) * 100 }
 function segsToPct(intervals) { return intervals.map(([s, e]) => ({ left: pct(s), width: pct(e) - pct(s) })) }
+// Fluglehrer-Zustände -> Segmente mit CSS-Klasse (frei/auf Anfrage/Solo)
+const STMAP = { frei: 's-frei', anfrage_direkt: 's-anfrageD', anfrage_absprache: 's-anfrageA', solo: 's-solo' }
+function stateSegsToPct(segments) {
+  return (segments || []).map((s) => ({ left: pct(toMin(s.start)), width: pct(toMin(s.end)) - pct(toMin(s.start)), cls: STMAP[s.state] || 's-frei' }))
+}
 
 const aircraftLabel = computed(() => { const a = props.md.aircraft.find((x) => x.id === aircraftId.value); return a ? a.callsign : '' })
 const fiLabel = computed(() => { const i = props.md.instructors.find((x) => x.id === fiId.value); return i ? i.name : '' })
@@ -122,8 +127,8 @@ const fiLabel = computed(() => { const i = props.md.instructors.find((x) => x.id
 const availRows = computed(() => {
   if (!avail.value || !dayBounds.value) return []
   const b = dayBounds.value, rows = []
-  if (aircraftId.value && avail.value.aircraftFree) rows.push({ key: 'ac', t: 'Flugzeug', sub: aircraftLabel.value, busy: segsToPct(busyIntervals(avail.value.aircraftFree, b.s, b.e)) })
-  if (fiId.value && avail.value.instructorFree) rows.push({ key: 'fi', t: 'Fluglehrer', sub: fiLabel.value, busy: segsToPct(busyIntervals(avail.value.instructorFree, b.s, b.e)) })
+  if (aircraftId.value && avail.value.aircraftFree) rows.push({ key: 'ac', mode: 'ac', t: 'Flugzeug', sub: aircraftLabel.value, busy: segsToPct(busyIntervals(avail.value.aircraftFree, b.s, b.e)) })
+  if (fiId.value && avail.value.instructorSegments) rows.push({ key: 'fi', mode: 'fi', t: 'Fluglehrer', sub: fiLabel.value, states: stateSegsToPct(avail.value.instructorSegments) })
   return rows
 })
 const comboBusy = computed(() => (avail.value && dayBounds.value) ? segsToPct(busyIntervals(avail.value.freeSlots, dayBounds.value.s, dayBounds.value.e)) : [])
@@ -211,7 +216,7 @@ async function loadCmpFi() {
       api.availability({ date: startDate.value, aircraft: 0, fi: i.id }).catch(() => null)))
     const rows = list.map((i, idx) => ({
       id: i.id, name: i.name,
-      busy: res[idx]?.instructorFree ? segsToPct(busyIntervals(res[idx].instructorFree, b.s, b.e)) : [],
+      states: res[idx]?.instructorSegments ? stateSegsToPct(res[idx].instructorSegments) : [],
       selected: i.id === fiId.value,
     }))
     const sel = rows.find((r) => r.selected)
@@ -341,8 +346,13 @@ defineExpose({ submit: save })
         <div class="av3box">
           <div v-for="r in availRows" :key="r.key" class="av3row">
             <div class="av3lab">{{ r.t }}<br><small>{{ r.sub }}</small></div>
-            <div class="av3bar">
-              <div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
+            <div class="av3bar" :class="{ nb: r.mode === 'fi' }">
+              <template v-if="r.mode === 'fi'">
+                <div v-for="(seg, i) in r.states" :key="i" class="av3seg" :class="seg.cls" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
+              </template>
+              <template v-else>
+                <div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
+              </template>
             </div>
           </div>
           <div class="av3row">
@@ -356,6 +366,10 @@ defineExpose({ submit: save })
         </div>
         <!-- Nur Warnung bei Konflikt; "frei" waere redundant zum ausgewaehlten Block oben. -->
         <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+        <div v-if="fiId" class="av3legend">
+          <span class="note">Fluglehrer: Vollton = direkt buchbar · gestreift = nach Absprache · grau = nicht buchbar</span>
+          <span><i class="s-frei"></i>frei</span><span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span><span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span><span><i class="s-solo"></i>Solo</span><span><i class="nb"></i>nicht buchbar</span>
+        </div>
       </template>
       <template v-else>
         <div class="ftitle"><Icon name="chart" /> Verfügbarkeit</div>
@@ -382,7 +396,7 @@ defineExpose({ submit: save })
         <template v-else>
           <div v-for="r in cmpFi" :key="r.id" class="av3row" :class="{ cmpsel: r.selected }">
             <div class="av3lab">{{ r.name }}</div>
-            <div class="av3bar"><div v-for="(seg, i) in r.busy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div></div>
+            <div class="av3bar nb"><div v-for="(seg, i) in r.states" :key="i" class="av3seg" :class="seg.cls" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div></div>
           </div>
           <div class="av3axis"><span v-for="(t, i) in axisTicks" :key="i">{{ t }}</span></div>
         </template>

@@ -1,0 +1,90 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}{{ umfang == 'historie' ? 'Meine Historie' : (umfang == 'meine' ? 'Meine Buchungen' : 'Alle Buchungen') }}{% endblock %}
+
+{% block topactions %}
+  <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_reserve') }}">＋ Neue Reservierung</a>
+{% endblock %}
+
+{% block content %}
+  <form method="get" action="{{ path('modern_bookings') }}" class="fr-toolbar">
+    {# Zeile 1: Suche #}
+    <div class="fr-trow">
+      <div class="fr-searchwrap">
+        <input type="search" name="q" value="{{ q }}" class="fr-search"
+               placeholder="🔍 Suchen (Pilot, Flugzeug, Beschreibung, Fluglehrer …)">
+      </div>
+    </div>
+
+    {# Zeile 2: Filter #}
+    <div class="fr-trow">
+      <label class="fr-fl">Zeitraum
+        <select name="zeitraum" onchange="this.form.submit()" {{ umfang == 'historie' ? 'disabled' : '' }}>
+          {% set zopts = {'date':'Alle','today':'Heute','tomorrow':'Morgen','thisweek':'Diese Woche','weekafter':'Nächste Woche','thisweekend':'Dieses Wochenende','nextweekend':'Nächstes Wochenende','thismonth':'Dieser Monat'} %}
+          {% for v, l in zopts %}<option value="{{ v }}" {{ zeitraum == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+
+      <label class="fr-fl">Gruppieren
+        <select name="gruppieren" onchange="this.form.submit()">
+          {% set gopts = {'datum':'Datum','flugzeug':'Flugzeug','fluglehrer':'Fluglehrer','nutzer':'Nutzer'} %}
+          {% for v, l in gopts %}<option value="{{ v }}" {{ gruppieren == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+
+      <label class="fr-fl">Zweck
+        <select name="zweck" onchange="this.form.submit()">
+          {% set wopts = {'alle':'Alle','charter':'Charter','schulung':'Schulung','wartung':'Wartung'} %}
+          {% for v, l in wopts %}<option value="{{ v }}" {{ zweck == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+
+      <span class="fr-umfang">
+        <label class="{{ umfang == 'alle' ? 'on' : '' }}"><input type="radio" name="umfang" value="alle" {{ umfang == 'alle' ? 'checked' : '' }} onchange="this.form.submit()">Alle</label>
+        <label class="{{ umfang == 'meine' ? 'on' : '' }}"><input type="radio" name="umfang" value="meine" {{ umfang == 'meine' ? 'checked' : '' }} onchange="this.form.submit()">Meine</label>
+        <label class="{{ umfang == 'historie' ? 'on' : '' }}"><input type="radio" name="umfang" value="historie" {{ umfang == 'historie' ? 'checked' : '' }} onchange="this.form.submit()">Historie</label>
+      </span>
+
+      <button type="submit" class="fr-applybtn">Suchen</button>
+      <a class="fr-clear" href="{{ path('modern_bookings') }}">Zurücksetzen</a>
+    </div>
+  </form>
+
+  {% set g = gruppieren|default('datum') %}
+  {% set group1 = '__none__' %}
+  {% set group2 = '__none__' %}
+  {% for b in bookings %}
+    {% set k1 = g == 'flugzeug' ? b.flugzeug : (g == 'fluglehrer' ? (b.flightinstructor ?: 'Ohne Fluglehrer') : (g == 'nutzer' ? b.user : b.date)) %}
+    {% set k2 = g == 'datum' ? b.flugzeug : b.date %}
+
+    {% if group1 != k1 %}
+      {% set group1 = k1 %}
+      {% set group2 = '__none__' %}
+      <div class="fr-dayhd">{{ g == 'datum' ? '📅' : (g == 'flugzeug' ? '🛩️' : (g == 'fluglehrer' ? '🧑‍✈️' : '👤')) }} {{ k1 }}</div>
+    {% endif %}
+    {% if group2 != k2 %}
+      {% set group2 = k2 %}
+      <div class="fr-acrow">{{ k2 }}</div>
+    {% endif %}
+
+    {% set p = b.flightpurpose|lower %}
+    {% set pcls = 'charter' %}
+    {% if 'chul' in p %}{% set pcls = 'schul' %}{% elseif 'artung' in p %}{% set pcls = 'wart' %}{% endif %}
+
+    <a class="fr-bk" href="{{ path('modern_booking', {id: b.bookingid}) }}">
+      <span class="fr-tm">{{ b.start }}–{{ b.end }}</span>
+      <span class="fr-who">
+        <b>{{ g == 'nutzer' ? (b.flugzeug) : b.user }}</b>
+        <small>
+          {%- if g != 'flugzeug' and g != 'nutzer' %}{{ b.flugzeug }} · {% endif -%}
+          {{- b.flightpurpose -}}
+          {%- if b.isflighttraining and b.flightinstructor and g != 'fluglehrer' %} · FI: {{ b.flightinstructor }}{% endif -%}
+          {%- if b.description %} · {{ b.description }}{% endif -%}
+        </small>
+      </span>
+      <span class="fr-pill {{ pcls }}">{{ b.flightpurpose }}</span>
+    </a>
+  {% else %}
+    <div class="fr-empty">Keine Buchungen für diese Filter.</div>
+  {% endfor %}
+{% endblock %}

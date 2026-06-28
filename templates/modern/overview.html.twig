@@ -1,0 +1,51 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Flottenauslastung{% endblock %}
+
+{% block topactions %}
+  <span class="fr-ansicht">
+    <a class="{{ ansicht == '14tage' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: '14tage'}) }}">14 Tage</a>
+    <a class="{{ ansicht == 'monat' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: 'monat'}) }}">Monat</a>
+  </span>
+  <span class="fr-pernav">
+    <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
+    <b>{{ label }}</b>
+    <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
+  </span>
+  <span class="fr-scale">frei
+    <i class="occ-leer"></i><i class="occ-wenig"></i><i class="occ-mittel"></i><i class="occ-voll"></i><i class="occ-sehrvoll"></i><i class="occ-ausgebucht"></i>
+    ausgebucht</span>
+{% endblock %}
+
+{% block content %}
+  <div class="fr-ovwrap">
+    <table class="fr-matrix">
+      <thead>
+        <tr>
+          <th class="fr-corner">Flugzeug</th>
+          {% for d in days %}
+            <th class="fr-day {{ d.wend }} {{ d.today ? 'today' : '' }}"><span class="wd">{{ d.wd }}</span>{{ d.num }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in planes %}
+          {% set row = cells[p.planeID]|default([]) %}
+          <tr>
+            <td class="fr-ac"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></td>
+            {% for c in row %}
+              {% set d = days[loop.index0] %}
+              <td class="{{ d.wend }}">
+                <a class="fr-cell occ-{{ c.color }} {{ d and d.today ? 'today' : '' }}"
+                   href="{{ path('modern_day', {plane: p.planeID, date: d.iso}) }}"
+                   title="{{ c.tooltip ? (c.tooltip|replace({'<br>': ' · '})|striptags) : 'frei' }}"></a>
+              </td>
+            {% endfor %}
+          </tr>
+        {% else %}
+          <tr><td class="fr-empty">Keine Flugzeuge.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

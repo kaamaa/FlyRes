@@ -3,6 +3,7 @@
 namespace App\Controller\Api;
 
 use App\Entities\Bookings;
+use App\Entities\FlightPurposes;
 use App\Entities\Planes;
 use App\Entities\Users;
 use App\TimeFunctions;
@@ -57,7 +58,9 @@ class AvailabilityController extends ApiController
 
         // --- Verfuegbarkeiten der bestehenden Logik holen und parsen ---
         $planeBlocks = $this->parseBlocks(Bookings::GetAllAvailablePlanesForADate($em, $clientid, $date));
-        $fiBlocks    = $this->parseBlocks(Bookings::GetAllAvailableFIsForADate($em, $clientid, $date));
+        $fiHtml      = Bookings::GetAllAvailableFIsForADate($em, $clientid, $date);
+        $fiBlocks    = $this->parseBlocks($fiHtml);
+        $fiSegBlocks = $this->parseSegments($fiHtml);
 
         // --- Flugzeug: freie Luecken fuer das gewaehlte Flugzeug ---
         $aircraftFree = null;
@@ -75,6 +78,56 @@ class AvailabilityController extends ApiController
             $instructorFree = ($fiName !== null) ? ($fiBlocks[$fiName] ?? []) : [];
         }
 
+        // --- Fluglehrer-ZUSTAENDE (frei / auf Anfrage direkt / nach Absprache / nicht buchbar) ---
+        $instructorSegments = null;
+        if ($fiId) {
+            // Nur Flag 1 (= echter Dummy-/immer-fuer-alle-Fluglehrer) gilt fuer die ANZEIGE
+            // als ganztaegig frei. 2/3 (fuer sich selbst / Admins) sind reale Lehrer ->
+            // echte Verfuegbarkeit anzeigen; die Sonder-Buchbarkeit bleibt Sache der Speichern-Pruefung.
+            if (Users::IsFlightinstructorAlwaysAvailable($em, $fiId)) {
+                // Dummy-Fluglehrer (Flag 1): ganzer Tag frei
+                $instructorSegments = [['start' => $this->min2str($dayStart), 'end' => $this->min2str($dayEnd), 'state' => 'frei']];
+            } else {
+                $onReq = Users::IsFlightinstructorBookableOnRequest($em, $fiId);
+                $raw = ($fiName !== null) ? ($fiSegBlocks[$fiName] ?? []) : [];
+                $instructorSegments = array_map(function (array $s) use ($onReq) {
+                    $state = $s[2] === 'anfrage'
+                        ? ($onReq ? 'anfrage_direkt' : 'anfrage_absprache')
+                        : 'frei';
+                    return ['start' => $this->min2str($s[0]), 'end' => $this->min2str($s[1]), 'state' => $state];
+                }, $raw);
+
+                // Solo-Parallel: Solo-Schulflug-Buchungen des Lehrers sind bei FiParallelBookings=1
+                // weiterhin (fuer eine weitere Solo-Schulung) buchbar -> als 'solo' markieren.
+                if (Users::AllowDoubleBookingsforFlightinstructor($em, $fiId)) {
+                    $bks = $em->createQuery(
+                        "SELECT b FROM App\Entity\FresBooking b WHERE b.clientid = :c AND b.flightinstructor = :fi "
+                        . "AND b.status NOT IN ('storniert','flugzeug_geloescht','user_geloescht') "
+                        . "AND b.itemstart < :to AND b.itemstop > :from"
+                    )->setParameters([
+                        'c' => $clientid, 'fi' => $fiId,
+                        'from' => $date->format('Y-m-d 00:00:00'),
+                        'to'   => (clone $date)->modify('+1 day')->format('Y-m-d 00:00:00'),
+                    ])->getResult();
+                    $dayStr = $date->format('Y-m-d');
+                    foreach ($bks as $b) {
+                        if (!FlightPurposes::IsSolo($b->getFlightpurposeid())) {
+                            continue;
+                        }
+                        $bs = ($b->getItemstart()->format('Y-m-d') < $dayStr)
+                            ? $dayStart : (int) $b->getItemstart()->format('H') * 60 + (int) $b->getItemstart()->format('i');
+                        $be = ($b->getItemstop()->format('Y-m-d') > $dayStr)
+                            ? $dayEnd : (int) $b->getItemstop()->format('H') * 60 + (int) $b->getItemstop()->format('i');
+                        $bs = max($bs, $dayStart);
+                        $be = min($be, $dayEnd);
+                        if ($be > $bs) {
+                            $instructorSegments[] = ['start' => $this->min2str($bs), 'end' => $this->min2str($be), 'state' => 'solo'];
+                        }
+                    }
+                }
+            }
+        }
+
         // --- Gemeinsame freie Slots = Tagesfenster geschnitten mit den Auswahlen ---
         $slots = [[$dayStart, $dayEnd]];
         if ($aircraftFree !== null) {
@@ -90,9 +143,10 @@ class AvailabilityController extends ApiController
             'dayEnd'         => $this->min2str($dayEnd),
             'aircraftId'     => $aircraftId ?: null,
             'aircraftFree'   => $aircraftFree === null ? null : $this->slotsOut($aircraftFree),
-            'instructorId'   => $fiId ?: null,
-            'instructorFree' => $instructorFree === null ? null : $this->slotsOut($instructorFree),
-            'freeSlots'      => $this->slotsOut($slots, true),
+            'instructorId'       => $fiId ?: null,
+            'instructorFree'     => $instructorFree === null ? null : $this->slotsOut($instructorFree),
+            'instructorSegments' => $instructorSegments,
+            'freeSlots'          => $this->slotsOut($slots, true),
         ]);
     }
 
@@ -123,6 +177,40 @@ class AvailabilityController extends ApiController
                 }
             }
             // Mehrere Bloecke mit gleichem Label zusammenfuehren (Sicherheit)
+            $out[$label] = array_merge($out[$label] ?? [], $list);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Wie parseBlocks, aber je Zeitbereich zusaetzlich die Art:
+     * 'anfrage' (oranger <span>) oder 'frei' (normaler <span>).
+     * Rueckgabe: [ label => [ [startMin, endMin, kind], ... ] ]
+     */
+    private function parseSegments(string $html): array
+    {
+        $out = [];
+        foreach (explode('<br>', $html) as $block) {
+            if (trim($block) === '' || !preg_match('/<b>(.*?)<\/b>/s', $block, $m)) {
+                continue;
+            }
+            $label = trim($m[1]);
+            $list = [];
+            if (preg_match_all('/<span([^>]*)>(.*?)<\/span>/s', $block, $spans, PREG_SET_ORDER)) {
+                foreach ($spans as $sp) {
+                    $kind = (stripos($sp[1], 'orange') !== false) ? 'anfrage' : 'frei';
+                    if (preg_match_all('/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/', $sp[2], $ranges, PREG_SET_ORDER)) {
+                        foreach ($ranges as $r) {
+                            $start = (int) $r[1] * 60 + (int) $r[2];
+                            $end   = (int) $r[3] * 60 + (int) $r[4];
+                            if ($end > $start) {
+                                $list[] = [$start, $end, $kind];
+                            }
+                        }
+                    }
+                }
+            }
             $out[$label] = array_merge($out[$label] ?? [], $list);
         }
 

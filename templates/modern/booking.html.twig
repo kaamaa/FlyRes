@@ -1,0 +1,28 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Buchungsdetails{% endblock %}
+
+{% block topactions %}
+  <a class="fr-btn ghost" href="javascript:history.back()">‹ Zurück</a>
+  {% if modify %}
+    <a class="fr-btn ghost" style="margin-left:auto;" href="#">Bearbeiten</a>
+    <a class="fr-btn danger" href="#">Stornieren</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="fr-detail">
+    <div class="fr-kv full"><span class="k">Zeitraum</span><span class="v">{{ start }} – {{ end }}</span></div>
+    <div class="fr-kv"><span class="k">Flugzeug</span><span class="v">{{ flugzeug }}</span></div>
+    <div class="fr-kv"><span class="k">Flugzweck</span><span class="v">{{ flightpurpose }}</span></div>
+    <div class="fr-kv"><span class="k">Pilot</span><span class="v">{{ ReservedForUser }}</span></div>
+    <div class="fr-kv"><span class="k">Fluglehrer</span><span class="v">{{ flightinstructor ?: '—' }}</span></div>
+    <div class="fr-kv"><span class="k">Flugplatz</span><span class="v">{{ airfield }}</span></div>
+    <div class="fr-kv"><span class="k">Kontakt</span><span class="v">{{ telmobile ?: telhome ?: teloffice ?: '—' }}</span></div>
+    <div class="fr-kv full"><span class="k">Beschreibung</span><span class="v">{{ description ?: '—' }}</span></div>
+  </div>
+
+  <div class="fr-detmeta">
+    Reserviert von {{ ReservedForUser }} am {{ ReservedAt }}{% if ChangedAt %} · zuletzt geändert am {{ ChangedAt }}{% endif %}
+  </div>
+{% endblock %}

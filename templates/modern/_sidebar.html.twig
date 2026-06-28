@@ -1,0 +1,31 @@
+{# Sidebar-Navigation (Variante A). Buchungs-Ansichten zeigen schon das neue
+   Design (modern_bookings + command); Stammdaten/Verwaltung folgen als naechste
+   Scheiben und sind hier als "bald" markiert. #}
+{% set u = umfang|default('alle') %}
+{% set route = app.request.attributes.get('_route') %}
+<div class="fr-side">
+  <div class="fr-brand"><span>✈</span> FlyRes</div>
+
+  <a class="fr-nav fr-navnew {{ route == 'modern_reserve' ? 'on' : '' }}" href="{{ path('modern_reserve') }}"><span class="ic">＋</span> Reservieren</a>
+
+  <div class="fr-navsec">Ansichten</div>
+  <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}"><span class="ic">📋</span> Alle Buchungen</a>
+  <a class="fr-nav {{ route == 'modern_bookings' and u != 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings', {umfang: 'meine'}) }}"><span class="ic">👤</span> Meine Buchungen</a>
+  <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}"><span class="ic">📊</span> Übersicht</a>
+
+  <div class="fr-navsec">Stammdaten <span class="fr-soon">bald</span></div>
+  <span class="fr-nav muted"><span class="ic">🛩️</span> Flugzeuge</span>
+  <span class="fr-nav muted"><span class="ic">🎓</span> Lizenzen</span>
+  <span class="fr-nav muted"><span class="ic">📌</span> Pinnwand</span>
+
+  <div class="fr-navsec">Verwaltung <span class="fr-soon">bald</span></div>
+  <span class="fr-nav muted"><span class="ic">👥</span> Nutzer</span>
+  <span class="fr-nav muted"><span class="ic">⚙️</span> Mandanten</span>
+
+  <div class="fr-usr">
+    <span class="ava">{{ (app.user.firstname|default('')|first) ~ (app.user.lastname|default('')|first) }}</span>
+    <div>{{ app.user.firstname|default('') }} {{ app.user.lastname|default('') }}<br>
+      <span style="color:#7f93a8;font-size:11px;">Vorschau · Variante A</span>
+    </div>
+  </div>
+</div>
