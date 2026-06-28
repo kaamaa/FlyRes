@@ -1,0 +1,89 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}{{ isNew ? 'Neuer Pinnwandeintrag' : 'Pinnwandeintrag bearbeiten' }}{% endblock %}
+
+{% block content %}
+<form class="fr-form" action="{{ path('modern_note_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">
+      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="fr-formsec">Eintrag</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Titel</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <input type="text" name="header" value="{{ v.header }}" maxlength="255" placeholder="Überschrift …">
+      </div>
+    </div>
+    <div class="fr-frow col">
+      <label>Text</label>
+      <textarea name="description" class="fr-area" rows="5" placeholder="Nachricht für die Pinnwand …">{{ v.description }}</textarea>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Gültigkeit</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Gültig bis</label>
+      <div class="fr-ctrl dt fr-date">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <span class="fr-datedisp"></span>
+        <input type="hidden" name="validuntil" id="n_vu" value="{{ v.validuntil }}">
+        <div class="fr-calpop" hidden></div>
+      </div>
+    </div>
+    <div class="fr-hint">
+      {% if isSysAdmin %}Als System-Admin ohne Begrenzung wählbar.{% else %}Maximal einen Monat in der Zukunft.{% endif %}
+    </div>
+  </div>
+
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn">Eintrag speichern</button>
+    <a class="fr-clear" href="{{ path('modern_notes') }}">Abbrechen</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  var SERVER_TODAY = '{{ today }}';
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function setupDate(wrap) {
+    var inp = wrap.querySelector('input[type=hidden]'), disp = wrap.querySelector('.fr-datedisp'), pop = wrap.querySelector('.fr-calpop');
+    var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'], MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'], view = {};
+    function fmt(iso) { if (!iso) return 'Bitte wählen…'; var p = iso.split('-'); return WD[new Date(+p[0],+p[1]-1,+p[2]).getDay()] + ' ' + p[2] + '.' + p[1] + '.' + p[0]; }
+    function refresh() { disp.textContent = fmt(inp.value); }
+    function build() {
+      var first = new Date(view.y, view.m-1, 1), lead = (first.getDay()+6)%7, dim = new Date(view.y, view.m, 0).getDate();
+      var cells = Math.ceil((lead+dim)/7)*7, start = new Date(view.y, view.m-1, 1-lead);
+      var h = '<div class="cal-head"><button type="button" data-nav="-1">‹</button><b>' + MON[view.m-1] + ' ' + view.y + '</b><button type="button" data-nav="1">›</button></div><div class="cal-grid">';
+      ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function (w) { h += '<span class="cal-wd">' + w + '</span>'; });
+      for (var i = 0; i < cells; i++) {
+        var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+        var iso = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
+        var c = 'cal-day' + ((dt.getMonth()+1 !== view.m || dt.getFullYear() !== view.y) ? ' out' : '');
+        if (iso === inp.value) c += ' sel'; if (iso === SERVER_TODAY) c += ' today';
+        h += '<button type="button" class="' + c + '" data-iso="' + iso + '">' + dt.getDate() + '</button>';
+      }
+      pop.innerHTML = h + '</div>';
+    }
+    function open() { var p = (inp.value || SERVER_TODAY).split('-'); view = {y:+p[0], m:+p[1]}; build(); pop.hidden = false; }
+    function close() { pop.hidden = true; }
+    wrap.addEventListener('click', function (e) { if (e.target.closest('.fr-calpop')) return; pop.hidden ? open() : close(); });
+    pop.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var nav = e.target.closest('[data-nav]'); if (nav) { view.m += +nav.dataset.nav; if (view.m<1){view.m=12;view.y--;} if (view.m>12){view.m=1;view.y++;} build(); return; }
+      var day = e.target.closest('[data-iso]'); if (day) { inp.value = day.dataset.iso; refresh(); close(); }
+    });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) close(); });
+    refresh();
+  }
+  document.querySelectorAll('.fr-date').forEach(setupDate);
+})();
+</script>
+{% endblock %}

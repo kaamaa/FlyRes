@@ -1,0 +1,33 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}{{ isNew ? 'Neuer Mandant' : 'Mandant bearbeiten' }}{% endblock %}
+
+{% block content %}
+<form class="fr-form" action="{{ path('modern_mandant_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="fr-formsec">Flugschule</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Name der Flugschule</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></span>
+        <input type="text" name="name" value="{{ v.name }}" maxlength="150" placeholder="z. B. Flugschule Worms">
+      </div>
+    </div>
+    <label class="fr-check">
+      <input type="checkbox" name="active" value="1" {{ v.active ? 'checked' : '' }}>
+      <span>Aktiv. Inaktive Mandanten sind gesperrt.</span>
+    </label>
+  </div>
+
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn">Mandant speichern</button>
+    <a class="fr-clear" href="{{ path('modern_mandanten') }}">Abbrechen</a>
+  </div>
+</form>
+{% endblock %}

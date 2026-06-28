@@ -1,0 +1,133 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Dashboard{% endblock %}
+
+{% block content %}
+  {# ---- Begrüßung + Schnellaktionen ---- #}
+  <div class="fr-dash-hd">
+    <div class="fr-dash-hi">
+      <span class="fr-dash-av">{{ (app.user.firstname|default('')|first) ~ (app.user.lastname|default('')|first) }}</span>
+      <div>
+        <h2>Hallo {{ vorname|default('') }}</h2>
+        <div class="sub">{{ heute }}</div>
+      </div>
+    </div>
+    <div class="fr-dash-quick">
+      <a class="fr-btn" href="{{ path('modern_reserve') }}">＋ Reservieren</a>
+      <a class="fr-btn ghost" href="{{ path('modern_overview') }}">Wochenübersicht</a>
+      <a class="fr-btn ghost" href="{{ path('modern_bookings', {umfang: 'meine'}) }}">Meine Buchungen</a>
+    </div>
+  </div>
+
+  {# ---- Lizenz-Warn-Banner ---- #}
+  {% if warn %}
+  <div class="fr-dash-warn red">
+    <span class="ic">⚠️</span>
+    <div class="t">
+      <b>{{ warn.name }} {{ warn.expired ? 'ist abgelaufen' : 'läuft bald ab' }}</b>
+      <div>
+        {%- if warn.expired %}Abgelaufen am {{ warn.date }} – bitte umgehend erneuern.
+        {%- else %}Nur noch <b>{{ warn.days }} {{ warn.days == 1 ? 'Tag' : 'Tage' }}</b> gültig – bis {{ warn.date }}. Bitte rechtzeitig verlängern.{% endif -%}
+      </div>
+    </div>
+    <a class="fr-btn" href="{{ path('modern_licences') }}">Meine Lizenzen</a>
+  </div>
+  {% endif %}
+
+  {# ---- Hauptraster ---- #}
+  <div class="fr-dash-grid">
+
+    {# Meine nächsten Buchungen #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Meine nächsten Buchungen</h3><a href="{{ path('modern_bookings', {umfang: 'meine'}) }}">alle ›</a></div>
+      {% for b in myBookings %}
+        <a class="fr-bk" href="{{ path('modern_booking', {id: b.id}) }}">
+          <div class="fr-tm">{{ b.tag }}<br>{{ b.zeit }}</div>
+          <div class="fr-who"><b>{{ b.flugzeug }}</b><small>{{ b.purpose }}{% if b.fi %} · FI: {{ b.fi }}{% endif %}{% if b.desc %} · {{ b.desc }}{% endif %}</small></div>
+          <span class="fr-pill {{ b.kind }}">{{ b.purpose }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine anstehenden Buchungen. <a href="{{ path('modern_reserve') }}">Jetzt reservieren ›</a></div>
+      {% endfor %}
+    </section>
+
+    {# Meine Lizenzen #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Meine Lizenzen</h3><a href="{{ path('modern_licences') }}">alle ›</a></div>
+      <div class="fr-dash-ampel">
+        <span><i class="green"></i>{{ kpi.green + kpi.inf }} gültig</span>
+        <span><i class="amber"></i>{{ kpi.amber }} unter 12 Mon.</span>
+        <span><i class="red"></i>{{ kpi.red }} läuft bald ab</span>
+      </div>
+      {% for l in myLicences %}
+        <a class="fr-lcard" href="{{ path('modern_licences') }}">
+          <div class="fr-lbar {{ l.state }}"></div>
+          <div class="fr-linfo"><div class="fr-lname">{{ l.name }}{% if l.full %} <span class="full">{{ l.full }}</span>{% endif %}</div><div class="fr-lsub">{{ l.validity }}</div></div>
+          <span class="fr-ltag {{ l.state }}">{{ l.badge }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine Lizenzen hinterlegt.</div>
+      {% endfor %}
+    </section>
+
+    {# Meine Schulungstermine (nur Fluglehrer) #}
+    {% if isFi %}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Meine Schulungstermine</h3><span class="fr-roletag fi">Fluglehrer</span></div>
+      {% for b in fiBookings %}
+        <a class="fr-bk" href="{{ path('modern_booking', {id: b.id}) }}">
+          <div class="fr-tm">{{ b.tag }}<br>{{ b.zeit }}</div>
+          <div class="fr-who"><b>{{ b.flugzeug }}</b><small>Schüler: {{ b.pilot }}{% if b.desc %} · {{ b.desc }}{% endif %}</small></div>
+          <span class="fr-pill {{ b.kind }}">{{ b.purpose }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine anstehenden Schulungstermine.</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {# Pinnwand #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>📌 Pinnwand</h3><a href="{{ path('modern_notes') }}">alle ›</a></div>
+      {% for n in notes %}
+        <div class="fr-dash-note"><b>{{ n.header }}</b><p>{{ n.text }}</p><small>{{ n.author }}{% if n.validuntil %} · bis {{ n.validuntil }}{% endif %}</small></div>
+      {% else %}
+        <div class="fr-dash-empty">Keine aktuellen Aushänge.</div>
+      {% endfor %}
+    </section>
+
+  </div>
+
+  {# ---- Administration (nur Admins) ---- #}
+  {% if isAdmin %}
+  <div class="fr-dash-adminsec">Administration <span class="fr-roletag admin">Admin</span></div>
+  <div class="fr-dash-grid">
+
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Ablaufende Lizenzen (alle Nutzer)</h3><a href="{{ path('modern_licences', {scope: 'abgelaufen'}) }}">alle ›</a></div>
+      {% for l in adminLic %}
+        <a class="fr-lcard" href="{{ path('modern_licences', {scope: 'abgelaufen'}) }}">
+          <div class="fr-lbar red"></div>
+          <div class="fr-linfo"><div class="fr-lname">{{ l.user }} <span class="full">· {{ l.name }}</span></div><div class="fr-lsub">{{ l.validity }}</div></div>
+          <span class="fr-ltag red">{{ l.badge }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine ablaufenden Lizenzen. 👍</div>
+      {% endfor %}
+    </section>
+
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Club-Kennzahlen</h3></div>
+      <div class="fr-stat-tiles">
+        <div class="fr-stat"><div class="v">{{ stats.bookToday }}</div><div class="k">Buchungen heute</div></div>
+        <div class="fr-stat"><div class="v">{{ stats.bookWeek }}</div><div class="k">Buchungen diese Woche</div></div>
+        <div class="fr-stat"><div class="v">{{ stats.users }}</div><div class="k">aktive Nutzer</div></div>
+        <div class="fr-stat"><div class="v">{{ stats.aircraft }}</div><div class="k">Flugzeuge</div></div>
+        <div class="fr-stat {{ stats.expiredLic > 0 ? 'warn' : '' }}"><div class="v">{{ stats.expiredLic }}</div><div class="k">abgelaufene Lizenzen</div></div>
+        <div class="fr-stat {{ stats.locked > 0 ? 'warn' : '' }}"><div class="v">{{ stats.locked }}</div><div class="k">gesperrte Konten</div></div>
+      </div>
+    </section>
+
+  </div>
+  {% endif %}
+{% endblock %}

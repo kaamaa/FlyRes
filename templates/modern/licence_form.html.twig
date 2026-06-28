@@ -1,0 +1,135 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}{{ isNew ? 'Neue Lizenz' : 'Lizenz bearbeiten' }}{% endblock %}
+
+{% block content %}
+<form class="fr-form" action="{{ path('modern_licence_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">
+      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="fr-formsec">Nutzer &amp; Lizenztyp</div>
+  <div class="fr-card">
+    {% if isAdmin %}
+    <div class="fr-frow">
+      <label>Nutzer</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <select name="accountid">
+          {% for label, id in users %}<option value="{{ id }}" {{ id == v.accountid ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    {% else %}
+      <input type="hidden" name="accountid" value="{{ v.accountid }}">
+    {% endif %}
+    <div class="fr-frow">
+      <label>Lizenztyp</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 10L12 4 2 10l10 6 10-6z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></svg></span>
+        <select name="licenceid" id="l_type">
+          <option value="0">Bitte wählen…</option>
+          {% for t in types %}<option value="{{ t.id }}" data-desc="{{ t.desc }}" {{ t.id == v.licenceid ? 'selected' : '' }}>{{ t.label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="fr-typedesc" id="l_desc" {{ v.licenceid == 0 ? 'hidden' : '' }}></div>
+  </div>
+
+  <div class="fr-formsec">Gültigkeit</div>
+  <div class="fr-card">
+    <label class="fr-check">
+      <input type="checkbox" name="validunlimited" id="l_unlim" value="1" {{ v.validunlimited ? 'checked' : '' }}>
+      <span>Unbegrenzt gültig</span>
+    </label>
+    <div class="fr-frow" id="l_vurow" {{ v.validunlimited ? 'hidden' : '' }}>
+      <label>Gültig bis</label>
+      <div class="fr-ctrl dt fr-date">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <span class="fr-datedisp"></span>
+        <input type="hidden" name="validuntil" id="l_vu" value="{{ v.validuntil }}">
+        <div class="fr-calpop" hidden></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Kommentar</div>
+  <div class="fr-card">
+    <div class="fr-frow col">
+      <textarea name="comment" class="fr-area" rows="3" placeholder="Optionaler Hinweis …">{{ v.comment }}</textarea>
+    </div>
+  </div>
+
+  <div class="fr-card">
+    <label class="fr-check">
+      <input type="checkbox" name="wahrheitsgemaess" value="1">
+      <span>Alle Angaben sind wahrheitsgemäß erfolgt. Mir ist bekannt, dass Fliegen ohne gültige Lizenz eine Straftat nach § 60 LuftVG ist, die mit einer Freiheitsstrafe oder einer Geldstrafe bestraft werden kann.</span>
+    </label>
+  </div>
+
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn">Lizenz speichern</button>
+    <a class="fr-clear" href="{{ path('modern_licences') }}">Abbrechen</a>
+  </div>
+</form>
+
+<script>
+(function () {
+  var type = document.getElementById('l_type');
+  var desc = document.getElementById('l_desc');
+  var unlim = document.getElementById('l_unlim');
+  var vurow = document.getElementById('l_vurow');
+
+  function showDesc() {
+    var opt = type.options[type.selectedIndex];
+    var d = opt ? (opt.getAttribute('data-desc') || '') : '';
+    if (d) { desc.textContent = d; desc.hidden = false; }
+    else { desc.textContent = ''; desc.hidden = true; }
+  }
+  function toggleVu() { vurow.hidden = unlim.checked; }
+  type.addEventListener('change', showDesc);
+  unlim.addEventListener('change', toggleVu);
+  showDesc();
+  toggleVu();
+
+  // ---- Eigener Kalender-Picker (großes Monatsraster, wie in der Reservieren-Maske) ----
+  var SERVER_TODAY = '{{ today }}';
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function setupDate(wrap) {
+    var inp = wrap.querySelector('input[type=hidden]'), disp = wrap.querySelector('.fr-datedisp'), pop = wrap.querySelector('.fr-calpop');
+    var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'], MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'], view = {};
+    function fmt(iso) { if (!iso) return 'Bitte wählen…'; var p = iso.split('-'); return WD[new Date(+p[0],+p[1]-1,+p[2]).getDay()] + ' ' + p[2] + '.' + p[1] + '.' + p[0]; }
+    function refresh() { disp.textContent = fmt(inp.value); }
+    function build() {
+      var first = new Date(view.y, view.m-1, 1), lead = (first.getDay()+6)%7, dim = new Date(view.y, view.m, 0).getDate();
+      var cells = Math.ceil((lead+dim)/7)*7, start = new Date(view.y, view.m-1, 1-lead);
+      var h = '<div class="cal-head"><button type="button" data-nav="-1">‹</button><b>' + MON[view.m-1] + ' ' + view.y + '</b><button type="button" data-nav="1">›</button></div><div class="cal-grid">';
+      ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function (w) { h += '<span class="cal-wd">' + w + '</span>'; });
+      for (var i = 0; i < cells; i++) {
+        var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+        var iso = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
+        var c = 'cal-day' + ((dt.getMonth()+1 !== view.m || dt.getFullYear() !== view.y) ? ' out' : '');
+        if (iso === inp.value) c += ' sel'; if (iso === SERVER_TODAY) c += ' today';
+        h += '<button type="button" class="' + c + '" data-iso="' + iso + '">' + dt.getDate() + '</button>';
+      }
+      pop.innerHTML = h + '</div>';
+    }
+    function open() { var p = (inp.value || SERVER_TODAY).split('-'); view = {y:+p[0], m:+p[1]}; build(); pop.hidden = false; }
+    function close() { pop.hidden = true; }
+    wrap.addEventListener('click', function (e) { if (e.target.closest('.fr-calpop')) return; pop.hidden ? open() : close(); });
+    pop.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var nav = e.target.closest('[data-nav]'); if (nav) { view.m += +nav.dataset.nav; if (view.m<1){view.m=12;view.y--;} if (view.m>12){view.m=1;view.y++;} build(); return; }
+      var day = e.target.closest('[data-iso]'); if (day) { inp.value = day.dataset.iso; refresh(); close(); }
+    });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) close(); });
+    refresh();
+  }
+  document.querySelectorAll('.fr-date').forEach(setupDate);
+})();
+</script>
+{% endblock %}

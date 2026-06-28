@@ -12,19 +12,18 @@
     <b>{{ label }}</b>
     <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
   </span>
-  <span class="fr-scale">frei
-    <i class="occ-leer"></i><i class="occ-wenig"></i><i class="occ-mittel"></i><i class="occ-voll"></i><i class="occ-sehrvoll"></i><i class="occ-ausgebucht"></i>
-    ausgebucht</span>
+  <span class="fr-scale">frei<i class="fr-scalebar"></i>ausgebucht</span>
 {% endblock %}
 
 {% block content %}
+  {% set dots = ['#34c759', '#0a84ff', '#ff9f0a', '#bf5af2', '#ff375f', '#5ac8fa', '#ffd60a', '#ff6482'] %}
   <div class="fr-ovwrap">
     <table class="fr-matrix">
       <thead>
         <tr>
           <th class="fr-corner">Flugzeug</th>
           {% for d in days %}
-            <th class="fr-day {{ d.wend }} {{ d.today ? 'today' : '' }}"><span class="wd">{{ d.wd }}</span>{{ d.num }}</th>
+            <th class="fr-day {{ d.wend }}"><span class="wd">{{ d.wd }}</span><span class="dn {{ d.today ? 'today' : '' }}">{{ d.num }}</span></th>
           {% endfor %}
         </tr>
       </thead>
@@ -32,7 +31,7 @@
         {% for p in planes %}
           {% set row = cells[p.planeID]|default([]) %}
           <tr>
-            <td class="fr-ac"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></td>
+            <td class="fr-ac"><span class="dot" style="background:{{ dots[loop.index0 % 8] }}"></span><span class="lbl"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></span></td>
             {% for c in row %}
               {% set d = days[loop.index0] %}
               <td class="{{ d.wend }}">

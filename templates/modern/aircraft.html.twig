@@ -1,0 +1,56 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Flugzeuge{% endblock %}
+
+{% block topactions %}
+  <a class="fr-chip {{ tab == 'flugzeuge' ? 'on' : '' }}" href="{{ path('modern_aircraft') }}">Flugzeuge</a>
+  <a class="fr-chip {{ tab == 'typen' ? 'on' : '' }}" href="{{ path('modern_aircraft', {tab: 'typen'}) }}">Flugzeugtypen</a>
+  {% if tab == 'typen' %}
+    <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_actype_new') }}">＋ Neuer Typ</a>
+  {% else %}
+    <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_aircraft_new') }}">＋ Neues Flugzeug</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if tab == 'typen' %}
+    <div class="fr-cards">
+      {% for t in types %}
+        <div class="fr-acard">
+          <a class="fr-acard-main" href="{{ path('modern_actype_edit', {id: t.id}) }}">
+            <div class="fr-acard-ico ty">{{ t.short|slice(0,3)|upper }}</div>
+            <div class="fr-acard-info">
+              <div class="fr-acard-t">{{ t.long }} <span class="fr-acard-sub">{{ t.short }}</span></div>
+              <div class="fr-acard-lics">
+                {% for l in t.licences %}<span class="fr-lic">{{ l }}</span>{% else %}<span class="fr-acard-muted">keine Lizenzen erforderlich</span>{% endfor %}
+              </div>
+            </div>
+            <span class="fr-lchev">›</span>
+          </a>
+          <form class="fr-acard-del" method="post" action="{{ path('modern_actype_delete') }}" onsubmit="return confirm('Diesen Flugzeugtyp löschen?');">
+            <input type="hidden" name="id" value="{{ t.id }}">
+            <button type="submit" class="fr-iconbtn del" title="Löschen">🗑</button>
+          </form>
+        </div>
+      {% else %}
+        <div class="fr-empty">Keine Flugzeugtypen.</div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="fr-cards">
+      {% for p in planes %}
+        <a class="fr-acard-main solo {{ p.active ? '' : 'inactive' }}" href="{{ path('modern_aircraft_edit', {id: p.id}) }}">
+          <div class="fr-acard-ico">✈</div>
+          <div class="fr-acard-info">
+            <div class="fr-acard-t">{{ p.kennung }} <span class="fr-acard-sub">{{ p.name }}</span></div>
+            <div class="fr-acard-meta">{{ p.type }}{% if p.advance %} · Vorausbuchung {{ p.advance }} Tage{% endif %}</div>
+          </div>
+          <span class="fr-ltag {{ p.active ? 'inf' : 'red' }}">{{ p.active ? 'aktiv' : 'inaktiv' }}</span>
+          <span class="fr-lchev">›</span>
+        </a>
+      {% else %}
+        <div class="fr-empty">Keine Flugzeuge.</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

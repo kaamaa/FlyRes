@@ -197,6 +197,10 @@ class BookingController extends ApiController
         if (!Bookings::IsAllowedtoChangeBooking($em, $user, $booking)) {
             return $this->json(['error' => 'forbidden'], 403);
         }
+        // Vergangene Buchungen (Ende mehr als eine Woche her) nicht mehr bearbeitbar.
+        if (!Bookings::IsBookingDateEditable($booking)) {
+            return $this->json(['error' => 'too_old', 'errors' => ['Buchungen, deren Ende mehr als eine Woche zurückliegt, können nicht mehr bearbeitet werden.']], 422);
+        }
 
         $data = json_decode($request->getContent(), true);
         if (!is_array($data)) {
@@ -410,6 +414,9 @@ class BookingController extends ApiController
             'emailInfoIntern' => $d['EmailInfoIntern'],
             'emailInfoExtern' => $d['EmailInfoExtern'],
             'canEdit'         => (bool) $d['modify'],
+            // Bearbeiten zusaetzlich datumsabhaengig (Ende max. 1 Woche her);
+            // Storno/Loeschen richtet sich weiter nach canEdit.
+            'canEditDate'     => (bool) ($d['editable'] ?? $d['modify']),
         ];
     }
 }

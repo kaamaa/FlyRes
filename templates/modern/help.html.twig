@@ -1,0 +1,102 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Anleitung{% endblock %}
+
+{% block content %}
+  <div class="fr-help">
+
+    <p class="fr-help-intro">
+      Kurzanleitung zur Bedienung von FlyRes. Es werden nur die Bereiche gezeigt, die zu deinen Berechtigungen passen.
+    </p>
+
+    {# ---------- Für alle ---------- #}
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">🏠</span> Dashboard &amp; Einstieg <span class="fr-roletag all">alle</span></h3>
+      <p>Nach der Anmeldung landest du auf deinem persönlichen Dashboard. Es zeigt deine nächsten Buchungen, den Status deiner Lizenzen und die aktuelle Pinnwand.</p>
+      <ul>
+        <li>Eine <b>rote Warnung oben</b> erscheint, wenn eine deiner Lizenzen abgelaufen ist oder bald abläuft – bitte zuerst beachten.</li>
+        <li>Über die Seitenleiste links erreichst du alle Bereiche; der aktuelle Punkt ist hervorgehoben.</li>
+      </ul>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">＋</span> Reservieren <span class="fr-roletag all">alle</span></h3>
+      <ol>
+        <li><b>Flugzeug</b> wählen, bei Bedarf einen <b>Fluglehrer</b> dazu.</li>
+        <li><b>Datum &amp; Uhrzeit</b> über den Kalender bzw. das Zeit-Dropdown (30-Min-Schritte, freie Eingabe möglich) festlegen.</li>
+        <li>Die <b>Verfügbarkeit</b> wird live angezeigt – freie Blöcke, andere Flugzeuge und Fluglehrer lassen sich direkt vergleichen.</li>
+        <li><b>Flugzweck</b> und <b>Flugplatz</b> angeben, optional Beschreibung und Benachrichtigungen.</li>
+        <li>Beim <b>Speichern</b> werden Konflikte, Verfügbarkeit und gültige Lizenzen automatisch geprüft.</li>
+      </ol>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">📋</span> Buchungen ansehen &amp; ändern <span class="fr-roletag all">alle</span></h3>
+      <ul>
+        <li>Unter <b>Alle / Meine Buchungen</b> kannst du nach Zeitraum, Zweck und Stichwort filtern.</li>
+        <li>Eine Buchung öffnen → <b>Bearbeiten</b> oder <b>Stornieren</b> (nur eigene bzw. dir als Fluglehrer zugewiesene).</li>
+        <li>Buchungen, deren Ende <b>mehr als eine Woche</b> zurückliegt, können nicht mehr bearbeitet werden.</li>
+      </ul>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">🎓</span> Lizenzen <span class="fr-roletag all">alle</span></h3>
+      <p>Unter <b>Lizenzen</b> siehst du deine Lizenzen mit Ampel-Farbe (grün = lange gültig, gelb = unter 12 Monaten, rot = bald ablaufend/abgelaufen). Neue Lizenzen legst du selbst an und pflegst die Gültigkeit.</p>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">📌</span> Pinnwand &amp; <span class="fr-help-ic">📊</span> Wochenübersicht <span class="fr-roletag all">alle</span></h3>
+      <ul>
+        <li><b>Pinnwand:</b> Aushänge lesen und selbst erstellen (standardmäßig bis zu einem Monat gültig).</li>
+        <li><b>Wochenübersicht:</b> Flottenauslastung auf einen Blick – umschaltbar zwischen 14 Tagen und Monat.</li>
+      </ul>
+    </section>
+
+    {# ---------- Fluglehrer ---------- #}
+    {% if isFi %}
+    <section class="fr-help-sec fi">
+      <h3><span class="fr-help-ic">👨‍🏫</span> Für Fluglehrer <span class="fr-roletag fi">Fluglehrer</span></h3>
+      <ul>
+        <li>Dein Dashboard zeigt zusätzlich <b>deine anstehenden Schulungstermine</b> (Flüge, in denen du als Fluglehrer zugewiesen bist).</li>
+        <li>Deine <b>Verfügbarkeit</b> (immer verfügbar, auf Anfrage buchbar, Parallel-Buchungen zu Solo-Schulungen) wird in deinem Nutzerprofil gepflegt – melde dich bei einem Administrator, falls etwas angepasst werden soll.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ---------- Administrator ---------- #}
+    {% if isAdmin %}
+    <section class="fr-help-sec admin">
+      <h3><span class="fr-help-ic">🛡️</span> Für Administratoren <span class="fr-roletag admin">Admin</span></h3>
+      <ul>
+        <li>Du siehst im Dashboard die <b>club-weit ablaufenden Lizenzen</b> und <b>Kennzahlen</b>.</li>
+        <li>Unter Lizenzen kannst du <b>alle Nutzer</b> einsehen, abgelaufene filtern und <b>neue Lizenzen für andere</b> anlegen.</li>
+        <li>Du darfst <b>Buchungen aller Nutzer</b> bearbeiten und stornieren.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ---------- System-Administrator ---------- #}
+    {% if isSysAdmin %}
+    <section class="fr-help-sec admin">
+      <h3><span class="fr-help-ic">⚙️</span> Für System-Administratoren <span class="fr-roletag admin">System-Admin</span></h3>
+      <ul>
+        <li><b>Nutzer:</b> anlegen, bearbeiten, sperren und Berechtigungen vergeben (nur unterhalb der eigenen Stufe). Über das 🎓-Symbol springst du direkt zu den Lizenzen eines Nutzers.</li>
+        <li><b>Flugzeuge &amp; Flugzeugtypen:</b> anlegen und pflegen, inklusive der je Typ erforderlichen Lizenzen. Flugzeuge werden über den Status „inaktiv" aus der Auswahl genommen.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ---------- Global-Administrator ---------- #}
+    {% if isGlobalAdmin %}
+    <section class="fr-help-sec admin">
+      <h3><span class="fr-help-ic">🏫</span> Für Global-Administratoren <span class="fr-roletag admin">Global-Admin</span></h3>
+      <ul>
+        <li><b>Mandanten</b> (Flugschulen) anlegen, bearbeiten und aktivieren/deaktivieren.</li>
+        <li>Die Statistik je Mandant zeigt Nutzer-, Flugzeug- und Reservierungszahlen.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    <p class="fr-help-foot">Fragen oder etwas unklar? Wende dich an einen Administrator deiner Flugschule.</p>
+  </div>
+{% endblock %}

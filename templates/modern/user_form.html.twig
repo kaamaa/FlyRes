@@ -1,0 +1,111 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}{{ isNew ? 'Neuer Nutzer' : 'Nutzer bearbeiten' }}{% endblock %}
+
+{% block content %}
+{% set mailOpts = v.isAdmin ? {'keine': 0, 'nur eigene': 1, 'alle': 2} : {'nein': 0, 'ja': 1} %}
+<form class="fr-form" action="{{ path('modern_user_save') }}" method="post" autocomplete="off">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  {% if not isNew %}
+    <a class="fr-btn ghost" href="{{ path('modern_licences', {user: v.id}) }}" style="margin-bottom:14px;">🎓 Lizenzen dieses Nutzers</a>
+  {% endif %}
+
+  <div class="fr-formsec">Person</div>
+  <div class="fr-card">
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Vorname</label><div class="fr-ctrl"><input type="text" name="firstname" value="{{ v.firstname }}" maxlength="100"></div></div>
+      <div class="fr-frow"><label>Nachname</label><div class="fr-ctrl"><input type="text" name="lastname" value="{{ v.lastname }}" maxlength="100"></div></div>
+    </div>
+    <div class="fr-frow">
+      <label>E-Mail</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg></span>
+        <input type="email" name="email" value="{{ v.email }}" maxlength="150">
+      </div>
+    </div>
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Telefon privat</label><div class="fr-ctrl"><input type="text" name="phone_home" value="{{ v.phone_home }}" maxlength="50"></div></div>
+      <div class="fr-frow"><label>Telefon mobil</label><div class="fr-ctrl"><input type="text" name="phone_mobile" value="{{ v.phone_mobile }}" maxlength="50"></div></div>
+    </div>
+    <div class="fr-frow"><label>Telefon Büro</label><div class="fr-ctrl"><input type="text" name="phone_office" value="{{ v.phone_office }}" maxlength="50"></div></div>
+  </div>
+
+  <div class="fr-formsec">Zugang</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Nutzername</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <input type="text" name="username" value="{{ v.username }}" maxlength="80" autocomplete="off">
+      </div>
+    </div>
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Passwort</label><div class="fr-ctrl"><input type="password" name="password" value="" autocomplete="new-password" placeholder="{{ isNew ? 'mind. 5 Zeichen' : 'leer = unverändert' }}"></div></div>
+      <div class="fr-frow"><label>Passwort wiederholen</label><div class="fr-ctrl"><input type="password" name="password_check" value="" autocomplete="new-password"></div></div>
+    </div>
+    <label class="fr-check">
+      <input type="checkbox" name="islocked" value="1" {{ v.islocked ? 'checked' : '' }}>
+      <span>Konto gesperrt (kein Login möglich).</span>
+    </label>
+  </div>
+
+  <div class="fr-formsec">Benachrichtigungen</div>
+  <div class="fr-card">
+    <div class="fr-f2">
+      <div class="fr-frow">
+        <label>Buchungs-Mails</label>
+        <div class="fr-ctrl"><select name="getbookingmails">{% for label, val in mailOpts %}<option value="{{ val }}" {{ val == v.getbookingmails ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select></div>
+      </div>
+      <div class="fr-frow">
+        <label>Lizenz-Mails</label>
+        <div class="fr-ctrl"><select name="getlicencemails">{% for label, val in mailOpts %}<option value="{{ val }}" {{ val == v.getlicencemails ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Berechtigungen</div>
+  <div class="fr-card">
+    <div class="fr-checklist">
+      {% for f in functions %}
+        <label class="fr-check"><input type="checkbox" name="functions[]" value="{{ f.id }}" {{ f.id in v.roles ? 'checked' : '' }}><span>{{ f.name }}</span></label>
+      {% else %}
+        <div class="fr-acard-muted">Keine vergebbaren Berechtigungen.</div>
+      {% endfor %}
+    </div>
+    <small class="fr-hint">Es können nur Berechtigungen unterhalb der eigenen Stufe vergeben werden. Höhere bestehende Rollen bleiben unverändert.</small>
+  </div>
+
+  {% if v.isFi %}
+  <div class="fr-formsec">Fluglehrer-Einstellungen</div>
+  <div class="fr-card">
+    <input type="hidden" name="fi_section" value="1">
+    <div class="fr-frow">
+      <label>Immer verfügbar für</label>
+      <div class="fr-ctrl"><select name="fiallwaysavailable">{% for label, val in fiAvail %}<option value="{{ val }}" {{ val == v.fiallwaysavailable ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select></div>
+      <small class="fr-hint">Dummy-Fluglehrer (z. B. „Fluglehrer zuweisen") gelten als immer verfügbar.</small>
+    </div>
+    <label class="fr-check"><input type="checkbox" name="fibookableifonrequest" value="1" {{ v.fibookableifonrequest ? 'checked' : '' }}><span>Auf Anfrage buchbar.</span></label>
+    <label class="fr-check"><input type="checkbox" name="fiparallelbookings" value="1" {{ v.fiparallelbookings ? 'checked' : '' }}><span>Parallel-Buchungen zu Solo-Schulungsflügen erlaubt.</span></label>
+  </div>
+  {% endif %}
+
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn">Nutzer speichern</button>
+    <a class="fr-clear" href="{{ path('modern_users') }}">Abbrechen</a>
+    {% if not isNew %}
+      <button type="submit" class="fr-btn danger" style="margin-left:12px;" form="u_delform">Nutzer löschen</button>
+    {% endif %}
+  </div>
+</form>
+
+{% if not isNew %}
+<form id="u_delform" method="post" action="{{ path('modern_user_delete') }}" onsubmit="return confirm('Diesen Nutzer wirklich löschen? Alle Buchungen dieses Nutzers werden dabei entfernt. Dies kann nicht rückgängig gemacht werden.');" hidden>
+  <input type="hidden" name="id" value="{{ v.id }}">
+</form>
+{% endif %}
+{% endblock %}

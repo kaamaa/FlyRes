@@ -1,0 +1,45 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Pinnwand{% endblock %}
+
+{% block topactions %}
+  <a class="fr-chip {{ scope == 'aktuell' ? 'on' : '' }}" href="{{ path('modern_notes') }}">Aktuelle</a>
+  <a class="fr-chip {{ scope == 'meine' ? 'on' : '' }}" href="{{ path('modern_notes', {scope: 'meine'}) }}">Meine</a>
+  <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_note_new') }}">＋ Neuer Eintrag</a>
+{% endblock %}
+
+{% block content %}
+  <div class="fr-notes">
+    {% for n in items %}
+      <article class="fr-note">
+        <div class="fr-note-pin"></div>
+        <header class="fr-note-hd">
+          <h3>{{ n.header }}</h3>
+          {% if n.validuntil %}
+            <span class="fr-note-exp {{ n.soon ? 'soon' : '' }}">
+              {% if n.days is not null and n.days < 0 %}abgelaufen{% elseif n.days == 0 %}läuft heute ab{% else %}bis {{ n.validuntil }}{% endif %}
+            </span>
+          {% endif %}
+        </header>
+        <div class="fr-note-body">{{ n.text|raw }}</div>
+        <footer class="fr-note-ft">
+          <span class="fr-note-meta">
+            <span class="av">{{ n.author|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>
+            {{ n.author }}{% if n.created %} · {{ n.created }}{% endif %}
+          </span>
+          {% if n.canedit %}
+            <span class="fr-note-act">
+              <a class="fr-iconbtn" href="{{ path('modern_note_edit', {id: n.id}) }}" title="Bearbeiten">✎</a>
+              <form method="post" action="{{ path('modern_note_delete') }}" onsubmit="return confirm('Diesen Pinnwandeintrag löschen?');">
+                <input type="hidden" name="id" value="{{ n.id }}">
+                <button type="submit" class="fr-iconbtn del" title="Löschen">🗑</button>
+              </form>
+            </span>
+          {% endif %}
+        </footer>
+      </article>
+    {% else %}
+      <div class="fr-empty">Keine {{ scope == 'meine' ? 'eigenen ' : '' }}Pinnwandeinträge.</div>
+    {% endfor %}
+  </div>
+{% endblock %}

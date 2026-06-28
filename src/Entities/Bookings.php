@@ -332,6 +332,21 @@ class Bookings
     return $message;
   }
   
+  /**
+   * Buchungen der Vergangenheit duerfen nur begrenzt nachbearbeitet werden:
+   * Liegt das Ende (Itemstop) mehr als eine Woche zurueck, ist Bearbeiten
+   * gesperrt. (Storno/Loeschen bleibt von dieser Regel unberuehrt.)
+   */
+  public static function IsBookingDateEditable ($booking)
+  {
+    if (!$booking) return FALSE;
+    $stop = $booking->getItemstop();
+    if (!$stop) return FALSE;
+    $limit = new \DateTime('now');
+    $limit->modify('-1 week');
+    return $stop >= $limit;
+  }
+
   public static function IsAllowedtoChangeBooking ($em, $user, $booking)
   {
     if ($user)
@@ -1173,7 +1188,9 @@ class Bookings
                             $prefix . 'description' => $booking->getDescription(),
                             $prefix . 'EmailInfoIntern' => $emailInfoIntern,
                             $prefix . 'EmailInfoExtern' => $emailInfoExtern,
-                            $prefix . 'modify' => $modify);
+                            $prefix . 'modify' => $modify,
+                            // Bearbeiten zusaetzlich datumsabhaengig (Ende max. 1 Woche her)
+                            $prefix . 'editable' => $modify && Bookings::IsBookingDateEditable($booking));
     }    
     return $bookingList;
   }

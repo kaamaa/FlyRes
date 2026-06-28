@@ -6,21 +6,38 @@
 <div class="fr-side">
   <div class="fr-brand"><span>✈</span> FlyRes</div>
 
-  <a class="fr-nav fr-navnew {{ route == 'modern_reserve' ? 'on' : '' }}" href="{{ path('modern_reserve') }}"><span class="ic">＋</span> Reservieren</a>
+  <a class="fr-nav {{ route == 'modern_dashboard' ? 'on' : '' }}" href="{{ path('modern_dashboard') }}"><span class="ic">🏠</span> Dashboard</a>
+
+  <a class="fr-nav {{ route == 'modern_reserve' ? 'on' : '' }}" href="{{ path('modern_reserve') }}"><span class="ic">＋</span> Reservieren</a>
 
   <div class="fr-navsec">Ansichten</div>
   <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}"><span class="ic">📋</span> Alle Buchungen</a>
   <a class="fr-nav {{ route == 'modern_bookings' and u != 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings', {umfang: 'meine'}) }}"><span class="ic">👤</span> Meine Buchungen</a>
-  <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}"><span class="ic">📊</span> Übersicht</a>
+  <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}"><span class="ic">📊</span> Wochenübersicht</a>
 
-  <div class="fr-navsec">Stammdaten <span class="fr-soon">bald</span></div>
-  <span class="fr-nav muted"><span class="ic">🛩️</span> Flugzeuge</span>
-  <span class="fr-nav muted"><span class="ic">🎓</span> Lizenzen</span>
-  <span class="fr-nav muted"><span class="ic">📌</span> Pinnwand</span>
+  <div class="fr-navsec">Stammdaten</div>
+  {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+    <a class="fr-nav {{ route starts with 'modern_aircraft' or route starts with 'modern_actype' ? 'on' : '' }}" href="{{ path('modern_aircraft') }}"><span class="ic">🛩️</span> Flugzeuge</a>
+  {% else %}
+    <span class="fr-nav muted"><span class="ic">🛩️</span> Flugzeuge</span>
+  {% endif %}
+  <a class="fr-nav {{ route == 'modern_licences' ? 'on' : '' }}" href="{{ path('modern_licences') }}"><span class="ic">🎓</span> Lizenzen</a>
+  <a class="fr-nav {{ route starts with 'modern_note' ? 'on' : '' }}" href="{{ path('modern_notes') }}"><span class="ic">📌</span> Pinnwand</a>
 
-  <div class="fr-navsec">Verwaltung <span class="fr-soon">bald</span></div>
-  <span class="fr-nav muted"><span class="ic">👥</span> Nutzer</span>
-  <span class="fr-nav muted"><span class="ic">⚙️</span> Mandanten</span>
+  <div class="fr-navsec">Verwaltung</div>
+  {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+    <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}"><span class="ic">👥</span> Nutzer</a>
+  {% else %}
+    <span class="fr-nav muted"><span class="ic">👥</span> Nutzer</span>
+  {% endif %}
+  {% if is_granted('ROLE_GLOBAL_ADMIN') %}
+    <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}"><span class="ic">⚙️</span> Mandanten</a>
+  {% else %}
+    <span class="fr-nav muted"><span class="ic">⚙️</span> Mandanten</span>
+  {% endif %}
+
+  <div class="fr-navsec">Hilfe</div>
+  <a class="fr-nav {{ route == 'modern_help' ? 'on' : '' }}" href="{{ path('modern_help') }}"><span class="ic">❓</span> Anleitung</a>
 
   <div class="fr-usr">
     <span class="ava">{{ (app.user.firstname|default('')|first) ~ (app.user.lastname|default('')|first) }}</span>

@@ -4,10 +4,8 @@
 
 {% block topactions %}
   <a class="fr-btn ghost" href="javascript:history.back()">‹ Zurück</a>
-  {% if modify %}
-    <a class="fr-btn ghost" style="margin-left:auto;" href="#">Bearbeiten</a>
-    <a class="fr-btn danger" href="#">Stornieren</a>
-  {% endif %}
+  {% if editable %}<a class="fr-btn ghost" style="margin-left:auto;" href="{{ path('modern_booking_edit', {id: id}) }}">Bearbeiten</a>{% endif %}
+  {% if modify %}<button type="button" class="fr-btn danger" id="b_cancel" data-id="{{ id }}" {% if not editable %}style="margin-left:auto;"{% endif %}>Stornieren</button>{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -22,7 +20,36 @@
     <div class="fr-kv full"><span class="k">Beschreibung</span><span class="v">{{ description ?: '—' }}</span></div>
   </div>
 
+  <div id="b_msg" class="fr-msg" hidden></div>
+
   <div class="fr-detmeta">
     Reserviert von {{ ReservedForUser }} am {{ ReservedAt }}{% if ChangedAt %} · zuletzt geändert am {{ ChangedAt }}{% endif %}
   </div>
+
+  {% if modify %}
+  <script>
+  (function () {
+    var btn = document.getElementById('b_cancel'), msg = document.getElementById('b_msg');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      if (!confirm('Diese Buchung wirklich stornieren? Die beteiligten Personen werden per E-Mail informiert.')) return;
+      btn.disabled = true; btn.textContent = 'Storniere…'; msg.hidden = true;
+      fetch('/api/bookings/' + btn.dataset.id, {
+        method: 'DELETE', credentials: 'same-origin', headers: { 'Accept': 'application/json' }
+      })
+        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: r.ok, j: null }; }); })
+        .then(function (res) {
+          if (res.ok && res.j && res.j.success) { window.location.href = '/modern'; return; }
+          btn.disabled = false; btn.textContent = 'Stornieren';
+          var e = (res.j && res.j.error) || 'Stornierung fehlgeschlagen.';
+          msg.className = 'fr-msg err'; msg.textContent = 'Stornierung nicht möglich: ' + e; msg.hidden = false;
+        })
+        .catch(function () {
+          btn.disabled = false; btn.textContent = 'Stornieren';
+          msg.className = 'fr-msg err'; msg.textContent = 'Netzwerkfehler bei der Stornierung.'; msg.hidden = false;
+        });
+    });
+  })();
+  </script>
+  {% endif %}
 {% endblock %}

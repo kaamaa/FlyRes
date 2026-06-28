@@ -79,8 +79,8 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
       // Projektspezifische Session-Initialisierung
       LogonType::defineStandalone($request->getSession());
 
-      // Fallback-Ziel nach dem Login
-      return new RedirectResponse($this->urlGenerator->generate('_weeksview'));
+      // Fallback-Ziel nach dem Login: persoenliches Dashboard (modernes Frontend)
+      return new RedirectResponse($this->urlGenerator->generate('modern_dashboard'));
      
     }
 

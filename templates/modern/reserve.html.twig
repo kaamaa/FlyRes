@@ -1,9 +1,9 @@
 {% extends 'modern/layout.html.twig' %}
 
-{% block ptitle %}Reservieren{% endblock %}
+{% block ptitle %}{{ editId ? 'Buchung bearbeiten' : 'Reservieren' }}{% endblock %}
 
 {% block content %}
-<form class="fr-form" action="#" method="post">
+<form class="fr-form" action="#" method="post" data-edit="{{ editId ?: '' }}">
 
   <div class="fr-formsec">Flugzeug &amp; Fluglehrer</div>
   <div class="fr-card">
@@ -23,7 +23,7 @@
         <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
         <select name="flightinstructor" id="r_fi">
           <option value="">(keiner)</option>
-          {% for label, id in instructors %}<option value="{{ id }}">{{ label }}</option>{% endfor %}
+          {% for label, id in instructors %}<option value="{{ id }}" {{ edit and id == edit.flightinstructor ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
         </select>
       </div>
     </div>
@@ -35,11 +35,11 @@
     {% set icClock %}<span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>{% endset %}
     <div class="fr-f2">
       <div class="fr-frow"><label>Von · Datum</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="startdate" id="r_startdate" value="{{ today }}"><div class="fr-calpop" hidden></div></div></div>
-      <div class="fr-frow"><label>Von · Zeit</label><div class="fr-ctrl dt fr-combo">{{ icClock|raw }}<input type="text" name="starttime" id="r_starttime" value="10:00" autocomplete="off" inputmode="numeric" placeholder="HH:MM"><button type="button" class="fr-comboar" tabindex="-1">▾</button><div class="fr-combolist" hidden></div></div></div>
+      <div class="fr-frow"><label>Von · Zeit</label><div class="fr-ctrl dt fr-combo">{{ icClock|raw }}<input type="text" name="starttime" id="r_starttime" value="{{ edit ? edit.startTime : '10:00' }}" autocomplete="off" inputmode="numeric" placeholder="HH:MM"><button type="button" class="fr-comboar" tabindex="-1">▾</button><div class="fr-combolist" hidden></div></div></div>
     </div>
     <div class="fr-f2">
-      <div class="fr-frow"><label>Bis · Datum</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="enddate" id="r_enddate" value="{{ today }}"><div class="fr-calpop" hidden></div></div></div>
-      <div class="fr-frow"><label>Bis · Zeit</label><div class="fr-ctrl dt fr-combo">{{ icClock|raw }}<input type="text" name="endtime" id="r_endtime" value="12:00" autocomplete="off" inputmode="numeric" placeholder="HH:MM"><button type="button" class="fr-comboar" tabindex="-1">▾</button><div class="fr-combolist" hidden></div></div></div>
+      <div class="fr-frow"><label>Bis · Datum</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="enddate" id="r_enddate" value="{{ edit ? edit.endDate : today }}"><div class="fr-calpop" hidden></div></div></div>
+      <div class="fr-frow"><label>Bis · Zeit</label><div class="fr-ctrl dt fr-combo">{{ icClock|raw }}<input type="text" name="endtime" id="r_endtime" value="{{ edit ? edit.endTime : '12:00' }}" autocomplete="off" inputmode="numeric" placeholder="HH:MM"><button type="button" class="fr-comboar" tabindex="-1">▾</button><div class="fr-combolist" hidden></div></div></div>
     </div>
     <div class="fr-hint">Dropdown in 30-Min-Schritten (Öffnungszeiten) – freie Eingabe (HH:MM) ebenfalls möglich.</div>
   </div>
@@ -66,7 +66,7 @@
   <div class="fr-formsec">Flugzweck</div>
   <div class="fr-purposes">
     {% for label, id in purposes %}
-      <label class="fr-pp"><input type="radio" name="flightpurposeid" value="{{ id }}" {{ loop.first ? 'checked' : '' }}>{{ label }}</label>
+      <label class="fr-pp"><input type="radio" name="flightpurposeid" value="{{ id }}" {{ edit ? (id == edit.flightpurposeId ? 'checked' : '') : (loop.first ? 'checked' : '') }}>{{ label }}</label>
     {% endfor %}
   </div>
 
@@ -76,12 +76,16 @@
       <label>Ziel</label>
       <div class="fr-ctrl">
         <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 22s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
-        <select name="airfieldid">{% for label, id in airfields %}<option value="{{ id }}">{{ label }}</option>{% endfor %}</select>
+        <select name="airfieldid">{% for label, id in airfields %}<option value="{{ id }}" {{ edit and id == edit.airfieldId ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select>
       </div>
     </div>
   </div>
 
-  {# --- Zusatzfelder aus dem klassischen Web-Frontend (in der PWA nicht vorhanden) --- #}
+  {# --- Zusatzfelder aus dem klassischen Web-Frontend (in der PWA nicht vorhanden).
+         Im Bearbeiten-Modus ausgeblendet: "Reserviert für" wird beim Update nicht
+         geaendert, und die Empfaenger sind serverseitig gespeichert (das Detail
+         liefert sie nicht zurueck) – ein Mitsenden wuerde sie ueberschreiben. --- #}
+  {% if not editId %}
   <div class="fr-formsec">Im Namen &amp; Benachrichtigung <span class="fr-tagweb">nur Web</span></div>
   <div class="fr-card">
     <div class="fr-frow">
@@ -112,18 +116,19 @@
       <small class="fr-hint">Externe Adressen, durch Semikolon getrennt.</small>
     </div>
   </div>
+  {% endif %}
 
   <div class="fr-formsec">Beschreibung</div>
   <div class="fr-card">
-    <div class="fr-frow"><div class="fr-box"><textarea name="description" rows="3" placeholder="z. B. Platzrunden, Überlandflug …"></textarea></div></div>
+    <div class="fr-frow"><div class="fr-box"><textarea name="description" rows="3" placeholder="z. B. Platzrunden, Überlandflug …">{{ edit ? edit.description : '' }}</textarea></div></div>
   </div>
 
   <div id="r_msg" class="fr-msg" hidden></div>
   <div class="fr-formfoot">
-    <button type="submit" class="fr-btn" id="r_save">Reservierung speichern</button>
+    <button type="submit" class="fr-btn" id="r_save">{{ editId ? 'Änderung speichern' : 'Reservierung speichern' }}</button>
     <a class="fr-clear" href="javascript:history.back()">Abbrechen</a>
   </div>
-  <div class="fr-detmeta">Speichern läuft über die geprüfte API (POST /api/bookings) – inkl. Konflikt-, Verfügbarkeits- und Lizenzprüfung sowie E-Mail-Infos.</div>
+  <div class="fr-detmeta">Speichern läuft über die geprüfte API ({{ editId ? 'PATCH /api/bookings/' ~ editId : 'POST /api/bookings' }}) – inkl. Konflikt-, Verfügbarkeits- und Lizenzprüfung sowie E-Mail-Infos.</div>
 </form>
 
 <script>
@@ -292,21 +297,29 @@
   function val(sel){ var el=q(sel); return el?el.value:''; }
   function normTime(t){ var p=(t||'').split(':'); if(p.length<2) return t; return ('0'+p[0]).slice(-2)+':'+('0'+p[1]).slice(-2); }
   function showMsg(html,kind){ msg.className='fr-msg '+kind; msg.innerHTML=html; msg.hidden=false; }
+  var EDIT_ID=form.getAttribute('data-edit')||'';
+  var SAVE_LABEL=EDIT_ID?'Änderung speichern':'Reservierung speichern';
   function buildBody(){
-    var purpose=q('input[name="flightpurposeid"]:checked'), emi=q('select[name="emailinfoi[]"]');
-    var emails=emi?Array.prototype.slice.call(emi.selectedOptions).map(function(o){return parseInt(o.value,10);}):[];
-    return {
+    var purpose=q('input[name="flightpurposeid"]:checked');
+    var body={
       aircraftId: parseInt(ac.value||'0',10),
       flightinstructor: fi.value?parseInt(fi.value,10):null,
       start: sd.value+' '+normTime(st.value),
       end: ed.value+' '+normTime(et.value),
       flightpurposeId: purpose?parseInt(purpose.value,10):0,
       airfieldId: parseInt(val('select[name="airfieldid"]')||'0',10),
-      description: val('textarea[name="description"]'),
-      createdForUserId: parseInt(val('select[name="createdbyuserid"]')||'0',10),
-      emailInternUserIds: emails,
-      emailInfoExtern: val('input[name="emailinfoe"]')
+      description: val('textarea[name="description"]')
     };
+    // Web-only-Felder nur beim Neuanlegen mitsenden; beim Update bleiben
+    // "Reserviert für" und die gespeicherten Empfaenger serverseitig erhalten.
+    if(!EDIT_ID){
+      var emi=q('select[name="emailinfoi[]"]');
+      var emails=emi?Array.prototype.slice.call(emi.selectedOptions).map(function(o){return parseInt(o.value,10);}):[];
+      body.createdForUserId=parseInt(val('select[name="createdbyuserid"]')||'0',10);
+      body.emailInternUserIds=emails;
+      body.emailInfoExtern=val('input[name="emailinfoe"]');
+    }
+    return body;
   }
   form.addEventListener('submit',function(e){
     e.preventDefault();
@@ -315,15 +328,16 @@
     if(!st.value||!et.value) errs.push('Bitte Von-/Bis-Zeit angeben.');
     if(errs.length){ showMsg(errs.join('<br>'),'err'); return; }
     saveBtn.disabled=true; saveBtn.textContent='Speichern…'; msg.hidden=true;
-    fetch('/api/bookings',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body)})
+    fetch(EDIT_ID?('/api/bookings/'+EDIT_ID):'/api/bookings',
+      {method:EDIT_ID?'PATCH':'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(body)})
       .then(function(r){ return r.json().then(function(j){ return {ok:r.ok,j:j}; },function(){ return {ok:r.ok,j:null}; }); })
       .then(function(res){
         if(res.ok && res.j && res.j.id){ window.location.href='/modern/buchung/'+res.j.id; return; }
-        saveBtn.disabled=false; saveBtn.textContent='Reservierung speichern';
+        saveBtn.disabled=false; saveBtn.textContent=SAVE_LABEL;
         var e=(res.j&&(res.j.errors||(res.j.error?[res.j.error]:null)))||['Speichern fehlgeschlagen.'];
-        showMsg('Reservierung nicht möglich:<br>'+e.join('<br>'),'err');
+        showMsg((EDIT_ID?'Änderung':'Reservierung')+' nicht möglich:<br>'+e.join('<br>'),'err');
       })
-      .catch(function(){ saveBtn.disabled=false; saveBtn.textContent='Reservierung speichern'; showMsg('Netzwerkfehler beim Speichern.','err'); });
+      .catch(function(){ saveBtn.disabled=false; saveBtn.textContent=SAVE_LABEL; showMsg('Netzwerkfehler beim Speichern.','err'); });
   });
 
   [ac,fi,sd].forEach(function(el){ el.addEventListener('change',function(){ load(); refreshCmp(); }); });

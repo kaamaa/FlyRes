@@ -40,7 +40,7 @@ async function del() {
     <div class="nav">
       <div class="row">
         <button class="action" @click="emit('close')">‹ Zurück</button>
-        <button v-if="d && d.canEdit" class="action bold" @click="emit('edit', d)">Bearbeiten</button>
+        <button v-if="d && (d.canEditDate ?? d.canEdit)" class="action bold" @click="emit('edit', d)">Bearbeiten</button>
         <span v-else></span>
       </div>
     </div>

@@ -5,6 +5,16 @@
 # (?zeitraum=&umfang=&zweck=&gruppieren=&q=).
 # ---------------------------------------------------------------------------
 
+modern_dashboard:
+    path: /modern/dashboard
+    controller: App\Controller\ModernPreviewController::dashboard
+    methods: GET
+
+modern_help:
+    path: /modern/anleitung
+    controller: App\Controller\ModernPreviewController::help
+    methods: GET
+
 modern_bookings:
     path: /modern
     controller: App\Controller\ModernPreviewController::bookings
@@ -31,3 +41,160 @@ modern_reserve:
     path: /modern/reservieren
     controller: App\Controller\ModernPreviewController::reserve
     methods: GET
+
+modern_booking_edit:
+    path: /modern/buchung/{id}/bearbeiten
+    controller: App\Controller\ModernPreviewController::reserve
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_licences:
+    path: /modern/lizenzen
+    controller: App\Controller\ModernPreviewController::licences
+    methods: GET
+
+modern_licence_new:
+    path: /modern/lizenz/neu
+    controller: App\Controller\ModernPreviewController::licenceNew
+    methods: GET
+
+modern_licence_save:
+    path: /modern/lizenz/speichern
+    controller: App\Controller\ModernPreviewController::licenceSave
+    methods: POST
+
+modern_licence_edit:
+    path: /modern/lizenz/{id}
+    controller: App\Controller\ModernPreviewController::licenceEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_notes:
+    path: /modern/pinnwand
+    controller: App\Controller\ModernPreviewController::notes
+    methods: GET
+
+modern_note_new:
+    path: /modern/pinnwand/neu
+    controller: App\Controller\ModernPreviewController::noteNew
+    methods: GET
+
+modern_note_save:
+    path: /modern/pinnwand/speichern
+    controller: App\Controller\ModernPreviewController::noteSave
+    methods: POST
+
+modern_note_delete:
+    path: /modern/pinnwand/loeschen
+    controller: App\Controller\ModernPreviewController::noteDelete
+    methods: POST
+
+modern_note_edit:
+    path: /modern/pinnwand/{id}
+    controller: App\Controller\ModernPreviewController::noteEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Stammdaten: Flugzeuge & Flugzeugtypen (nur ROLE_SYSTEM_ADMIN) ---
+modern_aircraft:
+    path: /modern/flugzeuge
+    controller: App\Controller\ModernPreviewController::aircraft
+    methods: GET
+
+modern_aircraft_new:
+    path: /modern/flugzeug/neu
+    controller: App\Controller\ModernPreviewController::aircraftNew
+    methods: GET
+
+modern_aircraft_save:
+    path: /modern/flugzeug/speichern
+    controller: App\Controller\ModernPreviewController::aircraftSave
+    methods: POST
+
+modern_aircraft_edit:
+    path: /modern/flugzeug/{id}
+    controller: App\Controller\ModernPreviewController::aircraftEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_actype_new:
+    path: /modern/flugzeugtyp/neu
+    controller: App\Controller\ModernPreviewController::aircraftTypeNew
+    methods: GET
+
+modern_actype_save:
+    path: /modern/flugzeugtyp/speichern
+    controller: App\Controller\ModernPreviewController::aircraftTypeSave
+    methods: POST
+
+modern_actype_delete:
+    path: /modern/flugzeugtyp/loeschen
+    controller: App\Controller\ModernPreviewController::aircraftTypeDelete
+    methods: POST
+
+modern_actype_edit:
+    path: /modern/flugzeugtyp/{id}
+    controller: App\Controller\ModernPreviewController::aircraftTypeEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Verwaltung: Nutzer (nur ROLE_SYSTEM_ADMIN) ---
+modern_users:
+    path: /modern/nutzer
+    controller: App\Controller\ModernPreviewController::users
+    methods: GET
+
+modern_user_new:
+    path: /modern/nutzer/neu
+    controller: App\Controller\ModernPreviewController::userNew
+    methods: GET
+
+modern_user_save:
+    path: /modern/nutzer/speichern
+    controller: App\Controller\ModernPreviewController::userSave
+    methods: POST
+
+modern_user_delete:
+    path: /modern/nutzer/loeschen
+    controller: App\Controller\ModernPreviewController::userDelete
+    methods: POST
+
+modern_user_edit:
+    path: /modern/nutzer/{id}
+    controller: App\Controller\ModernPreviewController::userEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Verwaltung: Mandanten (nur ROLE_GLOBAL_ADMIN) ---
+modern_mandanten:
+    path: /modern/mandanten
+    controller: App\Controller\ModernPreviewController::mandanten
+    methods: GET
+
+modern_mandant_new:
+    path: /modern/mandant/neu
+    controller: App\Controller\ModernPreviewController::mandantNew
+    methods: GET
+
+modern_mandant_save:
+    path: /modern/mandant/speichern
+    controller: App\Controller\ModernPreviewController::mandantSave
+    methods: POST
+
+modern_mandant_toggle:
+    path: /modern/mandant/umschalten
+    controller: App\Controller\ModernPreviewController::mandantToggle
+    methods: POST
+
+modern_mandant_edit:
+    path: /modern/mandant/{id}
+    controller: App\Controller\ModernPreviewController::mandantEdit
+    methods: GET
+    requirements:
+        id: '\d+'
