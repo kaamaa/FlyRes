@@ -6,7 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 /**
  * @ORM\Entity(repositoryClass="App\Repository\FresApiTokenRepository")
  * @ORM\Table(
- *     name="FRes_api_tokens",
+ *     name="fres_api_tokens",
  *     indexes={
  *         @ORM\Index(name="idx_user_last_used", columns={"user_id", "last_used_at"})
  *     },
@@ -26,7 +26,7 @@ class FresApiToken
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\FresAccounts")
-     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
+     * @ORM\JoinColumn(name="user_id", referencedColumnName="id", nullable=false)
      */
     private FresAccounts $user;
 
