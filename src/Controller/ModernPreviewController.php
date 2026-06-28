@@ -2082,6 +2082,8 @@ class ModernPreviewController extends AbstractController
 
         // Fuer das Audit: neu vs. Aenderung + bisherige Rollen (Vergleich nach dem Speichern).
         $isNew = ($id === 0);
+        // Fuer aktive Token-Bereinigung: war der Nutzer VOR dem Speichern gesperrt?
+        $wasLocked = !$isNew && Users::isLocked($u);
         $oldRoleIds = [];
         if (!$isNew) {
             foreach ($u->getFunction() as $f) { $oldRoleIds[] = (int) $f->getId(); }
@@ -2164,6 +2166,12 @@ class ModernPreviewController extends AbstractController
 
         $em->persist($u);
         $em->flush();
+
+        // Beim Uebergang entsperrt -> gesperrt: Bearer-Tokens des Nutzers aktiv entfernen.
+        // Hygiene; der eigentliche Zugriffsstopp erfolgt pro Request im BearerTokenAuthenticator.
+        if (Users::isNewlyLocked($wasLocked, Users::isLocked($u))) {
+            $em->getRepository(\App\Entity\FresApiToken::class)->deleteAllForUser((int) $u->getId());
+        }
 
         $newRoleIds = [];
         foreach ($u->getFunction() as $f) { $newRoleIds[] = (int) $f->getId(); }
