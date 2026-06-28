@@ -31,4 +31,18 @@ class FresApiTokenRepository extends ServiceEntityRepository
         $this->getEntityManager()->remove($token);
         if ($flush) $this->getEntityManager()->flush();
     }
+
+    /**
+     * Loescht alle API-Tokens eines Nutzers (Bulk-Delete via DQL).
+     * Ersetzt das durch den fehlenden FK weggefallene ON DELETE CASCADE.
+     *
+     * @return int Anzahl geloeschter Zeilen
+     */
+    public function deleteAllForUser(int $userId): int
+    {
+        return (int) $this->getEntityManager()
+            ->createQuery('DELETE FROM App\Entity\FresApiToken t WHERE t.user = :userId')
+            ->setParameter('userId', $userId)
+            ->execute();
+    }
 }
