@@ -7,6 +7,7 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entities\Clients;
 use App\Logging;
+use App\Entity\FresApiToken;
 
 class Users
 {
@@ -92,6 +93,9 @@ class Users
       
       $em->persist($user);
       $em->flush();
+
+      // FK-loses Schema: Tokens des Nutzers aktiv entfernen (ersetzt ON DELETE CASCADE)
+      $em->getRepository(FresApiToken::class)->deleteAllForUser((int) $id);
     }
   }
   
