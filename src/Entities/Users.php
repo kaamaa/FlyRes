@@ -446,7 +446,17 @@ class Users
     if($user->getIslocked() == 1) return TRUE;
       else return FALSE;
   }
-  
+
+  /**
+   * True, wenn ein Nutzer beim Speichern von "entsperrt" auf "gesperrt"
+   * wechselt. Verhindert wiederholtes Aufraeumen bei jedem Save eines
+   * bereits gesperrten Nutzers.
+   */
+  public static function isNewlyLocked(bool $wasLocked, bool $isNowLocked): bool
+  {
+    return !$wasLocked && $isNowLocked;
+  }
+
   public static function isDeleted ($user)
   {
     if (strcmp($user->getStatus(), 'geloescht') == 0) return TRUE;
