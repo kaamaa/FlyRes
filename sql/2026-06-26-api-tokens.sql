@@ -4,7 +4,7 @@
 -- ist (InnoDB kann keinen FK auf MyISAM anlegen). Aufraeumen verwaister Tokens
 -- erfolgt aktiv im Code (Users::DeleteUser, EditUserController::SaveAction).
 
-CREATE TABLE fres_api_tokens (
+CREATE TABLE IF NOT EXISTS fres_api_tokens (
     id            BIGINT UNSIGNED   NOT NULL AUTO_INCREMENT,
     user_id       INT               NOT NULL,
     token_hash    CHAR(64)          NOT NULL,

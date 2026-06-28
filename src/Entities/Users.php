@@ -94,7 +94,10 @@ class Users
       $em->persist($user);
       $em->flush();
 
-      // FK-loses Schema: Tokens des Nutzers aktiv entfernen (ersetzt ON DELETE CASCADE)
+      // FK-loses Schema: Tokens des Nutzers aktiv entfernen (ersetzt ON DELETE CASCADE).
+      // Bewusst best-effort/nicht-transaktional nach dem Flush: der Bearer-Authenticator
+      // weist geloeschte Nutzer ohnehin bei jedem Request ab, daher ist die Bereinigung
+      // Hygiene, kein Sicherheits-Gate. Nicht in die Soft-Delete-Transaktion ziehen.
       $em->getRepository(FresApiToken::class)->deleteAllForUser((int) $id);
     }
   }
