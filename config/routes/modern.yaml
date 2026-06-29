@@ -246,3 +246,14 @@ modern_mandant_edit:
     methods: GET
     requirements:
         id: '\d+'
+
+# --- System-Diagnose (nur ROLE_SYSTEM_ADMIN) ---
+modern_system:
+    path: /modern/system
+    controller: App\Controller\ModernSystemController::system
+    methods: GET
+
+modern_system_phpinfo:
+    path: /modern/system/phpinfo
+    controller: App\Controller\ModernSystemController::phpinfo
+    methods: GET

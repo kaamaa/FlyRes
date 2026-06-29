@@ -42,6 +42,11 @@
   <div class="fr-navsec">Hilfe</div>
   <a class="fr-nav {{ route == 'modern_help' ? 'on' : '' }}" href="{{ path('modern_help') }}"><span class="ic">❓</span> Anleitung</a>
 
+  {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+    <div class="fr-navsec">System</div>
+    <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}"><span class="ic">🩺</span> Diagnose</a>
+  {% endif %}
+
   {% set rolle = 'Pilot' %}
   {% if is_granted('ROLE_GLOBAL_ADMIN') %}{% set rolle = 'Global-Administrator' %}
   {% elseif is_granted('ROLE_SYSTEM_ADMIN') %}{% set rolle = 'System-Administrator' %}

@@ -843,9 +843,58 @@ class Bookings
                                                                  'clientID' =>  $clientid));
     $query->setCacheable(true);
     return $query->getResult();
-    
+
   }
-  
+
+  // Holt ALLE Buchungen eines Flugzeugs fuer den gesamten Zeitraum in EINER Abfrage.
+  // Ersetzt in der Uebersicht die bisherigen (Flugzeuge x Tage) Einzelabfragen:
+  // statt z.B. 30 Tage x N Flugzeuge gibt es jetzt nur noch N Abfragen.
+  protected static function GetBookingsForPlaneInRangeAsObjects ($em, $rangeStartStr, $rangeEndStr, $clientid, $planeId)
+  {
+    // Nur die fuer die Uebersicht benoetigten Felder laden (Partial-Hydration).
+    // Spart die grossen mediumtext-Spalten emailinfoi/emailinfoe, die hier nie
+    // gebraucht werden – deutlich weniger I/O pro Buchung.
+    // Hinweis: Partial-Entities sind NICHT mit dem Second-Level-Cache
+    // kombinierbar (Doctrine: FeatureNotImplemented). Fuer diese heisse, oft
+    // geaenderte Abfrage ist die schlanke Spaltenauswahl ohnehin der groessere
+    // Hebel (der SLC wuerde bei jeder Buchung sowieso invalidiert) – daher hier
+    // bewusst kein setCacheable(). Der neue Composite-Index macht sie schnell.
+    $querystring = "SELECT partial b.{id, clientid, createdbyuserid, flightpurposeid, itemstart, itemstop, description, flightinstructor} FROM App\Entity\FresBooking b WHERE "
+      // Buchung ueberschneidet den Zeitraum [rangeStart, rangeEnd]
+      . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
+      . "b.clientid = :clientID and b.aircraftid = :planeID and "
+      . "b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' "
+      . "ORDER BY b.itemstart";
+    $query = $em->createQuery($querystring)->setParameters(array('range_start' => $rangeStartStr,
+                                                                 'range_end'   => $rangeEndStr,
+                                                                 'planeID'     => $planeId,
+                                                                 'clientID'    => $clientid));
+    return $query->getResult();
+  }
+
+  // Filtert aus einer vorab geladenen Buchungsliste die Buchungen heraus, die den
+  // angegebenen Tag ueberschneiden. Identische Logik wie GetBookingsForOneDayAsObjects,
+  // nur in PHP statt per SQL (vermeidet die Abfrage pro Tag).
+  protected static function FilterBookingsForDay ($bookings, $int_day, $int_month, $int_year)
+  {
+    $day_start = mktime(0, 0, 0, $int_month, $int_day,     $int_year);
+    $day_end   = mktime(0, 0, 0, $int_month, $int_day + 1, $int_year);
+    $result = array();
+    foreach ($bookings as $b)
+    {
+      $bs = $b->getItemstart()->getTimestamp();
+      $be = $b->getItemstop()->getTimestamp();
+      // Buchung startet vor und endet nach dem Tag ODER startet bzw. endet am Tag
+      if (($bs <= $day_start && $be >= $day_end)
+        || ($bs >= $day_start && $bs <= $day_end)
+        || ($be >= $day_start && $be <= $day_end))
+      {
+        $result[] = $b;
+      }
+    }
+    return $result;
+  }
+
   protected static function GetDayRange($booking, $int_year, $int_month, $day, $sHour, $sMinute, $eHour, $eMinute)
   {
     // ermittelt den Start und das Ende des Tages basierend auf einer Buchung und auf angegeben Start- und Endparametern
@@ -874,10 +923,35 @@ class Bookings
     $planes = $em->getRepository('App\Entity\FresAircraft')->findBy(array('clientid' => $clientid));
     if ($planes) 
     {
+      // Zeitraum der Uebersicht einmal bestimmen (00:00 Starttag bis 00:00 nach dem letzten Tag)
+      $rangeStart = clone $startdate;
+      $rangeStart->setTime(0, 0, 0);
+      $rangeEnd = clone $rangeStart;
+      $rangeEnd->modify('+' . $int_duration . ' days');
+      $rangeStartStr = $rangeStart->format('Y-m-d H:i:s');
+      $rangeEndStr   = $rangeEnd->format('Y-m-d H:i:s');
+
+      // In-Request-Caches: dieselben Nutzer/Flugarten tauchen im ganzen Raster
+      // (Flugzeuge x Tage x Buchungen) vielfach auf -> jeweils nur EINMAL
+      // nachschlagen statt pro Buchung erneut die DB zu fragen.
+      $userNameCache = [];
+      $purposeCache  = [];
+      $schulungCache = [];
+      $getName = function ($uid) use (&$userNameCache, $em, $clientid) {
+        $key = (int) $uid;
+        if (!array_key_exists($key, $userNameCache)) {
+          $userNameCache[$key] = Users::GetUserName($em, $clientid, $uid);
+        }
+        return $userNameCache[$key];
+      };
+
       foreach ($planes as $plane)
       {
+        // Alle Buchungen dieses Flugzeugs fuer den gesamten Zeitraum in EINER Abfrage holen
+        $planeBookings = self::GetBookingsForPlaneInRangeAsObjects ($em, $rangeStartStr, $rangeEndStr, $clientid, $plane->getId());
+
         $current_date = clone $startdate;
-        for ($i = 1; $i <= $int_duration; $i++) 
+        for ($i = 1; $i <= $int_duration; $i++)
         {
           $time = $current_date->getTimestamp();
           $int_month = (int) date("n",$time);
@@ -886,7 +960,8 @@ class Bookings
           
           $tooltip = "";
           $bookingsInfo = [];   // strukturiert (Zeit/Kennung/Kunde) fuer kompakte Tooltips
-          $bookings = self::GetBookingsForOneDayAsObjects ($em, $int_day, $int_month, $int_year, $clientid, $plane->getId());
+          // Aus der vorab geladenen Buchungsliste die Buchungen dieses Tages herausfiltern (keine DB-Abfrage mehr pro Tag)
+          $bookings = self::FilterBookingsForDay ($planeBookings, $int_day, $int_month, $int_year);
           //$color = 'frei';
           // In dieser Variable soll die Buchungszeit für einen Tag aufsummiert werden, die für die Fargebung genutzt wird
           $buchungsdauerProTag = 0;
@@ -947,12 +1022,17 @@ class Bookings
               $start = $ds_de[0];
               $stop = $ds_de[1];
                  
-              // Fluglehrer mit zur Schulungsart aufnehmen
-              $flightpurpose = FlightPurposes::GetFlightpurpose($em, $booking->getflightpurposeid());
-              $isFlightTraining = FlightPurposes::IsSchulung($booking->getflightpurposeid());
+              // Fluglehrer mit zur Schulungsart aufnehmen (Flugart gecacht)
+              $pid = $booking->getflightpurposeid();
+              if (!array_key_exists($pid, $purposeCache)) {
+                $purposeCache[$pid]  = FlightPurposes::GetFlightpurpose($em, $pid);
+                $schulungCache[$pid] = FlightPurposes::IsSchulung($pid);
+              }
+              $flightpurpose    = $purposeCache[$pid];
+              $isFlightTraining = $schulungCache[$pid];
               if ($isFlightTraining)
               {
-                $flightpurpose = $flightpurpose . " / " . Users::GetUserName($em, $booking->getClientid(), $booking->getFlightinstructor());
+                $flightpurpose = $flightpurpose . " / " . $getName($booking->getFlightinstructor());
               }
               
               $timestr = "";
@@ -968,7 +1048,7 @@ class Bookings
                 $timestr = date_format($start, 'H:i') . "-" . date_format($stop, 'H:i');
               }
               
-              $bookerName = Users::GetUserName($em, $clientid, $booking->getCreatedbyuserid());
+              $bookerName = $getName($booking->getCreatedbyuserid());
               $tooltip .= $timestr
                        . " " . $bookerName
                        . " (" . $flightpurpose . ") "

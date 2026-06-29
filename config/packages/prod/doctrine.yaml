@@ -5,6 +5,16 @@ doctrine:
     # "Failed opening required ...Proxies/__CG__...php" abzustürzen, wenn var/cache
     # geleert wurde. Minimaler Performance-Aufwand, fuer diese App vernachlaessigbar.
     auto_generate_proxy_classes: true
+    # Second-Level-Cache: ohne region_cache_driver faellt Doctrine auf einen
+    # In-Memory ArrayAdapter zurueck (nur pro Request) -> die setCacheable(true)-
+    # Abfragen brachten ueber Requests hinweg NICHTS. Hier auf einen persistenten
+    # Pool legen, damit der SLC tatsaechlich greift. Doctrine invalidiert die
+    # Regionen automatisch bei persist/flush (NONSTRICT_READ_WRITE auf den Entities).
+    second_level_cache:
+      enabled: true
+      region_cache_driver:
+        type: pool
+        pool: doctrine.second_level_cache_pool
     metadata_cache_driver:
       type: pool
       pool: doctrine.system_cache_pool
@@ -22,3 +32,5 @@ framework:
                 adapter: cache.app
             doctrine.system_cache_pool:
                 adapter: cache.system
+            doctrine.second_level_cache_pool:
+                adapter: cache.app
