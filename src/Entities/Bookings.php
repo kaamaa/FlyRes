@@ -885,6 +885,7 @@ class Bookings
           $int_day = (int) date("j",$time);
           
           $tooltip = "";
+          $bookingsInfo = [];   // strukturiert (Zeit/Kennung/Kunde) fuer kompakte Tooltips
           $bookings = self::GetBookingsForOneDayAsObjects ($em, $int_day, $int_month, $int_year, $clientid, $plane->getId());
           //$color = 'frei';
           // In dieser Variable soll die Buchungszeit für einen Tag aufsummiert werden, die für die Fargebung genutzt wird
@@ -967,10 +968,18 @@ class Bookings
                 $timestr = date_format($start, 'H:i') . "-" . date_format($stop, 'H:i');
               }
               
+              $bookerName = Users::GetUserName($em, $clientid, $booking->getCreatedbyuserid());
               $tooltip .= $timestr
-                       . " " . Users::GetUserName($em, $clientid, $booking->getCreatedbyuserid()) 
+                       . " " . $bookerName
                        . " (" . $flightpurpose . ") "
                        . $booking->getdescription() . "<br>";
+
+              // Kompakte, datumslose Variante (Tag ergibt sich aus der Spalte) – Name wiederverwenden
+              $bookingsInfo[] = [
+                'time'    => date_format($start, 'H:i') . '-' . date_format($stop, 'H:i'),
+                'kennung' => $plane->getKennung(),
+                'user'    => $bookerName,
+              ];
             }
           }
           $day = date('d-m-Y', mktime ( 0,0,0 ,$int_month ,$int_day, $int_year));
@@ -1010,7 +1019,7 @@ class Bookings
             case 10: $color = 'ausgebucht'; break;
           }
              
-          $bookingList[] = array('plane' => $plane->getId(), 'day' => $int_day, 'bookingdate' => $day, 'color' => $color, 'tooltip' => $tooltip);
+          $bookingList[] = array('plane' => $plane->getId(), 'day' => $int_day, 'bookingdate' => $day, 'color' => $color, 'tooltip' => $tooltip, 'bookings' => $bookingsInfo);
           $current_date->modify('+1 day');
         }
       }

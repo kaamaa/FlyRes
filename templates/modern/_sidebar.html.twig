@@ -11,9 +11,12 @@
   <a class="fr-nav {{ route == 'modern_reserve' ? 'on' : '' }}" href="{{ path('modern_reserve') }}"><span class="ic">＋</span> Reservieren</a>
 
   <div class="fr-navsec">Ansichten</div>
-  <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}"><span class="ic">📋</span> Alle Buchungen</a>
+  <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}"><span class="ic">📊</span> Übersichten</a>
   <a class="fr-nav {{ route == 'modern_bookings' and u != 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings', {umfang: 'meine'}) }}"><span class="ic">👤</span> Meine Buchungen</a>
-  <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}"><span class="ic">📊</span> Wochenübersicht</a>
+  <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}"><span class="ic">📋</span> Alle Buchungen</a>
+  {% if is_granted('ROLE_FI') %}
+    <a class="fr-nav {{ route starts with 'modern_fiavail' ? 'on' : '' }}" href="{{ path('modern_fiavail') }}"><span class="ic">🕘</span> Schulungszeiten</a>
+  {% endif %}
 
   <div class="fr-navsec">Stammdaten</div>
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
@@ -39,10 +42,16 @@
   <div class="fr-navsec">Hilfe</div>
   <a class="fr-nav {{ route == 'modern_help' ? 'on' : '' }}" href="{{ path('modern_help') }}"><span class="ic">❓</span> Anleitung</a>
 
+  {% set rolle = 'Pilot' %}
+  {% if is_granted('ROLE_GLOBAL_ADMIN') %}{% set rolle = 'Global-Administrator' %}
+  {% elseif is_granted('ROLE_SYSTEM_ADMIN') %}{% set rolle = 'System-Administrator' %}
+  {% elseif is_granted('ROLE_ADMIN') %}{% set rolle = 'Administrator' %}
+  {% elseif is_granted('ROLE_FI') %}{% set rolle = 'Fluglehrer' %}{% endif %}
   <div class="fr-usr">
     <span class="ava">{{ (app.user.firstname|default('')|first) ~ (app.user.lastname|default('')|first) }}</span>
     <div>{{ app.user.firstname|default('') }} {{ app.user.lastname|default('') }}<br>
-      <span style="color:#7f93a8;font-size:11px;">Vorschau · Variante A</span>
+      <span style="color:#7f93a8;font-size:11px;">{{ rolle }}</span>
     </div>
+    <a class="fr-logout" href="{{ path('app_logout') }}" title="Abmelden">⎋</a>
   </div>
 </div>

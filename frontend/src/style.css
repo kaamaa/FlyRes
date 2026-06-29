@@ -126,6 +126,7 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .av3seg.s-anfrageD{background:#ff9f0a;}
 .av3seg.s-anfrageA{background:repeating-linear-gradient(45deg,#ff9f0a,#ff9f0a 5px,#ffd89a 5px,#ffd89a 10px);}
 .av3seg.s-solo{background:#1bb6bd;}
+.av3seg.s-ausgebucht{background:repeating-linear-gradient(45deg,#9aa3ad,#9aa3ad 5px,#cfd4da 5px,#cfd4da 10px);}
 .av3legend{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:6px 16px 0;font-size:11px;color:var(--ios-label2);font-weight:600;}
 .av3legend .note{flex-basis:100%;font-weight:400;color:#8a8a8e;}
 .av3legend span{display:inline-flex;align-items:center;gap:4px;}
@@ -134,6 +135,7 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .av3legend i.s-anfrageD{background:#ff9f0a;}
 .av3legend i.s-anfrageA{background:repeating-linear-gradient(45deg,#ff9f0a,#ff9f0a 4px,#ffd89a 4px,#ffd89a 8px);}
 .av3legend i.s-solo{background:#1bb6bd;}
+.av3legend i.s-ausgebucht{background:repeating-linear-gradient(45deg,#9aa3ad,#9aa3ad 4px,#cfd4da 4px,#cfd4da 8px);}
 .av3legend i.nb{background:#d4d8de;}
 .av3sel{position:absolute;top:-3px;height:30px;border:2.5px solid var(--ios-blue);border-radius:8px;background:rgba(10,132,255,.10);}
 .av3sel.bad{border-color:var(--ios-red);background:rgba(255,59,48,.12);}

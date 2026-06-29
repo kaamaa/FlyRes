@@ -1,0 +1,49 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Mehrere Termine löschen{% endblock %}
+
+{% block content %}
+{% set wdays = {1:'Mo', 2:'Di', 3:'Mi', 4:'Do', 5:'Fr', 6:'Sa', 7:'So'} %}
+<form class="fr-form" action="{{ path('modern_fiavail_bulk_delete') }}" method="post"
+      onsubmit="return confirm('Wirklich alle passenden Schulungszeiten in diesem Zeitraum löschen? Dies kann nicht rückgängig gemacht werden.');">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="fr-fihint">Löscht alle eigenen Schulungszeiten im gewählten Zeitraum. Optional auf bestimmte Wochentage einschränken (z. B. nur Samstage).</div>
+
+  <div class="fr-formsec">Auswahl</div>
+  <div class="fr-card">
+    {% if isAdmin %}
+    <div class="fr-frow">
+      <label>Fluglehrer</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <select name="fi">{% for label, id in instructors %}<option value="{{ id }}" {{ id == v.fi ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    {% else %}<input type="hidden" name="fi" value="{{ v.fi }}">{% endif %}
+
+    {% set icCal %}<span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>{% endset %}
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Von (Datum)</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="fromdate" value="{{ v.fromdate }}"><div class="fr-calpop" hidden></div></div></div>
+      <div class="fr-frow"><label>Bis (Datum)</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="todate" value="{{ v.todate }}"><div class="fr-calpop" hidden></div></div></div>
+    </div>
+    <div class="fr-frow">
+      <label>Wochentage <span style="text-transform:none;font-weight:600;color:var(--fr-mut);">(leer = alle)</span></label>
+      <div class="fr-wdays">
+        {% for id, name in wdays %}
+          <label class="fr-wday"><input type="checkbox" name="weekdays[]" value="{{ id }}" {{ id in v.weekdays ? 'checked' : '' }}><span>{{ name }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn danger">Termine löschen</button>
+    <a class="fr-clear" href="{{ path('modern_fiavail') }}">Abbrechen</a>
+  </div>
+</form>
+
+{{ include('modern/_calendarjs.html.twig') }}
+{% endblock %}

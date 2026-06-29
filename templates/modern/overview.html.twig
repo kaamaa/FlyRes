@@ -4,47 +4,223 @@
 
 {% block topactions %}
   <span class="fr-ansicht">
+    <a class="{{ ansicht == 'tag' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: 'tag'}) }}">Tag</a>
     <a class="{{ ansicht == '14tage' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: '14tage'}) }}">14 Tage</a>
     <a class="{{ ansicht == 'monat' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: 'monat'}) }}">Monat</a>
   </span>
-  <span class="fr-pernav">
-    <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
-    <b>{{ label }}</b>
-    <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
-  </span>
-  <span class="fr-scale">frei<i class="fr-scalebar"></i>ausgebucht</span>
+  {% if ansicht != 'tag' %}
+    <span class="fr-pernav">
+      <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
+      <b>{{ label }}</b>
+      <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
+    </span>
+    <span class="fr-scale">frei<i class="fr-scalebar"></i>ausgebucht</span>
+  {% endif %}
 {% endblock %}
 
 {% block content %}
+{% if ansicht == 'tag' %}
+
+  {# ====== Tagesansicht (Stunden) ====== #}
+  <div class="fr-daypanel">
+    <div class="fr-dayhdr2">
+      <span class="t">📅 Tag · Stundenraster</span>
+      <div class="fr-ctrl dt fr-date" id="dayPick">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <span class="fr-datedisp"></span>
+        <input type="hidden" id="dayDate" value="{{ today }}">
+        <div class="fr-calpop" hidden></div>
+      </div>
+    </div>
+
+    <div class="fr-sechdr"><span class="t">🛩️ Flugzeuge</span></div>
+    <div id="dayAc" class="fr-avbox"><div class="fr-avhint">Lädt…</div></div>
+
+    <button type="button" class="fr-sechdr fr-sectoggle" id="dayFiToggle" aria-expanded="false">
+      <span class="t">🕘 Fluglehrer · spezifische Verfügbarkeit</span>
+      <span class="ar">◀</span>
+    </button>
+    <div id="dayFiBody" class="fr-secbody" hidden>
+      <div id="dayFi" class="fr-avbox"></div>
+      <div class="fr-avlegend">
+        <span class="fr-avlg-note">Fluglehrer: Vollton = direkt buchbar · gestreift = nach Absprache · grau = nicht buchbar</span>
+        <span><i class="s-frei"></i>frei</span>
+        <span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span>
+        <span><i class="s-anfrageA"></i>n. Absprache</span>
+        <span><i class="s-solo"></i>Solo-parallel</span>
+        <span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span>
+        <span><i class="nb"></i>nicht buchbar</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.FR_DAY = {
+      aircraft: [{% for p in planes %}{id:{{ p.planeID }},k:"{{ p.kennung|e('js') }}",t:"{{ p.type|e('js') }}"}{{ not loop.last ? ',' : '' }}{% endfor %}],
+      instructors: [{% for name, id in instructors %}{id:{{ id }},name:"{{ name|e('js') }}"}{{ not loop.last ? ',' : '' }}{% endfor %}]
+    };
+  </script>
+  {{ include('modern/_calendarjs.html.twig') }}
+  <script>
+  (function () {
+    var AC = (window.FR_DAY || {}).aircraft || [], FI = (window.FR_DAY || {}).instructors || [];
+    var DOTS = ['#34c759', '#0a84ff', '#ff9f0a', '#bf5af2', '#ff375f', '#5ac8fa', '#ffd60a', '#ff6482'];
+    // Label im Format der 14-Tage-/Monats-Matrix: Farbpunkt + fette Kennung/Name (+ Typ-Zeile)
+    function lab(main, sub, i) { return '<div class="fr-avlab named"><span class="dot" style="background:' + DOTS[i % 8] + '"></span><span class="lbl"><b>' + main + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; }
+    var pick = document.getElementById('dayPick'), dInp = document.getElementById('dayDate'),
+        acBox = document.getElementById('dayAc'), fiBox = document.getElementById('dayFi'),
+        fiT = document.getElementById('dayFiToggle'), fiB = document.getElementById('dayFiBody'), fiAr = fiT.querySelector('.ar');
+
+    function toMin(t) { if (!t) return null; var p = t.split(':'); return (+p[0]) * 60 + (+p[1]); }
+    function p2(n) { return ('0' + n).slice(-2); }
+    function busy(free, s, e) { var f = (free || []).map(function (w) { return [toMin(w.start), toMin(w.end)]; }).sort(function (a, b) { return a[0] - b[0]; }); var out = [], cur = s; f.forEach(function (x) { if (x[0] > cur) out.push([cur, x[0]]); cur = Math.max(cur, x[1]); }); if (cur < e) out.push([cur, e]); return out; }
+    function pctf(s, e) { var span = e - s || 1; return function (m) { return (m - s) / span * 100; }; }
+    function mm(m) { return p2(Math.floor(m / 60)) + ':' + p2(m % 60); }
+    function busySegs(arr, s, e) { var pct = pctf(s, e); return arr.map(function (x) { return '<div class="fr-avseg" data-tip="belegt ' + mm(x[0]) + '–' + mm(x[1]) + '" style="left:' + pct(x[0]) + '%;width:' + (pct(x[1]) - pct(x[0])) + '%"></div>'; }).join(''); }
+    function freeTitle(free) { if (!free || !free.length) return 'ganztägig belegt'; return 'frei: ' + free.map(function (w) { return w.start + '–' + w.end; }).join(' · '); }
+    var STCLS = { frei: 's-frei', anfrage_direkt: 's-anfrageD', anfrage_absprache: 's-anfrageA', solo: 's-solo', ausgebucht: 's-ausgebucht' };
+    var STLBL = { frei: 'frei', anfrage_direkt: 'auf Anfrage (buchbar)', anfrage_absprache: 'auf Anfrage – nach Absprache', solo: 'Solo-parallel buchbar', ausgebucht: 'verfügbar, aber ausgebucht' };
+    function stateBar(segs, s, e) { var pct = pctf(s, e); var inner = (segs || []).map(function (g) { var a = toMin(g.start), b = toMin(g.end), cl = STCLS[g.state] || 's-frei', lbl = STLBL[g.state] || g.state; return '<div class="fr-avseg ' + cl + '" data-tip="' + lbl + ' ' + g.start + '–' + g.end + '" style="left:' + pct(a) + '%;width:' + (pct(b) - pct(a)) + '%"></div>'; }).join(''); return '<div class="fr-avbar nb" data-tip="nicht buchbar">' + inner + '</div>'; }
+    function axis(s, e) { var span = e - s; var x = [0, 1, 2, 3, 4].map(function (i) { return '<span>' + p2(Math.round((s + span * i / 4) / 60)) + '</span>'; }).join(''); return '<div class="fr-avaxis">' + x + '</div>'; }
+    function get(q) { return fetch('/api/availability?' + q, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
+
+    function loadAc() {
+      var date = dInp.value; if (!date) return;
+      if (!AC.length) { acBox.innerHTML = '<div class="fr-avhint">Keine Flugzeuge.</div>'; return; }
+      acBox.innerHTML = '<div class="fr-avhint">Lädt…</div>';
+      Promise.all(AC.map(function (a) { return get('date=' + date + '&aircraft=' + a.id + '&fi=0'); })).then(function (res) {
+        var bounds = null, rows = '';
+        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(AC[i].k, AC[i].t, i) + '<div class="fr-avbar" data-tip="' + freeTitle(d.aircraftFree) + '">' + busySegs(busy(d.aircraftFree, bounds[0], bounds[1]), bounds[0], bounds[1]) + '</div></div>'; });
+        acBox.innerHTML = bounds ? rows + axis(bounds[0], bounds[1]) : '<div class="fr-avhint">Keine Daten für diesen Tag.</div>';
+      });
+    }
+    function loadFi() {
+      var date = dInp.value; if (!date) return;
+      if (!FI.length) { fiBox.innerHTML = '<div class="fr-avhint">Keine Fluglehrer.</div>'; return; }
+      fiBox.innerHTML = '<div class="fr-avhint">Lädt…</div>';
+      Promise.all(FI.map(function (f) { return get('date=' + date + '&aircraft=0&fi=' + f.id); })).then(function (res) {
+        var bounds = null, rows = '';
+        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(FI[i].name, '', i) + stateBar(d.instructorSegments, bounds[0], bounds[1]) + '</div>'; });
+        fiBox.innerHTML = bounds ? rows + axis(bounds[0], bounds[1]) : '<div class="fr-avhint">Keine Daten für diesen Tag.</div>';
+      });
+    }
+    pick.addEventListener('datechange', function () { loadAc(); if (!fiB.hidden) loadFi(); });
+    function setFi(open) { fiB.hidden = !open; fiT.setAttribute('aria-expanded', open ? 'true' : 'false'); fiAr.textContent = open ? '▼' : '◀'; if (open) loadFi(); }
+    fiT.addEventListener('click', function () { var o = fiB.hidden; setFi(o); try { localStorage.setItem('fr-dayfi-open', o ? '1' : '0'); } catch (e) {} });
+    var sf = null; try { sf = localStorage.getItem('fr-dayfi-open'); } catch (e) {}
+    loadAc();
+    if (sf === '1') setFi(true);
+  })();
+  </script>
+
+{% else %}
+
+  {# ====== Matrizen (14 Tage / Monat) ====== #}
   {% set dots = ['#34c759', '#0a84ff', '#ff9f0a', '#bf5af2', '#ff375f', '#5ac8fa', '#ffd60a', '#ff6482'] %}
-  <div class="fr-ovwrap">
-    <table class="fr-matrix">
-      <thead>
-        <tr>
-          <th class="fr-corner">Flugzeug</th>
-          {% for d in days %}
-            <th class="fr-day {{ d.wend }}"><span class="wd">{{ d.wd }}</span><span class="dn {{ d.today ? 'today' : '' }}">{{ d.num }}</span></th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in planes %}
-          {% set row = cells[p.planeID]|default([]) %}
+  <div class="fr-ovscroll">
+    <div class="fr-ovcard">
+
+      <div class="fr-sechdr"><span class="t">🛩️ Flugzeuge</span></div>
+      <table class="fr-matrix">
+        <thead>
           <tr>
-            <td class="fr-ac"><span class="dot" style="background:{{ dots[loop.index0 % 8] }}"></span><span class="lbl"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></span></td>
-            {% for c in row %}
-              {% set d = days[loop.index0] %}
-              <td class="{{ d.wend }}">
-                <a class="fr-cell occ-{{ c.color }} {{ d and d.today ? 'today' : '' }}"
-                   href="{{ path('modern_day', {plane: p.planeID, date: d.iso}) }}"
-                   title="{{ c.tooltip ? (c.tooltip|replace({'<br>': ' · '})|striptags) : 'frei' }}"></a>
-              </td>
+            <th class="fr-corner">Flugzeug</th>
+            {% for d in days %}
+              <th class="fr-day {{ d.wend }}"><span class="wd">{{ d.wd }}</span><span class="dn {{ d.today ? 'today' : '' }}">{{ d.num }}</span></th>
             {% endfor %}
           </tr>
-        {% else %}
-          <tr><td class="fr-empty">Keine Flugzeuge.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {% for p in planes %}
+            {% set row = cells[p.planeID]|default([]) %}
+            <tr>
+              <td class="fr-ac"><span class="dot" style="background:{{ dots[loop.index0 % 8] }}"></span><span class="lbl"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></span></td>
+              {% for c in row %}
+                {% set d = days[loop.index0] %}
+                <td class="{{ d.wend }}">
+                  <a class="fr-cell occ-{{ c.color }} {{ d and d.today ? 'today' : '' }}"
+                     href="{{ path('modern_day', {plane: p.planeID, date: d.iso}) }}"
+                     data-tip="{{ c.tooltip }}"></a>
+                </td>
+              {% endfor %}
+            </tr>
+          {% else %}
+            <tr><td class="fr-empty">Keine Flugzeuge.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      {% if firows %}
+      <button type="button" class="fr-sechdr fr-sectoggle" id="fiToggle" aria-expanded="false">
+        <span class="t">🕘 Fluglehrer · grundsätzlich verfügbar</span>
+        <span class="ar">◀</span>
+      </button>
+      <div class="fr-secbody" id="fiBody" hidden>
+        <table class="fr-matrix fr-fimatrix">
+          <thead>
+            <tr>
+              <th class="fr-corner">Fluglehrer</th>
+              {% for d in days %}
+                <th class="fr-day {{ d.wend }}"><span class="wd">{{ d.wd }}</span><span class="dn {{ d.today ? 'today' : '' }}">{{ d.num }}</span></th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for fi in firows %}
+              <tr>
+                <td class="fr-ac"><span class="dot" style="background:{{ dots[loop.index0 % 8] }}"></span><span class="lbl"><b>{{ fi.name }}</b></span></td>
+                {% for i in 0..(days|length - 1) %}
+                  {% set d = days[i] %}{% set c = fi.cells[i] %}
+                  <td class="{{ d.wend }}">{% if c %}<span class="fr-ficell {{ c.state }} {{ d.today ? 'today' : '' }}" data-tip="{{ c.title }}"></span>{% endif %}</td>
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% if not hasAvail %}<div class="fr-dash-empty fr-secnowrap" style="padding:8px 4px;">Für diesen Zeitraum sind noch keine Schulungszeiten hinterlegt.</div>{% endif %}
+        <div class="fr-filegend fr-secnowrap">
+          <span><i class="green"></i>verfügbar</span>
+          <span><i class="amber"></i>auf Anfrage (buchbar)</span>
+          <span><i class="amberdash"></i>nur nach Rücksprache</span>
+          <span class="fr-filegend-note">Grundsätzliche Verfügbarkeit – Buchungen sind hier bewusst nicht berücksichtigt. Zeiten beim Überfahren einer Zelle.</span>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
   </div>
+
+  {% if firows %}
+  <script>
+  (function () {
+    var t = document.getElementById('fiToggle'), b = document.getElementById('fiBody'), ar = t.querySelector('.ar');
+    function set(open) { b.hidden = !open; t.setAttribute('aria-expanded', open ? 'true' : 'false'); ar.textContent = open ? '▼' : '◀'; }
+    var saved = null; try { saved = localStorage.getItem('fr-fimatrix-open'); } catch (e) {}
+    set(saved === '1');
+    t.addEventListener('click', function () { var o = b.hidden; set(o); try { localStorage.setItem('fr-fimatrix-open', o ? '1' : '0'); } catch (e) {} });
+  })();
+  </script>
+  {% endif %}
+
+{% endif %}
+
+{# Eigener Sofort-Tooltip für alle [data-tip]-Elemente (Matrix-Zellen + Tagesbalken) #}
+<script>
+(function () {
+  var tip = document.createElement('div'); tip.className = 'fr-tip'; document.body.appendChild(tip);
+  var cur = null;
+  function move(e) {
+    var x = e.clientX + 13, y = e.clientY + 16, r = tip.getBoundingClientRect();
+    if (x + r.width > window.innerWidth - 8) x = e.clientX - r.width - 13;
+    if (y + r.height > window.innerHeight - 8) y = e.clientY - r.height - 16;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  }
+  function show(el, e) { var t = el.getAttribute('data-tip'); if (!t) { hide(); return; } cur = el; tip.textContent = t; tip.style.opacity = '1'; move(e); }
+  function hide() { tip.style.opacity = '0'; cur = null; }
+  document.addEventListener('mouseover', function (e) { var el = e.target.closest('[data-tip]'); if (el) show(el, e); });
+  document.addEventListener('mousemove', function (e) { if (!cur) return; var el = e.target.closest('[data-tip]'); if (el === cur) move(e); else if (el) show(el, e); else hide(); });
+  document.addEventListener('mouseout', function (e) { if (cur && (!e.relatedTarget || !cur.contains(e.relatedTarget))) hide(); });
+  window.addEventListener('scroll', hide, true);
+})();
+</script>
 {% endblock %}

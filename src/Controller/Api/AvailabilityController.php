@@ -97,33 +97,36 @@ class AvailabilityController extends ApiController
                     return ['start' => $this->min2str($s[0]), 'end' => $this->min2str($s[1]), 'state' => $state];
                 }, $raw);
 
-                // Solo-Parallel: Solo-Schulflug-Buchungen des Lehrers sind bei FiParallelBookings=1
-                // weiterhin (fuer eine weitere Solo-Schulung) buchbar -> als 'solo' markieren.
-                if (Users::AllowDoubleBookingsforFlightinstructor($em, $fiId)) {
-                    $bks = $em->createQuery(
-                        "SELECT b FROM App\Entity\FresBooking b WHERE b.clientid = :c AND b.flightinstructor = :fi "
-                        . "AND b.status NOT IN ('storniert','flugzeug_geloescht','user_geloescht') "
-                        . "AND b.itemstart < :to AND b.itemstop > :from"
-                    )->setParameters([
-                        'c' => $clientid, 'fi' => $fiId,
-                        'from' => $date->format('Y-m-d 00:00:00'),
-                        'to'   => (clone $date)->modify('+1 day')->format('Y-m-d 00:00:00'),
-                    ])->getResult();
-                    $dayStr = $date->format('Y-m-d');
-                    foreach ($bks as $b) {
-                        if (!FlightPurposes::IsSolo($b->getFlightpurposeid())) {
-                            continue;
-                        }
-                        $bs = ($b->getItemstart()->format('Y-m-d') < $dayStr)
-                            ? $dayStart : (int) $b->getItemstart()->format('H') * 60 + (int) $b->getItemstart()->format('i');
-                        $be = ($b->getItemstop()->format('Y-m-d') > $dayStr)
-                            ? $dayEnd : (int) $b->getItemstop()->format('H') * 60 + (int) $b->getItemstop()->format('i');
-                        $bs = max($bs, $dayStart);
-                        $be = min($be, $dayEnd);
-                        if ($be > $bs) {
-                            $instructorSegments[] = ['start' => $this->min2str($bs), 'end' => $this->min2str($be), 'state' => 'solo'];
-                        }
+                // Individuelle Buchungslage des Lehrers an diesem Tag beruecksichtigen:
+                // Eine Solo-Schulflug-Buchung bleibt bei FiParallelBookings=1 weiterhin
+                // (fuer eine weitere Solo-Schulung) buchbar -> 'solo'. Jede andere Buchung
+                // belegt den Lehrer -> 'ausgebucht' (grau schraeg gestrichelt). Diese
+                // Segmente werden zuletzt angehaengt und ueberlagern so die frei-/Anfrage-
+                // Bereiche genau dort, wo der Lehrer schon gebucht ist.
+                $parallel = Users::AllowDoubleBookingsforFlightinstructor($em, $fiId);
+                $bks = $em->createQuery(
+                    "SELECT b FROM App\Entity\FresBooking b WHERE b.clientid = :c AND b.flightinstructor = :fi "
+                    . "AND b.status NOT IN ('storniert','flugzeug_geloescht','user_geloescht') "
+                    . "AND b.itemstart < :to AND b.itemstop > :from"
+                )->setParameters([
+                    'c' => $clientid, 'fi' => $fiId,
+                    'from' => $date->format('Y-m-d 00:00:00'),
+                    'to'   => (clone $date)->modify('+1 day')->format('Y-m-d 00:00:00'),
+                ])->getResult();
+                $dayStr = $date->format('Y-m-d');
+                foreach ($bks as $b) {
+                    $bs = ($b->getItemstart()->format('Y-m-d') < $dayStr)
+                        ? $dayStart : (int) $b->getItemstart()->format('H') * 60 + (int) $b->getItemstart()->format('i');
+                    $be = ($b->getItemstop()->format('Y-m-d') > $dayStr)
+                        ? $dayEnd : (int) $b->getItemstop()->format('H') * 60 + (int) $b->getItemstop()->format('i');
+                    $bs = max($bs, $dayStart);
+                    $be = min($be, $dayEnd);
+                    if ($be <= $bs) {
+                        continue;
                     }
+                    $isSolo = FlightPurposes::IsSolo($b->getFlightpurposeid());
+                    $state = ($isSolo && $parallel) ? 'solo' : 'ausgebucht';
+                    $instructorSegments[] = ['start' => $this->min2str($bs), 'end' => $this->min2str($be), 'state' => $state];
                 }
             }
         }

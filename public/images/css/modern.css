@@ -101,16 +101,16 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 /* Legende: durchgehender Verlaufsbalken (Stil aus dem mobilen FleetView) */
 .fr-scale{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--fr-mut);font-weight:600;}
 .fr-scale .fr-scalebar{width:140px;height:10px;border-radius:6px;display:inline-block;
-  background:linear-gradient(90deg,#eef1fb,#d2dbf7,#aab9f0,#8093e8,#5a66d6,#3b3f9e);}
+  background:linear-gradient(90deg,#eef1fb,#dfe4f8,#bcc6f0,#8e9ce6,#5f70d8,#3a3fae);}
 
 /* Scroll-Flaeche ist die Karte (weiss, runde Ecken, Schatten) – wie .fleetwrap mobil */
-.fr-ovwrap{overflow-x:auto;background:#fff;border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:6px 10px 10px;}
-.fr-matrix{border-collapse:separate;border-spacing:3px 0;}   /* 0 vertikal -> durchgehende Wochenend-Baender */
+.fr-ovwrap{background:#fff;border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:6px 10px 10px;}
+.fr-matrix{border-collapse:separate;border-spacing:2px 0;}   /* eng; 0 vertikal -> durchgehende Wochenend-Baender */
 .fr-matrix th.fr-corner{text-align:left;font-size:11px;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.4px;padding:0 8px;}
-.fr-matrix th.fr-day{width:30px;font-size:10.5px;font-weight:600;color:var(--fr-mut);padding:6px 0 7px;text-align:center;border-radius:8px 8px 0 0;}
-.fr-matrix th.fr-day .wd{display:block;font-size:8.5px;font-weight:700;opacity:.7;margin-bottom:3px;}
+.fr-matrix th.fr-day{width:22px;font-size:10.5px;font-weight:600;color:var(--fr-mut);padding:6px 0 6px;text-align:center;border-radius:8px 8px 0 0;}
+.fr-matrix th.fr-day .wd{display:block;font-size:8.5px;font-weight:700;opacity:.7;margin-bottom:2px;}
 /* Tag-Nummer im Kreis; "heute" = blau gefuellt (Stil mobil) */
-.fr-matrix th.fr-day .dn{width:21px;height:21px;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.fr-matrix th.fr-day .dn{width:20px;height:20px;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;}
 .fr-matrix th.fr-day .dn.today{background:var(--fr-blue);color:#fff;font-weight:800;}
 .fr-matrix th.fr-day.sat{background:#eef4fc;color:#2f5a86;font-weight:800;}
 .fr-matrix th.fr-day.sun{background:#fbeeee;color:#9c4a4a;font-weight:800;}
@@ -122,18 +122,18 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-matrix td.fr-ac .lbl{display:inline-block;vertical-align:middle;}
 .fr-matrix td.fr-ac b{display:block;font-size:12px;font-weight:800;letter-spacing:-.2px;}
 .fr-matrix td.fr-ac small{display:block;color:var(--fr-mut);font-size:10.5px;}
-/* Zellen: runde Indigo-Kacheln (Stil mobil .fcell) */
-.fr-cell{width:24px;height:24px;border-radius:9px;border:none;padding:0;cursor:pointer;display:block;margin:3px auto;}
+/* Zellen: dichte Heatmap (Variante 1) – kompakte abgerundete Quadrate + Innenkontur */
+.fr-cell{width:20px;height:20px;border-radius:5px;border:none;padding:0;cursor:pointer;display:block;margin:2px auto;background:#eef1fb;box-shadow:inset 0 0 0 1px rgba(40,50,90,.05);}
 .fr-cell.today{outline:2px solid rgba(58,63,174,.6);outline-offset:-2px;}
 .fr-cell:hover{outline:2px solid var(--fr-ink);outline-offset:0;}
 
-/* Auslastungsfarben (Indigo-Verlauf, 6 Stufen) – identisch zur mobilen lvl-Skala */
+/* Auslastungsfarben (feiner Indigo-Verlauf, 6 Stufen) */
 .occ-leer{background:#eef1fb;}
-.occ-wenig{background:#d2dbf7;}
-.occ-mittel{background:#aab9f0;}
-.occ-voll{background:#8093e8;}
-.occ-sehrvoll{background:#5a66d6;}
-.occ-ausgebucht{background:#3b3f9e;}
+.occ-wenig{background:#dfe4f8;}
+.occ-mittel{background:#bcc6f0;}
+.occ-voll{background:#8e9ce6;}
+.occ-sehrvoll{background:#5f70d8;}
+.occ-ausgebucht{background:#3a3fae;}
 
 /* ---- Tagesansicht (Karten im Mobil-Stil) ---- */
 .fr-btn.ghost{background:#fff;color:var(--fr-blue);border:1px solid var(--fr-line);}
@@ -254,6 +254,7 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-avseg.s-anfrageD{background:#ff9f0a;}
 .fr-avseg.s-anfrageA{background:repeating-linear-gradient(45deg,#ff9f0a,#ff9f0a 5px,#ffd89a 5px,#ffd89a 10px);}
 .fr-avseg.s-solo{background:#1bb6bd;}
+.fr-avseg.s-ausgebucht{background:repeating-linear-gradient(45deg,#9aa3ad,#9aa3ad 5px,#cfd4da 5px,#cfd4da 10px);}  /* grundsätzlich verfügbar, aber ausgebucht */
 .fr-avlegend{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:8px 2px 0;font-size:11.5px;color:#566;font-weight:600;}
 .fr-avlegend .fr-avlg-note{flex-basis:100%;color:var(--fr-mut);font-weight:500;}
 .fr-avlegend span{display:inline-flex;align-items:center;gap:5px;}
@@ -262,6 +263,7 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-avlegend i.s-anfrageD{background:#ff9f0a;}
 .fr-avlegend i.s-anfrageA{background:repeating-linear-gradient(45deg,#ff9f0a,#ff9f0a 4px,#ffd89a 4px,#ffd89a 8px);}
 .fr-avlegend i.s-solo{background:#1bb6bd;}
+.fr-avlegend i.s-ausgebucht{background:repeating-linear-gradient(45deg,#9aa3ad,#9aa3ad 4px,#cfd4da 4px,#cfd4da 8px);}
 .fr-avlegend i.nb{background:#d4d8de;}
 
 /* Vergleich andere Flugzeuge / Fluglehrer */
@@ -447,3 +449,103 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-help-sec h3 .fr-roletag{margin-left:auto;}
 .fr-roletag.all{background:#eef2f7;color:#5a6b7a;}
 .fr-help-foot{font-size:12.5px;color:var(--fr-mut);margin-top:8px;}
+
+/* --- Login-Seite (eigenständig) --- */
+body.fr-login{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:linear-gradient(160deg,#13212f 0%,#1d3550 55%,#22557e 100%);padding:20px;}
+.fr-login-wrap{width:100%;max-width:380px;}
+.fr-login-card{background:#fff;border-radius:18px;padding:28px 26px 26px;box-shadow:0 18px 50px rgba(0,0,0,.35);}
+.fr-login-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:24px;color:var(--fr-ink);letter-spacing:-.4px;}
+.fr-login-brand span{color:var(--fr-blue);}
+.fr-login-sub{color:var(--fr-mut);font-size:13px;font-weight:600;margin:4px 0 18px;}
+.fr-login-form label{display:block;font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin:13px 0 5px;}
+.fr-login-form select,.fr-login-form input[type=text],.fr-login-form input[type=password]{
+  width:100%;border:1px solid var(--fr-line);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:15px;
+  color:var(--fr-ink);background:#fff;box-sizing:border-box;}
+.fr-login-form select:focus,.fr-login-form input:focus{outline:none;border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+.fr-login-remember{display:flex !important;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--fr-ink);
+  text-transform:none;letter-spacing:0;margin:15px 0 18px;cursor:pointer;}
+.fr-login-remember input{width:17px;height:17px;accent-color:var(--fr-blue);}
+.fr-login-form .fr-btn{width:100%;justify-content:center;padding:11px;font-size:15px;}
+.fr-login-foot{text-align:center;color:#aebccb;font-size:12px;margin-top:16px;}
+.fr-login .fr-msg{margin:0 0 4px;max-width:none;}
+
+/* --- Abmelden-Button in der Sidebar --- */
+.fr-usr .fr-logout{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:inline-flex;
+  align-items:center;justify-content:center;color:#9fb0c0;font-size:16px;background:#1d3142;}
+.fr-usr .fr-logout:hover{background:#2a435a;color:#fff;}
+
+/* --- Fluglehrer: Schulungszeiten --- */
+.fr-fihint{font-size:13px;line-height:1.5;color:#37434f;background:var(--fr-blue-l);border-radius:10px;padding:11px 14px;margin-bottom:14px;max-width:760px;}
+.fr-fibar{flex:0 0 auto;width:5px;align-self:stretch;min-height:34px;border-radius:3px;}
+.fr-fibar.green{background:#01DF3A;}
+.fr-fibar.amber{background:#FFBF00;}
+.fr-fibar.red{background:#FA5858;}
+
+/* --- Wochentag-Auswahl (Serie / Mehrfach-Löschen) --- */
+.fr-wdays{display:flex;flex-wrap:wrap;gap:7px;}
+.fr-wday input{position:absolute;opacity:0;width:0;height:0;}
+.fr-wday span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:8px 10px;
+  border:1px solid var(--fr-line);border-radius:8px;font-size:13px;font-weight:700;color:#566;cursor:pointer;background:#fff;}
+.fr-wday input:checked + span{background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
+.fr-wday input:focus-visible + span{box-shadow:0 0 0 3px var(--fr-blue-l);}
+
+/* --- Fluglehrer-Verfügbarkeitsmatrix (unter der Flotten-Matrix, deckungsgleich) --- */
+.fr-fisect .fr-sectrow td{border-top:2px solid #d4dbe4;padding-top:7px;}
+.fr-matrix td.fr-sectlbl{font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;padding-top:9px;}
+.fr-ficell{width:20px;height:20px;border-radius:5px;display:block;margin:2px auto;background:#eef1f5;}
+.fr-ficell.green{background:#2fcf63;}
+.fr-ficell.amber{background:#ffb220;}
+.fr-ficell.amberdash{background:repeating-linear-gradient(45deg,#ffb220,#ffb220 4px,#ffe2a0 4px,#ffe2a0 8px);}
+.fr-ficell.today{outline:2px solid rgba(31,111,178,.7);outline-offset:-2px;}
+.fr-filegend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:12px;font-size:12px;color:var(--fr-mut);font-weight:600;}
+.fr-filegend i{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:5px;}
+.fr-filegend i.green{background:#2fcf63;}
+.fr-filegend i.amber{background:#ffb220;}
+.fr-filegend i.amberdash{background:repeating-linear-gradient(45deg,#ffb220,#ffb220 3px,#ffe2a0 3px,#ffe2a0 6px);}
+.fr-filegend-note{color:#8a98a8;font-weight:500;}
+
+/* Erste Spalte fix -> Flotten- und Fluglehrer-Matrix bleiben deckungsgleich */
+.fr-matrix th.fr-corner,.fr-matrix td.fr-ac{width:140px;max-width:140px;}
+.fr-matrix td.fr-ac .lbl{display:inline-block;max-width:108px;overflow:hidden;vertical-align:middle;}
+.fr-matrix td.fr-ac .lbl b,.fr-matrix td.fr-ac .lbl small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* Ausklappbares Fluglehrer-Panel (eigene runde Karte unter der Flotten-Matrix) */
+/* Scroll-Container + Karte: die Karte wird max-content (nur so breit wie die
+   Tagesspalten). Lange Texte (Legende/Hinweis) dürfen die Breite NICHT aufblähen
+   -> sie bekommen .fr-secnowrap (width:0;min-width:100%) und brechen auf Kartenbreite um. */
+.fr-ovscroll{max-width:100%;overflow-x:auto;}
+.fr-ovcard{width:max-content;background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:12px 12px 14px;}
+.fr-ovcard .fr-matrix{margin:9px 2px 2px;}
+.fr-secnowrap{width:0;min-width:100%;box-sizing:border-box;}
+
+/* Blaue Section-Balken (Flugzeuge / Fluglehrer) – in allen Sichten */
+.fr-sechdr{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--fr-blue);color:#fff;
+  font-weight:800;font-size:13.5px;padding:10px 15px;border-radius:9px;margin:0;}
+.fr-sechdr .t{display:inline-flex;align-items:center;gap:7px;min-width:0;}
+button.fr-sechdr{width:100%;border:none;font-family:inherit;cursor:pointer;}
+button.fr-sechdr:hover{background:var(--fr-blue-d);}
+.fr-sechdr.fr-sectoggle{margin-top:13px;}
+/* Reiner Pfeil als Ausklapp-Indikator: ◀ = zu, ▼ = offen */
+.fr-sechdr .ar{flex:0 0 auto;font-size:16px;line-height:1;color:#fff;}
+
+.fr-secbody{margin-top:4px;}
+
+/* --- Tagesansicht (Stunden) auf der Übersichtsseite --- */
+.fr-daypanel{margin-top:0;background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:14px 16px 16px;max-width:900px;}
+.fr-dayhdr2{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.fr-dayhdr2 .t{font-size:15px;font-weight:800;color:var(--fr-ink);}
+.fr-dayhdr2 .fr-date{flex:0 0 auto;min-width:210px;}
+.fr-daypanel .fr-avbox{margin-top:9px;}
+
+/* Tagesansicht: Labels im Matrix-Format (Farbpunkt + fette Kennung/Name + Typ) */
+.fr-avlab.named{flex:0 0 150px;display:flex;align-items:center;gap:8px;overflow:hidden;}
+.fr-avlab.named .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.fr-avlab.named .lbl{min-width:0;overflow:hidden;}
+.fr-avlab.named .lbl b{display:block;font-size:12.5px;font-weight:800;letter-spacing:-.2px;color:var(--fr-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-avlab.named .lbl small{display:block;color:var(--fr-mut);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* Eigener, sofort erscheinender Tooltip (ersetzt den langsamen nativen title) */
+.fr-tip{position:fixed;z-index:1000;background:#1d2733;color:#fff;font-size:11.5px;line-height:1.45;
+  padding:6px 9px;border-radius:7px;white-space:pre-line;pointer-events:none;max-width:300px;
+  box-shadow:0 4px 14px rgba(0,0,0,.28);opacity:0;transition:opacity .07s;}

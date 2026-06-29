@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entities\Airfields;
 use App\Entities\Bookings;
+use App\Entities\FIAvailability;
 use App\Entities\FlightPurposes;
 use App\Entities\Functions;
 use App\Entities\Licenses;
@@ -14,6 +15,7 @@ use App\Entity\FresAccounts;
 use App\Entity\FresAircraft;
 use App\Entity\FresAircrafttype;
 use App\Entity\FresClient;
+use App\Entity\FresFIAvailability;
 use App\Entity\FresNote;
 use App\Entity\FresUserlicences;
 use App\ViewHelper;
@@ -335,8 +337,24 @@ class ModernPreviewController extends AbstractController
         $tz = new \DateTimeZone('Europe/Berlin');
 
         $ansicht = $request->query->get('ansicht', '14tage');
-        if (!in_array($ansicht, ['monat', '14tage'], true)) { $ansicht = '14tage'; }
+        if (!in_array($ansicht, ['tag', 'monat', '14tage'], true)) { $ansicht = '14tage'; }
         $off = (int) $request->query->get('off', 0);
+
+        // Tagesansicht (Stunden) – eigener Reiter; Daten kommen clientseitig über
+        // /api/availability. Hier nur Flugzeug-/Fluglehrer-Liste + Default-Datum.
+        if ($ansicht === 'tag') {
+            $response = $this->render('modern/overview.html.twig', [
+                'ansicht'     => 'tag',
+                'planes'      => Planes::GetAllPlanesForMonthview($em, $clientid),
+                'instructors' => Users::GetAllFlightinstructorsForListbox($em, $clientid),
+                'today'       => (new \DateTime('today', $tz))->format('Y-m-d'),
+                'label'       => '', 'prevOff' => 0, 'nextOff' => 0,
+                'cells'       => [], 'days' => [], 'firows' => [], 'hasAvail' => false,
+            ]);
+            $response->setExpires(new \DateTime());
+
+            return $response;
+        }
 
         if ($ansicht === '14tage') {
             $start = new \DateTime('today', $tz);
@@ -359,9 +377,19 @@ class ModernPreviewController extends AbstractController
         $bookings = Bookings::GetBookingsForAllPlanes($em, $start, $duration, $clientid);
 
         // Zellen je Flugzeug (Reihenfolge = Datum, wie von der Methode geliefert)
+        // Kompakter Tooltip je Zelle: pro Buchung eine Zeile "Zeit · Kennung · Kunde"
+        // (kein Datum – der Tag ergibt sich aus der Spalte).
         $cells = [];
         foreach (($bookings ?? []) as $b) {
-            $cells[$b['plane']][] = ['color' => $b['color'], 'tooltip' => $b['tooltip'], 'date' => $b['bookingdate']];
+            $lines = [];
+            foreach (($b['bookings'] ?? []) as $bk) {
+                $lines[] = $bk['time'] . ' · ' . $bk['kennung'] . ' · ' . $bk['user'];
+            }
+            $cells[$b['plane']][] = [
+                'color'   => $b['color'],
+                'tooltip' => $lines ? implode("\n", $lines) : 'frei',
+                'date'    => $b['bookingdate'],
+            ];
         }
 
         // Tages-Header
@@ -381,14 +409,76 @@ class ModernPreviewController extends AbstractController
             $cur->modify('+1 day');
         }
 
+        // --- Fluglehrer-Verfügbarkeit (grundsätzlich, aus den Schulungszeiten – OHNE
+        //     Berücksichtigung von Buchungen), deckungsgleich mit der Flotten-Matrix.
+        //     grün = verfügbar · orange = auf Anfrage (buchbar) · orange gestrichelt =
+        //     auf Anfrage, nur nach Rücksprache (FIBookableIfOnRequest=false). ---
+        $day0     = (clone $start)->setTime(0, 0, 0);
+        $rangeEnd = (clone $start)->modify('+' . ($duration - 1) . ' days')->setTime(23, 59, 59);
+        $avails = $em->createQuery(
+            "SELECT a FROM App\Entity\FresFIAvailability a WHERE a.clientid = :cid "
+            . "AND a.status <> :del AND a.itemstart <= :rend AND a.itemstop >= :rstart"
+        )->setParameter('cid', $clientid)
+         ->setParameter('del', FIAvailability::const_geloescht)
+         ->setParameter('rstart', $day0)->setParameter('rend', $rangeEnd)->getResult();
+
+        $prio = ['green' => 3, 'amber' => 2, 'amberdash' => 1];
+        $fiData = [];
+        $bookable = [];
+        foreach ($avails as $a) {
+            $fiObj = $a->getFlightinstructor();
+            if (!$fiObj) { continue; }
+            $fiId  = (int) $fiObj->getId();
+            $typ   = $a->getTyp();
+            $typId = $typ ? (int) $typ->getId() : 0;
+            if ($typId === 3) { continue; }   // "nicht verfügbar" nicht anzeigen
+            if (!array_key_exists($fiId, $bookable)) {
+                $bookable[$fiId] = Users::IsFlightinstructorBookableOnRequest($em, $fiId);
+            }
+            $state   = $typId === 1 ? 'green' : ($bookable[$fiId] ? 'amber' : 'amberdash');
+            $typName = $typ ? $typ->getName() : '';
+
+            $si = (int) $day0->diff((clone $a->getItemstart())->setTime(0, 0, 0))->format('%r%a');
+            $ei = (int) $day0->diff((clone $a->getItemstop())->setTime(0, 0, 0))->format('%r%a');
+            for ($i = max(0, $si); $i <= min($duration - 1, $ei); $i++) {
+                if (!isset($fiData[$fiId][$i])) { $fiData[$fiId][$i] = ['state' => $state, 'wins' => []]; }
+                if ($prio[$state] > $prio[$fiData[$fiId][$i]['state']]) { $fiData[$fiId][$i]['state'] = $state; }
+                $fiData[$fiId][$i]['wins'][] = $a->getItemstart()->format('H:i') . '–' . $a->getItemstop()->format('H:i') . ' ' . $typName;
+            }
+        }
+
+        $firows = [];
+        $hasAvail = false;
+        foreach (Users::GetAllFlightinstructorsForListbox($em, $clientid) as $name => $fiId) {
+            $fiId = (int) $fiId;
+            $cellsFi = [];
+            for ($i = 0; $i < $duration; $i++) {
+                if (isset($fiData[$fiId][$i])) {
+                    $hasAvail = true;
+                    $cellsFi[$i] = [
+                        'state' => $fiData[$fiId][$i]['state'],
+                        // pro Zeitfenster eine Zeile, ohne Datum (Tag = Spalte)
+                        'title' => implode("\n", $fiData[$fiId][$i]['wins']),
+                    ];
+                } else {
+                    $cellsFi[$i] = null;
+                }
+            }
+            $firows[] = ['name' => $name, 'cells' => $cellsFi];
+        }
+
         $response = $this->render('modern/overview.html.twig', [
-            'ansicht' => $ansicht,
-            'label'   => $label,
-            'prevOff' => $prevOff,
-            'nextOff' => $nextOff,
-            'planes'  => $planes,
-            'cells'   => $cells,
-            'days'    => $days,
+            'ansicht'  => $ansicht,
+            'label'    => $label,
+            'prevOff'  => $prevOff,
+            'nextOff'  => $nextOff,
+            'planes'      => $planes,
+            'cells'       => $cells,
+            'days'        => $days,
+            'firows'      => $firows,
+            'hasAvail'    => $hasAvail,
+            'instructors' => Users::GetAllFlightinstructorsForListbox($em, $clientid),
+            'today'       => $todayStr,
         ]);
         $response->setExpires(new \DateTime());
 
@@ -1657,6 +1747,448 @@ class ModernPreviewController extends AbstractController
             'isNew'  => ((int) ($values['id'] ?? 0)) === 0,
             'v'      => $values,
             'errors' => $errors,
+        ]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    // ====================================================================
+    //  Fluglehrer: verfügbare Schulungszeiten (ROLE_FI). Nutzt das bestehende
+    //  Modell FresFIAvailability + die FIAvailability-Logik (Status, Überlappung).
+    // ====================================================================
+
+    private const FIAVAIL_STATE = [1 => 'green', 2 => 'amber', 3 => 'red'];
+
+    /** Liste der Schulungszeiten (eigene; Admins zusätzlich „Alle"). */
+    public function fiAvail(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $clientid = $loggedin_user->getClientid();
+        $myId     = (int) $loggedin_user->getId();
+        $isAdmin  = $this->isGranted('ROLE_ADMIN');
+        $isFi     = Users::isFlightinstructor($em, $myId);
+
+        $scope = (string) $request->query->get('scope', 'meine');
+        if (!$isAdmin || !in_array($scope, ['meine', 'alle'], true)) { $scope = 'meine'; }
+        if ($isAdmin && !$isFi) { $scope = 'alle'; }   // Admin ohne FI-Rolle: nur „Alle" sinnvoll
+
+        $since = (new \DateTime('today'))->modify('-1 day');
+        $dql = "SELECT a FROM App\Entity\FresFIAvailability a WHERE a.clientid = :cid "
+             . "AND a.status <> :del AND a.itemstop >= :since";
+        if ($scope === 'meine') { $dql .= ' AND a.flightinstructor = :uid'; }
+        $dql .= ' ORDER BY a.itemstart ASC';
+        $q = $em->createQuery($dql)
+                ->setParameter('cid', $clientid)
+                ->setParameter('del', FIAvailability::const_geloescht)
+                ->setParameter('since', $since);
+        if ($scope === 'meine') { $q->setParameter('uid', $myId); }
+
+        $wd = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        $items = [];
+        foreach ($q->getResult() as $a) {
+            $start = $a->getItemstart();
+            $stop  = $a->getItemstop();
+            $typ   = $a->getTyp();
+            $fi    = $a->getFlightinstructor();
+            $sameDay = $start->format('Y-m-d') === $stop->format('Y-m-d');
+            $items[] = [
+                'id'      => $a->getId(),
+                'state'   => self::FIAVAIL_STATE[$typ ? (int) $typ->getId() : 0] ?? 'amber',
+                'typname' => $typ ? $typ->getName() : '',
+                'von'     => $wd[(int) $start->format('N') - 1] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
+                'bis'     => $sameDay ? $stop->format('H:i') . ' Uhr' : ($wd[(int) $stop->format('N') - 1] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
+                'comment' => trim((string) $a->getComment()),
+                'fi'      => $fi ? trim($fi->getFirstname() . ' ' . $fi->getLastname()) : '',
+            ];
+        }
+
+        // Ergebnis-Hinweis nach Serien-Anlage / Mehrfach-Löschen
+        $created = (int) $request->query->get('created', 0);
+        $skipped = (int) $request->query->get('skipped', 0);
+        $deleted = (int) $request->query->get('deleted', 0);
+        $notice = null;
+        if ($created || $skipped) {
+            $notice = $created . ' Termin(e) angelegt' . ($skipped ? ', ' . $skipped . ' wegen Überschneidung übersprungen' : '') . '.';
+        } elseif ($deleted) {
+            $notice = $deleted . ' Termin(e) gelöscht.';
+        }
+
+        $response = $this->render('modern/fiavail.html.twig', [
+            'items'   => $items,
+            'scope'   => $scope,
+            'isAdmin' => $isAdmin,
+            'isFi'    => $isFi,
+            'notice'  => $notice,
+        ]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    /** Schulungszeit-Formular (Neu). */
+    public function fiAvailNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $isFi  = Users::isFlightinstructor($em, (int) $loggedin_user->getId());
+        $today = (new \DateTime('today', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d');
+
+        $values = [
+            'id'      => 0,
+            'fi'      => $isFi ? (int) $loggedin_user->getId() : 0,
+            'typ'     => 1,
+            'vondate' => $today, 'vontime' => '09:00',
+            'bisdate' => $today, 'bistime' => '20:30',
+            'comment' => '',
+        ];
+
+        return $this->renderFiAvailForm($em, $loggedin_user, $values, []);
+    }
+
+    /** Schulungszeit-Formular (Bearbeiten). */
+    public function fiAvailEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+
+        $a = FIAvailability::GetAvailabilityObject($em, $loggedin_user->getClientid(), $id);
+        if (!$a || (string) $a->getStatus() === FIAvailability::const_geloescht) {
+            throw $this->createNotFoundException('Eintrag nicht gefunden.');
+        }
+        $fiObj = $a->getFlightinstructor();
+        $fiId  = $fiObj ? (int) $fiObj->getId() : 0;
+        if (!$this->isGranted('ROLE_ADMIN') && $fiId !== (int) $loggedin_user->getId()) {
+            throw $this->createAccessDeniedException();
+        }
+        $typ = $a->getTyp();
+        $values = [
+            'id'      => $a->getId(),
+            'fi'      => $fiId,
+            'typ'     => $typ ? (int) $typ->getId() : 1,
+            'vondate' => $a->getItemstart()->format('Y-m-d'), 'vontime' => $a->getItemstart()->format('H:i'),
+            'bisdate' => $a->getItemstop()->format('Y-m-d'),  'bistime' => $a->getItemstop()->format('H:i'),
+            'comment' => (string) $a->getComment(),
+        ];
+
+        return $this->renderFiAvailForm($em, $loggedin_user, $values, []);
+    }
+
+    /** Schulungszeit speichern (Neu/Bearbeiten). */
+    public function fiAvailSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $clientid = $loggedin_user->getClientid();
+        $myId     = (int) $loggedin_user->getId();
+        $isAdmin  = $this->isGranted('ROLE_ADMIN');
+        $tz = new \DateTimeZone('Europe/Berlin');
+
+        $id      = (int) $request->request->get('id', 0);
+        $typId   = (int) $request->request->get('typ', 0);
+        $vondate = trim((string) $request->request->get('vondate', ''));
+        $vontime = trim((string) $request->request->get('vontime', ''));
+        $bisdate = trim((string) $request->request->get('bisdate', ''));
+        $bistime = trim((string) $request->request->get('bistime', ''));
+        $comment = trim((string) $request->request->get('comment', ''));
+        $fiPost  = (int) $request->request->get('fi', 0);
+
+        if ($id !== 0) {
+            $a = FIAvailability::GetAvailabilityObject($em, $clientid, $id);
+            if (!$a || (string) $a->getStatus() === FIAvailability::const_geloescht) {
+                throw $this->createNotFoundException('Eintrag nicht gefunden.');
+            }
+            $cur = $a->getFlightinstructor();
+            $curId = $cur ? (int) $cur->getId() : 0;
+            if (!$isAdmin && $curId !== $myId) {
+                throw $this->createAccessDeniedException();
+            }
+            $fiId = $isAdmin ? ($fiPost ?: $curId) : $curId;
+        } else {
+            $a = new FresFIAvailability();
+            $a->setStatus(0);
+            $fiId = $isAdmin ? ($fiPost ?: $myId) : $myId;
+        }
+
+        $start = \DateTime::createFromFormat('Y-m-d H:i', $vondate . ' ' . $vontime, $tz);
+        $end   = \DateTime::createFromFormat('Y-m-d H:i', $bisdate . ' ' . $bistime, $tz);
+
+        $a->setClientid($clientid);
+        $a->setFlightinstructor($fiId);   // ID für die Überlappungsprüfung
+        $a->setItemstart($start ?: null);
+        $a->setItemstop($end ?: null);
+        $a->setComment($comment !== '' ? $comment : null);
+
+        $errors = [];
+        if (!$start || !$end) {
+            $errors[] = 'Bitte gültige Von-/Bis-Zeiten angeben.';
+        } elseif ($start >= $end) {
+            $errors[] = 'Das Ende muss später als der Start sein.';
+        }
+        if ($typId <= 0) {
+            $errors[] = 'Bitte einen Typ wählen.';
+        }
+        if (!$errors) {
+            $overlap = FIAvailability::IsOverlapping($em, $a);
+            if ($overlap !== null) { $errors[] = $overlap; }
+        }
+
+        if ($errors) {
+            $values = [
+                'id' => $id, 'fi' => $fiId, 'typ' => $typId,
+                'vondate' => $vondate, 'vontime' => $vontime,
+                'bisdate' => $bisdate, 'bistime' => $bistime, 'comment' => $comment,
+            ];
+            return $this->renderFiAvailForm($em, $loggedin_user, $values, $errors);
+        }
+
+        // One-to-One-Beziehungen setzen (sonst kein Persist)
+        $a->setTyp(FIAvailability::GetAvailabilityStateObject($em, $typId));
+        $a->setFlightinstructor(Users::GetUserObject($em, $clientid, $fiId));
+
+        $em->persist($a);
+        $em->flush();
+
+        return $this->redirectToRoute('modern_fiavail', $fiId !== $myId ? ['scope' => 'alle'] : []);
+    }
+
+    /** Schulungszeit (soft) löschen. */
+    public function fiAvailDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $clientid = $loggedin_user->getClientid();
+
+        $id = (int) $request->request->get('id', 0);
+        $a  = $id ? FIAvailability::GetAvailabilityObject($em, $clientid, $id) : null;
+        if ($a && (string) $a->getStatus() !== FIAvailability::const_geloescht) {
+            $fi = $a->getFlightinstructor();
+            $fiId = $fi ? (int) $fi->getId() : 0;
+            if ($this->isGranted('ROLE_ADMIN') || $fiId === (int) $loggedin_user->getId()) {
+                FIAvailability::DeleteAvailability($em, $clientid, $id);
+            }
+        }
+
+        return $this->redirectToRoute('modern_fiavail');
+    }
+
+    private function renderFiAvailForm(EntityManagerInterface $em, UserInterface $loggedin_user, array $values, array $errors): Response
+    {
+        $clientid = $loggedin_user->getClientid();
+        $isAdmin  = $this->isGranted('ROLE_ADMIN');
+
+        $response = $this->render('modern/fiavail_form.html.twig', [
+            'isNew'       => ((int) ($values['id'] ?? 0)) === 0,
+            'isAdmin'     => $isAdmin,
+            'states'      => FIAvailability::GetAllAvailabilityStates($em),
+            'instructors' => $isAdmin ? Users::GetAllFlightinstructorsForListbox($em, $clientid) : [],
+            'fiName'      => Users::GetUserName($em, $clientid, (int) ($values['fi'] ?? 0)),
+            'today'       => (new \DateTime('today', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d'),
+            'v'           => $values,
+            'errors'      => $errors,
+        ]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    /** Serien-Formular (z. B. „jeden Samstag, Aug–Dez"). */
+    public function fiAvailSeries(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $tz = new \DateTimeZone('Europe/Berlin');
+        $isFi = Users::isFlightinstructor($em, (int) $loggedin_user->getId());
+
+        $values = [
+            'fi'       => $isFi ? (int) $loggedin_user->getId() : 0,
+            'typ'      => 1,
+            'fromdate' => (new \DateTime('today', $tz))->format('Y-m-d'),
+            'todate'   => (new \DateTime('today', $tz))->format('Y') . '-12-31',
+            'weekdays' => [],
+            'fromtime' => '09:00',
+            'totime'   => '20:30',
+            'comment'  => '',
+        ];
+
+        return $this->renderFiAvailSeries($em, $loggedin_user, $values, []);
+    }
+
+    /** Serie speichern: in Einzeltermine je passendem Wochentag zerlegen. */
+    public function fiAvailSeriesSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $clientid = $loggedin_user->getClientid();
+        $myId     = (int) $loggedin_user->getId();
+        $isAdmin  = $this->isGranted('ROLE_ADMIN');
+        $tz = new \DateTimeZone('Europe/Berlin');
+
+        $typId    = (int) $request->request->get('typ', 0);
+        $fromdate = trim((string) $request->request->get('fromdate', ''));
+        $todate   = trim((string) $request->request->get('todate', ''));
+        $fromtime = trim((string) $request->request->get('fromtime', ''));
+        $totime   = trim((string) $request->request->get('totime', ''));
+        $comment  = trim((string) $request->request->get('comment', ''));
+        $weekdays = array_values(array_filter(array_map('intval', (array) $request->request->all('weekdays')), fn ($d) => $d >= 1 && $d <= 7));
+        $fiId     = $isAdmin ? ((int) $request->request->get('fi', 0) ?: $myId) : $myId;
+
+        $from = \DateTime::createFromFormat('Y-m-d', $fromdate, $tz);
+        $to   = \DateTime::createFromFormat('Y-m-d', $todate, $tz);
+        if ($from) { $from->setTime(0, 0, 0); }
+        if ($to)   { $to->setTime(0, 0, 0); }
+
+        $errors = [];
+        if ($typId <= 0)        { $errors[] = 'Bitte einen Typ wählen.'; }
+        if (!$from || !$to)     { $errors[] = 'Bitte gültigen Zeitraum (von/bis Datum) angeben.'; }
+        elseif ($from > $to)    { $errors[] = 'Das End-Datum muss nach dem Start-Datum liegen.'; }
+        elseif ((int) $from->diff($to)->format('%a') > 400) { $errors[] = 'Der Zeitraum darf höchstens etwa ein Jahr umfassen.'; }
+        if (!$weekdays)         { $errors[] = 'Bitte mindestens einen Wochentag wählen.'; }
+        if (!preg_match('/^\d{1,2}:\d{2}$/', $fromtime) || !preg_match('/^\d{1,2}:\d{2}$/', $totime) || $fromtime >= $totime) {
+            $errors[] = 'Bitte eine gültige Tageszeit (von vor bis) angeben.';
+        }
+
+        if ($errors) {
+            $values = [
+                'fi' => $fiId, 'typ' => $typId, 'fromdate' => $fromdate, 'todate' => $todate,
+                'weekdays' => $weekdays, 'fromtime' => $fromtime, 'totime' => $totime, 'comment' => $comment,
+            ];
+            return $this->renderFiAvailSeries($em, $loggedin_user, $values, $errors);
+        }
+
+        $typObj  = FIAvailability::GetAvailabilityStateObject($em, $typId);
+        $userObj = Users::GetUserObject($em, $clientid, $fiId);
+        $created = 0; $skipped = 0; $guard = 0;
+        $cur = clone $from;
+        while ($cur <= $to && $guard < 800) {
+            $guard++;
+            if (in_array((int) $cur->format('N'), $weekdays, true)) {
+                $start = \DateTime::createFromFormat('Y-m-d H:i', $cur->format('Y-m-d') . ' ' . $fromtime, $tz);
+                $end   = \DateTime::createFromFormat('Y-m-d H:i', $cur->format('Y-m-d') . ' ' . $totime, $tz);
+
+                $a = new FresFIAvailability();
+                $a->setClientid($clientid);
+                $a->setStatus(0);
+                $a->setFlightinstructor($fiId);
+                $a->setItemstart($start);
+                $a->setItemstop($end);
+                $a->setComment($comment !== '' ? $comment : null);
+
+                if (FIAvailability::IsOverlapping($em, $a) !== null) {
+                    $skipped++;
+                } else {
+                    $a->setTyp($typObj);
+                    $a->setFlightinstructor($userObj);
+                    $em->persist($a);
+                    $em->flush();   // einzeln, damit die Überlappungsprüfung folgende Tage erkennt
+                    $created++;
+                }
+            }
+            $cur->modify('+1 day');
+        }
+
+        return $this->redirectToRoute('modern_fiavail', array_merge(
+            ['created' => $created, 'skipped' => $skipped],
+            $fiId !== $myId ? ['scope' => 'alle'] : []
+        ));
+    }
+
+    private function renderFiAvailSeries(EntityManagerInterface $em, UserInterface $loggedin_user, array $values, array $errors): Response
+    {
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $response = $this->render('modern/fiavail_series.html.twig', [
+            'isAdmin'     => $isAdmin,
+            'states'      => FIAvailability::GetAllAvailabilityStates($em),
+            'instructors' => $isAdmin ? Users::GetAllFlightinstructorsForListbox($em, $loggedin_user->getClientid()) : [],
+            'today'       => (new \DateTime('today', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d'),
+            'v'           => $values,
+            'errors'      => $errors,
+        ]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    /** Mehrfach-Löschen-Formular. */
+    public function fiAvailBulk(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $tz = new \DateTimeZone('Europe/Berlin');
+        $isFi = Users::isFlightinstructor($em, (int) $loggedin_user->getId());
+
+        $values = [
+            'fi'       => $isFi ? (int) $loggedin_user->getId() : 0,
+            'fromdate' => (new \DateTime('today', $tz))->format('Y-m-d'),
+            'todate'   => (new \DateTime('today', $tz))->format('Y') . '-12-31',
+            'weekdays' => [],
+        ];
+
+        return $this->renderFiAvailBulk($em, $loggedin_user, $values, []);
+    }
+
+    /** Mehrfach-Löschen ausführen (Soft-Delete aller passenden Termine). */
+    public function fiAvailBulkDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_FI');
+        $em->getConnection()->exec('SET NAMES "UTF8"');
+        $clientid = $loggedin_user->getClientid();
+        $myId     = (int) $loggedin_user->getId();
+        $isAdmin  = $this->isGranted('ROLE_ADMIN');
+        $tz = new \DateTimeZone('Europe/Berlin');
+
+        $fromdate = trim((string) $request->request->get('fromdate', ''));
+        $todate   = trim((string) $request->request->get('todate', ''));
+        $weekdays = array_values(array_filter(array_map('intval', (array) $request->request->all('weekdays')), fn ($d) => $d >= 1 && $d <= 7));
+        $fiId     = $isAdmin ? ((int) $request->request->get('fi', 0) ?: $myId) : $myId;
+
+        $from = \DateTime::createFromFormat('Y-m-d', $fromdate, $tz);
+        $to   = \DateTime::createFromFormat('Y-m-d', $todate, $tz);
+        if ($from) { $from->setTime(0, 0, 0); }
+        if ($to)   { $to->setTime(23, 59, 59); }
+
+        $errors = [];
+        if (!$from || !$to)  { $errors[] = 'Bitte gültigen Zeitraum (von/bis Datum) angeben.'; }
+        elseif ($from > $to) { $errors[] = 'Das End-Datum muss nach dem Start-Datum liegen.'; }
+
+        if ($errors) {
+            $values = ['fi' => $fiId, 'fromdate' => $fromdate, 'todate' => $todate, 'weekdays' => $weekdays];
+            return $this->renderFiAvailBulk($em, $loggedin_user, $values, $errors);
+        }
+
+        $rows = $em->createQuery(
+            "SELECT a FROM App\Entity\FresFIAvailability a WHERE a.clientid = :cid AND a.flightinstructor = :fi "
+            . "AND a.status <> :del AND a.itemstart >= :from AND a.itemstart <= :to"
+        )->setParameter('cid', $clientid)->setParameter('fi', $fiId)
+         ->setParameter('del', FIAvailability::const_geloescht)
+         ->setParameter('from', $from)->setParameter('to', $to)->getResult();
+
+        $deleted = 0;
+        foreach ($rows as $a) {
+            if ($weekdays && !in_array((int) $a->getItemstart()->format('N'), $weekdays, true)) {
+                continue;   // Wochentag-Filter
+            }
+            $a->setStatus(FIAvailability::const_geloescht);
+            $deleted++;
+        }
+        if ($deleted) { $em->flush(); }
+
+        return $this->redirectToRoute('modern_fiavail', array_merge(
+            ['deleted' => $deleted],
+            $fiId !== $myId ? ['scope' => 'alle'] : []
+        ));
+    }
+
+    private function renderFiAvailBulk(EntityManagerInterface $em, UserInterface $loggedin_user, array $values, array $errors): Response
+    {
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $response = $this->render('modern/fiavail_bulk.html.twig', [
+            'isAdmin'     => $isAdmin,
+            'instructors' => $isAdmin ? Users::GetAllFlightinstructorsForListbox($em, $loggedin_user->getClientid()) : [],
+            'today'       => (new \DateTime('today', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d'),
+            'v'           => $values,
+            'errors'      => $errors,
         ]);
         $response->setExpires(new \DateTime());
 

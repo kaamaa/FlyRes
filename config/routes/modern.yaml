@@ -98,6 +98,54 @@ modern_note_edit:
     requirements:
         id: '\d+'
 
+# --- Fluglehrer: verfügbare Schulungszeiten (ROLE_FI) ---
+modern_fiavail:
+    path: /modern/schulungszeiten
+    controller: App\Controller\ModernPreviewController::fiAvail
+    methods: GET
+
+modern_fiavail_new:
+    path: /modern/schulungszeit/neu
+    controller: App\Controller\ModernPreviewController::fiAvailNew
+    methods: GET
+
+modern_fiavail_save:
+    path: /modern/schulungszeit/speichern
+    controller: App\Controller\ModernPreviewController::fiAvailSave
+    methods: POST
+
+modern_fiavail_delete:
+    path: /modern/schulungszeit/loeschen
+    controller: App\Controller\ModernPreviewController::fiAvailDelete
+    methods: POST
+
+modern_fiavail_series:
+    path: /modern/schulungszeit/serie
+    controller: App\Controller\ModernPreviewController::fiAvailSeries
+    methods: GET
+
+modern_fiavail_series_save:
+    path: /modern/schulungszeit/serie-speichern
+    controller: App\Controller\ModernPreviewController::fiAvailSeriesSave
+    methods: POST
+
+modern_fiavail_bulk:
+    path: /modern/schulungszeit/mehrfach
+    controller: App\Controller\ModernPreviewController::fiAvailBulk
+    methods: GET
+
+modern_fiavail_bulk_delete:
+    path: /modern/schulungszeit/mehrfach-loeschen
+    controller: App\Controller\ModernPreviewController::fiAvailBulkDelete
+    methods: POST
+
+modern_fiavail_edit:
+    path: /modern/schulungszeit/{id}
+    controller: App\Controller\ModernPreviewController::fiAvailEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
 # --- Stammdaten: Flugzeuge & Flugzeugtypen (nur ROLE_SYSTEM_ADMIN) ---
 modern_aircraft:
     path: /modern/flugzeuge

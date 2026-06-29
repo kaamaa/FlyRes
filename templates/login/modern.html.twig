@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlyRes – Anmelden</title>
+  <link href="{{ asset('images/css/modern.css') }}?v={{ 'now'|date('YmdHis') }}" rel="stylesheet">
+</head>
+<body class="fr-modern fr-login">
+  <div class="fr-login-wrap">
+    <div class="fr-login-card">
+      <div class="fr-login-brand"><span>✈</span> FlyRes</div>
+      <div class="fr-login-sub">Bitte melde dich an</div>
+
+      {% if error %}
+        <div class="fr-msg err">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
+      {% endif %}
+
+      <form method="post" action="{{ path('app_login') }}" class="fr-login-form">
+        <label for="client">Flugschule</label>
+        <select name="client" id="client">
+          {% for client in clients %}
+            <option {{ client.name == selected ? 'selected' : '' }}>{{ client.name }}</option>
+          {% endfor %}
+        </select>
+
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="_username" value="{{ last_username }}" autocomplete="username" autofocus>
+
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="_password" autocomplete="current-password">
+
+        <label class="fr-login-remember">
+          <input type="checkbox" name="_remember_me" checked> Eingeloggt bleiben
+        </label>
+
+        <input type="hidden" name="_target_path" value="{{ path('modern_dashboard') }}">
+        <button type="submit" class="fr-btn">Anmelden</button>
+      </form>
+    </div>
+    <div class="fr-login-foot">FlyRes · Flugschul-Reservierung</div>
+  </div>
+</body>
+</html>
