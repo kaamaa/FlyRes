@@ -41,3 +41,8 @@ services:
     App\EventSubscriber\CorsSubscriber:
         arguments:
             $allowedOrigins: '%app.cors_allowed_origins%'
+
+    # CSRF-Origin-Schutz fuer die /modern-POST-Formulare (server-gerendert, ohne Token)
+    App\EventSubscriber\CsrfOriginSubscriber:
+        arguments:
+            $allowedOrigins: '%app.cors_allowed_origins%'
