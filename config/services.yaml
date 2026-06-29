@@ -13,7 +13,10 @@ parameters:
     locale: de_DE
     program_version: 'FlyRes 6.4'
     mail_from: '%env(MAIL_FROM)%'
-   
+    # Vertrauenswuerdige Fremd-Origins fuer CORS (Joomla-Einbettung der FlyRes-Subdomain).
+    # Kommagetrennt erweiterbar. Genutzt vom CorsSubscriber + ApiController::denyCrossOrigin.
+    app.cors_allowed_origins: 'https://www.flugschule-worms.de'
+
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -32,4 +35,9 @@ services:
             - '../src/LogonType.php'
             - '../src/SessionData.php'
             - '../src/TimeFunctions.php'
-            - '../src/ViewHelper.php'        
+            - '../src/ViewHelper.php'
+
+    # CORS fuer die vertrauenswuerdigen Fremd-Origins (Cross-Site-iframe/Joomla)
+    App\EventSubscriber\CorsSubscriber:
+        arguments:
+            $allowedOrigins: '%app.cors_allowed_origins%'

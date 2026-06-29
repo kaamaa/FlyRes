@@ -116,7 +116,7 @@ const dayBounds = computed(() => avail.value ? { s: toMin(avail.value.dayStart),
 function pct(min) { const b = dayBounds.value; return ((min - b.s) / (b.e - b.s)) * 100 }
 function segsToPct(intervals) { return intervals.map(([s, e]) => ({ left: pct(s), width: pct(e) - pct(s) })) }
 // Fluglehrer-Zustände -> Segmente mit CSS-Klasse (frei/auf Anfrage/Solo)
-const STMAP = { frei: 's-frei', anfrage_direkt: 's-anfrageD', anfrage_absprache: 's-anfrageA', solo: 's-solo', ausgebucht: 's-ausgebucht' }
+const STMAP = { frei: 's-frei', anfrage_direkt: 's-anfrageD', anfrage_absprache: 's-anfrageA', solo: 's-solo', ausgebucht: 's-ausgebucht', nichtverfuegbar: 's-nichtverfuegbar' }
 function stateSegsToPct(segments) {
   return (segments || []).map((s) => ({ left: pct(toMin(s.start)), width: pct(toMin(s.end)) - pct(toMin(s.start)), cls: STMAP[s.state] || 's-frei' }))
 }
@@ -368,7 +368,7 @@ defineExpose({ submit: save })
         <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
         <div v-if="fiId" class="av3legend">
           <span class="note">Fluglehrer: Vollton = direkt buchbar · gestreift = nach Absprache · grau = nicht buchbar</span>
-          <span><i class="s-frei"></i>frei</span><span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span><span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span><span><i class="s-solo"></i>Solo</span><span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span><span><i class="nb"></i>nicht buchbar</span>
+          <span><i class="s-frei"></i>frei</span><span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span><span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span><span><i class="s-solo"></i>Solo</span><span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span><span><i class="s-nichtverfuegbar"></i>nicht verfügbar</span><span><i class="nb"></i>nicht buchbar</span>
         </div>
       </template>
       <template v-else>

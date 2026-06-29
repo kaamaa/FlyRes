@@ -91,7 +91,7 @@
     pop.addEventListener('click', function (e) {
       e.stopPropagation();
       var nav = e.target.closest('[data-nav]'); if (nav) { view.m += +nav.dataset.nav; if (view.m<1){view.m=12;view.y--;} if (view.m>12){view.m=1;view.y++;} build(); return; }
-      var day = e.target.closest('[data-iso]'); if (day) { inp.value = day.dataset.iso; refresh(); close(); }
+      var day = e.target.closest('[data-iso]'); if (day) { inp.value = day.dataset.iso; refresh(); close(); wrap.dispatchEvent(new CustomEvent('datechange')); }
     });
     document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) close(); });
     refresh();
@@ -99,11 +99,9 @@
     wrap._inp = inp;
   }
   var dates = Array.prototype.map.call(document.querySelectorAll('.fr-date'), function (w) { setupDate(w); return w; });
-  // Von-Datum ändern -> Bis-Datum gleichsetzen, falls Bis leer/davor
+  // Von-Datum ändern -> Bis-Datum automatisch gleichsetzen.
   if (dates.length === 2) {
-    dates[0].addEventListener('click', function () {
-      setTimeout(function () { if (!dates[1]._inp.value || dates[1]._inp.value < dates[0]._inp.value) { dates[1]._set(dates[0]._inp.value); } }, 0);
-    });
+    dates[0].addEventListener('datechange', function () { dates[1]._set(dates[0]._inp.value); });
   }
 })();
 </script>

@@ -422,7 +422,9 @@ class ModernPreviewController extends AbstractController
          ->setParameter('del', FIAvailability::const_geloescht)
          ->setParameter('rstart', $day0)->setParameter('rend', $rangeEnd)->getResult();
 
-        $prio = ['green' => 3, 'amber' => 2, 'amberdash' => 1];
+        // rot (nicht verfügbar) hat die niedrigste Prio -> wird nur angezeigt, wenn am
+        // Tag kein verfügbar-/Anfrage-Fenster existiert (sonst gewinnt die Verfügbarkeit).
+        $prio = ['green' => 4, 'amber' => 3, 'amberdash' => 2, 'red' => 1];
         $fiData = [];
         $bookable = [];
         foreach ($avails as $a) {
@@ -431,19 +433,25 @@ class ModernPreviewController extends AbstractController
             $fiId  = (int) $fiObj->getId();
             $typ   = $a->getTyp();
             $typId = $typ ? (int) $typ->getId() : 0;
-            if ($typId === 3) { continue; }   // "nicht verfügbar" nicht anzeigen
-            if (!array_key_exists($fiId, $bookable)) {
-                $bookable[$fiId] = Users::IsFlightinstructorBookableOnRequest($em, $fiId);
+            if ($typId === 3) {
+                $state = 'red';                 // nicht verfügbar
+            } elseif ($typId === 1) {
+                $state = 'green';               // verfügbar
+            } else {
+                if (!array_key_exists($fiId, $bookable)) {
+                    $bookable[$fiId] = Users::IsFlightinstructorBookableOnRequest($em, $fiId);
+                }
+                $state = $bookable[$fiId] ? 'amber' : 'amberdash';
             }
-            $state   = $typId === 1 ? 'green' : ($bookable[$fiId] ? 'amber' : 'amberdash');
             $typName = $typ ? $typ->getName() : '';
+            $comment = trim((string) $a->getComment());
 
             $si = (int) $day0->diff((clone $a->getItemstart())->setTime(0, 0, 0))->format('%r%a');
             $ei = (int) $day0->diff((clone $a->getItemstop())->setTime(0, 0, 0))->format('%r%a');
             for ($i = max(0, $si); $i <= min($duration - 1, $ei); $i++) {
                 if (!isset($fiData[$fiId][$i])) { $fiData[$fiId][$i] = ['state' => $state, 'wins' => []]; }
                 if ($prio[$state] > $prio[$fiData[$fiId][$i]['state']]) { $fiData[$fiId][$i]['state'] = $state; }
-                $fiData[$fiId][$i]['wins'][] = $a->getItemstart()->format('H:i') . '–' . $a->getItemstop()->format('H:i') . ' ' . $typName;
+                $fiData[$fiId][$i]['wins'][] = $a->getItemstart()->format('H:i') . '–' . $a->getItemstop()->format('H:i') . ' ' . $typName . ($comment !== '' ? ' – ' . $comment : '');
             }
         }
 

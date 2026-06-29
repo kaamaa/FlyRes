@@ -1,0 +1,8 @@
+# Produktion: FlyRes wird per Cross-Site-iframe (Joomla auf www.…, FlyRes auf
+# der Subdomain flyres.…) eingebettet. Das Session-Cookie muss dafuer
+# SameSite=None; Secure sein, sonst sendet der Browser es im iframe nicht mit.
+# Bewusst NUR in prod (HTTPS) – im dev-/HTTP-Betrieb bliebe das Cookie sonst aus.
+framework:
+    session:
+        cookie_samesite: none
+        cookie_secure: true

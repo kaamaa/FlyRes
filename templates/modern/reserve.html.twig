@@ -55,6 +55,7 @@
     <span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span>
     <span><i class="s-solo"></i>Solo-parallel</span>
     <span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span>
+    <span><i class="s-nichtverfuegbar"></i>nicht verfügbar</span>
     <span><i class="nb"></i>nicht buchbar</span>
   </div>
 
@@ -146,11 +147,20 @@
     for(var m=s;m<=e;m+=30) timeOpts.push(toHHMM(m));
     combos.forEach(function(c){ if(!c.list.hidden) c.build(); });
   }
-  // Eigenes Combobox-Dropdown (zuverlässig + freie Eingabe bleibt möglich)
-  function setupCombo(inp){
+  // Eigenes Combobox-Dropdown (zuverlässig + freie Eingabe bleibt möglich).
+  // targetFn liefert optional die Zeit, ab der die Liste beim Öffnen anfangen soll
+  // (Bis-Combo -> Von-Uhrzeit, damit man nicht erst hochscrollen muss).
+  function setupCombo(inp, targetFn){
     var wrap=inp.closest('.fr-combo'), list=wrap.querySelector('.fr-combolist'), btn=wrap.querySelector('.fr-comboar');
     function build(){ list.innerHTML=timeOpts.map(function(t){ return '<div class="fr-comboitem'+(t===inp.value?' sel':'')+'" data-t="'+t+'">'+t+'</div>'; }).join(''); }
-    function open(){ build(); list.hidden=false; }
+    function scrollToTarget(){
+      var t=normTime((targetFn?targetFn():inp.value)||''); if(!t) return;
+      var items=list.querySelectorAll('.fr-comboitem'), hit=null;
+      for(var i=0;i<items.length;i++){ if(normTime(items[i].dataset.t)>=t){ hit=items[i]; break; } }
+      if(!hit && items.length) hit=items[items.length-1];
+      if(hit) list.scrollTop=hit.offsetTop;
+    }
+    function open(){ build(); list.hidden=false; scrollToTarget(); }
     function close(){ list.hidden=true; }
     btn.addEventListener('mousedown',function(e){ e.preventDefault(); list.hidden?open():close(); });
     inp.addEventListener('click',open);
@@ -165,8 +175,9 @@
   function busy(free,s,e){ var f=(free||[]).map(function(w){return [toMin(w.start),toMin(w.end)];}).sort(function(a,b){return a[0]-b[0];}); var out=[],cur=s; f.forEach(function(x){ if(x[0]>cur)out.push([cur,x[0]]); cur=Math.max(cur,x[1]); }); if(cur<e)out.push([cur,e]); return out; }
   function freeBlocks(slots,dS,dE){ var floor=Math.max(540,toMin(dS)),end=toMin(dE),out=[]; (slots||[]).forEach(function(w){ var s=Math.ceil(Math.max(toMin(w.start),floor)/30)*30, we=Math.min(toMin(w.end),end); while(s+120<=we){ out.push({start:toHHMM(s),end:toHHMM(s+120),label:blk(s)+'–'+blk(s+120)}); s+=120; } }); return out; }
   // Fluglehrer-Zustandsbalken: Hintergrund grau (nicht buchbar), farbige Segmente je Zustand
-  var STCLS={frei:'s-frei',anfrage_direkt:'s-anfrageD',anfrage_absprache:'s-anfrageA',solo:'s-solo',ausgebucht:'s-ausgebucht'};
-  function stateBar(segs,s,e){ var span=e-s||1; function pct(m){return (m-s)/span*100;} var inner=(segs||[]).map(function(g){ var a=toMin(g.start),b=toMin(g.end),cl=STCLS[g.state]||'s-frei'; return '<div class="fr-avseg '+cl+'" style="left:'+pct(a)+'%;width:'+(pct(b)-pct(a))+'%"></div>'; }).join(''); return '<div class="fr-avbar nb">'+inner+'</div>'; }
+  var STCLS={frei:'s-frei',anfrage_direkt:'s-anfrageD',anfrage_absprache:'s-anfrageA',solo:'s-solo',ausgebucht:'s-ausgebucht',nichtverfuegbar:'s-nichtverfuegbar'};
+  var STLBL={frei:'frei',anfrage_direkt:'auf Anfrage (buchbar)',anfrage_absprache:'auf Anfrage – nach Absprache',solo:'Solo-parallel buchbar',ausgebucht:'verfügbar, aber ausgebucht',nichtverfuegbar:'nicht verfügbar'};
+  function stateBar(segs,s,e){ var span=e-s||1; function pct(m){return (m-s)/span*100;} var inner=(segs||[]).map(function(g){ var a=toMin(g.start),b=toMin(g.end),cl=STCLS[g.state]||'s-frei',lbl=STLBL[g.state]||g.state; return '<div class="fr-avseg '+cl+'" title="'+lbl+' '+g.start+'–'+g.end+(g.note?' – '+g.note:'')+'" style="left:'+pct(a)+'%;width:'+(pct(b)-pct(a))+'%"></div>'; }).join(''); return '<div class="fr-avbar nb">'+inner+'</div>'; }
 
   function render(d){
     if(!d){ box.innerHTML='<div class="fr-avhint">Bitte zuerst ein Flugzeug wählen.</div>'; return; }
@@ -290,7 +301,8 @@
   // Von-Datum ändern -> Bis-Datum gleichsetzen (inkl. Anzeige)
   sd.addEventListener('change',function(){ var w=ed.closest('.fr-date'); if(w&&w._set){ w._set(sd.value); } else { ed.value=sd.value; } });
 
-  setupCombo(st); setupCombo(et);   // Zeit-Comboboxen aktivieren
+  // Von-Combo scrollt zur eigenen Zeit; Bis-Combo startet bei der Von-Uhrzeit.
+  setupCombo(st); setupCombo(et, function(){ return st.value || et.value; });
 
   // ---- Speichern über die API (POST /api/bookings) ----
   var form=ac.closest('form'), saveBtn=document.getElementById('r_save'), msg=document.getElementById('r_msg');

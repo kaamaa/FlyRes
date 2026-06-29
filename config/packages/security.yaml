@@ -29,10 +29,13 @@ security:
                 
             remember_me:
                 secret:   '%kernel.secret%'
-                lifetime: 2592000 
+                lifetime: 2592000
                 # 30 days in seconds
                 path: /
-                # always_remember_me: true   
+                # Cross-Site-iframe (Joomla): RememberMe-Cookie nur mit SameSite=None
+                # (auf HTTPS automatisch Secure) wird im iframe mitgesendet.
+                samesite: none
+                # always_remember_me: true
                 user_provider: app_user_provider
                 #signature_properties: ['username', 'clientid']
 

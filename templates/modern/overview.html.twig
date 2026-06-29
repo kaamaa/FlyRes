@@ -49,6 +49,7 @@
         <span><i class="s-anfrageA"></i>n. Absprache</span>
         <span><i class="s-solo"></i>Solo-parallel</span>
         <span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span>
+        <span><i class="s-nichtverfuegbar"></i>nicht verfügbar</span>
         <span><i class="nb"></i>nicht buchbar</span>
       </div>
     </div>
@@ -78,9 +79,9 @@
     function mm(m) { return p2(Math.floor(m / 60)) + ':' + p2(m % 60); }
     function busySegs(arr, s, e) { var pct = pctf(s, e); return arr.map(function (x) { return '<div class="fr-avseg" data-tip="belegt ' + mm(x[0]) + '–' + mm(x[1]) + '" style="left:' + pct(x[0]) + '%;width:' + (pct(x[1]) - pct(x[0])) + '%"></div>'; }).join(''); }
     function freeTitle(free) { if (!free || !free.length) return 'ganztägig belegt'; return 'frei: ' + free.map(function (w) { return w.start + '–' + w.end; }).join(' · '); }
-    var STCLS = { frei: 's-frei', anfrage_direkt: 's-anfrageD', anfrage_absprache: 's-anfrageA', solo: 's-solo', ausgebucht: 's-ausgebucht' };
-    var STLBL = { frei: 'frei', anfrage_direkt: 'auf Anfrage (buchbar)', anfrage_absprache: 'auf Anfrage – nach Absprache', solo: 'Solo-parallel buchbar', ausgebucht: 'verfügbar, aber ausgebucht' };
-    function stateBar(segs, s, e) { var pct = pctf(s, e); var inner = (segs || []).map(function (g) { var a = toMin(g.start), b = toMin(g.end), cl = STCLS[g.state] || 's-frei', lbl = STLBL[g.state] || g.state; return '<div class="fr-avseg ' + cl + '" data-tip="' + lbl + ' ' + g.start + '–' + g.end + '" style="left:' + pct(a) + '%;width:' + (pct(b) - pct(a)) + '%"></div>'; }).join(''); return '<div class="fr-avbar nb" data-tip="nicht buchbar">' + inner + '</div>'; }
+    var STCLS = { frei: 's-frei', anfrage_direkt: 's-anfrageD', anfrage_absprache: 's-anfrageA', solo: 's-solo', ausgebucht: 's-ausgebucht', nichtverfuegbar: 's-nichtverfuegbar' };
+    var STLBL = { frei: 'frei', anfrage_direkt: 'auf Anfrage (buchbar)', anfrage_absprache: 'auf Anfrage – nach Absprache', solo: 'Solo-parallel buchbar', ausgebucht: 'verfügbar, aber ausgebucht', nichtverfuegbar: 'nicht verfügbar' };
+    function stateBar(segs, s, e) { var pct = pctf(s, e); var inner = (segs || []).map(function (g) { var a = toMin(g.start), b = toMin(g.end), cl = STCLS[g.state] || 's-frei', lbl = STLBL[g.state] || g.state; return '<div class="fr-avseg ' + cl + '" data-tip="' + lbl + ' ' + g.start + '–' + g.end + (g.note ? ' – ' + g.note : '') + '" style="left:' + pct(a) + '%;width:' + (pct(b) - pct(a)) + '%"></div>'; }).join(''); return '<div class="fr-avbar nb" data-tip="nicht buchbar">' + inner + '</div>'; }
     function axis(s, e) { var span = e - s; var x = [0, 1, 2, 3, 4].map(function (i) { return '<span>' + p2(Math.round((s + span * i / 4) / 60)) + '</span>'; }).join(''); return '<div class="fr-avaxis">' + x + '</div>'; }
     function get(q) { return fetch('/api/availability?' + q, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); }
 
@@ -182,7 +183,8 @@
           <span><i class="green"></i>verfügbar</span>
           <span><i class="amber"></i>auf Anfrage (buchbar)</span>
           <span><i class="amberdash"></i>nur nach Rücksprache</span>
-          <span class="fr-filegend-note">Grundsätzliche Verfügbarkeit – Buchungen sind hier bewusst nicht berücksichtigt. Zeiten beim Überfahren einer Zelle.</span>
+          <span><i class="red"></i>nicht verfügbar</span>
+          <span class="fr-filegend-note">Grundsätzliche Verfügbarkeit – Buchungen sind hier bewusst nicht berücksichtigt. Zeiten (und Begründung) beim Überfahren einer Zelle.</span>
         </div>
       </div>
       {% endif %}

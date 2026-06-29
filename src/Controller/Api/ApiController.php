@@ -51,9 +51,15 @@ abstract class ApiController extends AbstractController
     protected function denyCrossOrigin(Request $request): ?JsonResponse
     {
         $expectedHost = $request->getHost();
+        // Vertrauenswuerdige Fremd-Origins (z. B. Joomla-Einbettung) zusaetzlich erlauben.
+        $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', (string) $this->getParameter('app.cors_allowed_origins')))));
+        $allowedHosts   = array_filter(array_map(static fn ($o) => parse_url($o, PHP_URL_HOST), $allowedOrigins));
 
         $origin = $request->headers->get('Origin');
         if ($origin !== null && $origin !== '') {
+            if (in_array($origin, $allowedOrigins, true)) {
+                return null;
+            }
             return parse_url($origin, PHP_URL_HOST) === $expectedHost
                 ? null
                 : $this->json(['error' => 'cross_origin_denied'], 403);
@@ -61,7 +67,8 @@ abstract class ApiController extends AbstractController
 
         $referer = $request->headers->get('Referer');
         if ($referer !== null && $referer !== '') {
-            return parse_url($referer, PHP_URL_HOST) === $expectedHost
+            $rHost = parse_url($referer, PHP_URL_HOST);
+            return ($rHost === $expectedHost || in_array($rHost, $allowedHosts, true))
                 ? null
                 : $this->json(['error' => 'cross_origin_denied'], 403);
         }

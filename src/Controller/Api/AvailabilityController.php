@@ -128,6 +128,39 @@ class AvailabilityController extends ApiController
                     $state = ($isSolo && $parallel) ? 'solo' : 'ausgebucht';
                     $instructorSegments[] = ['start' => $this->min2str($bs), 'end' => $this->min2str($be), 'state' => $state];
                 }
+
+                // "Nicht verfuegbar" (Typ 3) aus den Schulungszeiten: rot anzeigen, eine
+                // hinterlegte Begruendung als 'note' (-> Tooltip). Zuletzt angehaengt, damit
+                // es die frei-/Anfrage-Bereiche ueberlagert.
+                $nv = $em->createQuery(
+                    "SELECT a FROM App\Entity\FresFIAvailability a WHERE a.clientid = :c AND a.flightinstructor = :fi "
+                    . "AND a.status <> 'geloescht' AND a.itemstart < :to AND a.itemstop > :from"
+                )->setParameters([
+                    'c' => $clientid, 'fi' => $fiId,
+                    'from' => $date->format('Y-m-d 00:00:00'),
+                    'to'   => (clone $date)->modify('+1 day')->format('Y-m-d 00:00:00'),
+                ])->getResult();
+                foreach ($nv as $a) {
+                    $typ = $a->getTyp();
+                    if (!$typ || (int) $typ->getId() !== 3) {
+                        continue;   // nur "nicht verfuegbar"
+                    }
+                    $bs = ($a->getItemstart()->format('Y-m-d') < $dayStr)
+                        ? $dayStart : (int) $a->getItemstart()->format('H') * 60 + (int) $a->getItemstart()->format('i');
+                    $be = ($a->getItemstop()->format('Y-m-d') > $dayStr)
+                        ? $dayEnd : (int) $a->getItemstop()->format('H') * 60 + (int) $a->getItemstop()->format('i');
+                    $bs = max($bs, $dayStart);
+                    $be = min($be, $dayEnd);
+                    if ($be <= $bs) {
+                        continue;
+                    }
+                    $seg = ['start' => $this->min2str($bs), 'end' => $this->min2str($be), 'state' => 'nichtverfuegbar'];
+                    $note = trim((string) $a->getComment());
+                    if ($note !== '') {
+                        $seg['note'] = $note;
+                    }
+                    $instructorSegments[] = $seg;
+                }
             }
         }
 
