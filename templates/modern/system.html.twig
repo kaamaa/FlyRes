@@ -109,6 +109,18 @@
   </div>
 </div>
 
+{# ---------- Datenbank-Backup (nur Global-Admin: mandantenuebergreifend) ---------- #}
+{% if is_granted('ROLE_GLOBAL_ADMIN') %}
+<div class="sys-sec">Datenbank-Backup</div>
+<div class="sys-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+  <div>
+    <div style="font-weight:700;color:var(--fr-ink);">Vollständiges SQL-Backup herunterladen</div>
+    <div class="sys-hint">Struktur + Daten <b>aller</b> Tabellen als <span class="sys-mono">.sql</span> (wie phpMyAdmin-Export, direkt wieder importierbar). Enthält sämtliche Daten inkl. Zugangsdaten – bitte sicher aufbewahren.</div>
+  </div>
+  <a class="fr-btn" href="{{ path('modern_system_backup') }}" style="white-space:nowrap;">⬇ Backup herunterladen</a>
+</div>
+{% endif %}
+
 {# ---------- Datenbank ---------- #}
 <div class="sys-sec">Datenbank</div>
 {% if db.error %}
@@ -202,10 +214,12 @@
   </div>
 </div>
 
-{# ---------- phpinfo() ---------- #}
+{# ---------- phpinfo() (nur Global-Admin: legt Server-Secrets offen) ---------- #}
+{% if is_granted('ROLE_GLOBAL_ADMIN') %}
 <div class="sys-sec">phpinfo()</div>
 <details class="sys-det" open>
   <summary>Vollständige phpinfo()-Ausgabe anzeigen/ausblenden</summary>
   <iframe class="sys-frame" src="{{ path('modern_system_phpinfo') }}" title="phpinfo"></iframe>
 </details>
+{% endif %}
 {% endblock %}

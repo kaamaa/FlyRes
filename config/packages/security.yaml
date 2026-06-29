@@ -22,11 +22,17 @@ security:
             custom_authenticators:
               - App\Security\LoginFormAuthenticator 
       
-            entry_point: App\Security\LoginFormAuthenticator   # <- WICHTIG    
+            entry_point: App\Security\LoginFormAuthenticator   # <- WICHTIG
             lazy: true
             stateless: false
             provider: app_user_provider
-                
+
+            # Brute-Force-Bremse: max. Loginversuche pro IP/Benutzer im Zeitfenster
+            # (nutzt den vorhandenen symfony/rate-limiter). Greift fuer den Form-Login.
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+
             remember_me:
                 secret:   '%kernel.secret%'
                 lifetime: 2592000

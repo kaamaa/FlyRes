@@ -5,6 +5,8 @@ namespace App\Controller;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Symfony\Component\HttpKernel\Kernel;
 
 /**
@@ -35,13 +37,97 @@ class ModernSystemController extends AbstractController
     /** Rohe phpinfo()-Ausgabe (eigenes Dokument fuer das iframe). */
     public function phpinfo(): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
+        // phpinfo() legt $_SERVER/$_ENV offen (APP_SECRET, DATABASE_URL, MAILER_DSN) –
+        // daher nur fuer GLOBAL_ADMIN, nicht fuer den pro-Mandant-System-Admin.
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
 
         ob_start();
         phpinfo();
         $html = (string) ob_get_clean();
 
         return new Response($html, 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    /**
+     * Vollstaendiges SQL-Backup (Struktur + Daten ALLER Tabellen) als Download.
+     * Erzeugt einen phpMyAdmin-aehnlichen Dump und streamt ihn, damit auch grosse
+     * Tabellen (z. B. tools_airports) ohne Speicherprobleme laufen.
+     */
+    public function backup(EntityManagerInterface $em): Response
+    {
+        // Der Dump umfasst die GESAMTE (mandantenuebergreifende) DB inkl. aller
+        // Passwort-Hashes/E-Mails. ROLE_SYSTEM_ADMIN ist pro-Mandant -> hier
+        // bewusst ROLE_GLOBAL_ADMIN, um die Mandantengrenze nicht zu brechen.
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        $conn     = $em->getConnection();
+        $dbName   = (string) $conn->getDatabase();
+        $filename = 'flyres-backup-' . date('Y-m-d_H-i-s') . '.sql';
+
+        $response = new StreamedResponse(static function () use ($conn, $dbName) {
+            $out = fopen('php://output', 'wb');
+            $w = static function (string $s) use ($out) { fwrite($out, $s); };
+
+            $w("-- FlyRes SQL-Backup\n");
+            $w('-- Datenbank: `' . $dbName . "`\n");
+            $w('-- Erstellt:  ' . date('Y-m-d H:i:s') . "\n");
+            $w("-- Struktur und Daten aller Tabellen. Wiederherstellung: Datei importieren.\n\n");
+            // NO_AUTO_VALUE_ON_ZERO + geleerter strict-Teil, damit Legacy-Defaults
+            // ('0000-00-00') beim Import nicht abgelehnt werden (wie bei phpMyAdmin).
+            $w("SET SQL_MODE = \"NO_AUTO_VALUE_ON_ZERO\";\n");
+            $w("SET time_zone = \"+00:00\";\n");
+            $w("SET NAMES utf8mb4;\n");
+            $w("SET FOREIGN_KEY_CHECKS = 0;\n");
+
+            foreach ($conn->executeQuery('SHOW TABLES')->fetchFirstColumn() as $table) {
+                $create = $conn->executeQuery('SHOW CREATE TABLE `' . $table . '`')->fetchAssociative();
+                $ddl = $create['Create Table'] ?? null;
+                if ($ddl === null) {
+                    continue; // Views o. Ae. ueberspringen
+                }
+
+                $w("\n-- --------------------------------------------------------\n");
+                $w('-- Tabelle `' . $table . "`\n\n");
+                $w('DROP TABLE IF EXISTS `' . $table . "`;\n");
+                $w($ddl . ";\n\n");
+
+                // Daten gestreamt in Bloecken zu je 100 Zeilen (Multi-Row-INSERT).
+                $cols  = null;
+                $batch = [];
+                foreach ($conn->executeQuery('SELECT * FROM `' . $table . '`')->iterateAssociative() as $row) {
+                    if ($cols === null) {
+                        $cols = array_keys($row);
+                    }
+                    $cells = [];
+                    foreach ($cols as $c) {
+                        $cells[] = $row[$c] === null ? 'NULL' : $conn->quote((string) $row[$c]);
+                    }
+                    $batch[] = '(' . implode(',', $cells) . ')';
+                    if (count($batch) >= 100) {
+                        $w('INSERT INTO `' . $table . '` (`' . implode('`,`', $cols) . "`) VALUES\n");
+                        $w(implode(",\n", $batch) . ";\n");
+                        $batch = [];
+                    }
+                }
+                if ($batch) {
+                    $w('INSERT INTO `' . $table . '` (`' . implode('`,`', $cols) . "`) VALUES\n");
+                    $w(implode(",\n", $batch) . ";\n");
+                }
+            }
+
+            $w("\nSET FOREIGN_KEY_CHECKS = 1;\n");
+            fclose($out);
+        });
+
+        $response->headers->set('Content-Type', 'application/sql; charset=utf-8');
+        $response->headers->set('Content-Disposition', $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            $filename
+        ));
+        $response->headers->set('X-Accel-Buffering', 'no'); // nginx: nicht puffern
+        $response->headers->set('Cache-Control', 'no-store');
+
+        return $response;
     }
 
     // ---------------------------------------------------------------- PHP ----

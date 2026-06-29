@@ -21,7 +21,7 @@
             </span>
           {% endif %}
         </header>
-        <div class="fr-note-body">{{ n.text|raw }}</div>
+        <div class="fr-note-body">{{ n.text|nl2br }}</div>
         <footer class="fr-note-ft">
           <span class="fr-note-meta">
             <span class="av">{{ n.author|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>

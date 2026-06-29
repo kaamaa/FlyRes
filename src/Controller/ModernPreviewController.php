@@ -956,7 +956,8 @@ class ModernPreviewController extends AbstractController
             $items[] = [
                 'id'        => $n->getId(),
                 'header'    => $n->getHeader(),
-                'text'      => nl2br((string) $n->getDescription()),
+                // Rohtext; Zeilenumbrueche/Escaping macht das Template via |nl2br (XSS-sicher)
+                'text'      => (string) $n->getDescription(),
                 'author'    => $u ? trim($u->getFirstname() . ' ' . $u->getLastname()) : '',
                 'validuntil'=> $vu ? $vu->format('d.m.Y') : '',
                 'days'      => $days,

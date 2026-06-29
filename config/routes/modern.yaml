@@ -257,3 +257,8 @@ modern_system_phpinfo:
     path: /modern/system/phpinfo
     controller: App\Controller\ModernSystemController::phpinfo
     methods: GET
+
+modern_system_backup:
+    path: /modern/system/backup
+    controller: App\Controller\ModernSystemController::backup
+    methods: GET

@@ -33,7 +33,11 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-side .fr-nav.on:hover{background:#21394e;}
 .fr-side .fr-nav.muted{color:#6a7c8d;cursor:default;}
 .fr-side .fr-nav.muted:hover{background:none;color:#6a7c8d;}
-.fr-side .fr-nav .ic{width:16px;text-align:center;}
+.fr-side .fr-nav .ic{width:18px;height:18px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#8499ad;}
+.fr-side .fr-nav .ic svg{width:18px;height:18px;}
+.fr-side .fr-nav:hover .ic{color:#fff;}
+.fr-side .fr-nav.on .ic{color:#4a9fe0;}
+.fr-brand svg{width:20px;height:20px;}
 .fr-usr{display:flex;align-items:center;gap:9px;margin-top:16px;padding:9px 8px;border-top:1px solid #24384a;color:#aebccb;font-size:12.5px;}
 .fr-usr .ava{width:28px;height:28px;border-radius:50%;background:var(--fr-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex:0 0 auto;}
 
@@ -480,6 +484,9 @@ body.fr-login{display:flex;align-items:center;justify-content:center;min-height:
 .fr-usr .fr-logout{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:inline-flex;
   align-items:center;justify-content:center;color:#9fb0c0;font-size:16px;background:#1d3142;}
 .fr-usr .fr-logout:hover{background:#2a435a;color:#fff;}
+.fr-usr .fr-logout .ic{display:inline-flex;align-items:center;justify-content:center;}
+.fr-usr .fr-logout .ic svg{width:17px;height:17px;}
+.fr-navsep{height:1px;background:#24384a;margin:14px 8px 6px;}
 
 /* --- Fluglehrer: Schulungszeiten --- */
 .fr-fihint{font-size:13px;line-height:1.5;color:#37434f;background:var(--fr-blue-l);border-radius:10px;padding:11px 14px;margin-bottom:14px;max-width:760px;}
