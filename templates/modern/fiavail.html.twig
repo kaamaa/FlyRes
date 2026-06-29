@@ -7,9 +7,9 @@
     <a class="fr-chip {{ scope == 'meine' ? 'on' : '' }}" href="{{ path('modern_fiavail') }}">Meine</a>
     <a class="fr-chip {{ scope == 'alle' ? 'on' : '' }}" href="{{ path('modern_fiavail', {scope: 'alle'}) }}">Alle Fluglehrer</a>
   {% endif %}
-  <a class="fr-btn ghost" style="margin-left:auto;" href="{{ path('modern_fiavail_bulk') }}">Mehrere löschen</a>
-  <a class="fr-btn ghost" href="{{ path('modern_fiavail_series') }}">Serie</a>
-  <a class="fr-btn" href="{{ path('modern_fiavail_new') }}">＋ Einzeln</a>
+  <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_fiavail_new') }}">＋ Einzeln</a>
+  <a class="fr-btn ghost" href="{{ path('modern_fiavail_series') }}">Terminserie erstellen</a>
+  <a class="fr-btn ghost" href="{{ path('modern_fiavail_bulk') }}">Terminserie löschen</a>
 {% endblock %}
 
 {% block content %}

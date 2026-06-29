@@ -65,9 +65,8 @@
   <script>
   (function () {
     var AC = (window.FR_DAY || {}).aircraft || [], FI = (window.FR_DAY || {}).instructors || [];
-    var DOTS = ['#34c759', '#0a84ff', '#ff9f0a', '#bf5af2', '#ff375f', '#5ac8fa', '#ffd60a', '#ff6482'];
-    // Label im Format der 14-Tage-/Monats-Matrix: Farbpunkt + fette Kennung/Name (+ Typ-Zeile)
-    function lab(main, sub, i) { return '<div class="fr-avlab named"><span class="dot" style="background:' + DOTS[i % 8] + '"></span><span class="lbl"><b>' + main + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; }
+    // Label im Format der 14-Tage-/Monats-Matrix: fette Kennung/Name (+ Typ-Zeile)
+    function lab(main, sub) { return '<div class="fr-avlab named"><span class="lbl"><b>' + main + '</b>' + (sub ? '<small>' + sub + '</small>' : '') + '</span></div>'; }
     var pick = document.getElementById('dayPick'), dInp = document.getElementById('dayDate'),
         acBox = document.getElementById('dayAc'), fiBox = document.getElementById('dayFi'),
         fiT = document.getElementById('dayFiToggle'), fiB = document.getElementById('dayFiBody'), fiAr = fiT.querySelector('.ar');
@@ -91,7 +90,7 @@
       acBox.innerHTML = '<div class="fr-avhint">Lädt…</div>';
       Promise.all(AC.map(function (a) { return get('date=' + date + '&aircraft=' + a.id + '&fi=0'); })).then(function (res) {
         var bounds = null, rows = '';
-        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(AC[i].k, AC[i].t, i) + '<div class="fr-avbar" data-tip="' + freeTitle(d.aircraftFree) + '">' + busySegs(busy(d.aircraftFree, bounds[0], bounds[1]), bounds[0], bounds[1]) + '</div></div>'; });
+        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(AC[i].k, AC[i].t) + '<div class="fr-avbar" data-tip="' + freeTitle(d.aircraftFree) + '">' + busySegs(busy(d.aircraftFree, bounds[0], bounds[1]), bounds[0], bounds[1]) + '</div></div>'; });
         acBox.innerHTML = bounds ? rows + axis(bounds[0], bounds[1]) : '<div class="fr-avhint">Keine Daten für diesen Tag.</div>';
       });
     }
@@ -101,7 +100,7 @@
       fiBox.innerHTML = '<div class="fr-avhint">Lädt…</div>';
       Promise.all(FI.map(function (f) { return get('date=' + date + '&aircraft=0&fi=' + f.id); })).then(function (res) {
         var bounds = null, rows = '';
-        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(FI[i].name, '', i) + stateBar(d.instructorSegments, bounds[0], bounds[1]) + '</div>'; });
+        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(FI[i].name, '') + stateBar(d.instructorSegments, bounds[0], bounds[1]) + '</div>'; });
         fiBox.innerHTML = bounds ? rows + axis(bounds[0], bounds[1]) : '<div class="fr-avhint">Keine Daten für diesen Tag.</div>';
       });
     }
@@ -117,7 +116,6 @@
 {% else %}
 
   {# ====== Matrizen (14 Tage / Monat) ====== #}
-  {% set dots = ['#34c759', '#0a84ff', '#ff9f0a', '#bf5af2', '#ff375f', '#5ac8fa', '#ffd60a', '#ff6482'] %}
   <div class="fr-ovscroll">
     <div class="fr-ovcard">
 
@@ -135,7 +133,7 @@
           {% for p in planes %}
             {% set row = cells[p.planeID]|default([]) %}
             <tr>
-              <td class="fr-ac"><span class="dot" style="background:{{ dots[loop.index0 % 8] }}"></span><span class="lbl"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></span></td>
+              <td class="fr-ac"><span class="lbl"><b>{{ p.kennung }}</b><small>{{ p.type }}</small></span></td>
               {% for c in row %}
                 {% set d = days[loop.index0] %}
                 <td class="{{ d.wend }}">
@@ -169,7 +167,7 @@
           <tbody>
             {% for fi in firows %}
               <tr>
-                <td class="fr-ac"><span class="dot" style="background:{{ dots[loop.index0 % 8] }}"></span><span class="lbl"><b>{{ fi.name }}</b></span></td>
+                <td class="fr-ac"><span class="lbl"><b>{{ fi.name }}</b></span></td>
                 {% for i in 0..(days|length - 1) %}
                   {% set d = days[i] %}{% set c = fi.cells[i] %}
                   <td class="{{ d.wend }}">{% if c %}<span class="fr-ficell {{ c.state }} {{ d.today ? 'today' : '' }}" data-tip="{{ c.title }}"></span>{% endif %}</td>

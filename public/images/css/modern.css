@@ -136,7 +136,10 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .occ-ausgebucht{background:#3a3fae;}
 
 /* ---- Tagesansicht (Karten im Mobil-Stil) ---- */
-.fr-btn.ghost{background:#fff;color:var(--fr-blue);border:1px solid var(--fr-line);}
+/* Sekundaer-Buttons appweit auf den soliden blauen Stil vereinheitlicht
+   (wie "Reservierung speichern"); nur danger bleibt rot als Warnung. */
+.fr-btn.ghost{background:var(--fr-blue);color:#fff;border:none;}
+.fr-btn.ghost:hover{background:var(--fr-blue-d);color:#fff;}
 .fr-btn.danger{background:#fff;color:var(--fr-red);border:1px solid #f1c8c8;}
 .fr-dayhdr{display:flex;align-items:center;gap:12px;margin:4px 0 12px;}
 .fr-dayhdr .d{font-weight:700;font-size:14px;}
@@ -224,6 +227,7 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-pp input{display:none;}
 .fr-pp:has(input:checked){background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
 .fr-formfoot{display:flex;align-items:center;gap:12px;margin-top:18px;}
+.fr-formfoot .fr-cancel{margin-left:auto;}
 .fr-btn:disabled{opacity:.5;cursor:not-allowed;}
 .fr-msg{margin-top:16px;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;max-width:680px;}
 .fr-msg.err{background:#fdeaea;color:#c0392b;border:1px solid #f1c8c8;}

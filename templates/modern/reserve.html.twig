@@ -128,9 +128,8 @@
   <div id="r_msg" class="fr-msg" hidden></div>
   <div class="fr-formfoot">
     <button type="submit" class="fr-btn" id="r_save">{{ editId ? 'Änderung speichern' : 'Reservierung speichern' }}</button>
-    <a class="fr-clear" href="javascript:history.back()">Abbrechen</a>
+    <a class="fr-btn fr-cancel" href="javascript:history.back()">Abbrechen</a>
   </div>
-  <div class="fr-detmeta">Speichern läuft über die geprüfte API ({{ editId ? 'PATCH /api/bookings/' ~ editId : 'POST /api/bookings' }}) – inkl. Konflikt-, Verfügbarkeits- und Lizenzprüfung sowie E-Mail-Infos.</div>
 </form>
 
 <script>
