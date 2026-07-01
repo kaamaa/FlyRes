@@ -17,8 +17,6 @@ use App\Repository\ToolsAirportRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
-use App\ViewHelper;
-use App\SessionData;
 use DateTimeZone;
 use DateTime;
 

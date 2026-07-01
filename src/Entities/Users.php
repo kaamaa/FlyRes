@@ -8,7 +8,6 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Security\User\WebserviceUser;
 use App\Entities\Clients;
-use App\ViewHelper;
 use App\Logging;
 
 class Users
