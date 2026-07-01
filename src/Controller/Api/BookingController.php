@@ -8,6 +8,7 @@ use App\Entities\FlightPurposes;
 use App\Entities\Licenses;
 use App\Entities\Planes;
 use App\Entities\Users;
+use App\Controller\MailParamsTrait;
 use App\Entity\FresBooking;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -31,6 +32,8 @@ use Symfony\Component\Mailer\MailerInterface;
  */
 class BookingController extends ApiController
 {
+    use MailParamsTrait;
+
     /** Erlaubte "view"-Werte -> bestehende GeneralView-Kommandos (Whitelist gegen internes die()). */
     private const VIEW_MAP = [
         'mine'         => 'own_fi',          // eigene + als Fluglehrer zugewiesene (kommende)
@@ -146,7 +149,6 @@ class BookingController extends ApiController
         if ($csrf = $this->denyCrossOrigin($request)) {
             return $csrf;
         }
-        $this->setUtf8($em);
 
         $data = json_decode($request->getContent(), true);
         if (!is_array($data)) {
@@ -188,7 +190,6 @@ class BookingController extends ApiController
         if ($csrf = $this->denyCrossOrigin($request)) {
             return $csrf;
         }
-        $this->setUtf8($em);
 
         $booking = Bookings::GetBookingObject($em, $user->getClientid(), $id);
         if (!$booking) {
@@ -236,7 +237,6 @@ class BookingController extends ApiController
         if ($csrf = $this->denyCrossOrigin($request)) {
             return $csrf;
         }
-        $this->setUtf8($em);
 
         $booking = Bookings::GetBookingObject($em, $user->getClientid(), $id);
         if (!$booking) {
@@ -357,11 +357,7 @@ class BookingController extends ApiController
 
     private function sendBookingMail(EntityManagerInterface $em, $user, MailerInterface $mailer, ?FresBooking $new, ?FresBooking $old, string $source = 'web'): void
     {
-        $parameter = [
-            'program_version' => $this->getParameter('program_version'),
-            'mail_from'       => $this->getParameter('mail_from'),
-            'source'          => $source,
-        ];
+        $parameter = $this->mailParams($source);
         $twig = $this->container->get('twig');
         Bookings::SendBookingsInfoMail($em, $user, $twig, $new, $old, $mailer, $parameter);
     }
@@ -388,16 +384,6 @@ class BookingController extends ApiController
         }
 
         return null;
-    }
-
-    /** Setzt die Verbindungs-Zeichenkodierung wie in den Bestands-Controllern (defensiv). */
-    private function setUtf8(EntityManagerInterface $em): void
-    {
-        try {
-            $em->getConnection()->executeStatement('SET NAMES "UTF8"');
-        } catch (\Throwable $e) {
-            // Zeichenkodierung ist nicht kritisch genug, um den Request scheitern zu lassen.
-        }
     }
 
     /** Detail-Array von GetBookingDetails -> sauberes API-JSON. */

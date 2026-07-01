@@ -23,11 +23,10 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * Wiederverwendung statt Duplizierung: Die eigentliche Verfuegbarkeitslogik
  * (Buchungs-Luecken der Flugzeuge bzw. FI-Verfuegbarkeit minus Buchungen)
- * steckt in den bestehenden, oeffentlichen Methoden
- * Bookings::GetAllAvailablePlanesForADate() / GetAllAvailableFIsForADate().
- * Diese liefern einen kompakten HTML-String mit Zeitbereichen ("G:i-G:i"),
- * den wir hier in strukturierte Slots ueberfuehren. So bleibt die komplette
- * Fachlogik an einer Stelle und der Bestandscode unveraendert.
+ * steckt in den bestehenden Methoden Bookings::GetFreeGapsForPlaneInRange()
+ * und Bookings::GetFIFreeWindowsForOneDay(), die strukturierte Daten liefern.
+ * (Frueher wurde stattdessen der HTML-String der Alt-Ansichten geparst –
+ * per Head-to-Head-Test als gleichwertig nachgewiesen und ersetzt.)
  */
 class AvailabilityController extends ApiController
 {
@@ -57,31 +56,31 @@ class AvailabilityController extends ApiController
         $dayStart = $dsH * 60 + $dsM;
         $dayEnd   = $deH * 60 + $deM;
 
-        // --- Verfuegbarkeiten der bestehenden Logik holen und parsen ---
-        $planeBlocks = $this->parseBlocks(Bookings::GetAllAvailablePlanesForADate($em, $clientid, $date));
-        $fiHtml      = Bookings::GetAllAvailableFIsForADate($em, $clientid, $date);
-        $fiBlocks    = $this->parseBlocks($fiHtml);
-        $fiSegBlocks = $this->parseSegments($fiHtml);
+        // --- Verfuegbarkeit direkt als Daten (kein HTML-Parsing mehr) ---
+        $dateStr  = $date->format('Y-m-d');
+        $dayAfter = (clone $date)->modify('+1 day');
 
         // --- Flugzeug: freie Luecken fuer das gewaehlte Flugzeug ---
         $aircraftFree = null;
         if ($aircraftId) {
             $plane = Planes::GetPlaneObject($em, $clientid, $aircraftId);
-            $kennung = $plane ? $plane->getKennung() : null;
-            $aircraftFree = ($kennung !== null) ? ($planeBlocks[$kennung] ?? []) : [];
+            $aircraftFree = ($plane && $plane->getKennung() !== null)
+                ? (Bookings::GetFreeGapsForPlaneInRange($em, $clientid, $aircraftId, $date, $dayAfter)[$dateStr] ?? [])
+                : [];
         }
 
-        // --- Fluglehrer: Verfuegbarkeitsfenster fuer den gewaehlten FI ---
+        // --- Fluglehrer: Verfuegbarkeitsfenster fuer den gewaehlten FI ([s,e] ohne Typ) ---
         $instructorFree = null;
         if ($fiId) {
-            $fi = Users::GetUserObject($em, $clientid, $fiId);
-            $fiName = $fi ? ($fi->getFirstname() . ' ' . $fi->getLastname()) : null;
-            $instructorFree = ($fiName !== null) ? ($fiBlocks[$fiName] ?? []) : [];
+            $instructorFree = array_map(
+                static fn (array $w) => [$w[0], $w[1]],
+                Bookings::GetFIFreeWindowsForOneDay($em, $clientid, $fiId, $date)
+            );
         }
 
         // --- Fluglehrer-ZUSTAENDE (frei / auf Anfrage direkt / nach Absprache / nicht buchbar) ---
         $instructorSegments = $fiId
-            ? $this->buildInstructorSegments($em, $clientid, $fiId, $fiName ?? null, $date, $dayStart, $dayEnd, $fiSegBlocks)
+            ? $this->buildInstructorSegments($em, $clientid, $fiId, $date, $dayStart, $dayEnd)
             : null;
 
         // --- Gemeinsame freie Slots = Tagesfenster geschnitten mit den Auswahlen ---
@@ -110,12 +109,12 @@ class AvailabilityController extends ApiController
      * Baut die Fluglehrer-Zustandssegmente (frei / auf Anfrage direkt / nach
      * Absprache / solo / ausgebucht / nicht verfuegbar) fuer EINEN Tag und FI.
      * Aus availability() ausgelagert, damit comparematrix() es fuer ALLE
-     * Fluglehrer wiederverwenden kann, ohne die Tages-Basis je FI neu zu rechnen.
+     * Fluglehrer wiederverwenden kann. Basis: Bookings::GetFIFreeWindowsForOneDay
+     * (strukturierte Daten – frueher aus geparstem HTML).
      *
-     * @param array<string,array<int,array{0:int,1:int,2:string}>> $fiSegBlocks  geparste Segmente ALLER FIs (einmal berechnet)
      * @return array<int,array{start:string,end:string,state:string,note?:string}>
      */
-    private function buildInstructorSegments(EntityManagerInterface $em, int $clientid, int $fiId, ?string $fiName, \DateTime $date, int $dayStart, int $dayEnd, array $fiSegBlocks): array
+    private function buildInstructorSegments(EntityManagerInterface $em, int $clientid, int $fiId, \DateTime $date, int $dayStart, int $dayEnd): array
     {
         // Nur Flag 1 (= echter Dummy-/immer-fuer-alle-Fluglehrer) gilt fuer die ANZEIGE
         // als ganztaegig frei. 2/3 (fuer sich selbst / Admins) sind reale Lehrer ->
@@ -126,13 +125,13 @@ class AvailabilityController extends ApiController
         }
 
         $onReq = Users::IsFlightinstructorBookableOnRequest($em, $fiId);
-        $raw = ($fiName !== null) ? ($fiSegBlocks[$fiName] ?? []) : [];
-        $instructorSegments = array_map(function (array $s) use ($onReq) {
-            $state = $s[2] === 'anfrage'
+        // Basis-Fenster [startMin, endMin, typ] (1=frei, 2=auf Anfrage) direkt als Daten.
+        $instructorSegments = array_map(function (array $w) use ($onReq) {
+            $state = ((int) $w[2] === 2)
                 ? ($onReq ? 'anfrage_direkt' : 'anfrage_absprache')
                 : 'frei';
-            return ['start' => $this->min2str($s[0]), 'end' => $this->min2str($s[1]), 'state' => $state];
-        }, $raw);
+            return ['start' => $this->min2str($w[0]), 'end' => $this->min2str($w[1]), 'state' => $state];
+        }, Bookings::GetFIFreeWindowsForOneDay($em, $clientid, $fiId, $date));
 
         // Individuelle Buchungslage des Lehrers an diesem Tag beruecksichtigen:
         // Eine Solo-Schulflug-Buchung bleibt bei FiParallelBookings=1 weiterhin
@@ -236,25 +235,25 @@ class AvailabilityController extends ApiController
         $dayStart = $dsH * 60 + $dsM;
         $dayEnd   = $deH * 60 + $deM;
 
+        $dateStr  = $date->format('Y-m-d');
+        $dayAfter = (clone $date)->modify('+1 day');
         $rows = [];
         if ($kind === 'ac') {
-            // Tagesverfuegbarkeit ALLER Flugzeuge EINMAL holen + nach Kennung indizieren
-            $planeBlocks = $this->parseBlocks(Bookings::GetAllAvailablePlanesForADate($em, $clientid, $date));
+            // Freie Luecken je Flugzeug direkt als Daten (kein HTML-Parsing).
             foreach (Planes::GetAllPlanesAsObject($em, $clientid) as $p) {
-                $kennung = $p->getKennung();
-                $free = ($kennung !== null) ? ($planeBlocks[$kennung] ?? []) : [];
+                $free = ($p->getKennung() !== null)
+                    ? (Bookings::GetFreeGapsForPlaneInRange($em, $clientid, (int) $p->getId(), $date, $dayAfter)[$dateStr] ?? [])
+                    : [];
                 $rows[] = ['id' => (int) $p->getId(), 'free' => $this->slotsOut($free)];
             }
         } else {
-            // Basis-Verfuegbarkeit ALLER Fluglehrer EINMAL parsen, dann je FI die
-            // Zustandssegmente bauen (statt die Basis je FI neu zu berechnen).
-            $fiSegBlocks = $this->parseSegments(Bookings::GetAllAvailableFIsForADate($em, $clientid, $date));
+            // Zustandssegmente je Fluglehrer direkt (buildInstructorSegments ist
+            // selbst datenbasiert – keine geparsten HTML-Bloecke mehr noetig).
             foreach (Users::GetAllFlightinstructorsAsObject($em, $clientid) as $fi) {
-                $fiId   = (int) $fi->getId();
-                $fiName = $fi->getFirstname() . ' ' . $fi->getLastname();
+                $fiId = (int) $fi->getId();
                 $rows[] = [
                     'id'       => $fiId,
-                    'segments' => $this->buildInstructorSegments($em, $clientid, $fiId, $fiName, $date, $dayStart, $dayEnd, $fiSegBlocks),
+                    'segments' => $this->buildInstructorSegments($em, $clientid, $fiId, $date, $dayStart, $dayEnd),
                 ];
             }
         }
@@ -424,73 +423,6 @@ class AvailabilityController extends ApiController
         }
 
         return $this->json(['slots' => $out, 'days' => $maxDays]);
-    }
-
-    /**
-     * Zerlegt den HTML-String der Verfuegbarkeitsmethoden in
-     * [ label => [ [startMin,endMin], ... ] ].
-     * Bloecke sind durch <br> getrennt; das Label steht im ersten <b>...</b>,
-     * Zeitbereiche im Format "G:i-G:i".
-     */
-    private function parseBlocks(string $html): array
-    {
-        $out = [];
-        foreach (explode('<br>', $html) as $block) {
-            if (trim($block) === '') {
-                continue;
-            }
-            if (!preg_match('/<b>(.*?)<\/b>/s', $block, $m)) {
-                continue;
-            }
-            $label = trim($m[1]);
-            preg_match_all('/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/', $block, $ranges, PREG_SET_ORDER);
-            $list = [];
-            foreach ($ranges as $r) {
-                $start = (int) $r[1] * 60 + (int) $r[2];
-                $end   = (int) $r[3] * 60 + (int) $r[4];
-                if ($end > $start) {
-                    $list[] = [$start, $end];
-                }
-            }
-            // Mehrere Bloecke mit gleichem Label zusammenfuehren (Sicherheit)
-            $out[$label] = array_merge($out[$label] ?? [], $list);
-        }
-
-        return $out;
-    }
-
-    /**
-     * Wie parseBlocks, aber je Zeitbereich zusaetzlich die Art:
-     * 'anfrage' (oranger <span>) oder 'frei' (normaler <span>).
-     * Rueckgabe: [ label => [ [startMin, endMin, kind], ... ] ]
-     */
-    private function parseSegments(string $html): array
-    {
-        $out = [];
-        foreach (explode('<br>', $html) as $block) {
-            if (trim($block) === '' || !preg_match('/<b>(.*?)<\/b>/s', $block, $m)) {
-                continue;
-            }
-            $label = trim($m[1]);
-            $list = [];
-            if (preg_match_all('/<span([^>]*)>(.*?)<\/span>/s', $block, $spans, PREG_SET_ORDER)) {
-                foreach ($spans as $sp) {
-                    $kind = (stripos($sp[1], 'orange') !== false) ? 'anfrage' : 'frei';
-                    if (preg_match_all('/(\d{1,2}):(\d{2})-(\d{1,2}):(\d{2})/', $sp[2], $ranges, PREG_SET_ORDER)) {
-                        foreach ($ranges as $r) {
-                            $start = (int) $r[1] * 60 + (int) $r[2];
-                            $end   = (int) $r[3] * 60 + (int) $r[4];
-                            if ($end > $start) {
-                                $list[] = [$start, $end, $kind];
-                            }
-                        }
-                    }
-                }
-            }
-            $out[$label] = array_merge($out[$label] ?? [], $list);
-        }
-
-        return $out;
     }
 
     /** Schnittmenge zweier Intervall-Listen (Minuten). */

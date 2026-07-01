@@ -166,7 +166,6 @@ class EditUserController extends AbstractController
 
   public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = true)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $userid = $sd->GetUserID();
@@ -201,7 +200,6 @@ class EditUserController extends AbstractController
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $this->denyAccessUnlessGranted('ROLE_ADMIN');
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -217,7 +215,6 @@ class EditUserController extends AbstractController
   public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, UserPasswordHasherInterface $passwordEncoder)
   {
     // Wird ausgefrufen, wenn der Save-Button gedrückt wurde
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     
     // UserID des bisherigen Datensatzes aus dem Sessionobjekt holen

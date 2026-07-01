@@ -18,7 +18,6 @@ class DayViewController extends AbstractController
     public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
       //Übergabe: FlugzeugID (ohne Stellenanzahl) Underscore und Datum im Format dd-mm-jjjj
-      $em->getConnection()->exec('SET NAMES "UTF8"');
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       
       // Für den Back-Button im View ViewBookingDetails speichern, wohin zurückgekehrt werden soll

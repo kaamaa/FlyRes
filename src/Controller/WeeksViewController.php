@@ -29,7 +29,6 @@ class WeeksViewController extends AbstractController
       return new Response('<pre>' . print_r($cookies, true) . '</pre>');
       */
 
-      $em->getConnection()->exec('SET NAMES "UTF8"');
       //Übergabe: Monat als Zahl (zweistellig) plus Jahr (vierstellig)
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       

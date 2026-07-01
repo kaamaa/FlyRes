@@ -69,7 +69,6 @@ class EditLicenceTypeController extends AbstractController
   public function NewAction(Request $request, EntityManagerInterface $em)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!');
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetLicenceTypeID(0);
@@ -120,7 +119,6 @@ class EditLicenceTypeController extends AbstractController
   public function EditAction(Request $request, EntityManagerInterface $em, $allowDelete = true)
   {
     if (!$this->isGranted('ROLE_GLOBAL_ADMIN')) die('unerlaubter Zugriff!');
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licencetypeid = $sd->GetLicenceTypeID();

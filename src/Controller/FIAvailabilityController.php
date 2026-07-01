@@ -49,7 +49,6 @@ class FIAvailabilityController extends AbstractController
 
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, string $command)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     ViewHelper::SetFIAvailabiltyCommand($request, $command);
     
@@ -82,7 +81,6 @@ class FIAvailabilityController extends AbstractController
 
   public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
 
     $availabilityID = $sd->GetAvailabilityID();
@@ -183,7 +181,6 @@ class FIAvailabilityController extends AbstractController
 
   public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $id)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     

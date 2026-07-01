@@ -14,10 +14,11 @@ use Doctrine\ORM\EntityManagerInterface;
 
 class ViewBookingDetailsController extends AbstractController
 {
+  use MailParamsTrait;
+
     
   public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $bookingID = ViewHelper::GetBookingID($request);
 
@@ -37,7 +38,6 @@ class ViewBookingDetailsController extends AbstractController
 
   public function DeleteAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $bookingID = ViewHelper::GetBookingID($request);
 
     // Die Buchung aus der Datenbank laden und eine Info über die Löschung per Mail verschicken
@@ -47,9 +47,7 @@ class ViewBookingDetailsController extends AbstractController
     
     //Bookings::SendBookingsInfoMail($em, $user, $this->container, NULL, $booking_old);
     
-    $parameter['program_version'] = $this->getParameter('program_version');
-    $parameter['mail_from'] = $this->getParameter('mail_from');
-    $parameter['source'] = 'web';   // klassisches Frontend = Web
+    $parameter = $this->mailParams('web');   // klassisches Frontend = Web
     $twig = $this->container->get('twig');
     Bookings::SendBookingsInfoMail($em, $user, $twig, NULL, $booking_old, $mailer, $parameter);
 

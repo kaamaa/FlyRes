@@ -31,6 +31,8 @@ use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 
 class LicenceController extends AbstractController
 {
+  use MailParamsTrait;
+
   const LicenceDateFormat1 = 'dd.MM.yyyy';  // Darstellung für DateTime->createFromFormat
   const VaildUntil_Null = "01.01.0000";
   const VaildUntil_Null_1 = "00.00.0000";
@@ -85,7 +87,6 @@ class LicenceController extends AbstractController
   public function GlobalWithIDAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Einstiegspunkt für die Lizenzliste, bei der die ID des zu bearbeiteten Lizenz übergeben wird
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     // aktuellen Nutzer ermittelen
     if ($loggedin_user)
     {  
@@ -108,7 +109,6 @@ class LicenceController extends AbstractController
   public function NewLicenceWithIDAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Einstiegspunkt für das Erstellen einer neuen Lizenz, bei der die ID des Nutzers übergeben wird
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     if ($this->isGranted('ROLE_ADMIN'))
     { 
       //$em = $this->getDoctrine()->getManager();
@@ -140,7 +140,6 @@ class LicenceController extends AbstractController
 
   protected function CreateNewLicenceObject(Request $request, $loggedin_user, EntityManagerInterface $em, $accountID = null)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $userLicence = new FresUserlicences();
     $userLicence->setClientid($loggedin_user->getClientid());
@@ -180,7 +179,6 @@ class LicenceController extends AbstractController
 
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetUserLicenceID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -194,7 +192,6 @@ class LicenceController extends AbstractController
 
   public function DeleteAction(MailerInterface $mailer,  Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
     $sd->SetUserLicenceID(0);
@@ -205,8 +202,7 @@ class LicenceController extends AbstractController
     // Die Lizenz aus der Datenbank laden und eine Info über die Löschung per Mail verschicken
     $userLicence_old = Licenses::GetUserLicenceObject($em, $loggedin_user->getClientid(), $licenceID);  
     
-    $parameter['program_version'] = $this->getParameter('program_version');
-    $parameter['mail_from'] = $this->getParameter('mail_from');
+    $parameter = $this->mailParams();
     $twig = $this->container->get('twig');
     
     Licenses::SendLicenceInfoMail($em, $user, $twig, NULL, $userLicence_old, $mailer, $parameter);
@@ -217,7 +213,6 @@ class LicenceController extends AbstractController
 
   public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
     
@@ -273,9 +268,8 @@ class LicenceController extends AbstractController
       
       // Nachricht über die Änderung per Mail versenden
               
-      $parameter['program_version'] = $this->getParameter('program_version');
-      $parameter['mail_from'] = $this->getParameter('mail_from');
-      $twig = $this->container->get('twig'); 
+      $parameter = $this->mailParams();
+      $twig = $this->container->get('twig');
       
       Licenses::SendLicenceInfoMail($em, $user, $twig, $userLicence, $userLicence_old, $mailer, $parameter);
 
@@ -286,7 +280,6 @@ class LicenceController extends AbstractController
 
   public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = TRUE)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
    
@@ -300,7 +293,6 @@ class LicenceController extends AbstractController
   public function LicenceChangedAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Diese Funktion wird aufgerufen, wenn in der Auswahlbox für die Lizenz etwas geändert wird
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $licenceID = $sd->GetUserLicenceID();
    
@@ -324,7 +316,6 @@ class LicenceController extends AbstractController
 
   public function GridWithIDAction(Request $request, EntityManagerInterface $em, $id)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     if ($this->isGranted('ROLE_ADMIN'))
     { 
       // Einstiegspunkt für die Lizenzliste, bei der die ID des zu bearbeiteten Lizenz übergeben wird
@@ -372,7 +363,6 @@ class LicenceController extends AbstractController
   {
     // Standalone = 0 zeigt an, dass die Lizenzen als Ergänzung zur Buchungsliste 
     // ohne Änderungsmöglichkeit angezeigt werden
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     
     // Route explizit setzen, damit das Grid nach einem Forward keine Fehlermeldung produziert (Workaround)
     $request->attributes->set('_route', '_licencetable');

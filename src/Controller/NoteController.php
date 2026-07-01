@@ -37,7 +37,6 @@ class NoteController extends AbstractController
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // new Note
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $note = new \App\Entity\FresNote();
     $note->setClientid($loggedin_user->getClientid());
     
@@ -52,7 +51,6 @@ class NoteController extends AbstractController
 
   public function SaveAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $noteid = $sd->GetNoteID();
 
@@ -118,7 +116,6 @@ class NoteController extends AbstractController
   public function ViewNotesAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     // Zeigt die Pinnwand auf der Startseite an
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $notes = Notes::GetAllActiveNotesAsObject($em);
     foreach ($notes as $note) 
     {
@@ -130,7 +127,6 @@ class NoteController extends AbstractController
 
   public function EditAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $note = Notes::GetNoteObject($em, $loggedin_user->getClientid(), $id);
     
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
@@ -143,7 +139,6 @@ class NoteController extends AbstractController
   
   public function DeleteAction(Request $request, $id, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"'); 
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetNoteID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -164,7 +159,6 @@ class NoteController extends AbstractController
   {
     // Diese Liste zeigt wahlweise alle Notizen oder nur meine Notizen an
 
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     // Creates a simple grid based on your entity (ORM)
     $source = new Entity('App\Entity\FresNote');

@@ -18,6 +18,12 @@ doctrine:
         charset: utf8mb4
         default_table_options:
             collate: utf8mb4_unicode_ci
+        # Verbindung bei JEDEM Connect auf utf8 (3-Byte) setzen – ersetzt die
+        # zuvor ~80 manuellen "SET NAMES UTF8"-Aufrufe in den Controllern und
+        # haelt das bisherige Laufzeit-Verhalten exakt bei.
+        # 1002 = PDO::MYSQL_ATTR_INIT_COMMAND.
+        options:
+            1002: 'SET NAMES utf8'
     orm:
         second_level_cache:
           enabled: true

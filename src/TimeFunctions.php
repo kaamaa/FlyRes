@@ -4,6 +4,12 @@ namespace App;
 
 class TimeFunctions
 {
+  // Zentrale deutsche Datumsnamen (1-indexiert: 1=Montag/Januar, wie ISO 'N'/'n').
+  // Ersetzt die zuvor mehrfach kopierten Arrays in Controllern/Entities.
+  public const WEEKDAYS       = [1 => 'Montag', 2 => 'Dienstag', 3 => 'Mittwoch', 4 => 'Donnerstag', 5 => 'Freitag', 6 => 'Samstag', 7 => 'Sonntag'];
+  public const WEEKDAYS_SHORT = [1 => 'Mo', 2 => 'Di', 3 => 'Mi', 4 => 'Do', 5 => 'Fr', 6 => 'Sa', 7 => 'So'];
+  public const MONTHS         = [1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April', 5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'];
+
   const const_Wo_Lat = 49.6069; // Süd wäre ein negativer Wert
   const const_Wo_Long = 8.3683; // West wäre ein negativer Wert
   const const_Wo_Start_Hour = 9;

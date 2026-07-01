@@ -182,10 +182,9 @@
     combos.push({list:list,build:build});
   }
 
-  function toMin(t){ if(!t) return null; var p=t.split(':'); return (+p[0])*60+(+p[1]); }
+  // toMin() + busy() sind global aus images/js/fravail.js
   function toHHMM(m){ return String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0'); }
   function blk(m){ var h=Math.floor(m/60),mm=m%60; return mm? h+':'+String(mm).padStart(2,'0') : ''+h; }
-  function busy(free,s,e){ var f=(free||[]).map(function(w){return [toMin(w.start),toMin(w.end)];}).sort(function(a,b){return a[0]-b[0];}); var out=[],cur=s; f.forEach(function(x){ if(x[0]>cur)out.push([cur,x[0]]); cur=Math.max(cur,x[1]); }); if(cur<e)out.push([cur,e]); return out; }
   function freeBlocks(slots,dS,dE){ var floor=Math.max(540,toMin(dS)),end=toMin(dE),out=[]; (slots||[]).forEach(function(w){ var s=Math.ceil(Math.max(toMin(w.start),floor)/30)*30, we=Math.min(toMin(w.end),end); while(s+120<=we){ out.push({start:toHHMM(s),end:toHHMM(s+120),label:blk(s)+'–'+blk(s+120)}); s+=120; } }); return out; }
   // Fluglehrer-Zustandsbalken: Hintergrund grau (nicht buchbar), farbige Segmente je Zustand
   var STCLS={frei:'s-frei',anfrage_direkt:'s-anfrageD',anfrage_absprache:'s-anfrageA',solo:'s-solo',ausgebucht:'s-ausgebucht',nichtverfuegbar:'s-nichtverfuegbar'};

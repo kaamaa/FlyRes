@@ -88,7 +88,6 @@ class EditAircraftController extends AbstractController
   public function NewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $this->denyAccessUnlessGranted('ROLE_ADMIN');
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $sd->SetPlaneID(0);
     ViewHelper::StoreSessionDataObject($request->getSession(), $sd);
@@ -104,7 +103,6 @@ class EditAircraftController extends AbstractController
   public function DeleteAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
     $this->denyAccessUnlessGranted('ROLE_ADMIN');
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
     $sd->SetPlaneID(0);
@@ -146,7 +144,6 @@ class EditAircraftController extends AbstractController
 
   public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em, $allowDelete = true)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $sd = ViewHelper::GetSessionDataObject($request->getSession());
     $aircraftid = $sd->GetPlaneID();
     if ($aircraftid != 0) $aircraft = Planes::GetPlaneObject($em, $loggedin_user->getClientid(), $aircraftid, true);

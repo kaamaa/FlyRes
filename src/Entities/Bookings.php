@@ -36,6 +36,13 @@ class BookingGap
 
 class Bookings
 {
+  // Zentrale Filter fuer "aktive" Buchungen (nicht storniert/geloescht).
+  // ACTIVE_STATUS_DQL nutzt den Alias 'b' (Doctrine-DQL), ACTIVE_STATUS_SQL
+  // die Roh-SQL-Variante ohne Alias. Ersetzt zuvor kopierte Literale.
+  public const ACTIVE_STATUS_DQL   = "b.status <> 'storniert' AND b.status <> 'flugzeug_geloescht' AND b.status <> 'user_geloescht'";
+  public const ACTIVE_STATUS_DQL_A = "a.status <> 'storniert' AND a.status <> 'flugzeug_geloescht' AND a.status <> 'user_geloescht'";
+  public const ACTIVE_STATUS_SQL   = "status <> 'storniert' AND status <> 'flugzeug_geloescht' AND status <> 'user_geloescht'";
+
   public static $em;
   private $params;
   
@@ -225,9 +232,23 @@ class Bookings
         // die Buchung liegt am rechten Rand (am Ende), daher die Verfügbarkeit kürzen
         $availabilities[$index]->setItemstop($bstart);  
         return;
-    }   
+    }
   }
- 
+
+  // Reduziert die Verfuegbarkeiten (in-place) um alle Buchungszeiten. Ausgelagert,
+  // da dasselbe doppelte foreach-Muster in mehreren FI-Funktionen genutzt wird.
+  protected static function ReduceAvailabilitiesByBookings(array &$availabilities, $bookings): void
+  {
+    foreach ($bookings as $booking)
+    {
+      $avs = $availabilities;
+      foreach ($avs as $index => $av)
+      {
+        self::AdjustAvailabilitiesAccordingToBooking($availabilities, $booking, $index, $av);
+      }
+    }
+  }
+
   public static function GetAllAvailableFIsForADate ($em, $clientid, $date)
   {
     // Ermittelt für das Reservierungsfenster alle verfügbaren Fluglehrer und ihrer Verfügbarkeit für den Tag
@@ -249,15 +270,8 @@ class Bookings
             $availabilities = FIAvailability::GetAvailabilityForOneDayAndFiAsObjects ($em, $date, $FI->getId(), $clientid);
             $bookings = Bookings::GetBookingsForOneDayAndFIAsObjects ($em, $int_day, $int_month, $int_year, $FI->getId(), $clientid);
            
-            foreach ($bookings as $booking) 
-            {
-                $avs = $availabilities;
-                foreach ($avs as $index=>$av) 
-                {
-                    Bookings::AdjustAvailabilitiesAccordingToBooking($availabilities, $booking, $index, $av);    
-                }
-            }   
-            
+            self::ReduceAvailabilitiesByBookings($availabilities, $bookings);
+
             if (!empty($availabilities))
             {
                 $message = $message . "<b>" .$FI->getfirstname() . ' ' . $FI->getlastname() . '</b> ';
@@ -300,13 +314,8 @@ class Bookings
     $availabilities = FIAvailability::GetAvailabilityForOneDayAndFiAsObjects($em, $date, $fiId, $clientid);
     $bookings       = self::GetBookingsForOneDayAndFIAsObjects($em, $int_day, $int_month, $int_year, $fiId, $clientid);
 
-    // Verfuegbarkeit um die Buchungen reduzieren (identisches Muster wie oben)
-    foreach ($bookings as $booking) {
-      $avs = $availabilities;
-      foreach ($avs as $index => $av) {
-        self::AdjustAvailabilitiesAccordingToBooking($availabilities, $booking, $index, $av);
-      }
-    }
+    // Verfuegbarkeit um die Buchungen reduzieren
+    self::ReduceAvailabilitiesByBookings($availabilities, $bookings);
 
     $out = [];
     foreach ($availabilities as $av) {
@@ -459,7 +468,7 @@ class Bookings
     $querystring .= "(:booking_start > b.itemstart and :booking_start < b.itemstop) or (:booking_end > b.itemstart and :booking_end < b.itemstop)) and"; 
     
     //Sonstige Parameter prüfen
-    $querystring .= " b.aircraftid = :planeID and b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and b.id <> :bookingID";
+    $querystring .= " b.aircraftid = :planeID and b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " and b.id <> :bookingID";
     $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 
                                                                  'booking_end' => $newBooking->getItemstop(),
                                                                  'planeID' => $newBooking->getAircraftid(), 
@@ -495,7 +504,7 @@ class Bookings
       //Buchungen finden: Buchung endet in der Zeit, in der geflogen werden soll 
       $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
       
-      $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
+      $querystring .= "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " and ";
       $querystring .= "b.createdbyuserid = :flightinstructor and b.id <> :bookingID";
       
       $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
@@ -549,7 +558,7 @@ class Bookings
     //Buchungen finden: Buchung endet in der Zeit, in der geflogen werden soll 
     $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
     
-    $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
+    $querystring .= "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " and ";
     $querystring .= "b.flightinstructor = :flightinstructor and b.id <> :bookingID";
     // Solo-Flüge von Flugschülern werden parallel nicht zugelassen, daher die folgende Zeile auskommentieren
 
@@ -745,7 +754,7 @@ class Bookings
     // Buchung beginnt vor Start und Buchung endet nach Ende
     $querystring .= "(b.itemstart < :day_start and b.itemstop > :day_end))"; 
     
-    $querystring .= "and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and b.clientid = :clientID "; 
+    $querystring .= "and " . self::ACTIVE_STATUS_DQL . " and b.clientid = :clientID "; 
     if ($command == 'training' or $command == 'fi') $querystring .= "and (b.flightpurposeid = 2 or b.flightpurposeid = 5 or b.flightinstructor IS NOT NULL) "; 
     if ($command == 'own' or $command == 'own_history')
     {
@@ -883,9 +892,7 @@ class Bookings
     $querystring .= "((b.itemstart <= :day_start and b.itemstop >= :day_end) or "; 
     //Buchungen finden: Buchung startet an oder und endet genau an dem Tag der angezeigt werden soll 
     $querystring .= "(b.itemstart >= :day_start and b.itemstart <= :day_end) or (b.itemstop >= :day_start and b.itemstop <= :day_end)) and "; 
-    $querystring .= "b.clientid = :clientID and (b.flightinstructor = :fiID or b.createdbyuserid = :fiID) and b.status <> 'storniert' and ";
-    $querystring .= "b.status <> 'flugzeug_geloescht' and ";
-    $querystring .= "b.status <> 'user_geloescht' and b.flightpurposeid <> :soloID ORDER BY b.itemstart";
+    $querystring .= "b.clientid = :clientID and (b.flightinstructor = :fiID or b.createdbyuserid = :fiID) and " . self::ACTIVE_STATUS_DQL . " and b.flightpurposeid <> :soloID ORDER BY b.itemstart";
     $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 
                                                                  'day_end' => $day_end, 
                                                                  'fiID' => $fiid, 
@@ -905,7 +912,7 @@ class Bookings
     $querystring .= "((b.itemstart <= :day_start and b.itemstop >= :day_end) or "; 
     //Buchungen finden: Buchung startet an oder und endet genau an dem Tag der angezeigt werden soll 
     $querystring .= "(b.itemstart >= :day_start and b.itemstart <= :day_end) or (b.itemstop >= :day_start and b.itemstop <= :day_end)) and "; 
-    $querystring .= "b.clientid = :clientID and b.aircraftid = :planeID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' ORDER BY b.itemstart";
+    $querystring .= "b.clientid = :clientID and b.aircraftid = :planeID and " . self::ACTIVE_STATUS_DQL . " ORDER BY b.itemstart";
     $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 
                                                                  'day_end' => $day_end, 
                                                                  'planeID' => $planeId, 
@@ -932,7 +939,7 @@ class Bookings
       // Buchung ueberschneidet den Zeitraum [rangeStart, rangeEnd]
       . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
       . "b.clientid = :clientID and b.aircraftid = :planeID and "
-      . "b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' "
+      . "" . self::ACTIVE_STATUS_DQL . " "
       . "ORDER BY b.itemstart";
     $query = $em->createQuery($querystring)->setParameters(array('range_start' => $rangeStartStr,
                                                                  'range_end'   => $rangeEndStr,
@@ -1015,7 +1022,7 @@ class Bookings
       };
 
       // Wochentags-Kurzform fuer die Spanne mehrtaegiger Buchungen (Mo..So)
-      $wdShort = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      $wdShort = TimeFunctions::WEEKDAYS_SHORT;   // 1-indexiert (1=Mo)
 
       foreach ($planes as $plane)
       {
@@ -1130,8 +1137,8 @@ class Bookings
               // die volle Spanne mit Datum zeigen (sonst stuende auf jedem Tag nur die
               // Start-/End-Uhrzeit, was wie eine kurze Tagesbuchung aussaehe).
               if ($start->format('Y-m-d') != $stop->format('Y-m-d')) {
-                $timeInfo = $wdShort[(int) $start->format('N') - 1] . ' ' . date_format($start, 'd.m. H:i')
-                          . ' → ' . $wdShort[(int) $stop->format('N') - 1] . ' ' . date_format($stop, 'd.m. H:i');
+                $timeInfo = $wdShort[(int) $start->format('N')] . ' ' . date_format($start, 'd.m. H:i')
+                          . ' → ' . $wdShort[(int) $stop->format('N')] . ' ' . date_format($stop, 'd.m. H:i');
               } else {
                 $timeInfo = date_format($start, 'H:i') . '-' . date_format($stop, 'H:i');
               }
@@ -1248,11 +1255,11 @@ class Bookings
   public static function CountAllBookingsForAPlane ($em, $clientid, $planeID)
   {
     $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 , date("m"), date("j"), date("Y")));
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart < :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
+    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart < :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
     $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'planeID' => $planeID, 'day_start' => $day_start));
     $past = $query->getSingleScalarResult();
     
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart >= :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
+    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart >= :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
     $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'planeID' => $planeID, 'day_start' => $day_start));
     $future = $query->getSingleScalarResult();
     
@@ -1262,11 +1269,11 @@ class Bookings
   public static function CountAllBookingsForAUser ($em, $clientid, $userID)
   {
     $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 , date("m"), date("j"), date("Y")));
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart < :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
+    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart < :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
     $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'userid' => $userID, 'day_start' => $day_start));
     $past = $query->getSingleScalarResult();
     
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart >= :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
+    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart >= :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
     $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'userid' => $userID, 'day_start' => $day_start));
     $future = $query->getSingleScalarResult();
     

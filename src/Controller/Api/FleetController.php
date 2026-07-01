@@ -56,7 +56,7 @@ class FleetController extends ApiController
         $label = $fmt->format($first);
 
         $todayYmd = (new \DateTime('now', $tzo))->format('Y-m-d');
-        $wd = [1 => 'Mo', 2 => 'Di', 3 => 'Mi', 4 => 'Do', 5 => 'Fr', 6 => 'Sa', 7 => 'So'];
+        $wd = TimeFunctions::WEEKDAYS_SHORT;
 
         // --- Tage des Monats + nutzbares Tagesfenster je Tag (einmal berechnen) ---
         // Fenstergrenzen (sTs/eTs) wie im Web aus GetDayStart/GetDayEnd (halbe Stunden,

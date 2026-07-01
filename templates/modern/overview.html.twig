@@ -71,9 +71,8 @@
         acBox = document.getElementById('dayAc'), fiBox = document.getElementById('dayFi'),
         fiT = document.getElementById('dayFiToggle'), fiB = document.getElementById('dayFiBody'), fiAr = fiT.querySelector('.ar');
 
-    function toMin(t) { if (!t) return null; var p = t.split(':'); return (+p[0]) * 60 + (+p[1]); }
+    // toMin() + busy() sind global aus images/js/fravail.js
     function p2(n) { return ('0' + n).slice(-2); }
-    function busy(free, s, e) { var f = (free || []).map(function (w) { return [toMin(w.start), toMin(w.end)]; }).sort(function (a, b) { return a[0] - b[0]; }); var out = [], cur = s; f.forEach(function (x) { if (x[0] > cur) out.push([cur, x[0]]); cur = Math.max(cur, x[1]); }); if (cur < e) out.push([cur, e]); return out; }
     function pctf(s, e) { var span = e - s || 1; return function (m) { return (m - s) / span * 100; }; }
     function mm(m) { return p2(Math.floor(m / 60)) + ':' + p2(m % 60); }
     function busySegs(arr, s, e) { var pct = pctf(s, e); return arr.map(function (x) { return '<div class="fr-avseg" data-tip="belegt ' + mm(x[0]) + '–' + mm(x[1]) + '" style="left:' + pct(x[0]) + '%;width:' + (pct(x[1]) - pct(x[0])) + '%"></div>'; }).join(''); }

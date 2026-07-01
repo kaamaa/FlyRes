@@ -16,7 +16,6 @@ class GeneralViewController extends AbstractController
     
     public function ViewAction(Request $request, $command, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
-      $em->getConnection()->exec('SET NAMES "UTF8"');
       
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       // Für den Back-Button im View ViewBookingDetails speichern, wohin zurückgekehrt werden soll

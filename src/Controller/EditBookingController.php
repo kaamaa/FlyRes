@@ -28,6 +28,8 @@ use Symfony\Component\Form\FormError;
 
 class EditBookingController extends AbstractController
 {
+  use MailParamsTrait;
+
   const BookingDateFormat1 = 'dd.MM.yyyy HH:mm'; // Darstellung für Formulare
   //const BookingDateFormat2 = 'd.m.Y H:i';  // Darstellung für DateTime->createFromFormat
   
@@ -83,7 +85,6 @@ class EditBookingController extends AbstractController
 
   public function SaveAction(MailerInterface $mailer, Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $bookingID = ViewHelper::GetBookingID($request); 
 
@@ -175,9 +176,7 @@ class EditBookingController extends AbstractController
 
       $user = $loggedin_user;
 
-      $parameter['program_version'] = $this->getParameter('program_version');
-      $parameter['mail_from'] = $this->getParameter('mail_from');
-      $parameter['source'] = 'web';   // klassisches Frontend = Web
+      $parameter = $this->mailParams('web');   // klassisches Frontend = Web
       $twig = $this->container->get('twig');
       Bookings::SendBookingsInfoMail($em, $user, $twig, $booking, $booking_old, $mailer, $parameter);
 
@@ -190,7 +189,6 @@ class EditBookingController extends AbstractController
 
   public function EditAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
   {
-    $em->getConnection()->exec('SET NAMES "UTF8"');
 
     $bookingID = ViewHelper::GetBookingID($request); 
 
@@ -206,7 +204,6 @@ class EditBookingController extends AbstractController
   //Controller wird per ajax aufgerufen, wenn ein Datum zu einer Buchung verändert wird
   {        
     date_default_timezone_set('Europe/Berlin');
-    $em->getConnection()->exec('SET NAMES "UTF8"');
     $startdate = new \DateTime();
     $startdate->setTimestamp(intval($request->request->get('startdate')));
     $enddate = new \DateTime();

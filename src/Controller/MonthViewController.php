@@ -21,7 +21,6 @@ class MonthViewController extends AbstractController
     public function ViewAction(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em)
     {
       //Übergabe: Monat als Zahl (zweistellig) plus Jahr (vierstellig)
-      $em->getConnection()->exec('SET NAMES "UTF8"');
       $sd = ViewHelper::GetSessionDataObject($request->getSession());
       
       if ($request->getMethod() == 'POST') {

@@ -41,13 +41,15 @@ use Twig\Environment;
  */
 class ModernPreviewController extends AbstractController
 {
+    use MailParamsTrait;
+
     /** Zeitfenster (DB-Fetch) – wie generalview-Standardansichten + thismonth. */
     private const TIME_COMMANDS = ['date', 'today', 'tomorrow', 'thisweek', 'weekafter', 'thisweekend', 'nextweekend', 'thismonth'];
     private const GROUPINGS     = ['datum', 'flugzeug', 'fluglehrer', 'nutzer'];
     private const ZWECKE        = ['alle', 'charter', 'schulung', 'wartung'];
     private const UMFAENGE      = ['alle', 'meine', 'historie'];
-    private const MONTHS_DE     = [1 => 'Januar', 2 => 'Februar', 3 => 'März', 4 => 'April', 5 => 'Mai', 6 => 'Juni', 7 => 'Juli', 8 => 'August', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Dezember'];
-    private const WEEKDAYS_DE   = [1 => 'Montag', 2 => 'Dienstag', 3 => 'Mittwoch', 4 => 'Donnerstag', 5 => 'Freitag', 6 => 'Samstag', 7 => 'Sonntag'];
+    private const MONTHS_DE     = TimeFunctions::MONTHS;      // zentral in TimeFunctions
+    private const WEEKDAYS_DE   = TimeFunctions::WEEKDAYS;    // zentral in TimeFunctions
 
     /**
      * Persoenliches Dashboard (Login-Startseite). Bringt eigene Buchungen,
@@ -58,7 +60,6 @@ class ModernPreviewController extends AbstractController
     public function dashboard(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId     = (int) $loggedin_user->getId();
         $isFi     = Users::isFlightinstructor($em, $myId);
@@ -69,8 +70,8 @@ class ModernPreviewController extends AbstractController
         $today = new \DateTime('today', $tz);
         $green = (clone $today)->modify('+12 months');
         $amber = (clone $today)->modify('+3 months');
-        $wd    = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-        $statusOk = "b.status <> 'storniert' AND b.status <> 'flugzeug_geloescht' AND b.status <> 'user_geloescht'";
+        $wd    = TimeFunctions::WEEKDAYS_SHORT;   // 1-indexiert (1=Mo)
+        $statusOk = Bookings::ACTIVE_STATUS_DQL;
 
         $heute = self::WEEKDAYS_DE[(int) $today->format('N')] . ', ' . (int) $today->format('j')
                . '. ' . self::MONTHS_DE[(int) $today->format('n')] . ' ' . $today->format('Y');
@@ -86,7 +87,7 @@ class ModernPreviewController extends AbstractController
             $label = (string) FlightPurposes::GetFlightpurpose($em, $b->getflightpurposeid());
             return [
                 'id'       => $b->getId(),
-                'tag'      => $wd[(int) $start->format('N') - 1] . ' ' . $start->format('d.m.'),
+                'tag'      => $wd[(int) $start->format('N')] . ' ' . $start->format('d.m.'),
                 'zeit'     => $start->format('H:i') . '–' . $stop->format('H:i'),
                 'flugzeug' => Planes::GetPlaneNameAndKennung($em, $clientid, $b->getAircraftid()),
                 'purpose'  => $label,
@@ -222,7 +223,7 @@ class ModernPreviewController extends AbstractController
             // Basis: gebuchte Stunden = Summe (itemstop - itemstart) je Buchung.
             // Stornierte/geloeschte ausgeschlossen.
             $conn      = $em->getConnection();
-            $statusSql = "status <> 'storniert' AND status <> 'flugzeug_geloescht' AND status <> 'user_geloescht'";
+            $statusSql = Bookings::ACTIVE_STATUS_SQL;
 
             $sumMin = function (\DateTimeInterface $from, \DateTimeInterface $to, string $extra = '') use ($conn, $clientid, $statusSql) {
                 return (int) $conn->executeQuery(
@@ -257,6 +258,11 @@ class ModernPreviewController extends AbstractController
             $stats['yearLabel']     = $yearStart->format('Y');
             $stats['yearPrevLabel'] = $lastYearStart->format('Y');
 
+            // Rohzeilen (id + mins) -> [{name, hours}]; Name-Resolver je Liste anders.
+            $topList = function (array $rows, string $idCol, callable $name): array {
+                return array_map(fn ($r) => ['name' => $name((int) $r[$idCol]), 'hours' => (int) round(((int) $r['mins']) / 60)], $rows);
+            };
+
             // Top-10 Flugzeuge nach gebuchten Stunden (YTD)
             $topPlaneRows = $conn->executeQuery(
                 "SELECT aircraftid, SUM(TIMESTAMPDIFF(MINUTE, itemstart, itemstop)) AS mins FROM FRes_booking "
@@ -264,10 +270,7 @@ class ModernPreviewController extends AbstractController
                 . "GROUP BY aircraftid ORDER BY mins DESC LIMIT 10",
                 ['cid' => $clientid, 'from' => $yearStart->format('Y-m-d H:i:s'), 'to' => $now->format('Y-m-d H:i:s')]
             )->fetchAllAssociative();
-            $stats['topPlanes'] = array_map(fn ($r) => [
-                'name'  => Planes::GetPlaneNameAndKennung($em, $clientid, (int) $r['aircraftid']),
-                'hours' => (int) round(((int) $r['mins']) / 60),
-            ], $topPlaneRows);
+            $stats['topPlanes'] = $topList($topPlaneRows, 'aircraftid', fn ($id) => Planes::GetPlaneNameAndKennung($em, $clientid, $id));
 
             // Top-10 Piloten/Flugschueler nach gebuchten Stunden (YTD)
             $topPilotRows = $conn->executeQuery(
@@ -276,10 +279,7 @@ class ModernPreviewController extends AbstractController
                 . "GROUP BY createdbyuserid ORDER BY mins DESC LIMIT 10",
                 ['cid' => $clientid, 'from' => $yearStart->format('Y-m-d H:i:s'), 'to' => $now->format('Y-m-d H:i:s')]
             )->fetchAllAssociative();
-            $stats['topPilots'] = array_map(fn ($r) => [
-                'name'  => Users::GetUserName($em, $clientid, (int) $r['uid']),
-                'hours' => (int) round(((int) $r['mins']) / 60),
-            ], $topPilotRows);
+            $stats['topPilots'] = $topList($topPilotRows, 'uid', fn ($id) => Users::GetUserName($em, $clientid, $id));
 
             // --- Weitere Vereins-Kennzahlen ---
             $fmt     = static fn (\DateTimeInterface $d): string => $d->format('Y-m-d H:i:s');
@@ -363,10 +363,7 @@ class ModernPreviewController extends AbstractController
                 . "AND itemstart >= :from AND itemstart < :to GROUP BY flightinstructor ORDER BY mins DESC LIMIT 10",
                 ['cid' => $clientid, 'from' => $fmt($yearStart), 'to' => $fmt($now)]
             )->fetchAllAssociative();
-            $stats['topFi'] = array_map(fn ($r) => [
-                'name'  => Users::GetUserName($em, $clientid, (int) $r['uid']),
-                'hours' => (int) round(((int) $r['mins']) / 60),
-            ], $topFiRows);
+            $stats['topFi'] = $topList($topFiRows, 'uid', fn ($id) => Users::GetUserName($em, $clientid, $id));
 
             // 12-Monats-Verlauf der Flugstunden (nur abgeschlossene Monate)
             $m12Start = (clone $curMonthStart)->modify('-12 months');
@@ -425,7 +422,6 @@ class ModernPreviewController extends AbstractController
     public function bookings(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $user = $loggedin_user;
 
         // --- Filter aus der URL (mit Whitelist-Absicherung) ---
@@ -502,7 +498,6 @@ class ModernPreviewController extends AbstractController
     public function overview(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $tz = new \DateTimeZone('Europe/Berlin');
 
@@ -572,7 +567,7 @@ class ModernPreviewController extends AbstractController
         }
 
         // Tages-Header
-        $wd = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        $wd = TimeFunctions::WEEKDAYS_SHORT;   // 1-indexiert (1=Mo)
         $todayStr = (new \DateTime('today', $tz))->format('Y-m-d');
         $days = [];
         $cur = clone $start;
@@ -580,7 +575,7 @@ class ModernPreviewController extends AbstractController
             $dow = (int) $cur->format('N');
             $days[] = [
                 'num'     => (int) $cur->format('j'),
-                'wd'      => $wd[$dow - 1],
+                'wd'      => $wd[$dow],
                 'wend'    => $dow === 6 ? 'sat' : ($dow === 7 ? 'sun' : ''),
                 'today'   => $cur->format('Y-m-d') === $todayStr,
                 'iso'     => $cur->format('Y-m-d'),
@@ -681,7 +676,6 @@ class ModernPreviewController extends AbstractController
     public function day(Request $request, UserInterface $loggedin_user, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $tz = new \DateTimeZone('Europe/Berlin');
 
@@ -712,7 +706,6 @@ class ModernPreviewController extends AbstractController
     public function booking(int $id, UserInterface $loggedin_user, EntityManagerInterface $em): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $data = Bookings::GetBookingDetails($em, $loggedin_user->getClientid(), $id, $loggedin_user);
         if ($data === null) {
@@ -736,7 +729,6 @@ class ModernPreviewController extends AbstractController
     public function licences(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId = (int) $loggedin_user->getId();
         $isAdmin = $this->isGranted('ROLE_ADMIN');
@@ -845,7 +837,6 @@ class ModernPreviewController extends AbstractController
     public function reserve(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, int $id = 0): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $tz = new \DateTimeZone('Europe/Berlin');
 
@@ -908,7 +899,6 @@ class ModernPreviewController extends AbstractController
     public function licenceNew(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         // Admins koennen per ?user={id} einen Nutzer vorbelegen (Link aus der Nutzerverwaltung)
         $pre = $this->isGranted('ROLE_ADMIN') ? (int) $request->query->get('user', 0) : 0;
@@ -931,7 +921,6 @@ class ModernPreviewController extends AbstractController
     public function licenceEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $ul = Licenses::GetUserLicenceObject($em, $clientid, $id);
@@ -966,7 +955,6 @@ class ModernPreviewController extends AbstractController
     public function licenceSave(MailerInterface $mailer, Environment $twig, Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId     = (int) $loggedin_user->getId();
         $isAdmin  = $this->isGranted('ROLE_ADMIN');
@@ -1059,10 +1047,7 @@ class ModernPreviewController extends AbstractController
         $em->flush();
 
         // --- Info-Mail (darf den Speichervorgang nicht abbrechen) ---
-        $parameter = [
-            'program_version' => $this->getParameter('program_version'),
-            'mail_from'       => $this->getParameter('mail_from'),
-        ];
+        $parameter = $this->mailParams();
         try {
             Licenses::SendLicenceInfoMail($em, $loggedin_user, $twig, $ul, $ul_old, $mailer, $parameter);
         } catch (\Throwable $e) {
@@ -1116,7 +1101,6 @@ class ModernPreviewController extends AbstractController
     public function notes(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid  = $loggedin_user->getClientid();
         $myId      = (int) $loggedin_user->getId();
         $isSysAdmin = $this->isGranted('ROLE_SYSTEM_ADMIN');
@@ -1163,7 +1147,6 @@ class ModernPreviewController extends AbstractController
     public function noteNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $tz = new \DateTimeZone('Europe/Berlin');
 
         // Standard-Gueltigkeit: einen Monat (Maximum fuer normale Nutzer)
@@ -1177,7 +1160,6 @@ class ModernPreviewController extends AbstractController
     public function noteEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $note = Notes::GetNoteObject($em, $loggedin_user->getClientid(), $id);
         if (!$note || $note->getStatus() === Notes::const_geloescht) {
@@ -1202,7 +1184,6 @@ class ModernPreviewController extends AbstractController
     public function noteSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid   = $loggedin_user->getClientid();
         $myId       = (int) $loggedin_user->getId();
         $isSysAdmin = $this->isGranted('ROLE_SYSTEM_ADMIN');
@@ -1273,7 +1254,6 @@ class ModernPreviewController extends AbstractController
     public function noteDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id   = (int) $request->request->get('id', 0);
@@ -1314,7 +1294,6 @@ class ModernPreviewController extends AbstractController
     public function aircraft(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $tab = (string) $request->query->get('tab', 'flugzeuge');
@@ -1368,7 +1347,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $values = ['id' => 0, 'kennung' => '', 'name' => '', 'aircrafttype' => 0, 'advance' => '', 'active' => true];
 
         return $this->renderAircraftForm($em, $loggedin_user, $values, []);
@@ -1378,7 +1356,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $p = Planes::GetPlaneObject($em, $loggedin_user->getClientid(), $id, true);
         if (!$p) {
@@ -1400,7 +1377,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id         = (int) $request->request->get('id', 0);
@@ -1460,7 +1436,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftTypeNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $values = ['id' => 0, 'short' => '', 'long' => '', 'licences' => []];
 
         return $this->renderTypeForm($em, $loggedin_user, $values, []);
@@ -1470,7 +1445,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftTypeEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $t = $this->findAircraftType($em, $loggedin_user->getClientid(), $id);
         if (!$t) {
@@ -1487,7 +1461,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftTypeSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id    = (int) $request->request->get('id', 0);
@@ -1534,7 +1507,6 @@ class ModernPreviewController extends AbstractController
     public function aircraftTypeDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id = (int) $request->request->get('id', 0);
@@ -1584,7 +1556,6 @@ class ModernPreviewController extends AbstractController
     public function users(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $items = [];
@@ -1617,7 +1588,6 @@ class ModernPreviewController extends AbstractController
     public function userNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $values = [
             'id' => 0, 'firstname' => '', 'lastname' => '', 'username' => '', 'email' => '',
@@ -1634,7 +1604,6 @@ class ModernPreviewController extends AbstractController
     public function userEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $u = Users::GetUserObject($em, $loggedin_user->getClientid(), $id);
         if (!$u || (string) $u->getStatus() === 'geloescht') {
@@ -1650,7 +1619,6 @@ class ModernPreviewController extends AbstractController
     public function userSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, UserPasswordHasherInterface $hasher): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id        = (int) $request->request->get('id', 0);
@@ -1763,7 +1731,6 @@ class ModernPreviewController extends AbstractController
     public function userDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id = (int) $request->request->get('id', 0);
@@ -1836,7 +1803,6 @@ class ModernPreviewController extends AbstractController
     public function mandanten(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $items = [];
         foreach ($em->getRepository(FresClient::class)->findBy([], ['name' => 'ASC']) as $c) {
@@ -1866,7 +1832,6 @@ class ModernPreviewController extends AbstractController
     public function mandantNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         return $this->renderMandantForm(['id' => 0, 'name' => '', 'active' => true, 'nextslots_days' => 14], []);
     }
@@ -1875,7 +1840,6 @@ class ModernPreviewController extends AbstractController
     public function mandantEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $c = $em->getRepository(FresClient::class)->find($id);
         if (!$c) {
@@ -1889,7 +1853,6 @@ class ModernPreviewController extends AbstractController
     public function mandantSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $id     = (int) $request->request->get('id', 0);
         $name   = trim((string) $request->request->get('name', ''));
@@ -1925,7 +1888,6 @@ class ModernPreviewController extends AbstractController
     public function mandantToggle(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $id = (int) $request->request->get('id', 0);
         $c  = $id ? $em->getRepository(FresClient::class)->find($id) : null;
@@ -1960,7 +1922,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvail(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId     = (int) $loggedin_user->getId();
         $isAdmin  = $this->isGranted('ROLE_ADMIN');
@@ -1981,7 +1942,7 @@ class ModernPreviewController extends AbstractController
                 ->setParameter('since', $since);
         if ($scope === 'meine') { $q->setParameter('uid', $myId); }
 
-        $wd = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+        $wd = TimeFunctions::WEEKDAYS_SHORT;   // 1-indexiert (1=Mo)
         $items = [];
         foreach ($q->getResult() as $a) {
             $start = $a->getItemstart();
@@ -1993,8 +1954,8 @@ class ModernPreviewController extends AbstractController
                 'id'      => $a->getId(),
                 'state'   => self::FIAVAIL_STATE[$typ ? (int) $typ->getId() : 0] ?? 'amber',
                 'typname' => $typ ? $typ->getName() : '',
-                'von'     => $wd[(int) $start->format('N') - 1] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
-                'bis'     => $sameDay ? $stop->format('H:i') . ' Uhr' : ($wd[(int) $stop->format('N') - 1] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
+                'von'     => $wd[(int) $start->format('N')] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
+                'bis'     => $sameDay ? $stop->format('H:i') . ' Uhr' : ($wd[(int) $stop->format('N')] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
                 'comment' => trim((string) $a->getComment()),
                 'fi'      => $fi ? trim($fi->getFirstname() . ' ' . $fi->getLastname()) : '',
             ];
@@ -2027,7 +1988,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $isFi  = Users::isFlightinstructor($em, (int) $loggedin_user->getId());
         $today = (new \DateTime('today', new \DateTimeZone('Europe/Berlin')))->format('Y-m-d');
 
@@ -2047,7 +2007,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
 
         $a = FIAvailability::GetAvailabilityObject($em, $loggedin_user->getClientid(), $id);
         if (!$a || (string) $a->getStatus() === FIAvailability::const_geloescht) {
@@ -2075,7 +2034,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId     = (int) $loggedin_user->getId();
         $isAdmin  = $this->isGranted('ROLE_ADMIN');
@@ -2153,7 +2111,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
 
         $id = (int) $request->request->get('id', 0);
@@ -2193,7 +2150,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailSeries(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $tz = new \DateTimeZone('Europe/Berlin');
         $isFi = Users::isFlightinstructor($em, (int) $loggedin_user->getId());
 
@@ -2215,7 +2171,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailSeriesSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId     = (int) $loggedin_user->getId();
         $isAdmin  = $this->isGranted('ROLE_ADMIN');
@@ -2310,7 +2265,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailBulk(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $tz = new \DateTimeZone('Europe/Berlin');
         $isFi = Users::isFlightinstructor($em, (int) $loggedin_user->getId());
 
@@ -2328,7 +2282,6 @@ class ModernPreviewController extends AbstractController
     public function fiAvailBulkDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
         $this->denyAccessUnlessGranted('ROLE_FI');
-        $em->getConnection()->exec('SET NAMES "UTF8"');
         $clientid = $loggedin_user->getClientid();
         $myId     = (int) $loggedin_user->getId();
         $isAdmin  = $this->isGranted('ROLE_ADMIN');
