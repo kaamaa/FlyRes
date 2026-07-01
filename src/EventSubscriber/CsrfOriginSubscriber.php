@@ -22,8 +22,8 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * sowie auf das Login-FORMULAR (Route app_login, /login) – Schutz gegen
  * Login-CSRF, ohne Token in den drei Login-Templates pflegen zu muessen.
  *
- * Bewusst NICHT erfasst: /loginwithcredentials und /api/login – das sind die
- * (absichtlich cross-site) Joomla-SSO-Pfade; sie werden separat behandelt.
+ * Bewusst NICHT erfasst: /api/login (und die uebrige JSON-API) – das sind die
+ * (absichtlich cross-site) Joomla-/Mobile-Login-Pfade; separat behandelt.
  */
 class CsrfOriginSubscriber implements EventSubscriberInterface
 {
@@ -60,7 +60,7 @@ class CsrfOriginSubscriber implements EventSubscriberInterface
             return;
         }
         // /web-Formulare + das Login-Formular (Route app_login). NICHT
-        // /loginwithcredentials oder /api/login (Joomla-SSO, eigene Behandlung).
+        // /api/login (Joomla/Mobile-Login, eigene Behandlung).
         $guarded = str_starts_with($req->getPathInfo(), '/web')
                 || $req->attributes->get('_route') === 'app_login';
         if (!$guarded) {

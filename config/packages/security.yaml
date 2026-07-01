@@ -64,8 +64,6 @@ security:
         - { path: ^/sunrise_sunset, roles: PUBLIC_ACCESS }
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: PUBLIC_ACCESS }
-        # auskommentieren dieser Zeilen führt dazu, dass Login über Joomla funktioniert
-        - { path: ^/loginwithcredentials, roles: PUBLIC_ACCESS }
         - { path: ^/mobile, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout, roles: PUBLIC_ACCESS }

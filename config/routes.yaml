@@ -17,9 +17,6 @@ _Sunrise_Sunset:
 app_login:
     path:   /login
     controller: App\Controller\LoginController::login
-api_login:
-    path:   /loginwithcredentials
-    controller: App\Controller\LoginController::loginwithcredentials
 api_login_v2:
     path:   /api/login
     controller: App\Controller\LoginController::apiLogin

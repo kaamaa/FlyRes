@@ -17,26 +17,23 @@ use App\LogonType;
 
 class FlyResAuthenticator extends AbstractAuthenticator
 {
-    // Dieser Authenticator wird bei Logn von der Webseite der Flugschule genutzt
-    
+    // Wird NICHT von der Firewall verwendet (nicht in security.yaml registriert),
+    // sondern nur programmatisch: LoginController::apiLogin ruft
+    // authenticateUser($user, $this, $request) auf. Daher werden supports() und
+    // authenticate() nie aufgerufen; genutzt werden nur onAuthenticationSuccess()
+    // und die Token-Erzeugung.
+
     private $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->entityManager = $entityManager; 
+        $this->entityManager = $entityManager;
     }
-    
-    /** 
-     * Called on every request to decide if this authenticator should be
-     * used for the request. Returning `false` will cause this authenticator
-     * to be skipped.
-     */
+
+    /** Nie firewall-seitig genutzt (nur programmatischer Login). */
     public function supports(Request $request): ?bool
     {
-      if ($request->getPathInfo() === '/loginwithcredentials')
-      {
-        return true;
-      }
+      return false;
     }
 
     public function authenticate(Request $request): Passport

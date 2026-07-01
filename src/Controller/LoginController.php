@@ -40,54 +40,6 @@ class LoginController extends AbstractController
     return $response;
   }
   
-  public function loginwithcredentials(Request $request,
-                                       UserCheckerInterface $checker, 
-                                       UserAuthenticatorInterface $userAuthenticator, 
-                                       FlyResAuthenticator $LoginAuthenticator, 
-                                       EntityManagerInterface $em) : Response
-  {
-    // Die Funktion wird von Joomla direkt aufgerufen
-    $session = $request->getSession();
-    
-    $str = $_SERVER['QUERY_STRING'];
-    $str1 = str_replace("%22", '"', $str);
-
-    $parameters = json_decode($str1, true, JSON_UNESCAPED_UNICODE);
-    $username = $parameters['username'];
-    $password = $parameters['password'];
- 
-    if ($username && $password)
-    {
-      // Da die Funktion nur der Homepage Flugschule-Worms augferufen wird kann der Mandant auf "1" festgelegt werden
-      $user = Users::GetUserObjectByName($em, $username, 1);
-      if ($user)
-      {
-        // Joomla liefert das Passwort bereits als MD5. verifyMd5() akzeptiert
-        // sowohl das migrierte bcrypt(MD5) als auch rohes Legacy-MD5, sodass
-        // dieser Pfad nach der Hash-Migration weiter funktioniert.
-        if (\App\Security\Hasher\CustomPasswordHasher::verifyMd5((string) $user->getPassword(), (string) $password))
-        {
-          if (!Users::isDeleted($user) && !Users::isLocked($user))
-          {
-            $checker->checkPreAuth($user);
-            // Der folgenden Aufruf bewirkt einen Aufruf von createAuthenticatedToken im FlyResAuthenticator
-            $userAuthenticator->authenticateUser($user, $LoginAuthenticator, $request);
-            
-            LogonType::defineInFrame($session);
-      
-            // Das Ergbnis des Authetifizierungsprozess wird nicht zurückgegeben
-            // Die Flugschule-Worms Homepage erwarte bei erfolgreichem Login den Usernamen im Format md5(Username) 
-            // und die Session ID zurück
-            $items = array("username" => md5($user->getUsername()), "id" => $session->getId());
-            $ret = new JsonResponse($items);
-            return $ret;
-          }
-        }
-      }
-    }
-    return new Response('Login fehlgeschlagen');
-  }
-
   /**
    * Saubere JSON-Login-API fuer das Joomla-Login-Modul.
    *
@@ -207,20 +159,4 @@ class LoginController extends AbstractController
     ]);
   }
 
-  /*
-  public function login_json(Session $session, Request $request) : Response
-  {
-    // Wird nicht verwendet, das beim Json Login keine Session gestartet wird
-    $em = $this->getDoctrine()->getManager();
-    //$username = 'Martin';
-    $parameters = json_decode($request->getContent(), true);
-    $username = $parameters['username'];
-    //$password = $parameters['password'];
-    $user = Users::GetUserObjectByName($em, $username, 1);
-    //$html = file_get_contents('/symfony54/public/weeksview');
-    $items = array("username" => md5($user->getUsername()), "id" => $session->getId());
-        return new JsonResponse($items);
-  }
-   * 
-   */
 }
