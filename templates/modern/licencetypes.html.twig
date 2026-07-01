@@ -1,0 +1,30 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Lizenztypen{% endblock %}
+
+{% block topactions %}
+  <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_licencetype_new') }}">＋ Neuer Lizenztyp</a>
+{% endblock %}
+
+{% block content %}
+  <div class="fr-cards">
+    {% for t in items %}
+      <div class="fr-acard">
+        <a class="fr-acard-main" href="{{ path('modern_licencetype_edit', {id: t.id}) }}">
+          <div class="fr-acard-ico">🎓</div>
+          <div class="fr-acard-info">
+            <div class="fr-acard-t">{{ t.longname }}</div>
+            <div class="fr-acard-meta">{% if t.categoryname %}Kategorie: {{ t.categoryname }}{% if t.categoryid %} (#{{ t.categoryid }}){% endif %}{% else %}ohne Kategorie{% endif %}{% if t.description %} · {{ t.description|slice(0, 80) }}{% if t.description|length > 80 %}…{% endif %}{% endif %}</div>
+          </div>
+          <span class="fr-lchev">›</span>
+        </a>
+        <form class="fr-acard-del" method="post" action="{{ path('modern_licencetype_delete') }}" onsubmit="return confirm('Lizenztyp „{{ t.longname }}“ wirklich löschen?');">
+          <input type="hidden" name="id" value="{{ t.id }}">
+          <button type="submit" class="fr-btn ghost" title="Löschen">Löschen</button>
+        </form>
+      </div>
+    {% else %}
+      <div class="fr-empty">Keine Lizenztypen.</div>
+    {% endfor %}
+  </div>
+{% endblock %}

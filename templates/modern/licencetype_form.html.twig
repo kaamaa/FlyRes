@@ -1,0 +1,58 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}{{ isNew ? 'Neuer Lizenztyp' : 'Lizenztyp bearbeiten' }}{% endblock %}
+
+{% block content %}
+<form class="fr-form" action="{{ path('modern_licencetype_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="fr-formsec">Lizenztyp</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Name (Langname)</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 10L12 4 2 10l10 6 10-6z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></svg></span>
+        <input type="text" name="longname" value="{{ v.longname }}" maxlength="1000" placeholder="z. B. PPL(A)">
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Kategorie-Name</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg></span>
+        <input type="text" name="categoryname" value="{{ v.categoryname }}" maxlength="30" placeholder="z. B. Lizenz, Medical, Class Rating">
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Kategorie-ID</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></span>
+        <input type="number" name="categoryid" value="{{ v.categoryid }}" min="0" placeholder="z. B. 1">
+      </div>
+      <div style="font-size:11.5px;color:var(--fr-mut);">Gruppiert Lizenztypen (gleiche ID = eine Kategorie, davon reicht eine gültige Lizenz).</div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Beschreibung</div>
+  <div class="fr-card">
+    <div class="fr-frow col">
+      <textarea name="description" class="fr-area" rows="4" placeholder="Optionale Beschreibung / Hinweis …">{{ v.description }}</textarea>
+    </div>
+  </div>
+
+  <div class="fr-formfoot">
+    <button type="submit" class="fr-btn">Lizenztyp speichern</button>
+    <a class="fr-btn fr-cancel" href="{{ path('modern_licencetypes') }}">Abbrechen</a>
+  </div>
+</form>
+
+{% if not isNew %}
+<form method="post" action="{{ path('modern_licencetype_delete') }}" onsubmit="return confirm('Diesen Lizenztyp wirklich löschen?');" style="margin:14px 16px 0;">
+  <input type="hidden" name="id" value="{{ v.id }}">
+  <button type="submit" class="fr-btn" style="width:100%;background:#fff;color:var(--fr-red,#c9453b);border:1px solid var(--fr-red,#c9453b);">Lizenztyp löschen</button>
+</form>
+{% endif %}
+{% endblock %}

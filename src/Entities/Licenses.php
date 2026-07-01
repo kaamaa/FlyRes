@@ -4,10 +4,28 @@ namespace App\Entities;
 
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
-use App\Controller\LicenceController;
 
 class Licenses
 {
+  // Sentinel fuer "unbegrenzt gueltig": in der DB steht statt NULL das Datum
+  // 01.01.0000 (damit gefiltert werden kann). Verlagert aus LicenceController,
+  // da von Web-Frontend + Mailversand geteilt genutzt.
+  const VAILD_UNTIL_NULL   = '01.01.0000';
+  const VAILD_UNTIL_NULL_1 = '00.00.0000';
+
+  public static function ChangeValidUntil_NotNull()
+  {
+    return \DateTime::createFromFormat('d.m.Y', self::VAILD_UNTIL_NULL);
+  }
+
+  public static function ChangeValidUntil_Null($validuntil)
+  {
+    if ($validuntil == null) return null;
+    $string = date_format($validuntil, 'd.m.Y');
+    if ($string == self::VAILD_UNTIL_NULL || $string == self::VAILD_UNTIL_NULL_1) return null;
+    return $validuntil;
+  }
+
   public static function GetUserLicenceObject ($em, $clientid, $id)
   {
     $querystring = "SELECT b FROM App\Entity\FresUserlicences b WHERE b.clientid = :clientID and b.id = :Id and b.status <> 'geloescht'";
@@ -33,7 +51,7 @@ class Licenses
     {
       $licence->setStatus('geloescht');
       if ($licence->getValidunlimited() == true)
-        $licence->setValiduntil (LicenceController::ChangeValidUntil_NotNull());
+        $licence->setValiduntil (self::ChangeValidUntil_NotNull());
       $em->persist($licence);
       $em->flush();
     }
@@ -279,9 +297,9 @@ class Licenses
   public static function SendLicenceInfoMail($em, $user, $twig, $newlicence, $oldlicence, $mailer, $parameter)
   {
     if ($newlicence != null)
-      $newlicence->setValiduntil(LicenceController::ChangeValidUntil_Null($newlicence->getValiduntil()));
+      $newlicence->setValiduntil(self::ChangeValidUntil_Null($newlicence->getValiduntil()));
     if ($oldlicence != null)
-      $oldlicence->setValiduntil(LicenceController::ChangeValidUntil_Null($oldlicence->getValiduntil()));
+      $oldlicence->setValiduntil(self::ChangeValidUntil_Null($oldlicence->getValiduntil()));
     
     $clientId = '';
     

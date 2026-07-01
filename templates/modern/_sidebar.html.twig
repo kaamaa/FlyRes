@@ -50,11 +50,13 @@
     <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
       <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
+      <a class="fr-nav {{ route starts with 'modern_licencetype' ? 'on' : '' }}" href="{{ path('modern_licencetypes') }}">{{ ui.ic('award') }} Lizenztypen</a>
     {% endif %}
     <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
   {% endif %}
 
   <div class="fr-navsep"></div>
+  <a class="fr-nav {{ route starts with 'modern_mydata' ? 'on' : '' }}" href="{{ path('modern_mydata') }}">{{ ui.ic('user') }} Meine Daten</a>
   <a class="fr-nav {{ route == 'modern_help' ? 'on' : '' }}" href="{{ path('modern_help') }}">{{ ui.ic('help') }} Anleitung</a>
 
   {% set rolle = 'Pilot' %}

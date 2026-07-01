@@ -62,7 +62,41 @@ modern_licence_new:
 modern_licence_save:
     path: /web/lizenz/speichern
     controller: App\Controller\ModernPreviewController::licenceSave
+
+modern_licence_delete:
+    path: /web/lizenz/loeschen
+    controller: App\Controller\ModernPreviewController::licenceDelete
     methods: POST
+
+modern_mydata:
+    path: /web/meine-daten
+    controller: App\Controller\ModernPreviewController::mydata
+    methods: GET
+modern_mydata_save:
+    path: /web/meine-daten/speichern
+    controller: App\Controller\ModernPreviewController::mydataSave
+    methods: POST
+
+modern_licencetypes:
+    path: /web/lizenztypen
+    controller: App\Controller\ModernPreviewController::licenceTypes
+modern_licencetype_new:
+    path: /web/lizenztyp/neu
+    controller: App\Controller\ModernPreviewController::licenceTypeNew
+modern_licencetype_save:
+    path: /web/lizenztyp/speichern
+    controller: App\Controller\ModernPreviewController::licenceTypeSave
+    methods: POST
+modern_licencetype_delete:
+    path: /web/lizenztyp/loeschen
+    controller: App\Controller\ModernPreviewController::licenceTypeDelete
+    methods: POST
+modern_licencetype_edit:
+    path: /web/lizenztyp/{id}
+    controller: App\Controller\ModernPreviewController::licenceTypeEdit
+    methods: GET
+    requirements:
+        id: '\d+'
 
 modern_licence_edit:
     path: /web/lizenz/{id}

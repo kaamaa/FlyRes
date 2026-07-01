@@ -8,6 +8,8 @@ use App\Entities\FIAvailability;
 use App\Entities\FlightPurposes;
 use App\Entities\Functions;
 use App\Entities\Licenses;
+use App\Entities\Licensetype;
+use App\Entity\FresLicencetype;
 use App\Entities\Notes;
 use App\Entities\Clients;
 use App\Entities\Planes;
@@ -933,7 +935,7 @@ class ModernPreviewController extends AbstractController
 
         $unlimited = (bool) $ul->getValidunlimited();
         // Sentinel-Datum (01.01.0000) wieder als "leer" behandeln
-        $vu = LicenceController::ChangeValidUntil_Null($ul->getValiduntil());
+        $vu = Licenses::ChangeValidUntil_Null($ul->getValiduntil());
 
         $values = [
             'id'             => $ul->getId(),
@@ -1037,7 +1039,7 @@ class ModernPreviewController extends AbstractController
 
         // --- Speichern ---
         if ($validunlimited) {
-            $ul->setValiduntil(LicenceController::ChangeValidUntil_NotNull());
+            $ul->setValiduntil(Licenses::ChangeValidUntil_NotNull());
         }
         // One-to-One-Beziehungen muessen gesetzt sein (sonst kein Persist)
         $ul->setUser(Users::GetUserObject($em, $clientid, $accountid));
@@ -1053,6 +1055,36 @@ class ModernPreviewController extends AbstractController
         } catch (\Throwable $e) {
             // Mailversand fehlgeschlagen – Lizenz ist trotzdem gespeichert.
         }
+
+        return $this->redirectToRoute('modern_licences', $accountid !== $myId ? ['scope' => 'alle'] : []);
+    }
+
+    /** Lizenz loeschen (Soft-Delete) – bildet LicenceController::DeleteAction nach. */
+    public function licenceDelete(MailerInterface $mailer, Environment $twig, Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        $clientid = $loggedin_user->getClientid();
+        $myId     = (int) $loggedin_user->getId();
+        $id       = (int) $request->request->get('id', 0);
+
+        $ul = Licenses::GetUserLicenceObject($em, $clientid, $id);
+        if (!$ul) {
+            throw $this->createNotFoundException('Lizenz nicht gefunden.');
+        }
+        // Nur eigene Lizenz oder Admin
+        if (!$this->isGranted('ROLE_ADMIN') && (int) $ul->getAccountid() !== $myId) {
+            throw $this->createAccessDeniedException();
+        }
+        $accountid = (int) $ul->getAccountid();
+
+        // Info-Mail ueber die Loeschung (darf den Vorgang nicht abbrechen)
+        try {
+            Licenses::SendLicenceInfoMail($em, $loggedin_user, $twig, null, $ul, $mailer, $this->mailParams());
+        } catch (\Throwable $e) {
+            // Mailversand fehlgeschlagen – Lizenz wird trotzdem geloescht.
+        }
+
+        Licenses::DeleteLicence($em, $clientid, $id);
 
         return $this->redirectToRoute('modern_licences', $accountid !== $myId ? ['scope' => 'alle'] : []);
     }
@@ -1088,6 +1120,202 @@ class ModernPreviewController extends AbstractController
             'v'        => $values,
             'errors'   => $errors,
         ]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    // ==================================================================
+    //  Lizenztypen (global, nur ROLE_GLOBAL_ADMIN) – aus dem klassischen
+    //  EditLicenceTypeController ins moderne Frontend uebernommen.
+    // ==================================================================
+
+    /** Liste der Lizenztypen. */
+    public function licenceTypes(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $rows = $em->createQuery(
+            "SELECT b FROM App\Entity\FresLicencetype b WHERE (b.status <> 'geloescht' OR b.status IS NULL) "
+            . "ORDER BY b.categoryid ASC, b.longname ASC"
+        )->getResult();
+        $items = array_map(fn ($t) => [
+            'id'           => (int) $t->getId(),
+            'categoryid'   => $t->getCategoryid(),
+            'categoryname' => (string) $t->getCategoryname(),
+            'longname'     => (string) $t->getLongname(),
+            'description'  => (string) $t->getDescription(),
+        ], $rows);
+
+        $response = $this->render('modern/licencetypes.html.twig', ['items' => $items]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    /** Lizenztyp-Formular (Neu). */
+    public function licenceTypeNew(UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        return $this->renderLicenceTypeForm(['id' => 0, 'categoryid' => '', 'categoryname' => '', 'longname' => '', 'description' => ''], []);
+    }
+
+    /** Lizenztyp-Formular (Bearbeiten). */
+    public function licenceTypeEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $t = $em->getRepository(FresLicencetype::class)->find($id);
+        if (!$t) {
+            throw $this->createNotFoundException('Lizenztyp nicht gefunden.');
+        }
+
+        return $this->renderLicenceTypeForm([
+            'id'           => (int) $t->getId(),
+            'categoryid'   => $t->getCategoryid(),
+            'categoryname' => (string) $t->getCategoryname(),
+            'longname'     => (string) $t->getLongname(),
+            'description'  => (string) $t->getDescription(),
+        ], []);
+    }
+
+    /** Lizenztyp speichern (Neu/Bearbeiten). */
+    public function licenceTypeSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        $id          = (int) $request->request->get('id', 0);
+        $categoryid  = trim((string) $request->request->get('categoryid', ''));
+        $categoryname = trim((string) $request->request->get('categoryname', ''));
+        $longname    = trim((string) $request->request->get('longname', ''));
+        $description = trim((string) $request->request->get('description', ''));
+
+        $t = $id ? $em->getRepository(FresLicencetype::class)->find($id) : new FresLicencetype();
+        if ($id && !$t) {
+            throw $this->createNotFoundException('Lizenztyp nicht gefunden.');
+        }
+
+        if ($longname === '') {
+            return $this->renderLicenceTypeForm(compact('id', 'categoryid', 'categoryname', 'longname', 'description'), ['Bitte einen Namen (Langname) eingeben.']);
+        }
+
+        $t->setCategoryid($categoryid === '' ? null : (int) $categoryid);
+        $t->setCategoryname($categoryname);
+        $t->setLongname($longname);
+        $t->setDescription($description);
+        if ($id === 0) {
+            $t->setStatus('0');
+        }
+
+        $em->persist($t);
+        $em->flush();
+
+        return $this->redirectToRoute('modern_licencetypes');
+    }
+
+    /** Lizenztyp loeschen (Soft-Delete: Status 'geloescht'). */
+    public function licenceTypeDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $id = (int) $request->request->get('id', 0);
+        if ($id) {
+            Licensetype::SetLicensetypeToInactive($em, $id);
+        }
+
+        return $this->redirectToRoute('modern_licencetypes');
+    }
+
+    private function renderLicenceTypeForm(array $values, array $errors): Response
+    {
+        $response = $this->render('modern/licencetype_form.html.twig', [
+            'isNew'  => ((int) ($values['id'] ?? 0)) === 0,
+            'v'      => $values,
+            'errors' => $errors,
+        ]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
+    // ==================================================================
+    //  "Meine Daten" – Selbstbearbeitung des eigenen Profils (ROLE_PILOT),
+    //  aus dem klassischen EditUserController::MyDataAction uebernommen.
+    //  Bewusst OHNE Rollen/Sperre/Nutzername – nur persoenliche Angaben.
+    // ==================================================================
+
+    /** Eigenes Profil anzeigen. */
+    public function mydata(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        $u = Users::GetUserObject($em, $loggedin_user->getClientid(), (int) $loggedin_user->getId());
+
+        return $this->renderMyData([
+            'firstname'       => (string) $u->getFirstname(),
+            'lastname'        => (string) $u->getLastname(),
+            'username'        => (string) $u->getUsername(),
+            'email'           => (string) $u->getEmail(),
+            'phone_home'      => (string) $u->getPhoneNumberHome(),
+            'phone_office'    => (string) $u->getPhoneNumberOffice(),
+            'phone_mobile'    => (string) $u->getPhoneNumberMobile(),
+            'getbookingmails' => (int) $u->getGetbookingmails(),
+            'getlicencemails' => (int) $u->getGetlicencemails(),
+        ], [], null);
+    }
+
+    /** Eigenes Profil speichern. */
+    public function mydataSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, UserPasswordHasherInterface $hasher): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        $u = Users::GetUserObject($em, $loggedin_user->getClientid(), (int) $loggedin_user->getId());
+
+        $firstname = trim((string) $request->request->get('firstname', ''));
+        $lastname  = trim((string) $request->request->get('lastname', ''));
+        $email     = trim((string) $request->request->get('email', ''));
+        $phoneH    = trim((string) $request->request->get('phone_home', ''));
+        $phoneO    = trim((string) $request->request->get('phone_office', ''));
+        $phoneM    = trim((string) $request->request->get('phone_mobile', ''));
+        $bookmail  = (int) $request->request->get('getbookingmails', 0);
+        $licmail   = (int) $request->request->get('getlicencemails', 0);
+        $pass      = trim((string) $request->request->get('password', ''));
+        $pass2     = trim((string) $request->request->get('password_check', ''));
+
+        $errors = [];
+        if ($firstname === '') { $errors[] = 'Bitte einen Vornamen eingeben.'; }
+        if ($lastname === '')  { $errors[] = 'Bitte einen Nachnamen eingeben.'; }
+        if ($email === '' || !Users::IsMailListValid($email)) { $errors[] = 'Die Mailadresse ist nicht gültig.'; }
+        if ($pass !== '') {
+            if ($pass !== $pass2) { $errors[] = 'Die Passwörter sind nicht identisch.'; }
+            elseif (strlen($pass) < 5) { $errors[] = 'Das Passwort muss mindestens 5 Zeichen lang sein.'; }
+        }
+
+        $values = [
+            'firstname' => $firstname, 'lastname' => $lastname, 'username' => (string) $u->getUsername(), 'email' => $email,
+            'phone_home' => $phoneH, 'phone_office' => $phoneO, 'phone_mobile' => $phoneM,
+            'getbookingmails' => $bookmail, 'getlicencemails' => $licmail,
+        ];
+        if ($errors) {
+            return $this->renderMyData($values, $errors, null);
+        }
+
+        $u->setFirstname($firstname);
+        $u->setLastname($lastname);
+        $u->setEmail($email);
+        $u->setPhoneNumberHome($phoneH);
+        $u->setPhoneNumberOffice($phoneO);
+        $u->setPhoneNumberMobile($phoneM);
+        $u->setGetbookingmails($bookmail);
+        $u->setGetlicencemails($licmail);
+        if ($pass !== '') {
+            $u->setPassword(Users::CreateNewPassword($loggedin_user, $hasher, $pass));
+        }
+        $em->persist($u);
+        $em->flush();
+
+        return $this->renderMyData($values, [], 'Deine Daten wurden gespeichert.');
+    }
+
+    private function renderMyData(array $values, array $errors, ?string $ok): Response
+    {
+        $response = $this->render('modern/mydata.html.twig', ['v' => $values, 'errors' => $errors, 'ok' => $ok]);
         $response->setExpires(new \DateTime());
 
         return $response;

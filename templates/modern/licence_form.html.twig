@@ -77,6 +77,13 @@
   </div>
 </form>
 
+{% if not isNew %}
+<form method="post" action="{{ path('modern_licence_delete') }}" onsubmit="return confirm('Diese Lizenz wirklich löschen?');" style="margin:14px 16px 0;">
+  <input type="hidden" name="id" value="{{ v.id }}">
+  <button type="submit" class="fr-btn" style="width:100%;background:#fff;color:var(--fr-red,#c9453b);border:1px solid var(--fr-red,#c9453b);">Lizenz löschen</button>
+</form>
+{% endif %}
+
 <script>
 (function () {
   var type = document.getElementById('l_type');
