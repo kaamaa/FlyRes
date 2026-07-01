@@ -113,13 +113,101 @@
 
     <section class="fr-dash-card">
       <div class="fr-dash-ch"><h3>Club-Kennzahlen</h3></div>
-      <div class="fr-stat-tiles">
-        <div class="fr-stat"><div class="v">{{ stats.bookToday }}</div><div class="k">Buchungen heute</div></div>
-        <div class="fr-stat"><div class="v">{{ stats.bookWeek }}</div><div class="k">Buchungen diese Woche</div></div>
-        <div class="fr-stat"><div class="v">{{ stats.users }}</div><div class="k">aktive Nutzer</div></div>
-        <div class="fr-stat"><div class="v">{{ stats.aircraft }}</div><div class="k">Flugzeuge</div></div>
-        <div class="fr-stat {{ stats.expiredLic > 0 ? 'warn' : '' }}"><div class="v">{{ stats.expiredLic }}</div><div class="k">abgelaufene Lizenzen</div></div>
-        <div class="fr-stat {{ stats.locked > 0 ? 'warn' : '' }}"><div class="v">{{ stats.locked }}</div><div class="k">gesperrte Konten</div></div>
+      {% set grph = 'font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid var(--fr-line);' %}
+      {% set kv = 'display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--fr-line);' %}
+      {% set lab = 'color:var(--fr-mut);' %}
+
+      <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:22px;align-items:start;">
+        {# --- linke Spalte: Hero-Kennzahlen + 12-Monats-Verlauf --- #}
+        <div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:linear-gradient(135deg,var(--fr-blue) 0%,var(--fr-blue-d) 100%);color:#fff;border-radius:13px;padding:15px 16px;">
+              <div style="font-size:28px;font-weight:800;line-height:1;">{{ stats.hoursYear }} h{% if stats.yearTrendPct is not null %}
+                <span style="font-size:14px;font-weight:700;color:{{ stats.yearTrendPct >= 0 ? '#a9edc4' : '#ffd39c' }};">{{ stats.yearTrendPct >= 0 ? '▲' : '▼' }} {{ stats.yearTrendPct|abs }}%</span>{% endif %}</div>
+              <div style="font-size:12px;opacity:.85;margin-top:6px;">Flugstunden {{ stats.yearLabel }} (bis heute){% if stats.yearTrendPct is not null %} · ggü. {{ stats.yearPrevLabel }}{% endif %}</div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--fr-line);border-radius:13px;padding:15px 16px;">
+              <div style="font-size:28px;font-weight:800;line-height:1;color:var(--fr-blue-d);">{{ stats.hoursMonth }} h{% if stats.trendPct is not null %}
+                <span style="font-size:14px;font-weight:700;color:{{ stats.trendPct >= 0 ? 'var(--fr-green)' : 'var(--fr-amber)' }};">{{ stats.trendPct >= 0 ? '▲' : '▼' }} {{ stats.trendPct|abs }}%</span>{% endif %}</div>
+              <div style="font-size:12px;color:var(--fr-mut);margin-top:6px;">Flugstunden {{ stats.monthLabel }}{% if stats.trendPct is not null %} · ggü. {{ stats.monthPrevLabel }}{% endif %}</div>
+            </div>
+          </div>
+
+          {% if stats.monthly is defined and stats.monthly is not empty %}
+          <div style="margin-top:16px;">
+            <div style="{{ grph }}">Flugstunden – letzte 12 Monate</div>
+            <div style="display:flex;align-items:flex-end;gap:6px;height:104px;">
+              {% for m in stats.monthly %}
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;" title="{{ m.label }}: {{ m.h }} h">
+                  <div style="font-size:9.5px;color:var(--fr-mut);">{{ m.h }}</div>
+                  <div style="width:100%;background:var(--fr-blue);border-radius:3px 3px 0 0;height:{{ (m.h / stats.monthlyMax * 80)|round }}px;min-height:2px;"></div>
+                  <div style="font-size:10px;color:var(--fr-mut);">{{ m.label }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        {# --- rechte Spalte: kompakte Werteliste (Datenblatt) --- #}
+        <div>
+          <div style="{{ grph }}">Betrieb</div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Buchungen heute</span><span style="font-weight:800;">{{ stats.bookToday }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Buchungen diese Woche</span><span style="font-weight:800;">{{ stats.bookWeek }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Buchungsdauer</span><span style="font-weight:800;">{{ stats.avgDuration|number_format(1, ',', '.') }} h</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Vorlaufzeit</span><span style="font-weight:800;">{{ stats.leadDays }} Tage</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Wochenend-Anteil</span><span style="font-weight:800;">{{ stats.weekendPct }} %</span></div>
+          <div style="{{ kv }}border-bottom:none;"><span style="{{ lab }}">Stornoquote</span><span style="font-weight:800;">{{ stats.stornoPct }} %</span></div>
+
+          <div style="{{ grph }}margin-top:14px;">Mitglieder &amp; Schulung</div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Mitglieder gesamt</span><span style="font-weight:800;">{{ stats.users }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">aktiv (12 Mon.)</span><span style="font-weight:800;">{{ stats.activeMembers }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">inaktiv</span><span style="font-weight:800;{{ stats.inactiveMembers > 0 ? 'color:var(--fr-amber);' : '' }}">{{ stats.inactiveMembers }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Stunden/Mitglied</span><span style="font-weight:800;">{{ stats.hoursPerMember|number_format(1, ',', '.') }} h</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">aktive Flugschüler</span><span style="font-weight:800;">{{ stats.activeStudents }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Schulungsanteil</span><span style="font-weight:800;">{{ stats.schulPct }} %</span></div>
+          <div style="{{ kv }}border-bottom:none;"><span style="{{ lab }}">Solo-Anteil (Schulung)</span><span style="font-weight:800;">{{ stats.soloPct }} %</span></div>
+
+          <div style="{{ grph }}margin-top:14px;">Flotte &amp; Sicherheit</div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Flugzeuge</span><span style="font-weight:800;">{{ stats.aircraft }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Auslastung Flotte</span><span style="font-weight:800;">{{ stats.fleetUtil }} %</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">abgelaufene Lizenzen</span><span style="font-weight:800;{{ stats.expiredLic > 0 ? 'color:var(--fr-amber);' : '' }}">{{ stats.expiredLic }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Lizenzen gültig</span><span style="font-weight:800;{{ stats.licValidPct < 90 ? 'color:var(--fr-amber);' : '' }}">{{ stats.licValidPct }} %</span></div>
+          <div style="{{ kv }}border-bottom:none;"><span style="{{ lab }}">gesperrte Konten</span><span style="font-weight:800;{{ stats.locked > 0 ? 'color:var(--fr-amber);' : '' }}">{{ stats.locked }}</span></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:20px;">
+        {% if stats.topPlanes is not empty %}
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">Top-Flugzeuge {{ stats.yearLabel }} (Stunden · Auslastung)</div>
+          {% for p in stats.topPlanes %}
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;{{ not loop.last ? 'border-bottom:1px solid var(--fr-line);' : '' }}">
+              <span>{{ loop.index }}. {{ p.name }}</span><span style="font-weight:700;white-space:nowrap;">{{ p.hours }} h · {{ p.util }} %</span>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if stats.topPilots is not empty %}
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">Top-Piloten / Flugschüler {{ stats.yearLabel }} (nach Stunden)</div>
+          {% for p in stats.topPilots %}
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;{{ not loop.last ? 'border-bottom:1px solid var(--fr-line);' : '' }}">
+              <span>{{ loop.index }}. {{ p.name }}</span><span style="font-weight:700;white-space:nowrap;">{{ p.hours }} h</span>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if stats.topFi is not empty %}
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">Top-Fluglehrer {{ stats.yearLabel }} (Schulungsstunden)</div>
+          {% for p in stats.topFi %}
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;{{ not loop.last ? 'border-bottom:1px solid var(--fr-line);' : '' }}">
+              <span>{{ loop.index }}. {{ p.name }}</span><span style="font-weight:700;white-space:nowrap;">{{ p.hours }} h</span>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
       </div>
     </section>
 

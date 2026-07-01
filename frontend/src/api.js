@@ -62,6 +62,8 @@ export const api = {
   bookings:    (params = {}) => GET(API_BASE + 'bookings' + qs(params)),
   booking:     (id) => GET(API_BASE + 'bookings/' + id),
   availability:(params) => GET(API_BASE + 'availability' + qs(params)),
+  nextslots:   (aircraft, fi, after) => GET(API_BASE + 'nextslots' + qs({ aircraft, fi, after })),
+  comparematrix:(kind, date) => GET(API_BASE + 'comparematrix' + qs({ kind, date })),
 
   create:      (body) => SEND('POST', API_BASE + 'bookings', body),
   update:      (id, body) => SEND('PATCH', API_BASE + 'bookings/' + id, body),

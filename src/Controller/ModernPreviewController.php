@@ -12,6 +12,7 @@ use App\Entities\Notes;
 use App\Entities\Clients;
 use App\Entities\Planes;
 use App\Entities\Users;
+use App\TimeFunctions;
 use App\Entity\FresAccounts;
 use App\Entity\FresAircraft;
 use App\Entity\FresAircrafttype;
@@ -216,6 +217,174 @@ class ModernPreviewController extends AbstractController
                 'expiredLic'  => $scalar("SELECT COUNT(b.id) FROM App\Entity\FresUserlicences b WHERE b.clientid = :cid AND (b.status <> 'geloescht' OR b.status IS NULL) AND (b.validunlimited = 0 OR b.validunlimited IS NULL) AND b.validuntil < :today", ['cid' => $clientid, 'today' => $today]),
                 'locked'      => $scalar("SELECT COUNT(b.id) FROM App\Entity\FresAccounts b WHERE b.clientid = :cid AND b.islocked = 1 AND (b.status <> 'geloescht' OR b.status IS NULL)", ['cid' => $clientid]),
             ];
+
+            // --- Flugstunden / Schulungsanteil / Trends / Top-Listen ---
+            // Basis: gebuchte Stunden = Summe (itemstop - itemstart) je Buchung.
+            // Stornierte/geloeschte ausgeschlossen.
+            $conn      = $em->getConnection();
+            $statusSql = "status <> 'storniert' AND status <> 'flugzeug_geloescht' AND status <> 'user_geloescht'";
+
+            $sumMin = function (\DateTimeInterface $from, \DateTimeInterface $to, string $extra = '') use ($conn, $clientid, $statusSql) {
+                return (int) $conn->executeQuery(
+                    "SELECT COALESCE(SUM(TIMESTAMPDIFF(MINUTE, itemstart, itemstop)),0) FROM FRes_booking "
+                    . "WHERE clientid = :cid AND $statusSql AND itemstart >= :from AND itemstart < :to " . $extra,
+                    ['cid' => $clientid, 'from' => $from->format('Y-m-d H:i:s'), 'to' => $to->format('Y-m-d H:i:s')]
+                )->fetchOne();
+            };
+
+            // Monat: nur ABGESCHLOSSENE Monate bewerten -> letzter voller Monat vs.
+            // Monat davor. Der laufende (angefangene) Monat wird bewusst ignoriert.
+            $curMonthStart  = new \DateTime($today->format('Y-m') . '-01 00:00:00', $tz);
+            $compStart      = (clone $curMonthStart)->modify('-1 month');   // letzter voller Monat
+            $compPrevStart  = (clone $compStart)->modify('-1 month');       // Monat davor
+            $minComp     = $sumMin($compStart, $curMonthStart);
+            $minCompPrev = $sumMin($compPrevStart, $compStart);
+            $stats['hoursMonth']     = (int) round($minComp / 60);
+            $stats['trendPct']       = $minCompPrev > 0 ? (int) round(($minComp - $minCompPrev) / $minCompPrev * 100) : null;
+            $stats['monthLabel']     = self::MONTHS_DE[(int) $compStart->format('n')] . ' ' . $compStart->format('Y');
+            $stats['monthPrevLabel'] = self::MONTHS_DE[(int) $compPrevStart->format('n')];
+
+            // Jahr: Year-to-date (1.1. bis jetzt) vs. Vorjahres-YTD (gleicher Stichtag).
+            $yearStart     = new \DateTime($today->format('Y') . '-01-01 00:00:00', $tz);
+            $lastYearStart = (clone $yearStart)->modify('-1 year');
+            $lastYtdCut    = (clone $now)->modify('-1 year');
+            $minYtd     = $sumMin($yearStart, $now);
+            $minYtdLast = $sumMin($lastYearStart, $lastYtdCut);
+            $minSchul   = $sumMin($yearStart, $now, 'AND flightpurposeid IN (2,5)');   // 2=Schulung m. FI, 5=Solo
+            $stats['hoursYear']     = (int) round($minYtd / 60);
+            $stats['yearTrendPct']  = $minYtdLast > 0 ? (int) round(($minYtd - $minYtdLast) / $minYtdLast * 100) : null;
+            $stats['schulPct']      = $minYtd > 0 ? (int) round($minSchul / $minYtd * 100) : 0;
+            $stats['yearLabel']     = $yearStart->format('Y');
+            $stats['yearPrevLabel'] = $lastYearStart->format('Y');
+
+            // Top-10 Flugzeuge nach gebuchten Stunden (YTD)
+            $topPlaneRows = $conn->executeQuery(
+                "SELECT aircraftid, SUM(TIMESTAMPDIFF(MINUTE, itemstart, itemstop)) AS mins FROM FRes_booking "
+                . "WHERE clientid = :cid AND $statusSql AND itemstart >= :from AND itemstart < :to "
+                . "GROUP BY aircraftid ORDER BY mins DESC LIMIT 10",
+                ['cid' => $clientid, 'from' => $yearStart->format('Y-m-d H:i:s'), 'to' => $now->format('Y-m-d H:i:s')]
+            )->fetchAllAssociative();
+            $stats['topPlanes'] = array_map(fn ($r) => [
+                'name'  => Planes::GetPlaneNameAndKennung($em, $clientid, (int) $r['aircraftid']),
+                'hours' => (int) round(((int) $r['mins']) / 60),
+            ], $topPlaneRows);
+
+            // Top-10 Piloten/Flugschueler nach gebuchten Stunden (YTD)
+            $topPilotRows = $conn->executeQuery(
+                "SELECT createdbyuserid AS uid, SUM(TIMESTAMPDIFF(MINUTE, itemstart, itemstop)) AS mins FROM FRes_booking "
+                . "WHERE clientid = :cid AND $statusSql AND itemstart >= :from AND itemstart < :to "
+                . "GROUP BY createdbyuserid ORDER BY mins DESC LIMIT 10",
+                ['cid' => $clientid, 'from' => $yearStart->format('Y-m-d H:i:s'), 'to' => $now->format('Y-m-d H:i:s')]
+            )->fetchAllAssociative();
+            $stats['topPilots'] = array_map(fn ($r) => [
+                'name'  => Users::GetUserName($em, $clientid, (int) $r['uid']),
+                'hours' => (int) round(((int) $r['mins']) / 60),
+            ], $topPilotRows);
+
+            // --- Weitere Vereins-Kennzahlen ---
+            $fmt     = static fn (\DateTimeInterface $d): string => $d->format('Y-m-d H:i:s');
+            $yearAgo = (clone $now)->modify('-12 months');
+            $scalarSql = fn (string $sql, array $p) => $conn->executeQuery($sql, ['cid' => $clientid] + $p)->fetchOne();
+
+            // Ø Buchungsdauer (YTD)
+            $cntYtd = (int) $scalarSql(
+                "SELECT COUNT(*) FROM FRes_booking WHERE clientid=:cid AND $statusSql AND itemstart>=:from AND itemstart<:to",
+                ['from' => $fmt($yearStart), 'to' => $fmt($now)]
+            );
+            $stats['avgDuration'] = $cntYtd > 0 ? round($minYtd / $cntYtd / 60, 1) : 0.0;
+
+            // Aktive/inaktive Mitglieder + Ø Stunden je aktivem Mitglied (rollierend 12 Monate)
+            $min365 = $sumMin($yearAgo, $now);
+            $activeMembers = (int) $scalarSql(
+                "SELECT COUNT(DISTINCT createdbyuserid) FROM FRes_booking WHERE clientid=:cid AND $statusSql AND itemstart>=:from AND itemstart<=:to",
+                ['from' => $fmt($yearAgo), 'to' => $fmt($now)]
+            );
+            $stats['activeMembers']   = $activeMembers;
+            $stats['inactiveMembers'] = max(0, (int) $stats['users'] - $activeMembers);
+            $stats['hoursPerMember']  = $activeMembers > 0 ? round($min365 / 60 / $activeMembers, 1) : 0.0;
+
+            // Aktive Flugschüler (Schulungsbuchung in 12 Monaten)
+            $stats['activeStudents'] = (int) $scalarSql(
+                "SELECT COUNT(DISTINCT createdbyuserid) FROM FRes_booking WHERE clientid=:cid AND $statusSql AND flightpurposeid IN (2,5) AND itemstart>=:from AND itemstart<=:to",
+                ['from' => $fmt($yearAgo), 'to' => $fmt($now)]
+            );
+
+            // Stornoquote (YTD): storniert / (storniert + aktiv)
+            $cntStorno = (int) $scalarSql(
+                "SELECT COUNT(*) FROM FRes_booking WHERE clientid=:cid AND status='storniert' AND itemstart>=:from AND itemstart<:to",
+                ['from' => $fmt($yearStart), 'to' => $fmt($now)]
+            );
+            $stats['stornoPct'] = ($cntYtd + $cntStorno) > 0 ? (int) round($cntStorno * 100 / ($cntYtd + $cntStorno)) : 0;
+
+            // Ø Vorlaufzeit in Tagen (Erstellung -> Flugtermin, YTD)
+            $lead = $scalarSql(
+                "SELECT AVG(DATEDIFF(itemstart, createdDate)) FROM FRes_booking WHERE clientid=:cid AND $statusSql AND itemstart>=:from AND itemstart<:to AND createdDate>'2000-01-01'",
+                ['from' => $fmt($yearStart), 'to' => $fmt($now)]
+            );
+            $stats['leadDays'] = $lead !== null ? (int) round((float) $lead) : 0;
+
+            // Wochenend-Anteil der Stunden (YTD); MySQL DAYOFWEEK: 1=So, 7=Sa
+            $minWeekend = $sumMin($yearStart, $now, 'AND DAYOFWEEK(itemstart) IN (1,7)');
+            $stats['weekendPct'] = $minYtd > 0 ? (int) round($minWeekend * 100 / $minYtd) : 0;
+
+            // Solo-Anteil an der Schulung (YTD)
+            $minSolo = $sumMin($yearStart, $now, 'AND flightpurposeid = 5');
+            $stats['soloPct'] = $minSchul > 0 ? (int) round($minSolo * 100 / $minSchul) : 0;
+
+            // Lizenz-Gültigkeit: Anteil Mitglieder (mit Lizenz) ohne abgelaufene Lizenz
+            $licJoin = "FROM FRes_userLicences l JOIN FRes_accounts a ON a.id=l.accountid "
+                     . "WHERE l.clientid=:cid AND (l.status<>'geloescht' OR l.status IS NULL) AND (a.status<>'geloescht' OR a.status IS NULL)";
+            $mLic = (int) $scalarSql("SELECT COUNT(DISTINCT l.accountid) $licJoin", []);
+            $mExp = (int) $scalarSql(
+                "SELECT COUNT(DISTINCT l.accountid) $licJoin AND (l.validunlimited=0 OR l.validunlimited IS NULL) AND l.validuntil < :today",
+                ['today' => $today->format('Y-m-d H:i:s')]
+            );
+            $stats['licValidPct'] = $mLic > 0 ? (int) round(($mLic - $mExp) * 100 / $mLic) : 0;
+
+            // Auslastungsgrad je Flugzeug: gebuchte Std / fliegbare Tageslicht-Std (YTD)
+            $daylightSec = 0;
+            $dl = clone $yearStart;
+            while ($dl < $now) {
+                $daylightSec += TimeFunctions::GetDaylight((int) $dl->format('n'), (int) $dl->format('j'), (int) $dl->format('Y'));
+                $dl->modify('+1 day');
+            }
+            $daylightHours = $daylightSec > 0 ? $daylightSec / 3600 : 0;
+            foreach ($stats['topPlanes'] as $i => $p) {
+                $stats['topPlanes'][$i]['util'] = $daylightHours > 0 ? min(100, (int) round($p['hours'] / $daylightHours * 100)) : 0;
+            }
+            // Ø Auslastung der Flotte: gebuchte Std / (Tageslicht-Std x Anzahl Flugzeuge)
+            $stats['fleetUtil'] = ($daylightHours > 0 && (int) $stats['aircraft'] > 0)
+                ? min(100, (int) round(($minYtd / 60) / ($daylightHours * (int) $stats['aircraft']) * 100)) : 0;
+
+            // Top-10 Fluglehrer nach Schulungsstunden (YTD)
+            $topFiRows = $conn->executeQuery(
+                "SELECT flightinstructor AS uid, SUM(TIMESTAMPDIFF(MINUTE, itemstart, itemstop)) AS mins FROM FRes_booking "
+                . "WHERE clientid = :cid AND $statusSql AND flightinstructor IS NOT NULL AND flightinstructor > 0 "
+                . "AND itemstart >= :from AND itemstart < :to GROUP BY flightinstructor ORDER BY mins DESC LIMIT 10",
+                ['cid' => $clientid, 'from' => $fmt($yearStart), 'to' => $fmt($now)]
+            )->fetchAllAssociative();
+            $stats['topFi'] = array_map(fn ($r) => [
+                'name'  => Users::GetUserName($em, $clientid, (int) $r['uid']),
+                'hours' => (int) round(((int) $r['mins']) / 60),
+            ], $topFiRows);
+
+            // 12-Monats-Verlauf der Flugstunden (nur abgeschlossene Monate)
+            $m12Start = (clone $curMonthStart)->modify('-12 months');
+            $mRows = $conn->executeQuery(
+                "SELECT DATE_FORMAT(itemstart,'%Y-%m') AS ym, SUM(TIMESTAMPDIFF(MINUTE, itemstart, itemstop)) AS mins FROM FRes_booking "
+                . "WHERE clientid = :cid AND $statusSql AND itemstart >= :from AND itemstart < :to GROUP BY ym",
+                ['cid' => $clientid, 'from' => $fmt($m12Start), 'to' => $fmt($curMonthStart)]
+            )->fetchAllAssociative();
+            $byYm = [];
+            foreach ($mRows as $r) { $byYm[$r['ym']] = (int) round(((int) $r['mins']) / 60); }
+            $series = [];
+            $dm = clone $m12Start;
+            for ($i = 0; $i < 12; $i++) {
+                $series[] = ['label' => mb_substr(self::MONTHS_DE[(int) $dm->format('n')], 0, 3), 'h' => $byYm[$dm->format('Y-m')] ?? 0];
+                $dm->modify('+1 month');
+            }
+            $stats['monthly']    = $series;
+            $stats['monthlyMax'] = max(1, max(array_column($series, 'h')));
         }
 
         $response = $this->render('modern/dashboard.html.twig', [

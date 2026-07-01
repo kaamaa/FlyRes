@@ -206,17 +206,17 @@ const cmpAc = ref([])
 const cmpFiLoading = ref(false)
 const cmpAcLoading = ref(false)
 
+// EIN Batch-Request (/api/comparematrix) statt N Einzelabfragen – wie im Web.
 async function loadCmpFi() {
   if (!avail.value || !dayBounds.value) return
-  const b = dayBounds.value
   const list = props.md.instructors || []
   cmpFiLoading.value = true
   try {
-    const res = await Promise.all(list.map((i) =>
-      api.availability({ date: startDate.value, aircraft: 0, fi: i.id }).catch(() => null)))
-    const rows = list.map((i, idx) => ({
+    const r = await api.comparematrix('fi', startDate.value).catch(() => null)
+    const byId = {}; ((r && r.rows) || []).forEach((x) => { byId[x.id] = x })
+    const rows = list.map((i) => ({
       id: i.id, name: i.name,
-      states: res[idx]?.instructorSegments ? stateSegsToPct(res[idx].instructorSegments) : [],
+      states: byId[i.id]?.segments ? stateSegsToPct(byId[i.id].segments) : [],
       selected: i.id === fiId.value,
     }))
     const sel = rows.find((r) => r.selected)
@@ -232,11 +232,11 @@ async function loadCmpAc() {
   const list = props.md.aircraft || []
   cmpAcLoading.value = true
   try {
-    const res = await Promise.all(list.map((a) =>
-      api.availability({ date: startDate.value, aircraft: a.id, fi: 0 }).catch(() => null)))
-    const rows = list.map((a, idx) => ({
+    const r = await api.comparematrix('ac', startDate.value).catch(() => null)
+    const byId = {}; ((r && r.rows) || []).forEach((x) => { byId[x.id] = x })
+    const rows = list.map((a) => ({
       id: a.id, name: a.callsign,
-      busy: res[idx]?.aircraftFree ? segsToPct(busyIntervals(res[idx].aircraftFree, b.s, b.e)) : [],
+      busy: byId[a.id]?.free ? segsToPct(busyIntervals(byId[a.id].free, b.s, b.e)) : [],
       selected: a.id === aircraftId.value,
     }))
     const sel = rows.find((r) => r.selected)
@@ -254,6 +254,58 @@ watch(avail, () => {
   if (showCmpFi.value) loadCmpFi()
   if (showCmpAc.value) loadCmpAc()
 })
+
+// ===== Nächste freie Termine (nextslots – identisch zum Web-Frontend) =====
+// Flugzeug ODER Fluglehrer ODER beides -> passende freie Fenster der naechsten
+// Tage. Klick auf eine Karte uebernimmt Datum + Uhrzeit. "Weitere anzeigen"
+// blaettert per Cursor. Zustaende: frei / auf Anfrage / nach Absprache.
+const slotsOpen = ref(true)
+const slots = ref([])
+const slotsDays = ref(14)
+const slotsMore = ref(false)
+const slotCursor = ref('')
+const slotsLoading = ref(false)
+let slotReq = 0
+const WANT = 8
+
+const slotMode = computed(() => {
+  const a = aircraftId.value, f = fiId.value
+  if (a && f) return '· Flugzeug & Fluglehrer'
+  if (a) return '· nur Flugzeug'
+  if (f) return '· nur Fluglehrer'
+  return ''
+})
+
+async function fetchSlots(more) {
+  const a = aircraftId.value || 0, f = fiId.value || 0
+  if (!a && !f) { slots.value = []; slotCursor.value = ''; slotsMore.value = false; return }
+  if (!slotsOpen.value) return
+  const my = ++slotReq
+  if (!more) { slots.value = []; slotCursor.value = ''; slotsLoading.value = true }
+  try {
+    const r = await api.nextslots(a, f, more ? slotCursor.value : '')
+    if (my !== slotReq) return
+    const list = (r && r.slots) || []
+    if (r && r.days) slotsDays.value = r.days
+    slots.value = more ? slots.value.concat(list) : list
+    slotsMore.value = list.length >= WANT
+    if (list.length) { const last = list[list.length - 1]; slotCursor.value = last.date + ' ' + last.start }
+  } catch {
+    if (my === slotReq && !more) slots.value = []
+  } finally {
+    if (my === slotReq) slotsLoading.value = false
+  }
+}
+watch([aircraftId, fiId], () => fetchSlots(false), { immediate: true })
+
+function toggleSlots() { slotsOpen.value = !slotsOpen.value; if (slotsOpen.value) fetchSlots(false) }
+function pickSlot(s) {
+  startDate.value = s.date; endDate.value = s.date
+  startTime.value = s.start; endTime.value = s.end
+  autoPick.value = false
+}
+function slotKindLabel(k) { return k === 'anfrage' ? 'auf Anfrage' : (k === 'absprache' ? 'nach Absprache' : 'frei') }
+function slotDur(min, kind) { return (Math.round(min / 6) / 10).toString().replace('.', ',') + ' Std ' + slotKindLabel(kind) }
 
 // ---- Speichern ----
 async function save() {
@@ -312,6 +364,29 @@ defineExpose({ submit: save })
         </select>
       </div>
     </div>
+
+    <!-- Nächste freie Termine (identisch zum Web-Frontend) -->
+    <template v-if="aircraftId || fiId">
+      <div class="slotsec" :class="{ open: slotsOpen }" @click="toggleSlots">
+        <span class="st">Nächste freie Termine <small>(nächste {{ slotsDays }} Tage)</small></span>
+        <span class="sub">{{ slotMode }}</span>
+        <span class="ar">{{ slotsOpen ? '▾' : '▸' }}</span>
+      </div>
+      <div v-if="slotsOpen" class="slotpanel">
+        <div v-if="slotsLoading" class="muted" style="margin:2px 0;">freie Termine werden gesucht…</div>
+        <template v-else>
+          <div v-if="!slots.length" class="muted" style="margin:2px 0;">In den nächsten {{ slotsDays }} Tagen kein freier Block gefunden.</div>
+          <div v-else class="slotcards">
+            <button v-for="(s, i) in slots" :key="i" type="button" class="slotcard" :class="'k-' + s.kind" @click="pickSlot(s)">
+              <span class="d">{{ dayShort(s.date) }}</span>
+              <span class="tm">{{ s.start }}–{{ s.end }}</span>
+              <span class="len">{{ slotDur(s.minutes, s.kind) }}</span>
+            </button>
+          </div>
+          <button v-if="slotsMore" type="button" class="slotmore" @click.stop="fetchSlots(true)">Weitere anzeigen</button>
+        </template>
+      </div>
+    </template>
 
     <!-- Zeitraum: 2 Zeilen – Datum & Uhrzeit als getrennte Felder -->
     <div class="ftitle"><Icon name="clock" /> Zeitraum</div>
