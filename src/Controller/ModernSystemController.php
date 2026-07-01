@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -25,13 +26,57 @@ class ModernSystemController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
 
+        // Passwort-Status + Lizenz-Bereinigung nur fuer Global-Admins
+        // (mandantenuebergreifend).
+        $isGlobal = $this->isGranted('ROLE_GLOBAL_ADMIN');
+        $pw  = $isGlobal ? $this->pwStatus($em) : null;
+        $lic = $isGlobal ? $this->licStatus($em) : null;
+
         return $this->render('modern/system.html.twig', [
             'php'      => $this->collectPhp(),
             'opcache'  => $this->collectOpcache(),
             'apcu'     => $this->collectApcu(),
             'doctrine' => $this->collectDoctrineCache($em),
             'db'       => $this->collectDatabase($em),
+            'pw'       => $pw,
+            'lic'      => $lic,
         ]);
+    }
+
+    /**
+     * Passwort-Migration (Legacy-MD5 -> bcrypt) per Button, da kein CLI-Zugriff.
+     * Nur Global-Admin (mandantenuebergreifend). POST -> durch den
+     * CsrfOriginSubscriber gegen Cross-Origin geschuetzt. Logik bewusst inline
+     * (keine eigene Klasse), damit kein zusaetzlicher Autoloader-Eintrag noetig ist.
+     */
+    public function passwordMigrate(Request $request, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        $dryRun = $request->request->get('mode') !== 'run';
+        $r = $this->pwMigrate($em, $dryRun);
+        $r['dryRun'] = $dryRun;
+        $this->addFlash('pwmigrate', $r);
+
+        return $this->redirectToRoute('modern_system');
+    }
+
+    /**
+     * Karteileichen-Bereinigung: Lizenzen, deren Pilot bereits geloescht ist
+     * (Account status='geloescht'), ebenfalls soft-loeschen (status='geloescht').
+     * Nur Global-Admin (mandantenuebergreifend). POST -> CsrfOriginSubscriber.
+     * Nur ein Soft-Delete – es wird nichts physisch entfernt.
+     */
+    public function licencesCleanup(Request $request, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        $dryRun = $request->request->get('mode') !== 'run';
+        $r = $this->licCleanup($em, $dryRun);
+        $r['dryRun'] = $dryRun;
+        $this->addFlash('liccleanup', $r);
+
+        return $this->redirectToRoute('modern_system');
     }
 
     /** Rohe phpinfo()-Ausgabe (eigenes Dokument fuer das iframe). */
@@ -347,6 +392,116 @@ class ModernSystemController extends AbstractController
         }
 
         return $out;
+    }
+
+    // ------------------------------------------------ Passwort-Migration ----
+
+    /**
+     * Status: wie viele Konten schon bcrypt, wie viele noch Legacy-MD5 sind.
+     *
+     * @return array{total:int, bcrypt:int, md5:int}
+     */
+    private function pwStatus(EntityManagerInterface $em): array
+    {
+        $conn = $em->getConnection();
+        $row = $conn->executeQuery(
+            "SELECT COUNT(*) AS total,
+                    SUM(CASE WHEN password LIKE '\$2%' THEN 1 ELSE 0 END) AS bcrypt,
+                    SUM(CASE WHEN password REGEXP '^[a-f0-9]{32}$' THEN 1 ELSE 0 END) AS md5
+             FROM fres_accounts"
+        )->fetchAssociative();
+
+        return [
+            'total'  => (int) ($row['total'] ?? 0),
+            'bcrypt' => (int) ($row['bcrypt'] ?? 0),
+            'md5'    => (int) ($row['md5'] ?? 0),
+        ];
+    }
+
+    /**
+     * Migration rohes MD5 -> bcrypt(MD5), ohne Klartext, idempotent.
+     *
+     * bcrypt (Kosten 12) ist absichtlich langsam (~0,3 s/Hash). Bei vielen
+     * Konten wuerde ein einziger Request in den nginx/PHP-Gateway-Timeout (504)
+     * laufen. Daher pro Aufruf nur ein ZEITBUDGET abarbeiten; der Rest wird beim
+     * naechsten Aufruf migriert (das Template setzt automatisch fort, bis 0).
+     *
+     * @return array{dryRun:bool, migrated:int, pending:int}
+     */
+    private function pwMigrate(EntityManagerInterface $em, bool $dryRun): array
+    {
+        $conn = $em->getConnection();
+
+        // Anzahl noch offener (roher MD5) Konten – schnelle Zaehlung.
+        $pending = (int) $conn->executeQuery(
+            "SELECT COUNT(*) FROM fres_accounts WHERE password REGEXP '^[a-f0-9]{32}$'"
+        )->fetchOne();
+
+        if ($dryRun || $pending === 0) {
+            return ['dryRun' => $dryRun, 'migrated' => 0, 'pending' => $pending];
+        }
+
+        // Nur noch nicht migrierte Konten laden und zeitbudgetiert abarbeiten.
+        $rows = $conn->executeQuery(
+            "SELECT id, password FROM fres_accounts WHERE password REGEXP '^[a-f0-9]{32}$'"
+        )->fetchAllAssociative();
+
+        $deadline = microtime(true) + 20.0;   // sicher unter dem Gateway-Timeout
+        $migrated = 0;
+
+        foreach ($rows as $row) {
+            $new = password_hash(strtolower((string) $row['password']), PASSWORD_BCRYPT, ['cost' => 12]);
+            $conn->executeStatement(
+                'UPDATE fres_accounts SET password = :p WHERE id = :id',
+                ['p' => $new, 'id' => $row['id']]
+            );
+            $migrated++;
+            if (microtime(true) >= $deadline) {
+                break;   // Rest beim naechsten (Auto-)Durchlauf
+            }
+        }
+
+        return ['dryRun' => false, 'migrated' => $migrated, 'pending' => $pending - $migrated];
+    }
+
+    /** SQL fuer offene Karteileichen: aktive Lizenzen an geloeschten Piloten. */
+    private const LIC_ORPHAN_WHERE =
+        "FRes_userLicences l JOIN FRes_accounts a ON a.id = l.accountid "
+        . "WHERE a.status = 'geloescht' AND (l.status IS NULL OR l.status = '0')";
+
+    /** @return array{pending:int} Anzahl aktiver Lizenzen an geloeschten Piloten. */
+    private function licStatus(EntityManagerInterface $em): array
+    {
+        $pending = (int) $em->getConnection()
+            ->executeQuery('SELECT COUNT(*) FROM ' . self::LIC_ORPHAN_WHERE)
+            ->fetchOne();
+
+        return ['pending' => $pending];
+    }
+
+    /**
+     * Soft-Delete der Karteileichen (status='geloescht'). Ein einzelnes UPDATE
+     * (schnell, kein Zeitbudget noetig). Idempotent: bereits geloeschte bleiben
+     * unberuehrt.
+     *
+     * @return array{deleted:int, pending:int}
+     */
+    private function licCleanup(EntityManagerInterface $em, bool $dryRun): array
+    {
+        $conn = $em->getConnection();
+        $pending = (int) $conn->executeQuery('SELECT COUNT(*) FROM ' . self::LIC_ORPHAN_WHERE)->fetchOne();
+
+        if ($dryRun || $pending === 0) {
+            return ['deleted' => 0, 'pending' => $pending];
+        }
+
+        $deleted = (int) $conn->executeStatement(
+            "UPDATE FRes_userLicences l JOIN FRes_accounts a ON a.id = l.accountid "
+            . "SET l.status = 'geloescht' "
+            . "WHERE a.status = 'geloescht' AND (l.status IS NULL OR l.status = '0')"
+        );
+
+        return ['deleted' => $deleted, 'pending' => $pending - $deleted];
     }
 
     // -------------------------------------------------------------- Utils ----

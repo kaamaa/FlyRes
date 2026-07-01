@@ -24,4 +24,16 @@ class Clients
     if ($client) return $client->getId();
     else return 0;
   }
+
+  // Vorausschau-Tage fuer "Naechste freie Termine" (pro Mandant konfigurierbar).
+  // Faellt auf 14 zurueck und wird auf 1..120 begrenzt (Schutz vor sehr langen
+  // Suchlaeufen, v. a. im Nur-Fluglehrer-Modus ohne Vorausbuchungs-Kappung).
+  public static function GetNextslotsDays ($em, $clientid)
+  {
+    $client = $em->getRepository('App\Entity\FresClient')->find($clientid);
+    $days = $client ? (int) $client->getNextslotsDays() : 14;
+    if ($days <= 0) $days = 14;
+    if ($days > 120) $days = 120;
+    return $days;
+  }
 }

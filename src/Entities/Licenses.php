@@ -38,6 +38,19 @@ class Licenses
       $em->flush();
     }
   }
+
+  // Alle Lizenzen eines Nutzers soft-loeschen (Status 'geloescht'). Wird beim
+  // Loeschen des Piloten aufgerufen, damit keine aktiven Lizenzen an einem
+  // geloeschten Account haengen bleiben. Bulk-UPDATE analog
+  // Bookings::DeleteAllBookingsForAUser – bereits geloeschte bleiben unberuehrt.
+  public static function DeleteAllLicencesForAUser ($em, $clientid, $accountid)
+  {
+    $querystring = "UPDATE App\Entity\FresUserlicences a SET a.status = 'geloescht' "
+                 . "WHERE a.clientid = :clientID and a.accountid = :accountID "
+                 . "and (a.status <> 'geloescht' or a.status IS NULL)";
+    $query = $em->createQuery($querystring)->setParameters(array('clientID' => $clientid, 'accountID' => $accountid));
+    $query->execute();
+  }
   
   public static function PPL_Required_but_CR_Invalid ($em, $accountID, $aircraftTypeid, $reservationdate)
   {

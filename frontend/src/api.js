@@ -28,7 +28,9 @@ const GET = (url) => fetch(url, { credentials: 'include' }).then(handle)
 const SEND = (method, url, body) => fetch(url, {
   method,
   credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
+  // Kennzeichnet schreibende Requests als von der Mobile-PWA stammend
+  // (Backend nutzt das fuer die Web/Mobile-Unterscheidung in E-Mails).
+  headers: { 'Content-Type': 'application/json', 'X-FlyRes-Client': 'mobile' },
   body: body !== undefined ? JSON.stringify(body) : undefined,
 }).then(handle)
 

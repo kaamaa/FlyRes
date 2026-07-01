@@ -9,6 +9,7 @@ use App\Entities\FlightPurposes;
 use App\Entities\Functions;
 use App\Entities\Licenses;
 use App\Entities\Notes;
+use App\Entities\Clients;
 use App\Entities\Planes;
 use App\Entities\Users;
 use App\Entity\FresAccounts;
@@ -379,15 +380,24 @@ class ModernPreviewController extends AbstractController
         // Zellen je Flugzeug (Reihenfolge = Datum, wie von der Methode geliefert)
         // Kompakter Tooltip je Zelle: pro Buchung eine Zeile "Zeit · Kennung · Kunde"
         // (kein Datum – der Tag ergibt sich aus der Spalte).
+        // Voller Wochentagsname fuer die Tooltip-Kopfzeile (Wochentag + Datum).
+        $wdFull = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+        $dateHead = static function (\DateTimeInterface $dt) use ($wdFull): string {
+            return $wdFull[(int) $dt->format('N') - 1] . ', ' . $dt->format('d.m.Y');
+        };
+
         $cells = [];
         foreach (($bookings ?? []) as $b) {
             $lines = [];
             foreach (($b['bookings'] ?? []) as $bk) {
                 $lines[] = $bk['time'] . ' · ' . $bk['kennung'] . ' · ' . $bk['user'];
             }
+            // Tooltip mit Kopfzeile "Wochentag, TT.MM.JJJJ" (Spalte = Tag).
+            $bd   = \DateTime::createFromFormat('d-m-Y', (string) $b['bookingdate']);
+            $head = $bd ? $dateHead($bd) . "\n" : '';
             $cells[$b['plane']][] = [
                 'color'   => $b['color'],
-                'tooltip' => $lines ? implode("\n", $lines) : 'frei',
+                'tooltip' => $head . ($lines ? implode("\n", $lines) : 'frei'),
                 'date'    => $b['bookingdate'],
             ];
         }
@@ -405,6 +415,7 @@ class ModernPreviewController extends AbstractController
                 'wend'    => $dow === 6 ? 'sat' : ($dow === 7 ? 'sun' : ''),
                 'today'   => $cur->format('Y-m-d') === $todayStr,
                 'iso'     => $cur->format('Y-m-d'),
+                'head'    => $dateHead($cur),
             ];
             $cur->modify('+1 day');
         }
@@ -465,8 +476,8 @@ class ModernPreviewController extends AbstractController
                     $hasAvail = true;
                     $cellsFi[$i] = [
                         'state' => $fiData[$fiId][$i]['state'],
-                        // pro Zeitfenster eine Zeile, ohne Datum (Tag = Spalte)
-                        'title' => implode("\n", $fiData[$fiId][$i]['wins']),
+                        // Kopfzeile "Wochentag, TT.MM.JJJJ", dann pro Zeitfenster eine Zeile
+                        'title' => $days[$i]['head'] . "\n" . implode("\n", $fiData[$fiId][$i]['wins']),
                     ];
                 } else {
                     $cellsFi[$i] = null;
@@ -712,6 +723,7 @@ class ModernPreviewController extends AbstractController
             'mailusers'   => Users::GetAllUsersForMailListbox($em, $clientid, Users::const_Buchungsmail),
             'myId'        => $loggedin_user->getId(),
             'preAircraft' => $preAircraft,
+            'nextslotsDays' => Clients::GetNextslotsDays($em, $clientid),
             'today'       => $today,
             'editId'      => $id,
             'edit'        => $edit,
@@ -1671,6 +1683,7 @@ class ModernPreviewController extends AbstractController
                 'users'    => (int) $em->getRepository('App\Entity\FresAccounts')->count(['clientid' => $c->getId()]),
                 'aircraft' => (int) $em->getRepository('App\Entity\FresAircraft')->count(['clientid' => $c->getId()]),
                 'bookings' => $bookings,
+                'nextslots_days' => $c->getNextslotsDays(),
             ];
         }
 
@@ -1686,7 +1699,7 @@ class ModernPreviewController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
         $em->getConnection()->exec('SET NAMES "UTF8"');
 
-        return $this->renderMandantForm(['id' => 0, 'name' => '', 'active' => true], []);
+        return $this->renderMandantForm(['id' => 0, 'name' => '', 'active' => true, 'nextslots_days' => 14], []);
     }
 
     /** Mandant-Formular (Bearbeiten). */
@@ -1700,7 +1713,7 @@ class ModernPreviewController extends AbstractController
             throw $this->createNotFoundException('Mandant nicht gefunden.');
         }
 
-        return $this->renderMandantForm(['id' => $c->getId(), 'name' => (string) $c->getName(), 'active' => $c->isActive()], []);
+        return $this->renderMandantForm(['id' => $c->getId(), 'name' => (string) $c->getName(), 'active' => $c->isActive(), 'nextslots_days' => $c->getNextslotsDays()], []);
     }
 
     /** Mandant speichern (Neu/Bearbeiten). */
@@ -1712,6 +1725,10 @@ class ModernPreviewController extends AbstractController
         $id     = (int) $request->request->get('id', 0);
         $name   = trim((string) $request->request->get('name', ''));
         $active = (bool) $request->request->get('active', false);
+        // Vorausschau-Tage fuer "Naechste freie Termine" (1..120, Default 14).
+        $days   = (int) $request->request->get('nextslots_days', 14);
+        if ($days < 1)   { $days = 1; }
+        if ($days > 120) { $days = 120; }
 
         if ($id !== 0) {
             $c = $em->getRepository(FresClient::class)->find($id);
@@ -1723,11 +1740,12 @@ class ModernPreviewController extends AbstractController
         }
 
         if ($name === '') {
-            return $this->renderMandantForm(['id' => $id, 'name' => $name, 'active' => $active], ['Bitte einen Namen eingeben.']);
+            return $this->renderMandantForm(['id' => $id, 'name' => $name, 'active' => $active, 'nextslots_days' => $days], ['Bitte einen Namen eingeben.']);
         }
 
         $c->setName($name);
         $c->setActive($active);
+        $c->setNextslotsDays($days);
         $em->persist($c);
         $em->flush();
 

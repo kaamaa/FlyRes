@@ -20,6 +20,17 @@
       </div>
     </div>
 
+    <div class="row">
+      <div class="col-sm-4 form-group"><label>Vorausschau „Nächste freie Termine"</label>
+        <div class="input-group">
+          <input type="number" class="form-control" name="nextslots_days" min="1" max="120"
+                 value="{{ isNew ? 14 : client.nextslotsDays }}" required>
+          <span class="input-group-addon">Tage</span>
+        </div>
+        <span class="help-block" style="font-size:12px;">Wie viele Tage die Terminsuche im Reservieren vorausschaut (1–120, Standard 14).</span>
+      </div>
+    </div>
+
     <p style="margin-top:10px;">
       <button type="submit" class="btn btn-primary">Speichern</button>
       <a href="{{ path('_config_mandanten') }}" class="btn btn-default">Abbrechen</a>

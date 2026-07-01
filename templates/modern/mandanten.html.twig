@@ -14,7 +14,7 @@
           <div class="fr-acard-ico">🏫</div>
           <div class="fr-acard-info">
             <div class="fr-acard-t">{{ c.name }}{% if not c.active %} <span class="fr-ltag red">inaktiv</span>{% endif %}</div>
-            <div class="fr-acard-meta">{{ c.users }} Nutzer · {{ c.aircraft }} {{ c.aircraft == 1 ? 'Flugzeug' : 'Flugzeuge' }} · {{ c.bookings }} {{ c.bookings == 1 ? 'Reservierung' : 'Reservierungen' }}</div>
+            <div class="fr-acard-meta">{{ c.users }} Nutzer · {{ c.aircraft }} {{ c.aircraft == 1 ? 'Flugzeug' : 'Flugzeuge' }} · {{ c.bookings }} {{ c.bookings == 1 ? 'Reservierung' : 'Reservierungen' }} · Vorausschau {{ c.nextslots_days }} Tage</div>
           </div>
           <span class="fr-lchev">›</span>
         </a>

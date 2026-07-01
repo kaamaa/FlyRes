@@ -7,9 +7,11 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use App\Entities\Users;
 
-class UserRepository extends ServiceEntityRepository implements UserLoaderInterface
+class UserRepository extends ServiceEntityRepository implements UserLoaderInterface, PasswordUpgraderInterface
 {
     // Das UserRepository wird verwendet um beim Login den Nutzer bei dem richtigen Client zu laden
     private $entityManager;
@@ -82,6 +84,21 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
     public function loadUserByUsername(string $usernameOrEmail): ?User
     {
         return $this->loadUserByIdentifier($usernameOrEmail);
+    }
+
+    /**
+     * Persistiert den vom Security-System neu berechneten Hash beim Login
+     * (Rehash-on-Login). Greift, wenn der Hasher needsRehash()=true meldet –
+     * also fuer noch nicht migrierte Legacy-MD5-Konten.
+     */
+    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
+    {
+        if (!$user instanceof FresAccounts) {
+            return;
+        }
+        $user->setPassword($newHashedPassword);
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
     }
 }
 

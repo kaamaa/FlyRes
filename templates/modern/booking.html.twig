@@ -39,7 +39,7 @@
       })
         .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }, function () { return { ok: r.ok, j: null }; }); })
         .then(function (res) {
-          if (res.ok && res.j && res.j.success) { window.location.href = '/modern'; return; }
+          if (res.ok && res.j && res.j.success) { window.location.href = '/web/buchungen'; return; }
           btn.disabled = false; btn.textContent = 'Stornieren';
           var e = (res.j && res.j.error) || 'Stornierung fehlgeschlagen.';
           msg.className = 'fr-msg err'; msg.textContent = 'Stornierung nicht möglich: ' + e; msg.hidden = false;

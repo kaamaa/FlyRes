@@ -109,6 +109,91 @@
   </div>
 </div>
 
+{# ---------- Passwort-Sicherheit (nur Global-Admin) ---------- #}
+{% if pw is not null %}
+<div class="sys-sec">Passwort-Sicherheit</div>
+
+{% for f in app.flashes('pwmigrate') %}
+  <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
+    {% if f.dryRun %}
+      <div style="font-weight:700;color:var(--fr-green);">Vorschau (Dry-Run) – es wurde nichts geschrieben</div>
+      <div class="sys-hint">Es würden <b>{{ f.pending }}</b> Konten von MD5 auf bcrypt migriert.</div>
+    {% else %}
+      <div style="font-weight:700;color:var(--fr-green);">{{ f.pending == 0 ? 'Migration abgeschlossen ✓' : 'Migration läuft …' }}</div>
+      <div class="sys-hint">In diesem Durchgang migriert: <b>{{ f.migrated }}</b> · noch offen: <b>{{ f.pending }}</b></div>
+      {% if f.pending > 0 and f.migrated > 0 %}
+        <div class="sys-hint" style="color:var(--fr-amber);">Setzt automatisch fort – bitte dieses Fenster offen lassen …</div>
+        <form id="pw-auto" method="post" action="{{ path('modern_system_pwmigrate') }}" style="display:none;"><input type="hidden" name="mode" value="run"></form>
+        <script>setTimeout(function(){ document.getElementById('pw-auto').submit(); }, 600);</script>
+      {% endif %}
+    {% endif %}
+  </div>
+{% endfor %}
+
+<div class="sys-card">
+  <table class="sys-kv">
+    <tr><td>Konten gesamt</td><td>{{ pw.total }}</td></tr>
+    <tr><td>bereits bcrypt</td><td>{{ pw.bcrypt }}</td></tr>
+    <tr><td>noch Legacy-MD5</td><td>{% if pw.md5 > 0 %}<span class="sys-badge bad">{{ pw.md5 }}</span>{% else %}<span class="sys-badge ok">0</span>{% endif %}</td></tr>
+  </table>
+  <div class="sys-hint">
+    Wandelt gespeicherte MD5-Hashes in gesalzenes <span class="sys-mono">bcrypt(MD5)</span> um – ohne Klartext, idempotent, beliebig wiederholbar.
+    <b>Voraussetzung:</b> die Spalte <span class="sys-mono">password</span> wurde bereits auf <span class="sys-mono">varchar(255)</span> erweitert (sonst schlägt es fehl).
+  </div>
+  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+    <form method="post" action="{{ path('modern_system_pwmigrate') }}">
+      <input type="hidden" name="mode" value="dry">
+      <button type="submit" class="fr-btn ghost">Vorschau (Dry-Run)</button>
+    </form>
+    {% if pw.md5 > 0 %}
+    <form method="post" action="{{ path('modern_system_pwmigrate') }}" onsubmit="return confirm('{{ pw.md5 }} Konten jetzt auf bcrypt migrieren?\n\nVorher muss die Spalte password auf varchar(255) erweitert sein.');">
+      <input type="hidden" name="mode" value="run">
+      <button type="submit" class="fr-btn">Migration ausführen ({{ pw.md5 }})</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{# ---------- Lizenz-Bereinigung (nur Global-Admin: mandantenuebergreifend) ---------- #}
+{% if lic is not null %}
+<div class="sys-sec">Lizenz-Bereinigung</div>
+
+{% for f in app.flashes('liccleanup') %}
+  <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
+    {% if f.dryRun %}
+      <div style="font-weight:700;color:var(--fr-green);">Vorschau (Dry-Run) – es wurde nichts geschrieben</div>
+      <div class="sys-hint">Es würden <b>{{ f.pending }}</b> Lizenzen als gelöscht markiert.</div>
+    {% else %}
+      <div style="font-weight:700;color:var(--fr-green);">Bereinigung abgeschlossen ✓</div>
+      <div class="sys-hint">Als gelöscht markiert: <b>{{ f.deleted }}</b> · noch offen: <b>{{ f.pending }}</b></div>
+    {% endif %}
+  </div>
+{% endfor %}
+
+<div class="sys-card">
+  <table class="sys-kv">
+    <tr><td>Aktive Lizenzen an gelöschten Piloten</td><td>{% if lic.pending > 0 %}<span class="sys-badge bad">{{ lic.pending }}</span>{% else %}<span class="sys-badge ok">0</span>{% endif %}</td></tr>
+  </table>
+  <div class="sys-hint">
+    Setzt Lizenzen, deren Pilot bereits gelöscht ist (Account <span class="sys-mono">status='geloescht'</span>), ebenfalls auf <span class="sys-mono">geloescht</span>.
+    Reiner <b>Soft-Delete</b> – nichts wird physisch entfernt, bereits gelöschte bleiben unberührt, beliebig wiederholbar.
+  </div>
+  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
+    <form method="post" action="{{ path('modern_system_liccleanup') }}">
+      <input type="hidden" name="mode" value="dry">
+      <button type="submit" class="fr-btn ghost">Vorschau (Dry-Run)</button>
+    </form>
+    {% if lic.pending > 0 %}
+    <form method="post" action="{{ path('modern_system_liccleanup') }}" onsubmit="return confirm('{{ lic.pending }} Lizenzen gelöschter Piloten jetzt als gelöscht markieren?\n\nNur Soft-Delete – reversibel.');">
+      <input type="hidden" name="mode" value="run">
+      <button type="submit" class="fr-btn">Bereinigung ausführen ({{ lic.pending }})</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
 {# ---------- Datenbank-Backup (nur Global-Admin: mandantenuebergreifend) ---------- #}
 {% if is_granted('ROLE_GLOBAL_ADMIN') %}
 <div class="sys-sec">Datenbank-Backup</div>

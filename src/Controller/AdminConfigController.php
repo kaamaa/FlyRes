@@ -114,6 +114,12 @@ class AdminConfigController extends AbstractController
         $client->setName(trim((string) $p->get('name')));
         $client->setActive($p->getBoolean('active'));
 
+        // Vorausschau-Tage fuer "Naechste freie Termine" (1..120, Default 14).
+        $days = (int) $p->get('nextslots_days', 14);
+        if ($days < 1)   { $days = 1; }
+        if ($days > 120) { $days = 120; }
+        $client->setNextslotsDays($days);
+
         $em->persist($client);
         $em->flush();
 

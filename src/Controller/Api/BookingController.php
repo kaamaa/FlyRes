@@ -171,7 +171,7 @@ class BookingController extends ApiController
 
         $em->persist($booking);
         $em->flush();
-        $this->sendBookingMail($em, $user, $mailer, $booking, null);
+        $this->sendBookingMail($em, $user, $mailer, $booking, null, $this->clientSource($request));
 
         $d = Bookings::GetBookingDetails($em, $user->getClientid(), $booking->getId(), $user);
 
@@ -219,7 +219,7 @@ class BookingController extends ApiController
 
         $em->persist($booking);
         $em->flush();
-        $this->sendBookingMail($em, $user, $mailer, $booking, $bookingOld);
+        $this->sendBookingMail($em, $user, $mailer, $booking, $bookingOld, $this->clientSource($request));
 
         $d = Bookings::GetBookingDetails($em, $user->getClientid(), $booking->getId(), $user);
 
@@ -247,7 +247,7 @@ class BookingController extends ApiController
         }
 
         // Erst Stornierungs-Mail (mit den noch vorhandenen Daten), dann loeschen – wie DeleteAction.
-        $this->sendBookingMail($em, $user, $mailer, null, $booking);
+        $this->sendBookingMail($em, $user, $mailer, null, $booking, $this->clientSource($request));
         Bookings::DeleteBooking($em, $user->getClientid(), $id);
 
         return $this->json(['success' => true]);
@@ -355,14 +355,25 @@ class BookingController extends ApiController
         return $errors;
     }
 
-    private function sendBookingMail(EntityManagerInterface $em, $user, MailerInterface $mailer, ?FresBooking $new, ?FresBooking $old): void
+    private function sendBookingMail(EntityManagerInterface $em, $user, MailerInterface $mailer, ?FresBooking $new, ?FresBooking $old, string $source = 'web'): void
     {
         $parameter = [
             'program_version' => $this->getParameter('program_version'),
             'mail_from'       => $this->getParameter('mail_from'),
+            'source'          => $source,
         ];
         $twig = $this->container->get('twig');
         Bookings::SendBookingsInfoMail($em, $user, $twig, $new, $old, $mailer, $parameter);
+    }
+
+    /**
+     * Herkunft des Requests fuer die Mail-Kennzeichnung: 'mobile' nur, wenn das
+     * Frontend den Header X-FlyRes-Client: mobile setzt (PWA). Sonst 'web'
+     * (modernes Web-Frontend wie klassische Oberflaeche).
+     */
+    private function clientSource(Request $request): string
+    {
+        return strtolower((string) $request->headers->get('X-FlyRes-Client')) === 'mobile' ? 'mobile' : 'web';
     }
 
     /** Akzeptiert "Y-m-d H:i" und ISO-"Y-m-dTH:i" (optional mit Sekunden). */

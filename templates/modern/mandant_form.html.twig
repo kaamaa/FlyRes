@@ -25,6 +25,18 @@
     </label>
   </div>
 
+  <div class="fr-formsec">Reservieren</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Vorausschau „Nächste freie Termine" (Tage)</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></span>
+        <input type="number" name="nextslots_days" value="{{ v.nextslots_days }}" min="1" max="120">
+      </div>
+      <div style="font-size:11.5px;color:var(--fr-mut);">Wie viele Tage die Terminsuche im Reservieren vorausschaut (1–120, Standard 14).</div>
+    </div>
+  </div>
+
   <div class="fr-formfoot">
     <button type="submit" class="fr-btn">Mandant speichern</button>
     <a class="fr-btn fr-cancel" href="{{ path('modern_mandanten') }}">Abbrechen</a>

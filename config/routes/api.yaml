@@ -68,6 +68,18 @@ api_availability:
     controller: App\Controller\Api\AvailabilityController::availability
     methods: GET
 
+# --- Batch-Vergleich: alle Flugzeuge/Fluglehrer an einem Tag in EINER Anfrage ---
+api_comparematrix:
+    path: /api/comparematrix
+    controller: App\Controller\Api\AvailabilityController::comparematrix
+    methods: GET
+
+# --- "Naechste freie Termine" fuer Reservieren ---
+api_nextslots:
+    path: /api/nextslots
+    controller: App\Controller\Api\AvailabilityController::nextslots
+    methods: GET
+
 # --- M4: Reservierungen schreiben ---
 api_booking_create:
     path: /api/bookings

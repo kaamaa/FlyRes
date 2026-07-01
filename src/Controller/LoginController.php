@@ -62,8 +62,11 @@ class LoginController extends AbstractController
       $user = Users::GetUserObjectByName($em, $username, 1);
       if ($user)
       {
-        if ($password === $user->getPassword())
-        { 
+        // Joomla liefert das Passwort bereits als MD5. verifyMd5() akzeptiert
+        // sowohl das migrierte bcrypt(MD5) als auch rohes Legacy-MD5, sodass
+        // dieser Pfad nach der Hash-Migration weiter funktioniert.
+        if (\App\Security\Hasher\CustomPasswordHasher::verifyMd5((string) $user->getPassword(), (string) $password))
+        {
           if (!Users::isDeleted($user) && !Users::isLocked($user))
           {
             $checker->checkPreAuth($user);

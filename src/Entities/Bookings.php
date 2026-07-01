@@ -281,9 +281,48 @@ class Bookings
     }
     return $message;
   }
-  
-  
-  
+
+  /**
+   * Schnelle Variante fuer "Naechste freie Termine": freie Verfuegbarkeitsfenster
+   * EINES Fluglehrers an einem Tag (Verfuegbarkeit typ 1/2 minus seine Buchungen).
+   * Exakt dieselbe Logik wie GetAllAvailableFIsForADate, aber nur fuer den
+   * gewaehlten FI statt ALLE FIs zu iterieren -> deutlich schneller.
+   *
+   * Jedes Fenster traegt zusaetzlich seinen Verfuegbarkeits-Typ:
+   * 1 = "verfuegbar/frei", 2 = "auf Anfrage" (wie in GetAllAvailableFIsForADate).
+   *
+   * @return array<int, array{0:int,1:int,2:int}>  [[startMin,endMin,typ], ...]
+   */
+  public static function GetFIFreeWindowsForOneDay($em, $clientid, $fiId, \DateTime $date)
+  {
+    $int_day = (int) $date->format('d'); $int_month = (int) $date->format('m'); $int_year = (int) $date->format('Y');
+
+    $availabilities = FIAvailability::GetAvailabilityForOneDayAndFiAsObjects($em, $date, $fiId, $clientid);
+    $bookings       = self::GetBookingsForOneDayAndFIAsObjects($em, $int_day, $int_month, $int_year, $fiId, $clientid);
+
+    // Verfuegbarkeit um die Buchungen reduzieren (identisches Muster wie oben)
+    foreach ($bookings as $booking) {
+      $avs = $availabilities;
+      foreach ($avs as $index => $av) {
+        self::AdjustAvailabilitiesAccordingToBooking($availabilities, $booking, $index, $av);
+      }
+    }
+
+    $out = [];
+    foreach ($availabilities as $av) {
+      $s = (int) $av->getItemstart()->format('G') * 60 + (int) $av->getItemstart()->format('i');
+      $e = (int) $av->getItemstop()->format('G')   * 60 + (int) $av->getItemstop()->format('i');
+      if ($e > $s) {
+        $typ = $av->getTyp() ? (int) $av->getTyp()->getId() : 1;   // 1=frei, 2=auf Anfrage
+        $out[] = [$s, $e, $typ];
+      }
+    }
+
+    return $out;
+  }
+
+
+
   public static function GetAllAvailablePlanesForADate ($em, $clientid, $date)
   {
     // Ermittelt für das Reservierungsfenster alle verfügbaren Flugzeuge und ihrer Verfügbarkeit für den Tag
@@ -331,7 +370,48 @@ class Bookings
     }
     return $message;
   }
-  
+
+  /**
+   * Schnelle Variante fuer "Naechste freie Termine": liefert die freien Luecken
+   * EINES Flugzeugs ueber einen Zeitraum – mit EINER Bereichsabfrage statt pro
+   * Tag die Verfuegbarkeit ALLER Flugzeuge zu berechnen. Tagesfenster
+   * sonnenstandsbasiert (wie GetAllAvailablePlanesForADate).
+   *
+   * @return array<string, array<int, array{0:int,1:int}>> ['Y-m-d' => [[startMin,endMin], ...]]
+   */
+  public static function GetFreeGapsForPlaneInRange($em, $clientid, $planeId, \DateTime $fromDate, \DateTime $toDate)
+  {
+    date_default_timezone_set('Europe/Berlin');
+
+    $cur = clone $fromDate; $cur->setTime(0, 0, 0);
+    $end = clone $toDate;   $end->setTime(0, 0, 0);
+
+    // Alle Buchungen des Flugzeugs fuer den ganzen Zeitraum in EINER Abfrage.
+    $all = self::GetBookingsForPlaneInRangeAsObjects(
+      $em, $cur->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s'), $clientid, $planeId
+    );
+
+    $out = [];
+    while ($cur < $end) {
+      $iy = (int) $cur->format('Y'); $im = (int) $cur->format('m'); $id = (int) $cur->format('d');
+      $dayBookings = self::FilterBookingsForDay($all, $id, $im, $iy);   // reine PHP-Filterung, keine DB
+
+      $mindate = clone $cur; $sr = TimeFunctions::GetDayStart($cur); $mindate->setTime($sr[0], $sr[1]);
+      $maxdate = clone $cur; $sr = TimeFunctions::GetDayEnd($cur);   $maxdate->setTime($sr[0], $sr[1]);
+
+      $list = [];
+      foreach (self::GetBookingGaps($dayBookings, $mindate, $maxdate) as $g) {
+        $s = (int) $g->getStart()->format('G') * 60 + (int) $g->getStart()->format('i');
+        $e = (int) $g->getEnd()->format('G')   * 60 + (int) $g->getEnd()->format('i');
+        if ($e > $s) { $list[] = [$s, $e]; }
+      }
+      $out[$cur->format('Y-m-d')] = $list;
+      $cur->modify('+1 day');
+    }
+
+    return $out;
+  }
+
   /**
    * Buchungen der Vergangenheit duerfen nur begrenzt nachbearbeitet werden:
    * Liegt das Ende (Itemstop) mehr als eine Woche zurueck, ist Bearbeiten
@@ -502,30 +582,19 @@ class Bookings
   }
   
   public static function _cmpStartDate($m, $n) {
-    // Sortieren nach Datum und Flugzeug
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-    
-    if ($date_m == $date_n) {
-        // gleicher Tag, daher zuerst nach Flugzeug und dann nach Datum sortieren
-        
-        if ($m->getAircraftid() == $n->getAircraftid())
-        {
-          // Flugzeuge sind identisch
-          return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-        }
-        else
-        {
-          // Flugzeuge sind nicht identisch
-          return ($m->getAircraftid() < $n->getAircraftid()) ? -1 : 1;
-        }
-    }
-    return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
+    // Rein chronologisch: nach Start (Datum + Uhrzeit) aufsteigend. Innerhalb
+    // eines Tages entscheidet damit die Uhrzeit (nicht mehr das Flugzeug). Nur
+    // bei exakt gleichem Start als stabiler Tie-Break die AircraftID.
+    $am = $m->getItemstart();
+    $an = $n->getItemstart();
+    if ($am != $an) return ($am < $an) ? -1 : 1;
+    return (string) $m->getAircraftid() <=> (string) $n->getAircraftid();
   }
 
   public static function _cmpStartDateDesc($m, $n): int
   {
-      // Sortieren nach Datum DESC, Uhrzeit ASC und Flugzeug ASC
+      // Tag DESC (neueste zuerst), INNERHALB des Tages aber rein nach Uhrzeit ASC.
+      // AircraftID nur noch als Tie-Break bei exakt gleichem Start.
       $am = $m->getItemstart(); // DateTimeInterface
       $an = $n->getItemstart();
 
@@ -533,11 +602,11 @@ class Bookings
       $byDay = $an->format('Ymd') <=> $am->format('Ymd');
       if ($byDay !== 0) return $byDay;
 
-      // 2) AircraftID ASC
-      $byAircraft = (string)$m->getAircraftid() <=> (string)$n->getAircraftid();
-      if ($byAircraft !== 0) return $byAircraft;
+      // 2) Uhrzeit ASC
+      if ($am != $an) return $am <=> $an;
 
-      return $am <=> $an; // Uhrzeit ASC
+      // 3) Tie-Break: AircraftID ASC
+      return (string) $m->getAircraftid() <=> (string) $n->getAircraftid();
   }
   
   public static function _cmpAircraft($m, $n) {
@@ -945,6 +1014,9 @@ class Bookings
         return $userNameCache[$key];
       };
 
+      // Wochentags-Kurzform fuer die Spanne mehrtaegiger Buchungen (Mo..So)
+      $wdShort = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
       foreach ($planes as $plane)
       {
         // Alle Buchungen dieses Flugzeugs fuer den gesamten Zeitraum in EINER Abfrage holen
@@ -1054,9 +1126,17 @@ class Bookings
                        . " (" . $flightpurpose . ") "
                        . $booking->getdescription() . "<br>";
 
-              // Kompakte, datumslose Variante (Tag ergibt sich aus der Spalte) – Name wiederverwenden
+              // Kompakte Variante – Name wiederverwenden. Bei MEHRTAEGIGEN Buchungen
+              // die volle Spanne mit Datum zeigen (sonst stuende auf jedem Tag nur die
+              // Start-/End-Uhrzeit, was wie eine kurze Tagesbuchung aussaehe).
+              if ($start->format('Y-m-d') != $stop->format('Y-m-d')) {
+                $timeInfo = $wdShort[(int) $start->format('N') - 1] . ' ' . date_format($start, 'd.m. H:i')
+                          . ' → ' . $wdShort[(int) $stop->format('N') - 1] . ' ' . date_format($stop, 'd.m. H:i');
+              } else {
+                $timeInfo = date_format($start, 'H:i') . '-' . date_format($stop, 'H:i');
+              }
               $bookingsInfo[] = [
-                'time'    => date_format($start, 'H:i') . '-' . date_format($stop, 'H:i'),
+                'time'    => $timeInfo,
                 'kennung' => $plane->getKennung(),
                 'user'    => $bookerName,
               ];
@@ -1355,6 +1435,10 @@ class Bookings
     if ($oldbooking && $oldbooking->getFlightinstructor() != NULL) $mailOldFI = Users::GetUserMailaddress($em, $oldbooking->getClientid(), $oldbooking->getFlightinstructor(), Users::const_Buchungsmail);
       else $mailOldFI = '';    
     
+    // Herkunft der Mail (Web- vs. Mobile-Frontend) fuer den Betreff.
+    $source      = $parameter['source'] ?? 'web';
+    $sourceLabel = ($source === 'mobile') ? 'Mobile' : 'Web';
+
     // Mail-Arrays zusammenführen
     $mails = array_merge($adminMails, $mailIntern);
     $mails = array_merge($mails, $mailExtern);
@@ -1373,8 +1457,8 @@ class Bookings
     {
       if (Users::IsMailAdressValid($mail))
       {
-        $message = (new Email()) 
-          ->subject($type . ' ' . $parameter['program_version'])
+        $message = (new Email())
+          ->subject($type . ' · ' . $parameter['program_version'] . ' · ' . $sourceLabel)
           ->html($twig->render('emails/bookingmail.html.twig', $data))
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])

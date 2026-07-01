@@ -10,7 +10,7 @@
   <table class="table table-striped table-bordered" style="background:#fff;">
     <thead>
       <tr style="background:#D8E3E7;">
-        <th>Name</th><th>Nutzer</th><th>Flugzeuge</th><th>Status</th><th></th>
+        <th>Name</th><th>Nutzer</th><th>Flugzeuge</th><th>Vorausschau</th><th>Status</th><th></th>
       </tr>
     </thead>
     <tbody>
@@ -19,6 +19,7 @@
         <td><b>{{ c.name }}</b></td>
         <td>{{ stats[c.id].users }}</td>
         <td>{{ stats[c.id].aircraft }}</td>
+        <td>{{ c.nextslotsDays }} Tage</td>
         <td>
           {% if c.active %}<span class="label label-success">aktiv</span>
           {% else %}<span class="label label-danger">inaktiv</span>{% endif %}

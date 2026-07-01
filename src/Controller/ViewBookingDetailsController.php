@@ -49,6 +49,7 @@ class ViewBookingDetailsController extends AbstractController
     
     $parameter['program_version'] = $this->getParameter('program_version');
     $parameter['mail_from'] = $this->getParameter('mail_from');
+    $parameter['source'] = 'web';   // klassisches Frontend = Web
     $twig = $this->container->get('twig');
     Bookings::SendBookingsInfoMail($em, $user, $twig, NULL, $booking_old, $mailer, $parameter);
 

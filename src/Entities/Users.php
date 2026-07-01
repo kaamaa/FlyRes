@@ -120,6 +120,9 @@ class Users
     if ($user)
     {
       Bookings::DeleteAllBookingsForAUser($em, $clientid, $id);
+      // Lizenzen des Nutzers ebenfalls soft-loeschen (sonst bleiben aktive
+      // Lizenzen an einem geloeschten Account haengen -> Karteileichen).
+      Licenses::DeleteAllLicencesForAUser($em, $clientid, $id);
       $user->setStatus('geloescht');
       // Wenn der Nutzer gelöscht wird muss der Username zur Anmedlung für neue Nutzer wieder freigegben werden
       // Daher wird er umbenannt in 'geloescht_' . $datum . '_' . $username;

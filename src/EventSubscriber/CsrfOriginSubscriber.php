@@ -9,7 +9,7 @@ use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
- * CSRF-Schutz fuer die klassischen /modern-Formulare.
+ * CSRF-Schutz fuer die Web-Frontend-Formulare (/web/*).
  *
  * Diese Formulare sind server-gerenderte Twig-POSTs OHNE CSRF-Token. Da die
  * Session per Cookie authentifiziert ist und der Cookie in prod auf
@@ -18,7 +18,7 @@ use Symfony\Component\HttpKernel\KernelEvents;
  * ersatzweise Referer) gegen den Ziel-Host plus die Allowlist – exakt analog
  * zu ApiController::denyCrossOrigin, das die /api-Schreibzugriffe schuetzt.
  *
- * Greift fuer zustandsaendernde Methoden (POST/PUT/PATCH/DELETE) auf /modern
+ * Greift fuer zustandsaendernde Methoden (POST/PUT/PATCH/DELETE) auf /web
  * sowie auf das Login-FORMULAR (Route app_login, /login) – Schutz gegen
  * Login-CSRF, ohne Token in den drei Login-Templates pflegen zu muessen.
  *
@@ -59,9 +59,9 @@ class CsrfOriginSubscriber implements EventSubscriberInterface
         if (!in_array($req->getMethod(), ['POST', 'PUT', 'PATCH', 'DELETE'], true)) {
             return;
         }
-        // /modern-Formulare + das Login-Formular (Route app_login). NICHT
+        // /web-Formulare + das Login-Formular (Route app_login). NICHT
         // /loginwithcredentials oder /api/login (Joomla-SSO, eigene Behandlung).
-        $guarded = str_starts_with($req->getPathInfo(), '/modern')
+        $guarded = str_starts_with($req->getPathInfo(), '/web')
                 || $req->attributes->get('_route') === 'app_login';
         if (!$guarded) {
             return;

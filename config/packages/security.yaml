@@ -27,11 +27,10 @@ security:
             stateless: false
             provider: app_user_provider
 
-            # Brute-Force-Bremse: max. Loginversuche pro IP/Benutzer im Zeitfenster
-            # (nutzt den vorhandenen symfony/rate-limiter). Greift fuer den Form-Login.
-            login_throttling:
-                max_attempts: 5
-                interval: '15 minutes'
+            # HINWEIS: login_throttling (Brute-Force-Bremse) wurde entfernt, weil
+            # es symfony/rate-limiter voraussetzt, das auf dem Prod-Server (aelteres
+            # vendor/) fehlt -> Container-Compile-Fehler/500. Erst wieder aktivieren,
+            # wenn rate-limiter dort installiert ist (composer require symfony/rate-limiter).
 
             remember_me:
                 secret:   '%kernel.secret%'
@@ -68,13 +67,14 @@ security:
         - { path: ^/logout, roles: PUBLIC_ACCESS }
         # auskommentieren dieser Zeilen führt dazu, dass Login über Joomla funktioniert
         - { path: ^/loginwithcredentials, roles: PUBLIC_ACCESS }
+        - { path: ^/mobile, roles: PUBLIC_ACCESS }
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout, roles: PUBLIC_ACCESS }
         - { path: ^/api/verify, roles: PUBLIC_ACCESS }
         # iPhone-PWA JSON-API (M1): PUBLIC_ACCESS, damit die Controller bei fehlendem
         # Login sauberes JSON (401) statt eines HTML-Login-Redirects liefern koennen.
         # Die Zugriffspruefung (angemeldet + ROLE_PILOT) erfolgt in App\Controller\Api.
-        - { path: ^/api/(clients|me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability|fleet)(/|$), roles: PUBLIC_ACCESS }
+        - { path: ^/api/(clients|me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability|comparematrix|nextslots|fleet)(/|$), roles: PUBLIC_ACCESS }
         #- { path: ^/start_session, roles: PUBLIC_ACCESS }
         #- { path: ^/login_check, roles: PUBLIC_ACCESS }
         - { path: ^/config, roles: ROLE_GLOBAL_ADMIN }
