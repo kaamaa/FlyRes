@@ -249,61 +249,12 @@ class Bookings
     }
   }
 
-  public static function GetAllAvailableFIsForADate ($em, $clientid, $date)
-  {
-    // Ermittelt für das Reservierungsfenster alle verfügbaren Fluglehrer und ihrer Verfügbarkeit für den Tag
-    date_default_timezone_set('Europe/Berlin');
-    $int_day = (int) $date->format('d');
-    $int_month = (int) $date->format('m');
-    $int_year = (int) $date->format('Y');
-    $message = '';
-    
-    // Zunächst alle Fluglehrer für den Mandanten ermitteln
-    $FIs = Users::GetAllFlightinstructorsAsObject($em, $clientid);
-    if ($FIs) {
-      // Über alle Fluglehrer iterieren
-      foreach ($FIs as $FI) 
-      {
-        if ($FI)  
-        {
-            // Ist der Fluglehrer verfügbar
-            $availabilities = FIAvailability::GetAvailabilityForOneDayAndFiAsObjects ($em, $date, $FI->getId(), $clientid);
-            $bookings = Bookings::GetBookingsForOneDayAndFIAsObjects ($em, $int_day, $int_month, $int_year, $FI->getId(), $clientid);
-           
-            self::ReduceAvailabilitiesByBookings($availabilities, $bookings);
-
-            if (!empty($availabilities))
-            {
-                $message = $message . "<b>" .$FI->getfirstname() . ' ' . $FI->getlastname() . '</b> ';
-                foreach($availabilities as $av) 
-                {
-                  if ($av->getTyp()->getID() == 2) 
-                  { 
-                    $message = $message . "<span style='color:orange'>"; 
-                  } 
-                  else 
-                  { 
-                    $message = $message . "<span>"; 
-                  }
-                  $message = $message . $av->getItemstart()->format('G:i-') . $av->getItemstop()->format('G:i ');
-                  $message = $message . "</span>"; 
-                }
-                $message = $message . "<br>";
-            }
-        }
-      }
-    }
-    return $message;
-  }
-
   /**
-   * Schnelle Variante fuer "Naechste freie Termine": freie Verfuegbarkeitsfenster
-   * EINES Fluglehrers an einem Tag (Verfuegbarkeit typ 1/2 minus seine Buchungen).
-   * Exakt dieselbe Logik wie GetAllAvailableFIsForADate, aber nur fuer den
-   * gewaehlten FI statt ALLE FIs zu iterieren -> deutlich schneller.
+   * "Naechste freie Termine": freie Verfuegbarkeitsfenster EINES Fluglehrers an
+   * einem Tag (Verfuegbarkeit typ 1/2 minus seine Buchungen).
    *
    * Jedes Fenster traegt zusaetzlich seinen Verfuegbarkeits-Typ:
-   * 1 = "verfuegbar/frei", 2 = "auf Anfrage" (wie in GetAllAvailableFIsForADate).
+   * 1 = "verfuegbar/frei", 2 = "auf Anfrage".
    *
    * @return array<int, array{0:int,1:int,2:int}>  [[startMin,endMin,typ], ...]
    */
@@ -332,59 +283,9 @@ class Bookings
 
 
 
-  public static function GetAllAvailablePlanesForADate ($em, $clientid, $date)
-  {
-    // Ermittelt für das Reservierungsfenster alle verfügbaren Flugzeuge und ihrer Verfügbarkeit für den Tag
-    date_default_timezone_set('Europe/Berlin');
-    
-    $int_day = (int) $date->format('d');
-    $int_month = (int) $date->format('m');
-    $int_year = (int) $date->format('Y');
-    
-    $mindate = clone $date;
-    $srary = TimeFunctions::GetDayStart($date);
-    $mindate->setTime ( $srary[0] , $srary[1]);
-
-    $maxdate = clone $date;
-    $srary = TimeFunctions::GetDayEnd($date);
-    $maxdate->setTime ( $srary[0] , $srary[1]);
-    
-    // Zunächst alle Flugzeuge für den Mandanten ermitteln
-    $planes = Planes::GetAllPlanesAsObject($em, $clientid);
-    if ($planes) {
-      $message = '';
-      // Über alle Flugzeuge iterieren
-      foreach ($planes as $plane) 
-      {
-        // Alle Buchungen für das Flugzeug und den Tag ermitteln
-        $bookings = Bookings::GetBookingsForOneDayAsObjects ($em, $int_day, $int_month, $int_year, $clientid, $plane->getId());
-        $bookinggaps = Bookings::GetBookingGaps($bookings, $mindate, $maxdate);
-        
-        // Jetzt den Anzeigestring zusammenbauen
-        if (count($bookinggaps) > 0 && $plane)
-        {
-          // Flugzeugname ausgeben
-          $message = $message . "<b>" .$plane->getKennung() . '</b> ';
-          foreach($bookinggaps as $bookinggap) 
-          {
-            // Lücken anfügen
-            $message = $message . $bookinggap->getStart()->format('G:i-') . $bookinggap->getEnd()->format('G:i ');
-          }
-          // Zeilenumbruch für HTML-Textarea
-          //$message = $message . "\r\n";
-          $message = $message . "<br>";
-        }
-        
-      }
-    }
-    return $message;
-  }
-
   /**
-   * Schnelle Variante fuer "Naechste freie Termine": liefert die freien Luecken
-   * EINES Flugzeugs ueber einen Zeitraum – mit EINER Bereichsabfrage statt pro
-   * Tag die Verfuegbarkeit ALLER Flugzeuge zu berechnen. Tagesfenster
-   * sonnenstandsbasiert (wie GetAllAvailablePlanesForADate).
+   * "Naechste freie Termine": liefert die freien Luecken EINES Flugzeugs ueber
+   * einen Zeitraum mit EINER Bereichsabfrage. Tagesfenster sonnenstandsbasiert.
    *
    * @return array<string, array<int, array{0:int,1:int}>> ['Y-m-d' => [[startMin,endMin], ...]]
    */
@@ -618,75 +519,6 @@ class Bookings
       return (string) $m->getAircraftid() <=> (string) $n->getAircraftid();
   }
   
-  public static function _cmpAircraft($m, $n) {
-    // Sortieren nach Flugzeug und Datum
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-    
-    if ($m->getAircraftid() == $n->getAircraftid()) 
-    {
-      // Flugzeuge sind identisch
-      if ($date_m == $date_n) 
-      {
-        // Es ist auch der gleiche Tag
-        return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-      }
-      else
-      {  
-        // Tage sind nicht identisch
-        return ($date_m < $date_n) ? -1 : 1;
-      }  
-      
-    }
-    return ($m->getAircraftid() < $n->getAircraftid()) ? -1 : 1;
-  }
-  
-  public static function _cmpFlightinstructor($m, $n) {
-    // Sortieren nach Fluglehrer und Datum
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-    
-    if ($m->getFlightinstructor() == $n->getFlightinstructor()) 
-    {
-      // Fluglehrer sind identisch
-      if ($date_m == $date_n) 
-      {
-        // Es ist auch der gleiche Tag
-        return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-      }
-      else
-      {  
-        // Tage sind nicht identisch
-        return ($date_m < $date_n) ? -1 : 1;
-      }  
-      
-    }
-    return ($m->getFlightinstructor() < $n->getFlightinstructor()) ? -1 : 1;
-  }
-  
-  public static function _cmpUser($m, $n) {
-    // Sortieren nach Flugzeug und Datum
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-           
-    if (strcasecmp(Users::GetUserNameForAlphabeticOrder(self::$em, $m->getClientID(), $m->getCreatedbyuserid()), Users::GetUserNameForAlphabeticOrder(self::$em, $n->getClientID(), $n->getCreatedbyuserid())) == 0) 
-    {
-      // Nutzer sind identisch
-      if ($date_m == $date_n) 
-      {
-        // Es ist auch der gleiche Tag
-        return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-      }
-      else
-      {  
-        // Tage sind nicht identisch
-        return ($date_m < $date_n) ? -1 : 1;
-      }  
-      
-    }
-    return (strcasecmp(Users::GetUserNameForAlphabeticOrder(self::$em, $m->getClientID(), $m->getCreatedbyuserid()), Users::GetUserNameForAlphabeticOrder(self::$em, $n->getClientID(), $n->getCreatedbyuserid())) < 0) ? -1 : 1;
-  }
-  
   public static function GetBookingsForGeneralView ($em, $command, $clientid, $userID = null)
   {
     setlocale(LC_TIME, 'de_DE.UTF-8', 'de_DE@euro', 'de_DE', 'de', 'ge');
@@ -694,9 +526,6 @@ class Bookings
     
     switch ($command) {
       case 'date':
-      case 'fi':
-      case 'planes':
-      case 'users':
       case 'training':
       case 'own':
       case 'own_fi':       // wie 'own', aber inkl. Buchungen, bei denen man Fluglehrer ist (PWA)
@@ -755,7 +584,7 @@ class Bookings
     $querystring .= "(b.itemstart < :day_start and b.itemstop > :day_end))"; 
     
     $querystring .= "and " . self::ACTIVE_STATUS_DQL . " and b.clientid = :clientID "; 
-    if ($command == 'training' or $command == 'fi') $querystring .= "and (b.flightpurposeid = 2 or b.flightpurposeid = 5 or b.flightinstructor IS NOT NULL) "; 
+    if ($command == 'training') $querystring .= "and (b.flightpurposeid = 2 or b.flightpurposeid = 5 or b.flightinstructor IS NOT NULL) ";
     if ($command == 'own' or $command == 'own_history')
     {
       $querystring .= " and b.createdbyuserid = :userid ";
@@ -832,23 +661,13 @@ class Bookings
      
       // Array sortieren
       switch ($command) {
-        case 'planes':
-          usort($bookings, 'self::_cmpAircraft');
-          break; 
-        case 'fi':
-          usort($bookings, 'self::_cmpFlightinstructor');
-          break; 
-        case 'users':
-          self::$em = $em;
-          usort($bookings, 'self::_cmpUser');
-          break; 
         case 'own_history':
         case 'own_fi_history':
           usort($bookings, 'self::_cmpStartDateDesc');
           break;
         default:
           usort($bookings, 'self::_cmpStartDate');
-          break;  
+          break;
       }
       
       // Daten zusammenstellen
@@ -1242,44 +1061,6 @@ class Bookings
     return $bookingList;
   }
   
-  public static function GetBookingTimes ($int_day, $int_month, $int_year)
-  {
-    for ($i = 360; $i <= 1230; $i += 30) 
-    {
-      $item_start = date('H : i', mktime (0,$i,0 ,$int_month, $int_day, $int_year));
-      $bookingTimes[] = array('time' => $item_start, 'Y-m-d H:i');
-    }
-    return $bookingTimes;
-  }
-  
-  public static function CountAllBookingsForAPlane ($em, $clientid, $planeID)
-  {
-    $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 , date("m"), date("j"), date("Y")));
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart < :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'planeID' => $planeID, 'day_start' => $day_start));
-    $past = $query->getSingleScalarResult();
-    
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart >= :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'planeID' => $planeID, 'day_start' => $day_start));
-    $future = $query->getSingleScalarResult();
-    
-    return array ('past' => $past, 'future' => $future);
-  }
-  
-  public static function CountAllBookingsForAUser ($em, $clientid, $userID)
-  {
-    $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 , date("m"), date("j"), date("Y")));
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart < :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'userid' => $userID, 'day_start' => $day_start));
-    $past = $query->getSingleScalarResult();
-    
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart >= :day_start and " . self::ACTIVE_STATUS_DQL_A . "";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'userid' => $userID, 'day_start' => $day_start));
-    $future = $query->getSingleScalarResult();
-    
-    return array ('past' => $past, 'future' => $future);
-  }
-  
   public static function DeleteBooking ($em, $clientid, $id)
   {
     $booking = $em->getRepository('App\Entity\FresBooking')->findOneBy(array('clientid' => $clientid, 'id' => $id));
@@ -1289,18 +1070,6 @@ class Bookings
       $em->persist($booking);
       $em->flush();
     }
-  }
-  
-  public static function DeleteAllBookingsForAPlane ($em, $clientid, $planeID)
-  {
-    /*
-    $querystring = "DELETE App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' => $clientid, 'planeID' => $planeID));
-    $query->execute();
-    */
-    $querystring = "UPDATE App\Entity\FresBooking a SET a.status = 'flugzeug_geloescht' WHERE a.clientid = :clientID and a.aircraftid = :planeID";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' => $clientid, 'planeID' => $planeID));
-    $query->execute();
   }
   
   public static function DeleteAllBookingsForAUser ($em, $clientid, $userID)

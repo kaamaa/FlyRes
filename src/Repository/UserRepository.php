@@ -80,12 +80,6 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
         return $user;
     }
 
-    /** @deprecated since Symfony 5.3 */
-    public function loadUserByUsername(string $usernameOrEmail): ?User
-    {
-        return $this->loadUserByIdentifier($usernameOrEmail);
-    }
-
     /**
      * Persistiert den vom Security-System neu berechneten Hash beim Login
      * (Rehash-on-Login). Greift, wenn der Hasher needsRehash()=true meldet –

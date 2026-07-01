@@ -70,16 +70,6 @@ class Functions
     return '';
   }
   
-  public static function GetRole ($em, $id)
-  {
-    $function = $em->getRepository('App\Entity\FresFunction')->findOneByid($id);
-    if ($function) 
-    {
-      return $function->getRole();
-    }
-    return '';
-  }
-  
   public static function GetRoleForPriority ($em, $priority)
   {
     $function = $em->getRepository('App\Entity\FresFunction')->findOneBypriority($priority);
@@ -99,21 +89,6 @@ class Functions
       return $function->getPriority();
     }
     return '';
-  }
-  
-  public static function GetAllFunctionNames ($em)
-  {
-    $functionlist = array();
-    $functions = $em->getRepository('App\Entity\FresFunction')->findBy(array(), array('priority'=>'asc'));
-    if ($functions) 
-    {
-      foreach ($functions as $function) 
-      {
-        //$functionlist[$function->getId()] = $function->getFunction();
-        $functionlist[$function->getFunction()] = $function->getFunction();
-      }
-    }
-    return $functionlist; 
   }
   
 }

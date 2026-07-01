@@ -9,35 +9,6 @@ class Planes
   const const_geloescht = 'geloescht';
   const const_inactive = 'inactive';
   
-  public static function DeletePlane ($em, $clientid, $id)
-  {
-    //$plane = $em->getRepository('App\Entity\FresAircraft')->findOneBy(array('clientid' => $clientid, 'id' => $id));
-    $querystring = "SELECT b FROM App\Entity\FresAircraft b WHERE b.clientid = :clientID and b.id = :id and b.status <> '" . Planes::const_geloescht . "' and b.status <> '" . Planes::const_inactive . "'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'id' => $id));
-    $plane = $query->getSingleResult();
-    if ($plane)
-    {
-      Bookings::DeleteAllBookingsForAPlane($em, $clientid, $id);
-      $plane->setStatus(Planes::const_geloescht);
-      $em->persist($plane);
-      $em->flush();
-    }
-  }
-  
-  public static function SetPlaneToInactive ($em, $clientid, $id)
-  {
-    //$plane = $em->getRepository('App\Entity\FresAircraft')->findOneBy(array('clientid' => $clientid, 'id' => $id));
-    $querystring = "SELECT b FROM App\Entity\FresAircraft b WHERE b.clientid = :clientID and b.id = :id and b.status <> '" . Planes::const_geloescht . "'and b.status <> '" . Planes::const_inactive . "'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'id' => $id));
-    $plane = $query->getSingleResult();
-    if ($plane)
-    {
-      $plane->setStatus(Planes::const_inactive);
-      $em->persist($plane);
-      $em->flush();
-    }
-  }
-  
   public static function CheckIfBookingIsInAdvanceRange ($em, $clientid, $id, $bookingdate)
   {
     $querystring = "SELECT b FROM App\Entity\FresAircraft b WHERE b.clientid = :clientID and b.id = :id and b.status <> '" . Planes::const_geloescht . "'and b.status <> '" . Planes::const_inactive . "'";
@@ -142,14 +113,6 @@ class Planes
       }
     }
     return $aircraftTypeList;
-  } 
-  
-  public static function GetAircraftTypeObject ($em, $id, $clientid)
-  {
-    $querystring = "SELECT b FROM App\Entity\FresAircrafttype b WHERE b.id = :Id and b.clientid = :ClientId";
-    $query = $em->createQuery($querystring)->setParameters(array('Id' => $id, 'ClientId' => $clientid));
-    $aircraftType = $query->getSingleResult();
-    return $aircraftType;
   } 
   
   public static function GetAircraftTypeForAircraft ($em, $id, $clientid)

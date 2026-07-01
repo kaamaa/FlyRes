@@ -239,21 +239,6 @@ class Licenses
       else return FALSE;
   }  
   
-  public static function GetAllLicenceTypes ($em)
-  {
-    $licenseTypeList = array ();
-    $querystring = "SELECT b FROM App\Entity\FresLicencetype b order by b.categoryid asc, b.longname desc";
-    $query = $em->createQuery($querystring);
-    $query->setCacheable(true);
-    $licencesTypes = $query->getResult();
-    if ($licencesTypes) {
-      foreach ($licencesTypes as $licencesType) {
-        $licenseTypeList[$licencesType->getCategoryname() . ' ' . $licencesType->getLongname()] = $licencesType->getId();
-      }
-    }
-    return $licenseTypeList;
-  } 
-  
   public static function AircraftTypeRequestLicences ($em, $aircrafttype)
   {
     $licencesTypes = NULL;
