@@ -4,89 +4,94 @@
 
 {% block content %}
 <style>
-  .fp-form{display:grid;grid-template-columns:minmax(240px,1.4fr) repeat(4,minmax(90px,1fr)) auto;gap:12px;align-items:end;}
-  .fp-form label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
-  .fp-form textarea,.fp-form input{width:100%;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;}
-  .fp-form textarea{min-height:92px;resize:vertical;font-variant-numeric:tabular-nums;}
-  .fp-hint{font-size:12px;color:var(--fr-mut);margin:6px 0 16px;}
-  .fp-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;margin-top:16px;overflow-x:auto;}
+  .fp-params{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:16px;}
+  .fp-params label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+  .fp-params input{width:110px;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;}
   .fp-sec{font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;}
+  .wp-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+  .wp-num{width:22px;text-align:right;color:var(--fr-mut);font-size:12px;font-variant-numeric:tabular-nums;}
+  .wp-in{flex:0 0 240px;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;text-transform:uppercase;letter-spacing:.5px;}
+  .wp-btn{width:32px;height:32px;border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;color:var(--fr-mut);}
+  .wp-btn.ins{color:var(--fr-blue-d);} .wp-btn.del{color:var(--fr-red,#c9453b);}
+  .wp-btn:hover{background:#f2f5f8;}
+  .fp-hint{font-size:12px;color:var(--fr-mut);margin:6px 0 0;}
+  .fp-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;margin-top:16px;overflow-x:auto;}
   table.fp{border-collapse:collapse;width:100%;font-size:13px;}
   table.fp th,table.fp td{padding:7px 10px;border-bottom:1px solid var(--fr-line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
   table.fp th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);border-bottom:2px solid var(--fr-line);}
   table.fp td.l,table.fp th.l{text-align:left;}
-  table.fp tr.tot td{font-weight:800;border-top:2px solid var(--fr-line);border-bottom:none;background:#f6f9fc;}
+  table.fp tr.wp td{background:#f6f9fc;border-bottom:none;}
+  table.fp tr.wp td.l{font-size:14px;}
+  table.fp tr.wp .nm{color:var(--fr-mut);font-weight:400;margin-left:6px;}
+  table.fp tr.leg td{color:var(--fr-ink);}
+  table.fp tr.leg td.l{color:var(--fr-mut);text-align:center;}
   table.fp tr.err td{color:var(--fr-red,#c9453b);}
+  table.fp tr.tot td{font-weight:800;border-top:2px solid var(--fr-line);border-bottom:none;background:#eef3f7;}
   .fp-badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;}
-  .fp-ok{background:#eef7f0;color:var(--fr-green);}
   .fp-bad{background:#fbeeec;color:var(--fr-red,#c9453b);}
   .fp-disc{font-size:11.5px;color:var(--fr-mut);margin-top:14px;border-top:1px dashed var(--fr-line);padding-top:8px;}
 </style>
 
 <form method="post" action="{{ path('modern_flightplan') }}">
-  <div class="fp-form">
-    <div>
-      <label for="fp-route">Route (ICAO je Zeile)</label>
-      <textarea id="fp-route" name="route" placeholder="EDFV&#10;EDFZ&#10;EDFM">{{ routeText }}</textarea>
-    </div>
+  <div class="fp-params">
     <div><label>TAS (kt)</label><input type="number" name="tas" value="{{ tas|round }}" min="1" step="1"></div>
     <div><label>Wind aus (°)</label><input type="number" name="wind_dir" value="{{ windDir|round }}" min="0" max="360" step="1"></div>
     <div><label>Wind (kt)</label><input type="number" name="wind_speed" value="{{ windSpeed|round }}" min="0" step="1"></div>
     <div><label>Verbrauch (l/h)</label><input type="number" name="fuel_rate" value="{{ fuelRate|round(1) }}" min="0" step="0.5"></div>
-    <div><button type="submit" class="fr-btn">Berechnen</button></div>
   </div>
+
+  <div class="fp-sec">Route – Wegpunkte</div>
+  <div id="wp-list">
+    {% for wp in wpInputs %}
+      {% if wp is not empty %}
+      <div class="wp-row">
+        <span class="wp-num"></span>
+        <input name="waypoints[]" class="wp-in" placeholder="ICAO (z. B. EDFV)" autocomplete="off" value="{{ wp }}">
+        <button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button>
+        <button type="button" class="wp-btn del" title="Zeile löschen">✕</button>
+      </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="fp-hint">Je Zeile ein Wegpunkt (ICAO-Code). ＋ fügt eine Zeile darunter ein, ✕ löscht sie; am Ende ist immer eine leere Zeile frei. <b>Enter</b> springt in die nächste Zeile.</div>
+
+  <div style="margin-top:14px;"><button type="submit" class="fr-btn">Berechnen</button></div>
 </form>
-<div class="fp-hint">Wegpunkte als ICAO-Code (z. B. <span class="sys-mono">EDFV</span>) – eine je Zeile oder durch Leerzeichen/Komma getrennt. Daten aus der Nav-Datenbank (Flugplätze &amp; Waypoints).</div>
 
 {% if points is not empty %}
-<div class="fp-card">
-  <div class="fp-sec">Wegpunkte</div>
-  <table class="fp">
-    <tr><th class="l">ICAO</th><th class="l">Name</th><th>gefunden</th></tr>
-    {% for p in points %}
-      <tr>
-        <td class="l"><b>{{ p.input }}</b></td>
-        <td class="l">{{ p.name ?? '—' }}</td>
-        <td>{% if p.found %}<span class="fp-badge fp-ok">✓</span>{% else %}<span class="fp-badge fp-bad">nicht gefunden</span>{% endif %}</td>
-      </tr>
-    {% endfor %}
-  </table>
-</div>
-
-{% if legs is not empty %}
 <div class="fp-card">
   <div class="fp-sec">Navigations-Log</div>
   <table class="fp">
     <tr>
-      <th class="l">Von</th><th class="l">Nach</th>
+      <th class="l">Wegpunkt / Strecke</th>
       <th>Distanz</th><th>Kurs TC</th><th>Steuerkurs TH</th><th>GS</th><th>Zeit</th><th>Sprit</th>
     </tr>
-    {% for leg in legs %}
-      {% if leg.error %}
-        <tr class="err">
-          <td class="l"><b>{{ leg.from }}</b></td><td class="l"><b>{{ leg.to }}</b></td>
-          <td>{{ leg.dist is defined ? (leg.dist|round(1)) ~ ' NM' : '' }}</td>
-          <td>{{ leg.tc is defined ? '%03d°'|format(leg.tc|round) : '' }}</td>
-          <td colspan="4" class="l">⚠ {{ leg.error }}</td>
-        </tr>
-      {% else %}
-        <tr>
-          <td class="l"><b>{{ leg.from }}</b></td><td class="l"><b>{{ leg.to }}</b></td>
-          <td>{{ leg.dist|round(1) }} NM</td>
-          <td>{{ '%03d°'|format(leg.tc|round) }}</td>
-          <td>{{ '%03d°'|format(leg.th|round) }}</td>
-          <td>{{ leg.gs|round }} kt</td>
-          <td>{{ leg.timeStr }}</td>
-          <td>{{ leg.fuel|round(1) }} l</td>
-        </tr>
+    {% for p in points %}
+      <tr class="wp">
+        <td class="l"><b>{{ p.icao }}</b>{% if p.found %}<span class="nm">{{ p.name }}</span>{% else %} <span class="fp-badge fp-bad">nicht gefunden</span>{% endif %}</td>
+        <td colspan="6"></td>
+      </tr>
+      {% if not loop.last %}
+        {% set leg = legs[loop.index0] %}
+        {% if leg.error %}
+          <tr class="leg err"><td class="l">↓</td><td colspan="6" class="l">⚠ {{ leg.error }}</td></tr>
+        {% else %}
+          <tr class="leg">
+            <td class="l">↓</td>
+            <td>{{ leg.dist|round(1) }} NM</td>
+            <td>{{ '%03d°'|format(leg.tc|round) }}</td>
+            <td>{{ '%03d°'|format(leg.th|round) }}</td>
+            <td>{{ leg.gs|round }} kt</td>
+            <td>{{ leg.timeStr }}</td>
+            <td>{{ leg.fuel|round(1) }} l</td>
+          </tr>
+        {% endif %}
       {% endif %}
     {% endfor %}
     <tr class="tot">
-      <td class="l" colspan="2">Gesamt{% if not ok %} <span class="fp-badge fp-bad">unvollständig</span>{% endif %}</td>
-      <td>{{ totDist|round(1) }} NM</td>
-      <td></td><td></td><td></td>
-      <td>{{ totTimeStr }}</td>
-      <td>{{ totFuel|round(1) }} l</td>
+      <td class="l">Gesamt{% if not ok %} <span class="fp-badge fp-bad">unvollständig</span>{% endif %}</td>
+      <td>{{ totDist|round(1) }} NM</td><td></td><td></td><td></td>
+      <td>{{ totTimeStr }}</td><td>{{ totFuel|round(1) }} l</td>
     </tr>
   </table>
   <div class="fp-disc">
@@ -94,5 +99,49 @@
   </div>
 </div>
 {% endif %}
-{% endif %}
+
+<script>
+(function () {
+  var list = document.getElementById('wp-list');
+  function makeRow(val) {
+    var row = document.createElement('div');
+    row.className = 'wp-row';
+    row.innerHTML =
+      '<span class="wp-num"></span>' +
+      '<input name="waypoints[]" class="wp-in" placeholder="ICAO (z. B. EDFV)" autocomplete="off">' +
+      '<button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button>' +
+      '<button type="button" class="wp-btn del" title="Zeile löschen">✕</button>';
+    row.querySelector('.wp-in').value = val || '';
+    return row;
+  }
+  function renumber() {
+    var rows = list.querySelectorAll('.wp-row');
+    for (var i = 0; i < rows.length; i++) rows[i].querySelector('.wp-num').textContent = (i + 1) + '.';
+  }
+  function ensureTrailingEmpty() {
+    var rows = list.querySelectorAll('.wp-row');
+    var last = rows[rows.length - 1];
+    if (!last || last.querySelector('.wp-in').value.trim() !== '') list.appendChild(makeRow(''));
+    renumber();
+  }
+  list.addEventListener('click', function (e) {
+    var btn = e.target.closest('.wp-btn'); if (!btn) return;
+    var row = btn.closest('.wp-row');
+    if (btn.classList.contains('del')) { row.remove(); if (!list.querySelector('.wp-row')) list.appendChild(makeRow('')); }
+    else { var nr = makeRow(''); row.after(nr); nr.querySelector('.wp-in').focus(); }
+    ensureTrailingEmpty();
+  });
+  list.addEventListener('input', function (e) { if (e.target.classList.contains('wp-in')) ensureTrailingEmpty(); });
+  list.addEventListener('keydown', function (e) {
+    if (e.target.classList.contains('wp-in') && e.key === 'Enter') {
+      e.preventDefault();
+      var row = e.target.closest('.wp-row'); var nr = makeRow(''); row.after(nr);
+      nr.querySelector('.wp-in').focus(); ensureTrailingEmpty();
+    }
+  });
+  // Start: mindestens zwei Zeilen
+  if (!list.querySelector('.wp-row')) { list.appendChild(makeRow('')); list.appendChild(makeRow('')); }
+  ensureTrailingEmpty();
+})();
+</script>
 {% endblock %}

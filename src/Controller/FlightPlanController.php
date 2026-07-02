@@ -22,17 +22,24 @@ class FlightPlanController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_PILOT');
         $conn = $em->getConnection();
 
-        $routeText = trim((string) $request->request->get('route', ''));
         $tas       = max(1.0, (float) $request->request->get('tas', 100));
         $windDir   = fmod((float) $request->request->get('wind_dir', 0) + 360, 360);
         $windSpeed = max(0.0, (float) $request->request->get('wind_speed', 0));
         $fuelRate  = max(0.0, (float) $request->request->get('fuel_rate', 25));
 
-        // Wegpunkte: eine ICAO je Zeile bzw. durch Leerzeichen/Komma getrennt.
-        $tokens = $routeText === '' ? [] : (preg_split('/[\s,;]+/', strtoupper($routeText), -1, PREG_SPLIT_NO_EMPTY) ?: []);
+        // Eine Eingabezeile je Wegpunkt (Array). Rohliste fuer das Neu-Rendern der
+        // Zeilen, die nicht-leeren Eintraege werden fuer die Berechnung aufgeloest.
+        $wpRaw = $request->request->all('waypoints');
+        if (!is_array($wpRaw)) {
+            $wpRaw = [];
+        }
+        $wpInputs = array_map(static fn ($s) => strtoupper(trim((string) $s)), $wpRaw);
 
         $points = [];
-        foreach ($tokens as $tok) {
+        foreach ($wpInputs as $tok) {
+            if ($tok === '') {
+                continue;   // leere Zeilen werden uebersprungen (keine Luecken-Fehler)
+            }
             $row = $conn->fetchAssociative(
                 "SELECT ICAO, Airport, sLat, sLong, Type FROM tools_airports WHERE ICAO = ? "
                 . "ORDER BY CASE WHEN Type = 'A' THEN 0 ELSE 1 END LIMIT 1",
@@ -97,7 +104,7 @@ class FlightPlanController extends AbstractController
         }
 
         return $this->render('modern/flightplan.html.twig', [
-            'routeText' => $routeText,
+            'wpInputs' => $wpInputs,
             'tas' => $tas, 'windDir' => $windDir, 'windSpeed' => $windSpeed, 'fuelRate' => $fuelRate,
             'points' => $points, 'legs' => $legs,
             'totDist' => $totDist, 'totTime' => $totTime, 'totTimeStr' => $fmtTime($totTime),
