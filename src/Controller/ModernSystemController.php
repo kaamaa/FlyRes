@@ -81,6 +81,78 @@ class ModernSystemController extends AbstractController
         return $this->redirectToRoute('modern_system');
     }
 
+    /**
+     * Lizenztypen loeschen (Soft-Delete) im 3-Schritte-Ablauf. Nimmt die per
+     * Listbox gewaehlten IDs entgegen. mode='dry' -> Vorschau (Schritt 2, es
+     * wird nichts geaendert); mode='run' -> Ausfuehrung (Schritt 3): je Typ
+     * die Flugzeugtyp-Anforderungen entfernen und status='geloescht' setzen,
+     * atomar je Typ. Nur Global-Admin. POST -> CsrfOriginSubscriber.
+     */
+    public function licenceTypeDelete(Request $request, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        $ids = array_values(array_unique(array_filter(
+            array_map('intval', (array) $request->request->all('ids')),
+            static fn ($v) => $v > 0
+        )));
+        $mode = $request->request->get('mode');
+        $conn = $em->getConnection();
+
+        if (!$ids) {
+            $this->addFlash('lictypedel', ['empty' => true]);
+            return $this->redirectToRoute('modern_system');
+        }
+
+        // Detail je gewaehltem Typ (fuer Vorschau UND Ausfuehrung identisch).
+        $items = [];
+        foreach ($ids as $id) {
+            $t = $conn->fetchAssociative('SELECT id, categoryname, longname, status FROM FRes_licenceType WHERE id = ?', [$id]);
+            if (!$t) {
+                continue;
+            }
+            $items[] = [
+                'id'        => $id,
+                'name'      => trim(($t['categoryname'] ? $t['categoryname'] . ': ' : '') . $t['longname']),
+                'reqCount'  => (int) $conn->fetchOne('SELECT COUNT(*) FROM FRes_aircraftType2Licences WHERE licenceid = ?', [$id]),
+                'aktiv'     => (int) $conn->fetchOne("SELECT COUNT(*) FROM FRes_userLicences WHERE licenceid = ? AND (status IS NULL OR status <> 'geloescht')", [$id]),
+                'geloescht' => (int) $conn->fetchOne("SELECT COUNT(*) FROM FRes_userLicences WHERE licenceid = ? AND status = 'geloescht'", [$id]),
+                'already'   => ($t['status'] === 'geloescht'),
+                'reqRemoved'=> 0,
+                'done'      => false,
+                'error'     => null,
+            ];
+        }
+
+        if ($mode !== 'run') {
+            // Schritt 2: Vorschau – nichts aendern.
+            $this->addFlash('lictypedel', ['dryRun' => true, 'ids' => array_column($items, 'id'), 'items' => $items]);
+            return $this->redirectToRoute('modern_system');
+        }
+
+        // Schritt 3: ausfuehren – je Typ atomar (Anforderungen weg + soft-deaktivieren).
+        foreach ($items as &$it) {
+            if ($it['already']) {
+                $it['done'] = true;
+                continue;
+            }
+            $conn->beginTransaction();
+            try {
+                $it['reqRemoved'] = (int) $conn->executeStatement('DELETE FROM FRes_aircraftType2Licences WHERE licenceid = ?', [$it['id']]);
+                $conn->executeStatement("UPDATE FRes_licenceType SET status = 'geloescht' WHERE id = ?", [$it['id']]);
+                $conn->commit();
+                $it['done'] = true;
+            } catch (\Throwable $e) {
+                $conn->rollBack();
+                $it['error'] = $e->getMessage();
+            }
+        }
+        unset($it);
+
+        $this->addFlash('lictypedel', ['dryRun' => false, 'items' => $items]);
+        return $this->redirectToRoute('modern_system');
+    }
+
     /** Rohe phpinfo()-Ausgabe (eigenes Dokument fuer das iframe). */
     public function phpinfo(): Response
     {

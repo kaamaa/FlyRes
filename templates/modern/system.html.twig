@@ -205,24 +205,81 @@
 </div>
 {% endif %}
 
-{# ---------- Lizenztypen: Nutzungs-Übersicht (nur Anzeige, Global-Admin) ---------- #}
+{# ---------- Lizenztypen löschen (3 Schritte, nur Global-Admin) ---------- #}
 {% if lictype is not null %}
-<div class="sys-sec">Lizenztypen – Nutzungsübersicht</div>
+<div class="sys-sec">Lizenztypen löschen</div>
 
+{# Schritt 1: Auswahl – kommt immer zuerst #}
 <div class="sys-card">
   <div class="sys-hint" style="margin-bottom:10px;">
-    Lizenztypen nach Nutzung – die <b>am wenigsten genutzten stehen oben</b>. Reine Anzeige.
-    Jeder Eintrag nennt ausgeschrieben: <b>aktive Inhaber</b> (Piloten mit derzeit gültiger Lizenz),
-    <b>frühere/gelöschte</b> (bereits gelöschte Nutzer-Lizenzen dieses Typs) und von wie vielen
-    <b>Flugzeugtypen</b> der Typ als Pflichtlizenz verlangt wird.
+    <b>Schritt 1 – Auswahl:</b> Lizenztyp(en) in der Liste markieren (mehrere mit <span class="sys-mono">Strg</span>/<span class="sys-mono">⌘</span> bzw. <span class="sys-mono">Umschalt</span>).
+    Die <b>am wenigsten genutzten stehen oben</b>; jeder Eintrag nennt aktive Inhaber, frühere/gelöschte Lizenzen und von wie vielen Flugzeugtypen er verlangt wird.<br>
+    Danach <b>Schritt 2 – Vorschau</b> ansehen, erst dann erscheint <b>Schritt 3 – Löschen</b>.
+    Löschen = Soft-Delete: der Typ verschwindet aus den Auswahllisten und seine Flugzeugtyp-Anforderungen werden entfernt; bestehende Nutzer-Lizenzen und die Historie bleiben erhalten (per DB reversibel).
     Insgesamt <b>{{ lictype.total }}</b> Typen{% if lictype.unused > 0 %}, davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
   </div>
-  <select size="1" style="width:100%;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;">
-    {% for t in lictype.types %}
-      <option>{{ t.label }}</option>
-    {% endfor %}
-  </select>
+  <form method="post" action="{{ path('modern_system_lictype_delete') }}">
+    <select name="ids[]" multiple required size="{{ min(max(lictype.types|length, 4), 12) }}"
+            style="width:100%;padding:6px 8px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;">
+      {% for t in lictype.types %}
+        <option value="{{ t.id }}">{{ t.label }}</option>
+      {% endfor %}
+    </select>
+    <div style="margin-top:10px;">
+      <button type="submit" name="mode" value="dry" class="fr-btn ghost">Schritt 2: Vorschau anzeigen →</button>
+    </div>
+  </form>
 </div>
+
+{# Schritt 2 (Ergebnis) + Schritt 3 (Löschen-Button) – erscheint erst nach der Vorschau #}
+{% for f in app.flashes('lictypedel') %}
+  {% if f.empty is defined and f.empty %}
+    <div class="sys-card" style="border-color:#e6ddbf;background:#fbf7ec;margin-top:12px;">
+      <div style="font-weight:700;">Nichts ausgewählt</div>
+      <div class="sys-hint">Bitte in Schritt 1 mindestens einen Lizenztyp markieren.</div>
+    </div>
+  {% elseif f.dryRun %}
+    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-top:12px;">
+      <div style="font-weight:700;color:var(--fr-green);">Schritt 2 – Vorschau (es wurde nichts geändert)</div>
+      <div class="sys-hint" style="margin:4px 0 8px;">Folgende <b>{{ f.items|length }}</b> Lizenztyp(en) hast du gewählt – sie würden gelöscht (deaktiviert):</div>
+      <ul style="margin:0 0 10px;padding-left:20px;line-height:1.7;">
+        {% for it in f.items %}
+          <li>
+            <b>{{ it.name }}</b>
+            {% if it.already %}
+              — <span class="sys-mono">bereits deaktiviert</span> (wird übersprungen)
+            {% else %}
+              — {{ it.reqCount }} Flugzeugtyp-Anforderung(en) werden entfernt · Inhaber: {{ it.aktiv }} aktiv, {{ it.geloescht }} gelöscht
+              {% if it.aktiv > 0 %}<b style="color:var(--fr-red,#c9453b);"> ⚠ {{ it.aktiv }} aktive Inhaber!</b>{% endif %}
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+      {% if f.ids is not empty %}
+      <form method="post" action="{{ path('modern_system_lictype_delete') }}"
+            onsubmit="return confirm('Schritt 3: {{ f.ids|length }} Lizenztyp(en) jetzt löschen?\n\nEntfernt deren Flugzeugtyp-Anforderungen und deaktiviert sie (Soft-Delete, reversibel).');">
+        {% for id in f.ids %}<input type="hidden" name="ids[]" value="{{ id }}">{% endfor %}
+        <input type="hidden" name="mode" value="run">
+        <button type="submit" class="fr-btn" style="background:#fff;color:var(--fr-red,#c9453b);border:1px solid var(--fr-red,#c9453b);">Schritt 3: Jetzt löschen ({{ f.ids|length }})</button>
+      </form>
+      {% endif %}
+    </div>
+  {% else %}
+    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-top:12px;">
+      <div style="font-weight:700;color:var(--fr-green);">Schritt 3 abgeschlossen ✓ – Lizenztyp(en) gelöscht</div>
+      <ul style="margin:6px 0 0;padding-left:20px;line-height:1.7;">
+        {% for it in f.items %}
+          <li>
+            <b>{{ it.name }}</b> —
+            {% if it.done and it.already %}war bereits deaktiviert
+            {% elseif it.done %}{{ it.reqRemoved }} Flugzeugtyp-Anforderung(en) entfernt, deaktiviert
+            {% else %}<b style="color:var(--fr-red,#c9453b);">Fehler: {{ it.error|default('unbekannt') }}</b>{% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+{% endfor %}
 {% endif %}
 
 {# ---------- Datenbank-Backup (nur Global-Admin: mandantenuebergreifend) ---------- #}
