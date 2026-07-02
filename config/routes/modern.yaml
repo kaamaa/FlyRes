@@ -281,6 +281,12 @@ modern_mandant_edit:
     requirements:
         id: '\d+'
 
+# --- Sonnenzeiten (Sunrise/Sunset) – nur ROLE_GLOBAL_ADMIN ---
+modern_sunrise:
+    path: /web/sonnenzeiten
+    controller: App\Controller\Sunrise_SunsetController::webView
+    methods: [GET, POST]
+
 # --- System-Diagnose (nur ROLE_SYSTEM_ADMIN) ---
 modern_system:
     path: /web/system

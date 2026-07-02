@@ -1,6 +1,6 @@
 # Klassisches Frontend entfernt. Hier bleiben nur die von Web + Mobile geteilten
-# Login/Logout-Routen und das eigenstaendige Sonnenauf-/untergang-Tool.
-# Web-Routen: config/routes/modern.yaml · Mobile-API: config/routes/api.yaml
+# Login/Logout-Routen. Web-Routen: config/routes/modern.yaml · Mobile-API: config/routes/api.yaml
+# (Sonnenzeiten-Werkzeug ist jetzt im Web-Frontend: modern_sunrise, nur Global-Admin.)
 
 # Startseite -> modernes Dashboard
 _default:
@@ -9,10 +9,6 @@ _default:
     defaults:
         route: modern_dashboard
         permanent: false
-
-_Sunrise_Sunset:
-    path:  /sunrise_sunset
-    controller: App\Controller\Sunrise_SunsetController::ViewAction
 
 app_login:
     path:   /login

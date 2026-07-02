@@ -411,8 +411,10 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
    * @param Request $request The HTTP request containing form data
    * @return string HTML table with sunrise and sunset information
    */
-  public function ViewAction(Request $request, EntityManagerInterface $em)
+  public function webView(Request $request, EntityManagerInterface $em)
   {
+    // Nur fuer Global-System-Administratoren (mandantenuebergreifendes Werkzeug).
+    $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
     ini_set('memory_limit', '256M');
     // Setze die Standardzeitzone auf UTC 
     date_default_timezone_set('UTC');
@@ -483,7 +485,7 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
       $htmlTable = "";
       $title = "No Airports available";
     }
-    return $this->render('sunrise_sunset/view.html.twig', [ 
+    return $this->render('modern/sunrise.html.twig', [
       'form' => $form->createView(), 'htmlTable' => $htmlTable, 'title' => $title
     ]);
   }

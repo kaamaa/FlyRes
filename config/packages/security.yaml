@@ -61,7 +61,6 @@ security:
                 
 
     access_control:
-        - { path: ^/sunrise_sunset, roles: PUBLIC_ACCESS }
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/logout, roles: PUBLIC_ACCESS }
         - { path: ^/mobile, roles: PUBLIC_ACCESS }

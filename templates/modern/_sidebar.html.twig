@@ -51,6 +51,7 @@
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
       <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
       <a class="fr-nav {{ route starts with 'modern_licencetype' ? 'on' : '' }}" href="{{ path('modern_licencetypes') }}">{{ ui.ic('award') }} Lizenztypen</a>
+      <a class="fr-nav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ ui.ic('clock') }} Sonnenzeiten</a>
     {% endif %}
     <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
   {% endif %}
