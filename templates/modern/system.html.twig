@@ -249,8 +249,13 @@
             {% if it.already %}
               — <span class="sys-mono">bereits deaktiviert</span> (wird übersprungen)
             {% else %}
-              — {{ it.reqCount }} Flugzeugtyp-Anforderung(en) werden entfernt · Inhaber: {{ it.aktiv }} aktiv, {{ it.geloescht }} gelöscht
+              — Inhaber: {{ it.aktiv }} aktiv, {{ it.geloescht }} gelöscht
               {% if it.aktiv > 0 %}<b style="color:var(--fr-red,#c9453b);"> ⚠ {{ it.aktiv }} aktive Inhaber!</b>{% endif %}
+              {% if it.reqCount > 0 %}
+                <div class="sys-hint" style="margin:2px 0 0 2px;">Wird als Pflichtlizenz entfernt von <b>{{ it.reqCount }}</b> Flugzeugtyp(en): {{ it.reqNames|join(', ') }}</div>
+              {% else %}
+                <div class="sys-hint" style="margin:2px 0 0 2px;">Keine Flugzeugtyp-Anforderung betroffen.</div>
+              {% endif %}
             {% endif %}
           </li>
         {% endfor %}

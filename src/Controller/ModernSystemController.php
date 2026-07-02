@@ -111,10 +111,23 @@ class ModernSystemController extends AbstractController
             if (!$t) {
                 continue;
             }
+            // Konkrete Flugzeugtypen, die diesen Lizenztyp als Pflicht verlangen
+            // (werden beim Loeschen entfernt) – mit Mandant, da mandantenuebergreifend.
+            $reqNames = [];
+            foreach ($conn->fetchAllAssociative(
+                'SELECT at.shortname, at.clientid FROM FRes_aircraftType2Licences a2l '
+                . 'LEFT JOIN FRes_aircraftType at ON at.id = a2l.aircrafttypeid '
+                . 'WHERE a2l.licenceid = ? ORDER BY at.shortname',
+                [$id]
+            ) as $rr) {
+                $reqNames[] = ($rr['shortname'] ?: '(unbekannt)') . ' [Mandant ' . $rr['clientid'] . ']';
+            }
+
             $items[] = [
                 'id'        => $id,
                 'name'      => trim(($t['categoryname'] ? $t['categoryname'] . ': ' : '') . $t['longname']),
-                'reqCount'  => (int) $conn->fetchOne('SELECT COUNT(*) FROM FRes_aircraftType2Licences WHERE licenceid = ?', [$id]),
+                'reqCount'  => count($reqNames),
+                'reqNames'  => $reqNames,
                 'aktiv'     => (int) $conn->fetchOne("SELECT COUNT(*) FROM FRes_userLicences WHERE licenceid = ? AND (status IS NULL OR status <> 'geloescht')", [$id]),
                 'geloescht' => (int) $conn->fetchOne("SELECT COUNT(*) FROM FRes_userLicences WHERE licenceid = ? AND status = 'geloescht'", [$id]),
                 'already'   => ($t['status'] === 'geloescht'),
