@@ -74,17 +74,80 @@
   </div>
 {% endif %}
 
-  {# Auto-Hoehe an ein einbettendes iframe melden (Homepage-Einbindung). #}
+  {# Auto-Hoehe an ein einbettendes iframe melden (robust: ResizeObserver +
+     MutationObserver + Image-Load + Intervall-Rueckfall). Misst bevorzugt den
+     Inhaltscontainer (.fr-embed / .fr-pubmain), damit kein Leerraum entsteht. #}
   <script>
-  (function(){
-    if (window.parent === window) return;
+  (function () {
+    if (window.parent === window) { return; }   // nur wenn im iframe eingebettet
+
     var last = 0;
-    function send(){
-      var h = Math.ceil(document.documentElement.scrollHeight) + 8;
-      if (Math.abs(h - last) > 2){ last = h; window.parent.postMessage({ flyresHeight: h }, '*'); }
+    var RESERVE = 8;   // kleine Reserve gegen abschliessende Abstaende
+
+    function fallbackHeight() {
+      var b = document.body, e = document.documentElement;
+      return Math.max(
+        b ? b.scrollHeight : 0, b ? b.offsetHeight : 0,
+        e ? e.scrollHeight : 0, e ? e.offsetHeight : 0
+      );
     }
+
+    function container() {
+      return document.querySelector('.fr-embed')
+          || document.querySelector('.fr-pubmain')
+          || document.querySelector('.inhalt');
+    }
+
+    function measure() {
+      var off = window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0;
+      var c = container();
+      if (c) {
+        var h = c.getBoundingClientRect().bottom + off;
+        if (h > 50) { return Math.ceil(h + RESERVE); }
+      }
+      return Math.ceil(fallbackHeight());
+    }
+
+    function send() {
+      var v = measure();
+      if (v > 0 && Math.abs(v - last) > 2) {
+        last = v;
+        window.parent.postMessage({ flyresHeight: v }, '*');
+      }
+    }
+
+    function init() {
+      send();
+      if (window.ResizeObserver) {
+        try {
+          var ro = new ResizeObserver(send);
+          ro.observe(document.documentElement);
+          if (document.body) { ro.observe(document.body); }
+          var c = container();
+          if (c) { ro.observe(c); }
+        } catch (e) {}
+      }
+      if (window.MutationObserver && document.body) {
+        try {
+          new MutationObserver(send).observe(document.body, {
+            childList: true, subtree: true, attributes: true, characterData: true
+          });
+        } catch (e) {}
+      }
+      var imgs = document.images || [];
+      for (var i = 0; i < imgs.length; i++) {
+        if (!imgs[i].complete) { imgs[i].addEventListener('load', send); }
+      }
+      setInterval(send, 1000);   // robuster Rueckfall
+    }
+
+    window.addEventListener('resize', send);
     window.addEventListener('load', send);
-    if (window.ResizeObserver){ try { new ResizeObserver(send).observe(document.body); } catch(e){} }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
   })();
   </script>
 </body>
