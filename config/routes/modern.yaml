@@ -283,11 +283,11 @@ modern_mandant_edit:
 
 # --- VFR-Flugplanung – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
 modern_flightplan:
-    path: /web/flugplanung
+    path: /web/flight-planning
     controller: App\Controller\FlightPlanController::plan
     methods: [GET, POST]
 modern_flightplan_resolve:
-    path: /web/flugplanung/aufloesen
+    path: /web/flight-planning/resolve
     controller: App\Controller\FlightPlanController::resolve
     methods: POST
 
@@ -297,13 +297,13 @@ modern_wb:
     controller: App\Controller\WeightBalanceController::index
     methods: GET
 modern_wb_calc:
-    path: /web/weight-balance/berechnen
+    path: /web/weight-balance/calculate
     controller: App\Controller\WeightBalanceController::calc
     methods: POST
 
 # --- Sonnenzeiten (Sunrise/Sunset) – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
 modern_sunrise:
-    path: /web/sonnenzeiten
+    path: /web/sunrise-sunset
     controller: App\Controller\Sunrise_SunsetController::webView
     methods: [GET, POST]
 

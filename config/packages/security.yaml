@@ -75,8 +75,8 @@ security:
         # der Homepage). Rechnung/Aufloesung laeuft server-seitig -> keine Rohdaten
         # werden ausgeliefert. CSRF-Origin-Schutz (CsrfOriginSubscriber) greift weiter.
         - { path: ^/web/weight-balance, roles: PUBLIC_ACCESS }
-        - { path: ^/web/flugplanung, roles: PUBLIC_ACCESS }
-        - { path: ^/web/sonnenzeiten, roles: PUBLIC_ACCESS }
+        - { path: ^/web/flight-planning, roles: PUBLIC_ACCESS }
+        - { path: ^/web/sunrise-sunset, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_GUEST }
         # Hinweis: weitere Pfad-Rollen werden in den Controllern via denyAccessUnlessGranted()
         # geprueft (z.B. ROLE_ADMIN fuer Flugzeug-/Nutzer-/Typ-Verwaltung, ROLE_SYSTEM_ADMIN
