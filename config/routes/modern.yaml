@@ -281,6 +281,12 @@ modern_mandant_edit:
     requirements:
         id: '\d+'
 
+# --- VFR-Flugplanung – Pfad fuer alle Piloten (Menue-Eintrag nur Global-Admin) ---
+modern_flightplan:
+    path: /web/flugplanung
+    controller: App\Controller\FlightPlanController::plan
+    methods: [GET, POST]
+
 # --- Sonnenzeiten (Sunrise/Sunset) – nur ROLE_GLOBAL_ADMIN ---
 modern_sunrise:
     path: /web/sonnenzeiten
