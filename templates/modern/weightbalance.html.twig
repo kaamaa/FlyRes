@@ -1,0 +1,243 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Weight &amp; Balance{% endblock %}
+
+{% block topactions %}
+  <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF / drucken</button>
+{% endblock %}
+
+{% block content %}
+<style>
+  .wb-top{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:14px;}
+  .wb-top label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+  .wb-top select,.wb-top input{padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;}
+  .wb-top select{min-width:280px;} .wb-top input{width:96px;}
+  .wb-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:18px;align-items:start;}
+  .wb-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;}
+  table.wb{border-collapse:collapse;width:100%;font-size:13px;}
+  table.wb th,table.wb td{padding:7px 9px;border-bottom:1px solid var(--fr-line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  table.wb th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);}
+  table.wb td.l,table.wb th.l{text-align:left;}
+  table.wb td.l small{color:var(--fr-mut);}
+  table.wb input{width:76px;padding:6px 8px;border:1px solid var(--fr-line);border-radius:7px;font:inherit;text-align:right;}
+  table.wb input.over{border-color:var(--fr-red,#c9453b);background:#fdf1ef;}
+  table.wb tr.sum td{font-weight:800;border-top:2px solid var(--fr-line);background:#f6f9fc;}
+  .wb-kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .wb-kpi .k{flex:1;min-width:110px;background:#fff;border:1px solid var(--fr-line);border-radius:12px;padding:11px 13px;}
+  .wb-kpi .k.hero{background:linear-gradient(135deg,var(--fr-blue),var(--fr-blue-d));color:#fff;border:none;}
+  .wb-kpi .v{font-size:23px;font-weight:800;line-height:1;} .wb-kpi .t{font-size:11px;color:var(--fr-mut);margin-top:5px;}
+  .wb-kpi .k.hero .t{color:#e6eef6;}
+  .verdict{display:inline-flex;align-items:center;gap:8px;font-weight:800;padding:8px 14px;border-radius:10px;font-size:15px;margin-bottom:12px;}
+  .verdict.ok{background:#eaf7ef;color:var(--fr-green);} .verdict.bad{background:#fbeeec;color:var(--fr-red,#c9453b);}
+  .wb-warn{list-style:none;margin:10px 0 0;padding:0;}
+  .wb-warn li{color:var(--fr-red,#c9453b);font-size:12.5px;padding:2px 0;}
+  .wb-note{font-size:11.5px;color:var(--fr-mut);margin-top:12px;border-top:1px dashed var(--fr-line);padding-top:8px;}
+  .wb-src{font-size:11px;color:var(--fr-mut);margin-top:4px;}
+  @media print{ .fr-side,.fr-top{display:none!important;} .fr-app,.fr-main{display:block!important;} .fr-body{padding:0!important;}
+    .wb-grid{grid-template-columns:1fr;} .wb-card{border:none;} table.wb input{border:none;background:transparent;} }
+  @media (max-width:900px){ .wb-grid{grid-template-columns:1fr;} }
+</style>
+
+<div class="wb-top">
+  <div>
+    <label>Flugzeugmuster ({{ aircraft|length }})</label>
+    <select id="wb-ac">
+      <option value="">— Muster wählen —</option>
+      {% for a in aircraft %}<option value="{{ a.id }}">{{ a.label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Leermasse (kg)</label><input type="number" id="wb-em" step="0.1"></div>
+  <div><label>Leerarm (m)</label><input type="number" id="wb-ea" step="0.001"></div>
+  <div><label>Trip-Fuel (l)</label><input type="number" id="wb-trip" step="1" value="0"></div>
+</div>
+
+<div id="wb-body" style="display:none">
+  <div class="wb-grid">
+    <div class="wb-card">
+      <table class="wb" id="wb-load"></table>
+      <div class="wb-src" id="wb-src"></div>
+    </div>
+    <div>
+      <div class="wb-kpi" id="wb-kpi"></div>
+      <div id="wb-verdict"></div>
+      <div class="wb-card" style="padding:10px"><div id="wb-env"></div></div>
+      <ul class="wb-warn" id="wb-warn"></ul>
+    </div>
+  </div>
+  <div class="wb-note"><b>Achtung:</b> Prototyp mit Typdaten aus einer separaten App. Für den Betrieb das verifizierte AFM/Wägeblatt des konkreten Flugzeugs verwenden – Leermasse/-arm oben anpassen. Benutzung auf eigene Gefahr.</div>
+</div>
+<div id="wb-empty" class="wb-note">Bitte oben ein Flugzeugmuster wählen.</div>
+
+<script>
+(function () {
+  var TYPE_URL = '{{ path('modern_wb_type', {id: '__ID__'}) }}';
+  var KGM_TO_LBIN1000 = 0.0867962;
+  var type = null, cache = {};
+
+  // ---------- Rechen-Engine (Port von WbCalc) ----------
+  function computePoint(t, em, ea, load, burnL) {
+    var mass = em, moment = em * ea, remain = burnL || 0;
+    var st = t.stations;
+    for (var i = 0; i < st.length; i++) {
+      var s = st[i], v = load[s.id] || 0, m;
+      if (s.density != null) { var b = Math.min(remain, v); remain -= b; m = (v - b) * s.density; }
+      else if (s.oilDensity != null) { m = v * s.oilDensity; }
+      else { m = v; }
+      mass += m; moment += m * s.arm;
+    }
+    return { mass: mass, moment: moment, cg: mass ? moment / mass : 0 };
+  }
+  function cgToPctMac(t, cgM) { var g = t.geometry; if (!g || g.macLengthM == null || g.macLengthM == 0 || g.macLeadingEdgeM == null) return 0; return (cgM - g.macLeadingEdgeM) / g.macLengthM * 100; }
+  function envX(t, pt) {
+    var ax = t.envelope.xAxis; if (!ax) return pt.moment;
+    if (ax.kind == 'moment') { return ax.unit == 'lbIn1000' ? pt.moment * KGM_TO_LBIN1000 : pt.moment; }
+    if (ax.kind == 'cg') { if (ax.unit == 'mm') return pt.cg * 1000; if (ax.unit == 'in') return pt.cg * 39.3700787; if (ax.unit == 'percentMAC') return cgToPctMac(t, pt.cg); return pt.cg; }
+    if (ax.kind == 'cgPercentMac') return cgToPctMac(t, pt.cg);
+    return pt.moment;
+  }
+  function envY(t, pt) { var ax = t.envelope.yAxis; if (ax && ax.kind == 'mass' && ax.unit == 'lb') return pt.mass * 2.20462262; return pt.mass; }
+  function polys(t) {
+    var e = t.envelope; if (!e) return [];
+    if (e.categories) {
+      var cs = e.categories.filter(function (c) { return c.check !== false && c.enabled !== false && c.polygons && c.polygons.some(function (p) { return p.points && p.points.length >= 3; }); });
+      if (!cs.length) return [];
+      var c = e.defaultCategory ? (cs.filter(function (x) { return x.id == e.defaultCategory; })[0] || cs[0]) : cs[0];
+      return c.polygons.filter(function (p) { return p.points && p.points.length >= 3; });
+    }
+    if (e.polygons) return e.polygons.filter(function (p) { return p.points && p.points.length >= 3; });
+    if (e.points) return [{ points: e.points }];
+    return [];
+  }
+  function inPoly(x, y, pts) { var ins = false, j = pts.length - 1; for (var i = 0; i < pts.length; i++) { var xi = pts[i][0], yi = pts[i][1], xj = pts[j][0], yj = pts[j][1]; if (((yi > y) != (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi)) ins = !ins; j = i; } return ins; }
+  function inside(t, x, y) { var ps = polys(t); for (var i = 0; i < ps.length; i++) if (inPoly(x, y, ps[i].points)) return true; return false; }
+
+  // ---------- UI-Helfer ----------
+  function isFuel(s) { return s.density != null || s.oilDensity != null; }
+  function axisLabel(ax, fb) { if (!ax) return fb; var u = { m: 'm', mm: 'mm', in: 'in', percentMAC: '%MAC', kgm: 'kg·m', lbIn1000: 'lb·in/1000', kg: 'kg', lb: 'lb' }[ax.unit] || ax.unit; var k = { moment: 'Moment', cg: 'Schwerpunkt', cgPercentMac: 'Schwerpunkt', mass: 'Masse' }[ax.kind] || fb; return k + ' (' + u + ')'; }
+  function n1(x) { return (Math.round(x * 10) / 10).toLocaleString('de-DE'); }
+
+  function loadInputs() {
+    var out = {};
+    document.querySelectorAll('#wb-load input.st').forEach(function (el) { out[el.getAttribute('data-id')] = parseFloat(el.value) || 0; });
+    return out;
+  }
+
+  function buildTable() {
+    var h = '<tr><th class="l">Station</th><th>Arm</th><th>Eingabe</th><th>Masse</th><th>Moment</th></tr>';
+    h += '<tr><td class="l"><b>Leergewicht</b><br><small>Wägung</small></td><td>—</td><td><span style="color:var(--fr-mut)">oben</span></td><td id="wb-emm"></td><td id="wb-emmom"></td></tr>';
+    for (var i = 0; i < type.stations.length; i++) {
+      var s = type.stations[i], unit = isFuel(s) ? 'l' : 'kg';
+      var mx = isFuel(s) ? (s.maxLiters != null ? s.maxLiters + ' l' : '') : (s.maxKg != null ? s.maxKg + ' kg' : '');
+      h += '<tr><td class="l"><b>' + esc(s.label) + '</b>' + (mx ? '<br><small>max ' + mx + '</small>' : '') + '</td>' +
+           '<td>' + n1(s.arm) + ' m</td>' +
+           '<td><input class="st" type="number" step="0.1" min="0" data-id="' + esc(s.id) + '" value="0"> ' + unit + '</td>' +
+           '<td class="m-' + esc(s.id) + '"></td><td class="mom-' + esc(s.id) + '"></td></tr>';
+    }
+    h += '<tr class="sum"><td class="l">Start (Take-off)</td><td></td><td></td><td id="wb-tom"></td><td id="wb-tomom"></td></tr>';
+    document.getElementById('wb-load').innerHTML = h;
+    document.querySelectorAll('#wb-load input.st').forEach(function (el) { el.addEventListener('input', recompute); });
+  }
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function recompute() {
+    if (!type) return;
+    var em = parseFloat(document.getElementById('wb-em').value) || 0;
+    var ea = parseFloat(document.getElementById('wb-ea').value) || 0;
+    var trip = parseFloat(document.getElementById('wb-trip').value) || 0;
+    var load = loadInputs();
+
+    // Zeilenmassen + Limit-Markierung
+    document.getElementById('wb-emm').textContent = n1(em) + ' kg';
+    document.getElementById('wb-emmom').textContent = Math.round(em * ea).toLocaleString('de-DE');
+    var warns = [];
+    for (var i = 0; i < type.stations.length; i++) {
+      var s = type.stations[i], v = load[s.id] || 0, m;
+      if (s.density != null) { m = v * s.density; } else if (s.oilDensity != null) { m = v * s.oilDensity; } else { m = v; }
+      document.querySelector('#wb-load .m-' + cssid(s.id)).textContent = n1(m) + ' kg';
+      document.querySelector('#wb-load .mom-' + cssid(s.id)).textContent = Math.round(m * s.arm).toLocaleString('de-DE');
+      var cap = isFuel(s) ? s.maxLiters : s.maxKg;
+      var el = document.querySelector('#wb-load input[data-id="' + s.id + '"]');
+      if (cap != null && v > cap) { el.classList.add('over'); warns.push(esc(s.label) + ' über Limit (' + cap + ')'); } else { el.classList.remove('over'); }
+    }
+
+    var to = computePoint(type, em, ea, load, 0);
+    var ldg = computePoint(type, em, ea, load, trip);
+    document.getElementById('wb-tom').textContent = n1(to.mass) + ' kg';
+    document.getElementById('wb-tomom').textContent = Math.round(to.moment).toLocaleString('de-DE');
+
+    var lim = type.limits, mtom = lim.mtom, mlm = lim.mlm != null ? lim.mlm : mtom;
+    // Gesamt-Fuel für Trip-Plausibilität
+    var totFuel = 0; for (var f = 0; f < type.stations.length; f++) { if (type.stations[f].density != null) totFuel += load[type.stations[f].id] || 0; }
+    if (trip > totFuel) warns.push('Trip-Fuel > Start-Kraftstoff');
+    if (to.mass > mtom) warns.push('Startmasse > MTOM (' + mtom + ' kg)');
+    if (ldg.mass > mlm) warns.push('Landemasse > MLM (' + mlm + ' kg)');
+
+    var toX = envX(type, to), toY = envY(type, to), lX = envX(type, ldg), lY = envY(type, ldg);
+    var toIn = inside(type, toX, toY), lIn = inside(type, lX, lY);
+    if (!toIn) warns.push('Start außerhalb des Envelopes');
+    if (!lIn) warns.push('Landung außerhalb des Envelopes');
+
+    var ok = warns.length === 0;
+
+    document.getElementById('wb-kpi').innerHTML =
+      '<div class="k hero"><div class="v">' + n1(to.mass) + ' kg</div><div class="t">Startmasse · MTOM ' + mtom + '</div></div>' +
+      '<div class="k"><div class="v">' + n1(to.cg * 1000) + ' mm</div><div class="t">Schwerpunkt Start</div></div>' +
+      '<div class="k"><div class="v">' + n1(ldg.mass) + ' kg</div><div class="t">Landemasse (–' + n1(trip) + ' l)</div></div>';
+    document.getElementById('wb-verdict').innerHTML = '<div class="verdict ' + (ok ? 'ok' : 'bad') + '">' + (ok ? '✓ Innerhalb der Grenzen' : '✕ Grenzen verletzt') + '</div>';
+    document.getElementById('wb-warn').innerHTML = warns.map(function (w) { return '<li>⚠ ' + w + '</li>'; }).join('');
+    document.getElementById('wb-env').innerHTML = envSVG({ x: toX, y: toY, in: toIn }, { x: lX, y: lY, in: lIn });
+  }
+  function cssid(id) { return id.replace(/[^A-Za-z0-9_-]/g, '\\$&'); }
+
+  // ---------- Envelope-Diagramm (SVG) ----------
+  function envSVG(to, ldg) {
+    var e = type.envelope, v = e.view, ps = polys(type);
+    var w = 430, h = 300, m = { l: 52, r: 14, t: 12, b: 34 }, pw = w - m.l - m.r, ph = h - m.t - m.b;
+    function X(x) { return m.l + (x - v.xMin) / (v.xMax - v.xMin) * pw; }
+    function Y(y) { return m.t + (1 - (y - v.yMin) / (v.yMax - v.yMin)) * ph; }
+    var s = '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '">';
+    s += '<rect x="' + m.l + '" y="' + m.t + '" width="' + pw + '" height="' + ph + '" fill="#fbfcfe" stroke="#e3e8ee"/>';
+    // Ticks
+    var xt = niceTicks(v.xMin, v.xMax, 5), yt = niceTicks(v.yMin, v.yMax, 5);
+    for (var i = 0; i < xt.length; i++) { var x = X(xt[i]); s += '<line x1="' + x + '" y1="' + m.t + '" x2="' + x + '" y2="' + (m.t + ph) + '" stroke="#eef2f6"/><text x="' + x + '" y="' + (m.t + ph + 16) + '" font-size="9.5" fill="#7a8698" text-anchor="middle">' + fmtTick(xt[i]) + '</text>'; }
+    for (var k = 0; k < yt.length; k++) { var y = Y(yt[k]); s += '<line x1="' + m.l + '" y1="' + y + '" x2="' + (m.l + pw) + '" y2="' + y + '" stroke="#eef2f6"/><text x="' + (m.l - 6) + '" y="' + (y + 3) + '" font-size="9.5" fill="#7a8698" text-anchor="end">' + fmtTick(yt[k]) + '</text>'; }
+    // Polygone
+    for (var p = 0; p < ps.length; p++) { var pp = ps[p].points.map(function (q) { return X(q[0]) + ',' + Y(q[1]); }).join(' '); s += '<polygon points="' + pp + '" fill="rgba(46,158,91,.13)" stroke="#2e9e5b" stroke-width="1.6"/>'; }
+    // Punkte
+    s += '<line x1="' + X(ldg.x) + '" y1="' + Y(ldg.y) + '" x2="' + X(to.x) + '" y2="' + Y(to.y) + '" stroke="#9db4c9" stroke-dasharray="3 3"/>';
+    s += dot(X(ldg.x), Y(ldg.y), 4.5, ldg.in ? '#3b6ea5' : '#c9453b') + '<text x="' + (X(ldg.x) + 8) + '" y="' + (Y(ldg.y) + 12) + '" font-size="10" fill="#3b6ea5">Ldg</text>';
+    s += dot(X(to.x), Y(to.y), 5.5, to.in ? '#2e9e5b' : '#c9453b', '#fff') + '<text x="' + (X(to.x) + 8) + '" y="' + (Y(to.y) + 3) + '" font-size="10" fill="' + (to.in ? '#2e9e5b' : '#c9453b') + '" font-weight="700">Start</text>';
+    // Achsentitel
+    s += '<text x="' + (m.l + pw / 2) + '" y="' + (h - 3) + '" font-size="10" fill="#7a8698" text-anchor="middle">' + esc(axisLabel(e.xAxis, 'Schwerpunkt')) + '</text>';
+    s += '<text x="12" y="' + (m.t + ph / 2) + '" font-size="10" fill="#7a8698" text-anchor="middle" transform="rotate(-90 12 ' + (m.t + ph / 2) + ')">' + esc(axisLabel(e.yAxis, 'Masse')) + '</text>';
+    return s + '</svg>';
+  }
+  function dot(x, y, r, fill, stroke) { return '<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + fill + '"' + (stroke ? ' stroke="' + stroke + '" stroke-width="1.5"' : '') + '/>'; }
+  function niceTicks(a, b, n) { var step = (b - a) / n, out = []; for (var i = 0; i <= n; i++) out.push(a + step * i); return out; }
+  function fmtTick(v) { if (Math.abs(v) >= 100) return Math.round(v).toString(); if (Math.abs(v) >= 10) return (Math.round(v * 10) / 10).toString(); return (Math.round(v * 100) / 100).toString(); }
+
+  // ---------- Muster laden ----------
+  function selectType(id) {
+    if (!id) { document.getElementById('wb-body').style.display = 'none'; document.getElementById('wb-empty').style.display = ''; return; }
+    var done = function (t) {
+      type = t;
+      document.getElementById('wb-em').value = t.defaultEmptyMass != null ? t.defaultEmptyMass : '';
+      document.getElementById('wb-ea').value = t.defaultEmptyArm != null ? t.defaultEmptyArm : '';
+      document.getElementById('wb-src').textContent = t.source ? ('Quelle: ' + t.source) : '';
+      buildTable();
+      document.getElementById('wb-empty').style.display = 'none';
+      document.getElementById('wb-body').style.display = '';
+      recompute();
+    };
+    if (cache[id]) { done(cache[id]); return; }
+    fetch(TYPE_URL.replace('__ID__', id), { credentials: 'same-origin' })
+      .then(function (r) { return r.json(); })
+      .then(function (t) { if (t && !t.error) { cache[id] = t; done(t); } });
+  }
+
+  document.getElementById('wb-ac').addEventListener('change', function () { selectType(this.value); });
+  ['wb-em', 'wb-ea', 'wb-trip'].forEach(function (id) { document.getElementById(id).addEventListener('input', recompute); });
+})();
+</script>
+{% endblock %}

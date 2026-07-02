@@ -291,6 +291,18 @@ modern_flightplan_resolve:
     controller: App\Controller\FlightPlanController::resolve
     methods: POST
 
+# --- Weight & Balance – Pfad fuer alle Piloten (Menue-Eintrag nur Global-Admin) ---
+modern_wb:
+    path: /web/weight-balance
+    controller: App\Controller\WeightBalanceController::index
+    methods: GET
+modern_wb_type:
+    path: /web/weight-balance/typ/{id}
+    controller: App\Controller\WeightBalanceController::typeJson
+    methods: GET
+    requirements:
+        id: '[A-Za-z0-9_]+'
+
 # --- Sonnenzeiten (Sunrise/Sunset) – nur ROLE_GLOBAL_ADMIN ---
 modern_sunrise:
     path: /web/sonnenzeiten
