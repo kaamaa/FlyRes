@@ -89,7 +89,7 @@ class WbCalc
             'to'        => ['mass' => round(self::fromM($to['mass'], 'mass', $imp), 1),  'cg' => round(self::cgDisp($to['cg'], $imp), $imp ? 1 : 0)],
             'ldg'       => ['mass' => round(self::fromM($ldg['mass'], 'mass', $imp), 1), 'cg' => round(self::cgDisp($ldg['cg'], $imp), $imp ? 1 : 0)],
             'stations'  => $stationsOut,
-            'svg'       => self::renderSvg($type, $toX, $toY, $toIn, $lX, $lY, $lIn),
+            'svg'       => self::renderSvg($type, $toX, $toY, $toIn, $lX, $lY, $lIn, $imp),
         ];
     }
 
@@ -244,9 +244,14 @@ class WbCalc
     //  NICHT im ausgelieferten Markup. Nur die Achsen-Ticks zeigen den Bereich.
     // -------------------------------------------------------------------------
 
-    private static function renderSvg(array $t, float $toX, float $toY, bool $toIn, float $lX, float $lY, bool $lIn): string
+    private static function renderSvg(array $t, float $toX, float $toY, bool $toIn, float $lX, float $lY, bool $lIn, bool $imp): string
     {
         $e = $t['envelope']; $v = $e['view'];
+        // Achsen in die gewaehlte Einheit umrechnen. Nur Tick-Zahlen + Titel aendern sich;
+        // die Form bleibt identisch, weil Ansichtsfenster UND Punkte gleich skalieren
+        // (dieselben Pixelpositionen) -> wir skalieren daher nur die angezeigten Werte.
+        [$xFactor, $xUnit, $xPrefix] = self::axisScale($e['xAxis'] ?? null, $imp, 'Schwerpunkt');
+        [$yFactor, $yUnit, $yPrefix] = self::axisScale($e['yAxis'] ?? null, $imp, 'Masse');
         $w = 430; $h = 300; $ml = 52; $mr = 14; $mt = 12; $mb = 34;
         $pw = $w - $ml - $mr; $ph = $h - $mt - $mb;
         $X = static fn ($x) => $ml + ($x - $v['xMin']) / ($v['xMax'] - $v['xMin']) * $pw;
@@ -260,10 +265,10 @@ class WbCalc
         for ($i = 0; $i <= 5; $i++) {
             $xv = $v['xMin'] + ($v['xMax'] - $v['xMin']) * $i / 5; $px = $X($xv);
             $s .= '<line x1="' . self::f($px) . '" y1="' . $mt . '" x2="' . self::f($px) . '" y2="' . ($mt + $ph) . '" stroke="#eef2f6"/>';
-            $s .= '<text x="' . self::f($px) . '" y="' . ($mt + $ph + 16) . '" font-size="9.5" fill="#7a8698" text-anchor="middle">' . self::tick($xv) . '</text>';
+            $s .= '<text x="' . self::f($px) . '" y="' . ($mt + $ph + 16) . '" font-size="9.5" fill="#7a8698" text-anchor="middle">' . self::tick($xv * $xFactor) . '</text>';
             $yv = $v['yMin'] + ($v['yMax'] - $v['yMin']) * $i / 5; $py = $Y($yv);
             $s .= '<line x1="' . $ml . '" y1="' . self::f($py) . '" x2="' . ($ml + $pw) . '" y2="' . self::f($py) . '" stroke="#eef2f6"/>';
-            $s .= '<text x="' . ($ml - 6) . '" y="' . self::f($py + 3) . '" font-size="9.5" fill="#7a8698" text-anchor="end">' . self::tick($yv) . '</text>';
+            $s .= '<text x="' . ($ml - 6) . '" y="' . self::f($py + 3) . '" font-size="9.5" fill="#7a8698" text-anchor="end">' . self::tick($yv * $yFactor) . '</text>';
         }
         // Polygone in Pixeln
         foreach (self::polys($t) as $p) {
@@ -276,8 +281,8 @@ class WbCalc
         $s .= self::dot($X($lX), $Y($lY), 4.5, $lIn ? '#3b6ea5' : '#c9453b') . '<text x="' . self::f($X($lX) + 8) . '" y="' . self::f($Y($lY) + 12) . '" font-size="10" fill="#3b6ea5">Ldg</text>';
         $s .= self::dot($X($toX), $Y($toY), 5.5, $toIn ? '#2e9e5b' : '#c9453b', '#fff') . '<text x="' . self::f($X($toX) + 8) . '" y="' . self::f($Y($toY) + 3) . '" font-size="10" fill="' . ($toIn ? '#2e9e5b' : '#c9453b') . '" font-weight="700">Start</text>';
         // Achsentitel
-        $s .= '<text x="' . self::f($ml + $pw / 2) . '" y="' . ($h - 3) . '" font-size="10" fill="#7a8698" text-anchor="middle">' . self::axisLabel($e['xAxis'] ?? null, 'Schwerpunkt') . '</text>';
-        $s .= '<text x="12" y="' . self::f($mt + $ph / 2) . '" font-size="10" fill="#7a8698" text-anchor="middle" transform="rotate(-90 12 ' . self::f($mt + $ph / 2) . ')">' . self::axisLabel($e['yAxis'] ?? null, 'Masse') . '</text>';
+        $s .= '<text x="' . self::f($ml + $pw / 2) . '" y="' . ($h - 3) . '" font-size="10" fill="#7a8698" text-anchor="middle">' . $xPrefix . ' (' . $xUnit . ')</text>';
+        $s .= '<text x="12" y="' . self::f($mt + $ph / 2) . '" font-size="10" fill="#7a8698" text-anchor="middle" transform="rotate(-90 12 ' . self::f($mt + $ph / 2) . ')">' . $yPrefix . ' (' . $yUnit . ')</text>';
         return $s . '</svg>';
     }
 
@@ -287,12 +292,31 @@ class WbCalc
             . ($stroke ? ' stroke="' . $stroke . '" stroke-width="1.5"' : '') . '/>';
     }
 
-    private static function axisLabel(?array $ax, string $fb): string
+    /**
+     * Achsen-Skalierung nativ -> gewaehlte Anzeige-Einheit.
+     * @return array{0:float,1:string,2:string} [Faktor, Einheiten-Label, Kind-Prefix]
+     */
+    private static function axisScale(?array $ax, bool $imp, string $fbPrefix): array
     {
-        if ($ax === null) { return $fb; }
-        $u = ['m' => 'm', 'mm' => 'mm', 'in' => 'in', 'percentMAC' => '%MAC', 'kgm' => 'kg·m', 'lbIn1000' => 'lb·in/1000', 'kg' => 'kg', 'lb' => 'lb'][$ax['unit']] ?? $ax['unit'];
-        $k = ['moment' => 'Moment', 'cg' => 'Schwerpunkt', 'cgPercentMac' => 'Schwerpunkt', 'mass' => 'Masse'][$ax['kind']] ?? $fb;
-        return $k . ' (' . $u . ')';
+        if ($ax === null) { return [1.0, $imp ? 'lb' : 'kg', $fbPrefix]; }
+        $kind = $ax['kind'] ?? null; $unit = $ax['unit'] ?? null;
+        $prefix = ['moment' => 'Moment', 'cg' => 'Schwerpunkt', 'cgPercentMac' => 'Schwerpunkt', 'mass' => 'Masse'][$kind] ?? $fbPrefix;
+
+        if ($kind === 'mass') {
+            $n2c = ($unit === 'lb') ? 0.45359237 : 1.0;                 // nativ -> kg
+            return [$n2c * ($imp ? 2.20462262 : 1.0), $imp ? 'lb' : 'kg', $prefix];
+        }
+        if ($kind === 'cg') {
+            if ($unit === 'percentMAC') { return [1.0, '%MAC', $prefix]; }
+            $n2c = ['m' => 1.0, 'mm' => 0.001, 'in' => 0.0254][$unit] ?? 1.0;  // nativ -> m
+            return [$n2c * ($imp ? 39.3700787 : 1000.0), $imp ? 'in' : 'mm', $prefix];
+        }
+        if ($kind === 'cgPercentMac') { return [1.0, '%MAC', $prefix]; }
+        if ($kind === 'moment') {
+            $n2c = ($unit === 'lbIn1000') ? (1.0 / self::KGM_TO_LBIN1000) : 1.0;   // nativ -> kg·m
+            return [$n2c * ($imp ? self::KGM_TO_LBIN1000 : 1.0), $imp ? 'lb·in/1000' : 'kg·m', $prefix];
+        }
+        return [1.0, (string) ($unit ?? ''), $prefix];
     }
 
     private static function tick(float $v): string
