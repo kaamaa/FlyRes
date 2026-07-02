@@ -283,7 +283,7 @@ class Sunrise_SunsetController extends AbstractController
   public function webView(Request $request, EntityManagerInterface $em)
   {
     // Flugvorbereitungs-Werkzeug – fuer alle angemeldeten Piloten.
-    $this->denyAccessUnlessGranted('ROLE_PILOT');
+    // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
     ini_set('memory_limit', '256M');
     // Setze die Standardzeitzone auf UTC 
     date_default_timezone_set('UTC');

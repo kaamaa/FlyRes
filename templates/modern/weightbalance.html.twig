@@ -1,4 +1,4 @@
-{% extends 'modern/layout.html.twig' %}
+{% extends app.user ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
 
 {% block ptitle %}Weight &amp; Balance{% endblock %}
 

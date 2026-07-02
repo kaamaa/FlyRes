@@ -1,6 +1,6 @@
-{% extends 'modern/layout.html.twig' %}
+{% extends app.user ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
 
-{% block ptitle %}Sonnenzeiten (Sunrise / Sunset){% endblock %}
+{% block ptitle %}Sunrise / Sunset{% endblock %}
 
 {% block content %}
 <style>

@@ -71,6 +71,12 @@ security:
         # Login sauberes JSON (401) statt eines HTML-Login-Redirects liefern koennen.
         # Die Zugriffspruefung (angemeldet + ROLE_PILOT) erfolgt in App\Controller\Api.
         - { path: ^/api/(clients|me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability|comparematrix|nextslots|fleet)(/|$), roles: PUBLIC_ACCESS }
+        # Oeffentliche Flugvorbereitungs-Werkzeuge (ohne Login, z.B. Einbindung auf
+        # der Homepage). Rechnung/Aufloesung laeuft server-seitig -> keine Rohdaten
+        # werden ausgeliefert. CSRF-Origin-Schutz (CsrfOriginSubscriber) greift weiter.
+        - { path: ^/web/weight-balance, roles: PUBLIC_ACCESS }
+        - { path: ^/web/flugplanung, roles: PUBLIC_ACCESS }
+        - { path: ^/web/sonnenzeiten, roles: PUBLIC_ACCESS }
         - { path: ^/, roles: ROLE_GUEST }
         # Hinweis: weitere Pfad-Rollen werden in den Controllern via denyAccessUnlessGranted()
         # geprueft (z.B. ROLE_ADMIN fuer Flugzeug-/Nutzer-/Typ-Verwaltung, ROLE_SYSTEM_ADMIN

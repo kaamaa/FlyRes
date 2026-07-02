@@ -1,0 +1,58 @@
+{# ===========================================================================
+   Oeffentliches Layout fuer die frei zugaenglichen Flugvorbereitungs-Werkzeuge
+   (Weight & Balance, Flight Planning, Sunrise/Sunset). Kein Member-Sidebar,
+   keine app.user-Abhaengigkeit – wird fuer anonyme Besucher genutzt (die
+   Tool-Templates waehlen das Layout per app.user ? member : public).
+   =========================================================================== #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlyRes · {% block ptitle %}Flugvorbereitung{% endblock %}</title>
+  <link href="{{ asset('images/css/modern.css') }}?v={{ 'now'|date('YmdHis') }}" rel="stylesheet">
+  <script src="{{ asset('images/js/fravail.js') }}?v={{ 'now'|date('YmdHis') }}"></script>
+  <style>
+    .fr-pub{max-width:1180px;margin:0 auto;padding:0 18px 60px;}
+    .fr-pub-top{display:flex;align-items:center;gap:14px;padding:14px 2px 12px;border-bottom:1px solid var(--fr-line,#e3e8ee);margin-bottom:18px;flex-wrap:wrap;}
+    .fr-pub-brand{display:inline-flex;align-items:center;gap:7px;font-weight:800;color:var(--fr-blue-d,#1f4d73);font-size:18px;}
+    .fr-pub-brand svg{width:22px;height:22px;}
+    .fr-pub-ttl{font-size:18px;font-weight:700;color:var(--fr-ink,#1f2733);margin:0;}
+    .fr-pub-sp{flex:1;}
+    .fr-pub-login{font-size:13px;font-weight:700;color:var(--fr-blue,#3b6ea5);text-decoration:none;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;padding:7px 12px;}
+    .fr-pub-foot{margin-top:26px;padding-top:12px;border-top:1px solid var(--fr-line,#e3e8ee);font-size:11.5px;color:var(--fr-mut,#7a8698);text-align:center;}
+    @media print{ .fr-pub-top,.fr-pub-foot{display:none!important;} .fr-pub{padding:0;} }
+  </style>
+</head>
+<body class="fr-modern">
+  <div class="fr-pub">
+    <div class="fr-pub-top">
+      <span class="fr-pub-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15.5 13.5 11V4.2a1.5 1.5 0 0 0-3 0V11L3 15.5V17l7.5-2.3V19l-2 1.4V22l3.5-1 3.5 1v-1.6L13.5 19v-4.3L21 17z"/></svg> FlyRes</span>
+      <h1 class="fr-pub-ttl">{{ block('ptitle') }}</h1>
+      <span class="fr-pub-sp"></span>
+      <div class="fr-topactions">{% block topactions %}{% endblock %}</div>
+      <a class="fr-pub-login" href="{{ path('app_login') }}">Login</a>
+    </div>
+
+    <div class="fr-body">
+      {% block content %}{% endblock %}
+    </div>
+
+    <div class="fr-pub-foot">Free flight-preparation tool · FlyRes</div>
+  </div>
+
+  {# Auto-Hoehe an ein einbettendes iframe melden (Homepage-Einbindung). #}
+  <script>
+  (function(){
+    if (window.parent === window) return;
+    var last = 0;
+    function send(){
+      var h = Math.ceil(document.documentElement.scrollHeight) + 8;
+      if (Math.abs(h - last) > 2){ last = h; window.parent.postMessage({ flyresHeight: h }, '*'); }
+    }
+    window.addEventListener('load', send);
+    if (window.ResizeObserver){ try { new ResizeObserver(send).observe(document.body); } catch(e){} }
+  })();
+  </script>
+</body>
+</html>

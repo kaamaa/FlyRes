@@ -28,42 +28,42 @@
   <div class="fr-brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15.5 13.5 11V4.2a1.5 1.5 0 0 0-3 0V11L3 15.5V17l7.5-2.3V19l-2 1.4V22l3.5-1 3.5 1v-1.6L13.5 19v-4.3L21 17z"/></svg> FlyRes</div>
 
   <a class="fr-nav {{ route == 'modern_dashboard' ? 'on' : '' }}" href="{{ path('modern_dashboard') }}">{{ ui.ic('home') }} Dashboard</a>
-  <a class="fr-nav {{ route == 'modern_reserve' ? 'on' : '' }}" href="{{ path('modern_reserve') }}">{{ ui.ic('plus') }} Reservieren</a>
+  <a class="fr-nav {{ route == 'modern_reserve' ? 'on' : '' }}" href="{{ path('modern_reserve') }}">{{ ui.ic('plus') }} Reserve</a>
 
-  <div class="fr-navsec">Ansichten</div>
+  <div class="fr-navsec">Views</div>
   <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}">{{ ui.ic('chart') }} Übersichten</a>
-  <a class="fr-nav {{ route == 'modern_bookings' and u != 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings', {umfang: 'meine'}) }}">{{ ui.ic('user') }} Meine Buchungen</a>
-  <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}">{{ ui.ic('list') }} Alle Buchungen</a>
+  <a class="fr-nav {{ route == 'modern_bookings' and u != 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings', {umfang: 'meine'}) }}">{{ ui.ic('user') }} My Bookings</a>
+  <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}">{{ ui.ic('list') }} All Bookings</a>
   {% if is_granted('ROLE_FI') %}
-    <a class="fr-nav {{ route starts with 'modern_fiavail' ? 'on' : '' }}" href="{{ path('modern_fiavail') }}">{{ ui.ic('clock') }} Schulungszeiten</a>
+    <a class="fr-nav {{ route starts with 'modern_fiavail' ? 'on' : '' }}" href="{{ path('modern_fiavail') }}">{{ ui.ic('clock') }} Instruction Times</a>
   {% endif %}
 
-  <div class="fr-navsec">Stammdaten</div>
+  <div class="fr-navsec">Master Data</div>
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
-    <a class="fr-nav {{ route starts with 'modern_aircraft' or route starts with 'modern_actype' ? 'on' : '' }}" href="{{ path('modern_aircraft') }}">{{ ui.ic('plane') }} Flugzeuge</a>
+    <a class="fr-nav {{ route starts with 'modern_aircraft' or route starts with 'modern_actype' ? 'on' : '' }}" href="{{ path('modern_aircraft') }}">{{ ui.ic('plane') }} Aircraft</a>
   {% endif %}
-  <a class="fr-nav {{ route == 'modern_licences' ? 'on' : '' }}" href="{{ path('modern_licences') }}">{{ ui.ic('award') }} Lizenzen</a>
-  <a class="fr-nav {{ route starts with 'modern_note' ? 'on' : '' }}" href="{{ path('modern_notes') }}">{{ ui.ic('pin') }} Pinnwand</a>
+  <a class="fr-nav {{ route == 'modern_licences' ? 'on' : '' }}" href="{{ path('modern_licences') }}">{{ ui.ic('award') }} Licences</a>
+  <a class="fr-nav {{ route starts with 'modern_note' ? 'on' : '' }}" href="{{ path('modern_notes') }}">{{ ui.ic('pin') }} Notice Board</a>
 
   {# Flugvorbereitungs-Werkzeuge – fuer alle sichtbar #}
-  <div class="fr-navsec">Flugvorbereitung</div>
+  <div class="fr-navsec">Flight Preparation</div>
   <a class="fr-nav {{ route starts with 'modern_wb' ? 'on' : '' }}" href="{{ path('modern_wb') }}">{{ ui.ic('chart') }} Weight &amp; Balance</a>
-  <a class="fr-nav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ ui.ic('plane') }} Flugplanung</a>
-  <a class="fr-nav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ ui.ic('clock') }} Sonnenzeiten</a>
+  <a class="fr-nav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ ui.ic('plane') }} Flight Planning</a>
+  <a class="fr-nav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ ui.ic('clock') }} Sunrise / Sunset</a>
 
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
   <div class="fr-navsec">Administration</div>
-    <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
+    <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Users</a>
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
-      <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
-      <a class="fr-nav {{ route starts with 'modern_licencetype' ? 'on' : '' }}" href="{{ path('modern_licencetypes') }}">{{ ui.ic('award') }} Lizenztypen</a>
+      <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Clients</a>
+      <a class="fr-nav {{ route starts with 'modern_licencetype' ? 'on' : '' }}" href="{{ path('modern_licencetypes') }}">{{ ui.ic('award') }} Licence Types</a>
     {% endif %}
-    <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
+    <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnostics</a>
   {% endif %}
 
   <div class="fr-navsep"></div>
-  <a class="fr-nav {{ route starts with 'modern_mydata' ? 'on' : '' }}" href="{{ path('modern_mydata') }}">{{ ui.ic('user') }} Meine Daten</a>
-  <a class="fr-nav {{ route == 'modern_help' ? 'on' : '' }}" href="{{ path('modern_help') }}">{{ ui.ic('help') }} Anleitung</a>
+  <a class="fr-nav {{ route starts with 'modern_mydata' ? 'on' : '' }}" href="{{ path('modern_mydata') }}">{{ ui.ic('user') }} My Data</a>
+  <a class="fr-nav {{ route == 'modern_help' ? 'on' : '' }}" href="{{ path('modern_help') }}">{{ ui.ic('help') }} Manual</a>
 
   {% set rolle = 'Pilot' %}
   {% if is_granted('ROLE_GLOBAL_ADMIN') %}{% set rolle = 'Global-Administrator' %}
@@ -75,7 +75,7 @@
     <div>{{ app.user.firstname|default('') }} {{ app.user.lastname|default('') }}<br>
       <span style="color:#7f93a8;font-size:11px;">{{ rolle }}</span>
     </div>
-    <a class="fr-logout" href="{{ path('app_logout') }}" title="Abmelden">{{ ui.ic('logout') }}</a>
+    <a class="fr-logout" href="{{ path('app_logout') }}" title="Log out">{{ ui.ic('logout') }}</a>
   </div>
   <div style="text-align:center;font-size:10.5px;color:#7f93a8;padding:6px 0 2px;">FlyRes v{{ app_version }}</div>
 </div>

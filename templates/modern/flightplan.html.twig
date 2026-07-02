@@ -1,6 +1,6 @@
-{% extends 'modern/layout.html.twig' %}
+{% extends app.user ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
 
-{% block ptitle %}VFR-Flugplanung{% endblock %}
+{% block ptitle %}VFR Flight Planning{% endblock %}
 
 {% block topactions %}
   <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF / drucken</button>

@@ -29,7 +29,7 @@ class WeightBalanceController extends AbstractController
 
     public function index(): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
 
         $list = [];
         foreach ($this->loadTypes() as $id => $t) {
@@ -50,7 +50,7 @@ class WeightBalanceController extends AbstractController
      */
     public function calc(Request $request): JsonResponse
     {
-        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
 
         $id = (string) $request->request->get('id', '');
         $types = $this->loadTypes();

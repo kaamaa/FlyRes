@@ -24,7 +24,7 @@ class FlightPlanController extends AbstractController
     /** Seite mit dem Planungsformular. */
     public function plan(Request $request, EntityManagerInterface $em): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
 
         $wpRaw = $request->request->all('waypoints');
         $wpInputs = is_array($wpRaw)
@@ -46,7 +46,7 @@ class FlightPlanController extends AbstractController
      */
     public function resolve(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
         $conn = $em->getConnection();
 
         $icaos = $request->request->all('icaos');
