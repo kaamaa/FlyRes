@@ -64,36 +64,9 @@ class FlyResAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
-      return null;  
-    }
-    
-    public function getUser($credentials, UserProviderInterface $userProvider)
-    {
-      return false;
-    }
-    
-    public function getCredentials(Request $request)
-    {
       return null;
     }
-    
-    public function checkCredentials($credentials, UserInterface $user)
-    {
-      $password = $credentials['password'];
-      if (md5($password) === $user->getPassword()) return true;
-        else return false;
-    }
-    
-    public function start(Request $request, AuthenticationException $authException = null)
-    {
-      return null;
-    }
-    
-    public function supportsRememberMe()
-    {
-      return true;
-    }
-    
+
     public function createAuthenticatedToken(PassportInterface $passport, string $firewallName): TokenInterface
     {
       $token = parent::createAuthenticatedToken($passport, $firewallName);

@@ -5,7 +5,6 @@ namespace App\Entities;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 //use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use App\Security\User\WebserviceUser;
 use App\Entities\Clients;
 use App\Logging;
 
