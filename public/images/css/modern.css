@@ -415,6 +415,12 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-dash-warn.amber{background:#fff6e3;border:1px solid #f0d79a;color:#8a5a00;}
 
 .fr-dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start;}
+/* Club-Kennzahlen: zwei Spalten (Hero+Chart | Werteliste). min-width:0 laesst die
+   Spalten schrumpfen (sonst laeuft die rechte Liste bei schmalem Fenster aus dem
+   Rahmen); unter 900px untereinander. */
+.fr-kz-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;align-items:start;}
+.fr-kz-grid>*{min-width:0;}
+@media (max-width:900px){.fr-kz-grid{grid-template-columns:1fr;gap:16px;}}
 .fr-dash-card{background:#fff;border:1px solid var(--fr-line);border-radius:14px;padding:14px 15px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
 .fr-dash-ch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
 .fr-dash-ch h3{margin:0;font-size:14.5px;font-weight:800;color:var(--fr-ink);}
