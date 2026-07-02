@@ -73,9 +73,12 @@ class WeightBalanceController extends AbstractController
         // Default-Leerwerte (metrisch gespeichert) in die gewaehlte Einheit umrechnen.
         $dm = $type['defaultEmptyMass'] ?? null;
         $da = $type['defaultEmptyArm'] ?? null;
+        $def = WbCalc::defaultLoad($type, $imp);
         $result['defaults'] = [
             'emptyMass' => $dm !== null ? round($imp ? $dm * 2.20462262 : $dm, 1) : null,
             'emptyArm'  => $da !== null ? round($imp ? $da * 39.3700787 : $da, $imp ? 1 : 3) : null,
+            'load'      => $def['load'],
+            'tripFuel'  => $def['tripFuel'],
         ];
         $result['source'] = $type['source'] ?? null;
 

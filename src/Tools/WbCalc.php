@@ -93,6 +93,37 @@ class WbCalc
         ];
     }
 
+    /**
+     * Sinnvolle Start-Beladung je Station (nach Stationstyp), in der gewaehlten
+     * Anzeige-Einheit. Sitze = 80 kg (ein Standard-Insasse), Gepaeck = bis 10 kg,
+     * Kraftstoff ~60% der Kapazitaet (auf 5 gerundet), Oel voll. Plus ein
+     * Trip-Fuel-Vorschlag (~40% des Start-Kraftstoffs).
+     *
+     * @return array{load: array<string,float>, tripFuel: float}
+     */
+    public static function defaultLoad(array $type, bool $imp): array
+    {
+        $load = [];
+        $totalFuelL = 0.0;
+        foreach ($type['stations'] as $s) {
+            if (isset($s['oilDensity'])) {                       // Oel: voll (fester Posten)
+                $vm = $s['maxLiters'] ?? 6.0; $kind = 'vol';
+            } elseif (isset($s['density'])) {                    // Kraftstoff: ~60% der Kapazitaet
+                $max = $s['maxLiters'] ?? null; $kind = 'vol';
+                $vm = $max !== null ? min($max, round($max * 0.6 / 5) * 5) : 40.0;
+                $totalFuelL += $vm;
+            } else {                                             // Zuladung nach type
+                $kind = 'mass'; $t = $s['type'] ?? '';
+                if ($t === 'seat')          { $vm = 80.0; }
+                elseif ($t === 'baggage')   { $vm = min(10.0, $s['maxKg'] ?? 10.0); }
+                else                        { $vm = 0.0; }
+            }
+            $load[$s['id']] = round(self::fromM($vm, $kind, $imp), 1);
+        }
+        $tripL = round($totalFuelL * 0.4 / 5) * 5;
+        return ['load' => $load, 'tripFuel' => round(self::fromM($tripL, 'vol', $imp), 1)];
+    }
+
     /** Anzeige-Einheit -> metrisch (kg/m/l). */
     private static function toM(float $v, string $kind, bool $imp): float
     {

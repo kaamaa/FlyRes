@@ -139,9 +139,20 @@
     if (!acSel.value) { document.getElementById('wb-body').style.display = 'none'; document.getElementById('wb-empty').style.display = ''; return; }
     var r = await post(false);
     if (!r || r.error) return;
-    if (r.defaults) { emEl.value = r.defaults.emptyMass != null ? r.defaults.emptyMass : ''; eaEl.value = r.defaults.emptyArm != null ? r.defaults.emptyArm : ''; }
+    if (r.defaults) {
+      emEl.value = r.defaults.emptyMass != null ? r.defaults.emptyMass : '';
+      eaEl.value = r.defaults.emptyArm != null ? r.defaults.emptyArm : '';
+      if (r.defaults.tripFuel != null) { tripEl.value = r.defaults.tripFuel; }
+    }
     document.getElementById('wb-src').textContent = r.source ? ('Quelle: ' + r.source) : '';
     buildTable(r.stations);
+    // Sinnvolle Start-Beladung in die Stationsfelder setzen.
+    if (r.defaults && r.defaults.load) {
+      document.querySelectorAll('#wb-load input.st').forEach(function (el) {
+        var id = el.getAttribute('data-id');
+        if (r.defaults.load[id] != null) { el.value = r.defaults.load[id]; }
+      });
+    }
     document.getElementById('wb-empty').style.display = 'none';
     document.getElementById('wb-body').style.display = '';
     post(true).then(function (r2) { if (r2) render(r2); });
