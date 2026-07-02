@@ -9,11 +9,12 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Weight & Balance (erster Prototyp im modernen Frontend, Variante A). Die
+ * Weight & Balance (Prototyp im modernen Frontend, Variante A). Die
  * Flugzeug-Typdaten (Stationen/Arme/Envelope) stammen aus der Garmin-W&B-App
  * (nach JSON konvertiert, data/wb_aircraft_types.json). index() liefert die
- * Auswahlliste, typeJson() die vollen Daten eines Musters fuers Live-Rechnen im
- * Browser. Pfad fuer alle angemeldeten Piloten; Menue-Eintrag nur Global-Admin.
+ * Auswahlliste, calc() rechnet server-seitig und gibt nur Anzeigewerte zurueck
+ * (Rohdaten bleiben auf dem Server). Fuer alle angemeldeten Piloten sichtbar
+ * (Menuegruppe "Flugvorbereitung").
  */
 class WeightBalanceController extends AbstractController
 {

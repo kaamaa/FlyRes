@@ -281,7 +281,7 @@ modern_mandant_edit:
     requirements:
         id: '\d+'
 
-# --- VFR-Flugplanung – Pfad fuer alle Piloten (Menue-Eintrag nur Global-Admin) ---
+# --- VFR-Flugplanung – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
 modern_flightplan:
     path: /web/flugplanung
     controller: App\Controller\FlightPlanController::plan
@@ -291,7 +291,7 @@ modern_flightplan_resolve:
     controller: App\Controller\FlightPlanController::resolve
     methods: POST
 
-# --- Weight & Balance – Pfad fuer alle Piloten (Menue-Eintrag nur Global-Admin) ---
+# --- Weight & Balance – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
 modern_wb:
     path: /web/weight-balance
     controller: App\Controller\WeightBalanceController::index
@@ -301,7 +301,7 @@ modern_wb_calc:
     controller: App\Controller\WeightBalanceController::calc
     methods: POST
 
-# --- Sonnenzeiten (Sunrise/Sunset) – nur ROLE_GLOBAL_ADMIN ---
+# --- Sonnenzeiten (Sunrise/Sunset) – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
 modern_sunrise:
     path: /web/sonnenzeiten
     controller: App\Controller\Sunrise_SunsetController::webView

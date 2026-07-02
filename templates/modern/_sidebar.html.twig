@@ -45,15 +45,18 @@
   <a class="fr-nav {{ route == 'modern_licences' ? 'on' : '' }}" href="{{ path('modern_licences') }}">{{ ui.ic('award') }} Lizenzen</a>
   <a class="fr-nav {{ route starts with 'modern_note' ? 'on' : '' }}" href="{{ path('modern_notes') }}">{{ ui.ic('pin') }} Pinnwand</a>
 
+  {# Flugvorbereitungs-Werkzeuge – fuer alle sichtbar #}
+  <div class="fr-navsec">Flugvorbereitung</div>
+  <a class="fr-nav {{ route starts with 'modern_wb' ? 'on' : '' }}" href="{{ path('modern_wb') }}">{{ ui.ic('chart') }} Weight &amp; Balance</a>
+  <a class="fr-nav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ ui.ic('plane') }} Flugplanung</a>
+  <a class="fr-nav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ ui.ic('clock') }} Sonnenzeiten</a>
+
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
   <div class="fr-navsec">Administration</div>
     <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
       <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
       <a class="fr-nav {{ route starts with 'modern_licencetype' ? 'on' : '' }}" href="{{ path('modern_licencetypes') }}">{{ ui.ic('award') }} Lizenztypen</a>
-      <a class="fr-nav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ ui.ic('clock') }} Sonnenzeiten</a>
-      <a class="fr-nav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ ui.ic('plane') }} Flugplanung</a>
-      <a class="fr-nav {{ route starts with 'modern_wb' ? 'on' : '' }}" href="{{ path('modern_wb') }}">{{ ui.ic('chart') }} Weight &amp; Balance</a>
     {% endif %}
     <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
   {% endif %}
