@@ -56,20 +56,29 @@ class FlightPlanController extends AbstractController
         $icaos = array_unique(array_filter(array_map(static fn ($s) => strtoupper(trim((string) $s)), $icaos), static fn ($s) => $s !== ''));
 
         $out = [];
-        foreach ($icaos as $icao) {
+        foreach ($icaos as $q) {
+            // 1) exakter ICAO-Code (schnell)
             $row = $conn->fetchAssociative(
                 "SELECT ICAO, Airport, sLat, sLong FROM tools_airports WHERE ICAO = ? "
                 . "ORDER BY CASE WHEN Type = 'A' THEN 0 ELSE 1 END LIMIT 1",
-                [$icao]
+                [$q]
             );
+            // 2) sonst per Klarname (Flugplatzname), Praefix bevorzugt, Flugplaetze vor Waypoints
+            if (!$row && mb_strlen($q) >= 3) {
+                $row = $conn->fetchAssociative(
+                    "SELECT ICAO, Airport, sLat, sLong FROM tools_airports WHERE Airport LIKE ? "
+                    . "ORDER BY (Airport LIKE ?) DESC, CASE WHEN Type = 'A' THEN 0 ELSE 1 END, CHAR_LENGTH(Airport) LIMIT 1",
+                    ['%' . $q . '%', $q . '%']
+                );
+            }
             if ($row) {
                 $lat = NavCalc::parseCoordinate((string) $row['sLat']);
                 $lon = NavCalc::parseCoordinate((string) $row['sLong']);
-                $out[$icao] = ($lat !== null && $lon !== null)
-                    ? ['found' => true, 'name' => $row['Airport'], 'lat' => $lat, 'lon' => $lon]
+                $out[$q] = ($lat !== null && $lon !== null)
+                    ? ['found' => true, 'icao' => $row['ICAO'], 'name' => $row['Airport'], 'lat' => $lat, 'lon' => $lon]
                     : ['found' => false];
             } else {
-                $out[$icao] = ['found' => false];
+                $out[$q] = ['found' => false];
             }
         }
 

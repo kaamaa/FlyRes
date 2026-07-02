@@ -93,6 +93,7 @@
   }
   function fmtTime(min) { var m = Math.round(min); return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }
   function pad3(c) { return ('00' + Math.round(c)).slice(-3) + '°'; }
+  function esc(s) { return String(s).replace(/[&<>]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]; }); }
 
   function makeRow(val) {
     var tr = document.createElement('tr');
@@ -173,13 +174,13 @@
     for (var j = 0; j < pts.length; j++) {
       var r = pts[j], ic = r.querySelector('.wp-in').value.trim().toUpperCase(), c = cache[ic];
       var nameCell = r.querySelector('.wp-name');
-      if (c && c.found) { nameCell.textContent = c.name; }
+      if (c && c.found) { nameCell.innerHTML = '<b>' + esc(c.icao) + '</b> · ' + esc(c.name); }
       else { nameCell.textContent = 'nicht gefunden'; nameCell.className = 'wp-name bad'; ok = false; }
 
-      if (j < pts.length - 1) {
-        var r2 = pts[j + 1], ic2 = r2.querySelector('.wp-in').value.trim().toUpperCase(), c2 = cache[ic2];
-        if (c && c.found && c2 && c2.found) {
-          var dist = distanceNm(c.lat, c.lon, c2.lat, c2.lon), tc = bearing(c.lat, c.lon, c2.lat, c2.lon);
+      if (j > 0) {   // Leg vom vorigen Punkt zu DIESEM -> wird auf DIESER Zeile gezeigt
+        var rp = pts[j - 1], icp = rp.querySelector('.wp-in').value.trim().toUpperCase(), cp = cache[icp];
+        if (cp && cp.found && c && c.found) {
+          var dist = distanceNm(cp.lat, cp.lon, c.lat, c.lon), tc = bearing(cp.lat, cp.lon, c.lat, c.lon);
           var wt = windTriangle(tc, tas, wd, ws);
           if (wt) {
             var t = dist / wt.gs * 60, fuel = t / 60 * fr;
