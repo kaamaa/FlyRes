@@ -20,50 +20,58 @@ class WbCalc
      *
      * @return array<string,mixed>
      */
-    public static function calculate(array $type, float $emptyMass, float $emptyArm, float $tripFuel, array $load): array
+    public static function calculate(array $type, float $emptyMass, float $emptyArm, float $tripFuel, array $load, string $units = 'metric'): array
     {
+        $imp = ($units === 'imperial');
+        $mU = $imp ? 'lb' : 'kg'; $aU = $imp ? 'in' : 'm'; $vU = $imp ? 'gal' : 'l'; $cU = $imp ? 'in' : 'mm';
+
+        // Eingaben -> metrisch (kanonisch). Intern wird ausschliesslich metrisch gerechnet.
+        $em = self::toM($emptyMass, 'mass', $imp);
+        $ea = self::toM($emptyArm, 'arm', $imp);
+        $trip = self::toM(max(0.0, $tripFuel), 'vol', $imp);
+        $loadM = [];
+        foreach ($type['stations'] as $s) {
+            $kind = (isset($s['density']) || isset($s['oilDensity'])) ? 'vol' : 'mass';
+            $v = isset($load[$s['id']]) ? (float) $load[$s['id']] : 0.0;
+            $loadM[$s['id']] = self::toM($v, $kind, $imp);
+        }
+
         $warnings = [];
         $stationsOut = [];
-
-        // Trip-Fuel-Plausibilitaet + Stationsmassen (fuer die Anzeige) + Limits.
         $totalFuel = 0.0;
         foreach ($type['stations'] as $s) {
-            $id  = $s['id'];
-            $v   = isset($load[$id]) ? (float) $load[$id] : 0.0;
+            $id = $s['id'];
             $isFuel = isset($s['density']) || isset($s['oilDensity']);
-            if (isset($s['density'])) {
-                $totalFuel += $v;
-                $m = $v * $s['density'];
-            } elseif (isset($s['oilDensity'])) {
-                $m = $v * $s['oilDensity'];
-            } else {
-                $m = $v;
-            }
-            $cap  = $isFuel ? ($s['maxLiters'] ?? null) : ($s['maxKg'] ?? null);
-            $over = ($cap !== null && $v > $cap);
+            $kind = $isFuel ? 'vol' : 'mass';
+            $vm = $loadM[$id];                                  // Eingabe in metrisch (kg bzw. l)
+            if (isset($s['density']))    { $totalFuel += $vm; $mkg = $vm * $s['density']; }
+            elseif (isset($s['oilDensity'])) { $mkg = $vm * $s['oilDensity']; }
+            else { $mkg = $vm; }
+
+            $capM = $isFuel ? ($s['maxLiters'] ?? null) : ($s['maxKg'] ?? null);
+            $over = ($capM !== null && $vm > $capM + 1e-9);
             if ($over) {
-                $warnings[] = $s['label'] . ' über Limit (' . self::num($cap) . ')';
+                $warnings[] = $s['label'] . ' über Limit (' . self::num(self::fromM($capM, $kind, $imp)) . ' ' . ($isFuel ? $vU : $mU) . ')';
             }
             $stationsOut[] = [
                 'id'    => $id,
                 'label' => $s['label'],
-                'unit'  => $isFuel ? 'l' : 'kg',
-                'max'   => $cap,
-                'mass'  => round($m, 1),
+                'kind'  => $kind,
+                'unit'  => $isFuel ? $vU : $mU,
+                'max'   => $capM !== null ? round(self::fromM($capM, $kind, $imp), 1) : null,
+                'mass'  => round(self::fromM($mkg, 'mass', $imp), 1),
                 'over'  => $over,
             ];
         }
-        if ($tripFuel > $totalFuel) {
-            $warnings[] = 'Trip-Fuel > Start-Kraftstoff';
-        }
+        if ($trip > $totalFuel + 1e-9) { $warnings[] = 'Trip-Fuel > Start-Kraftstoff'; }
 
-        $to  = self::computePoint($type, $emptyMass, $emptyArm, $load, 0.0);
-        $ldg = self::computePoint($type, $emptyMass, $emptyArm, $load, $tripFuel);
+        $to  = self::computePoint($type, $em, $ea, $loadM, 0.0);
+        $ldg = self::computePoint($type, $em, $ea, $loadM, $trip);
 
         $mtom = (float) $type['limits']['mtom'];
         $mlm  = isset($type['limits']['mlm']) ? (float) $type['limits']['mlm'] : $mtom;
-        if ($to['mass']  > $mtom) { $warnings[] = 'Startmasse > MTOM (' . self::num($mtom) . ' kg)'; }
-        if ($ldg['mass'] > $mlm)  { $warnings[] = 'Landemasse > MLM (' . self::num($mlm) . ' kg)'; }
+        if ($to['mass']  > $mtom) { $warnings[] = 'Startmasse > MTOM (' . self::num(self::fromM($mtom, 'mass', $imp)) . ' ' . $mU . ')'; }
+        if ($ldg['mass'] > $mlm)  { $warnings[] = 'Landemasse > MLM (' . self::num(self::fromM($mlm, 'mass', $imp)) . ' ' . $mU . ')'; }
 
         $toX = self::envX($type, $to);   $toY = self::envY($type, $to);
         $lX  = self::envX($type, $ldg);  $lY  = self::envY($type, $ldg);
@@ -75,13 +83,40 @@ class WbCalc
         return [
             'ok'        => count($warnings) === 0,
             'warnings'  => $warnings,
-            'mtom'      => $mtom,
-            'mlm'       => $mlm,
-            'to'        => ['mass' => round($to['mass'], 1),  'cgMm' => round($to['cg'] * 1000)],
-            'ldg'       => ['mass' => round($ldg['mass'], 1), 'cgMm' => round($ldg['cg'] * 1000)],
+            'units'     => ['mass' => $mU, 'arm' => $aU, 'vol' => $vU, 'cg' => $cU],
+            'mtom'      => round(self::fromM($mtom, 'mass', $imp), 1),
+            'mlm'       => round(self::fromM($mlm, 'mass', $imp), 1),
+            'to'        => ['mass' => round(self::fromM($to['mass'], 'mass', $imp), 1),  'cg' => round(self::cgDisp($to['cg'], $imp), $imp ? 1 : 0)],
+            'ldg'       => ['mass' => round(self::fromM($ldg['mass'], 'mass', $imp), 1), 'cg' => round(self::cgDisp($ldg['cg'], $imp), $imp ? 1 : 0)],
             'stations'  => $stationsOut,
             'svg'       => self::renderSvg($type, $toX, $toY, $toIn, $lX, $lY, $lIn),
         ];
+    }
+
+    /** Anzeige-Einheit -> metrisch (kg/m/l). */
+    private static function toM(float $v, string $kind, bool $imp): float
+    {
+        if (!$imp) { return $v; }
+        if ($kind === 'mass') { return $v * 0.45359237; }
+        if ($kind === 'arm')  { return $v * 0.0254; }
+        if ($kind === 'vol')  { return $v * 3.785411784; }
+        return $v;
+    }
+
+    /** metrisch -> Anzeige-Einheit. */
+    private static function fromM(float $m, string $kind, bool $imp): float
+    {
+        if (!$imp) { return $m; }
+        if ($kind === 'mass') { return $m * 2.20462262; }
+        if ($kind === 'arm')  { return $m * 39.3700787; }
+        if ($kind === 'vol')  { return $m * 0.264172; }
+        return $m;
+    }
+
+    /** Schwerpunkt (Meter) -> Anzeige: mm (metrisch) bzw. in (imperial). */
+    private static function cgDisp(float $cgM, bool $imp): float
+    {
+        return $imp ? $cgM * 39.3700787 : $cgM * 1000.0;
     }
 
     /** @return array{mass:float,moment:float,cg:float} */

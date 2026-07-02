@@ -63,14 +63,21 @@ class WeightBalanceController extends AbstractController
         $em = $emStr !== '' ? (float) $emStr : (float) ($type['defaultEmptyMass'] ?? 0);
         $ea = $eaStr !== '' ? (float) $eaStr : (float) ($type['defaultEmptyArm'] ?? 0);
         $trip = max(0.0, (float) $request->request->get('tripFuel', 0));
+        $units = $request->request->get('units') === 'imperial' ? 'imperial' : 'metric';
+        $imp = ($units === 'imperial');
 
         $loadRaw = $request->request->all('load');
         $load = is_array($loadRaw) ? array_map(static fn ($v) => (float) $v, $loadRaw) : [];
 
-        $result = WbCalc::calculate($type, $em, $ea, $trip, $load);
-        // Default-Leerwerte fuers Vorbefuellen der Eingabefelder mitgeben.
-        $result['defaults'] = ['emptyMass' => $type['defaultEmptyMass'] ?? null, 'emptyArm' => $type['defaultEmptyArm'] ?? null];
-        $result['source']   = $type['source'] ?? null;
+        $result = WbCalc::calculate($type, $em, $ea, $trip, $load, $units);
+        // Default-Leerwerte (metrisch gespeichert) in die gewaehlte Einheit umrechnen.
+        $dm = $type['defaultEmptyMass'] ?? null;
+        $da = $type['defaultEmptyArm'] ?? null;
+        $result['defaults'] = [
+            'emptyMass' => $dm !== null ? round($imp ? $dm * 2.20462262 : $dm, 1) : null,
+            'emptyArm'  => $da !== null ? round($imp ? $da * 39.3700787 : $da, $imp ? 1 : 3) : null,
+        ];
+        $result['source'] = $type['source'] ?? null;
 
         return new JsonResponse($result);
     }
