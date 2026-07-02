@@ -304,11 +304,12 @@ class Sunrise_SunsetController extends AbstractController
     }
     else
     {
-      $country = $data['Country_Name'];
+      $country = $data['Country_Name'] ?? 'Germany';
       $country_code = ToolsCountryRepository::GetCountryCode($em, $country);
-      $airport = $data['Airport_Name'];
-      $month  = max(1, min(12, (int) ($data['SRSSMonth'] ?? 1)));
-      $tzMode = in_array(($data['TimeZone_Mode'] ?? 'local'), ['local', 'mez', 'utc'], true) ? $data['TimeZone_Mode'] : 'local';
+      $airport = $data['Airport_Name'] ?? '';
+      $month  = max(1, min(12, (int) ($data['SRSSMonth'] ?? (new \DateTime('now'))->format('n'))));
+      $tzModeRaw = $data['TimeZone_Mode'] ?? 'local';
+      $tzMode = in_array($tzModeRaw, ['local', 'mez', 'utc'], true) ? $tzModeRaw : 'local';
     }
     $dateTime = (new \DateTime())->setDate($year, $month, 1)->setTime(12, 0, 0);
     
