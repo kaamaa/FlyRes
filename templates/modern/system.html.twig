@@ -194,6 +194,64 @@
 </div>
 {% endif %}
 
+{# ---------- Lizenztyp deaktivieren (nur Global-Admin: mandantenuebergreifend) ---------- #}
+{% if lictype is not null %}
+<div class="sys-sec">Lizenztyp deaktivieren</div>
+
+{% for f in app.flashes('lictype') %}
+  {% if f.notFound %}
+    <div class="sys-card" style="border-color:#e6c3bf;background:#fbeeec;margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--fr-red,#c9453b);">Lizenztyp nicht gefunden</div>
+    </div>
+  {% elseif f.alreadyInactive %}
+    <div class="sys-card" style="border-color:#e6ddbf;background:#fbf7ec;margin-bottom:12px;">
+      <div style="font-weight:700;">Bereits deaktiviert</div>
+      <div class="sys-hint">„{{ f.name }}" ist schon auf <span class="sys-mono">geloescht</span> gesetzt.</div>
+    </div>
+  {% elseif f.dryRun %}
+    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--fr-green);">Vorschau (Dry-Run) – es wurde nichts geschrieben</div>
+      <div class="sys-hint">
+        „<b>{{ f.name }}</b>": es würden <b>{{ f.reqCount }}</b> Flugzeugtyp-Anforderung(en) entfernt und der Typ auf <span class="sys-mono">geloescht</span> gesetzt.<br>
+        Halter: {{ f.aktiv }} aktiv, {{ f.geloescht }} gelöscht (Lizenzen bleiben unangetastet).
+        {% if f.aktiv > 0 %}<br><b style="color:var(--fr-red,#c9453b);">⚠ Achtung: {{ f.aktiv }} Nutzer haben diesen Typ noch aktiv!</b>{% endif %}
+      </div>
+    </div>
+  {% elseif f.done %}
+    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--fr-green);">Lizenztyp deaktiviert ✓</div>
+      <div class="sys-hint">„<b>{{ f.name }}</b>": <b>{{ f.reqRemoved }}</b> Flugzeugtyp-Anforderung(en) entfernt, Typ auf <span class="sys-mono">geloescht</span> gesetzt.</div>
+    </div>
+  {% else %}
+    <div class="sys-card" style="border-color:#e6c3bf;background:#fbeeec;margin-bottom:12px;">
+      <div style="font-weight:700;color:var(--fr-red,#c9453b);">Fehler</div>
+      <div class="sys-hint">{{ f.error|default('Unbekannter Fehler') }}</div>
+    </div>
+  {% endif %}
+{% endfor %}
+
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Wählt einen Lizenztyp, entfernt dessen <b>Flugzeugtyp-Anforderungen</b> und setzt ihn auf
+    <span class="sys-mono">geloescht</span> (Soft-Delete – Typ verschwindet aus den Listen, bestehende Nutzer-Lizenzen und die Historie bleiben erhalten, reversibel per DB).
+    Tipp: erst <b>Vorschau</b>, dann <b>Deaktivieren</b>. Spalten je Typ: aktive/gelöschte Halter · FZ-Anf. = Flugzeugtyp-Anforderungen.
+  </div>
+  <form method="post" action="{{ path('modern_system_lictype_deactivate') }}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <select name="id" required style="min-width:min(560px,100%);padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;background:#fff;font:inherit;">
+      <option value="">— Lizenztyp wählen —</option>
+      {% for t in lictype.types %}
+        <option value="{{ t.id }}">{{ t.label }} · {{ t.aktiv }} aktiv / {{ t.geloescht }} gel. · {{ t.req }} FZ-Anf.</option>
+      {% endfor %}
+    </select>
+    <button type="submit" name="mode" value="dry" class="fr-btn ghost">Vorschau</button>
+    <button type="submit" name="mode" value="run" class="fr-btn"
+            onclick="return confirm('Lizenztyp deaktivieren?\n\nEntfernt die Flugzeugtyp-Anforderungen dieses Typs und setzt ihn auf gelöscht (Soft-Delete, reversibel).');">
+      Deaktivieren
+    </button>
+  </form>
+</div>
+{% endif %}
+
 {# ---------- Datenbank-Backup (nur Global-Admin: mandantenuebergreifend) ---------- #}
 {% if is_granted('ROLE_GLOBAL_ADMIN') %}
 <div class="sys-sec">Datenbank-Backup</div>

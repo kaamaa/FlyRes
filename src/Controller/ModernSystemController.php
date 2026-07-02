@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entities\Licensetype;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +32,7 @@ class ModernSystemController extends AbstractController
         $isGlobal = $this->isGranted('ROLE_GLOBAL_ADMIN');
         $pw  = $isGlobal ? $this->pwStatus($em) : null;
         $lic = $isGlobal ? $this->licStatus($em) : null;
+        $lictype = $isGlobal ? $this->licTypeStatus($em) : null;
 
         return $this->render('modern/system.html.twig', [
             'php'      => $this->collectPhp(),
@@ -40,6 +42,7 @@ class ModernSystemController extends AbstractController
             'db'       => $this->collectDatabase($em),
             'pw'       => $pw,
             'lic'      => $lic,
+            'lictype'  => $lictype,
         ]);
     }
 
@@ -76,6 +79,61 @@ class ModernSystemController extends AbstractController
         $r['dryRun'] = $dryRun;
         $this->addFlash('liccleanup', $r);
 
+        return $this->redirectToRoute('modern_system');
+    }
+
+    /**
+     * Lizenztyp deaktivieren (flexibel, fuer beliebige Typ-ID): entfernt zuerst
+     * die Flugzeugtyp-Anforderungen (FRes_aircraftType2Licences) dieses Typs und
+     * setzt ihn anschliessend auf status='geloescht' (Soft-Delete). Beides atomar
+     * in einer Transaktion. Nur Global-Admin (Lizenztypen sind mandantenuebergreifend).
+     * POST -> CsrfOriginSubscriber. Dry-Run zeigt die Auswirkung ohne zu schreiben.
+     */
+    public function licenceTypeDeactivate(Request $request, EntityManagerInterface $em): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+
+        $id     = (int) $request->request->get('id', 0);
+        $dryRun = $request->request->get('mode') !== 'run';
+        $conn   = $em->getConnection();
+
+        $type = $id > 0
+            ? $conn->fetchAssociative('SELECT id, categoryname, longname, status FROM FRes_licenceType WHERE id = ?', [$id])
+            : null;
+
+        $r = ['id' => $id, 'dryRun' => $dryRun, 'notFound' => false, 'alreadyInactive' => false,
+              'name' => null, 'reqCount' => 0, 'reqRemoved' => 0, 'aktiv' => 0, 'geloescht' => 0, 'done' => false];
+
+        if (!$type) {
+            $r['notFound'] = true;
+            $this->addFlash('lictype', $r);
+            return $this->redirectToRoute('modern_system');
+        }
+
+        $r['name']            = trim(($type['categoryname'] ? '[' . $type['categoryname'] . '] ' : '') . $type['longname']);
+        $r['alreadyInactive'] = ($type['status'] === Licensetype::const_geloescht);
+        $r['reqCount']        = (int) $conn->fetchOne('SELECT COUNT(*) FROM FRes_aircraftType2Licences WHERE licenceid = ?', [$id]);
+        $r['aktiv']           = (int) $conn->fetchOne("SELECT COUNT(*) FROM FRes_userLicences WHERE licenceid = ? AND (status IS NULL OR status <> 'geloescht')", [$id]);
+        $r['geloescht']       = (int) $conn->fetchOne("SELECT COUNT(*) FROM FRes_userLicences WHERE licenceid = ? AND status = 'geloescht'", [$id]);
+
+        if ($dryRun || $r['alreadyInactive']) {
+            $this->addFlash('lictype', $r);
+            return $this->redirectToRoute('modern_system');
+        }
+
+        // Ausfuehren: Anforderungen entfernen + Typ soft-deaktivieren (atomar).
+        $conn->beginTransaction();
+        try {
+            $r['reqRemoved'] = (int) $conn->executeStatement('DELETE FROM FRes_aircraftType2Licences WHERE licenceid = ?', [$id]);
+            $conn->executeStatement('UPDATE FRes_licenceType SET status = ? WHERE id = ?', [Licensetype::const_geloescht, $id]);
+            $conn->commit();
+            $r['done'] = true;
+        } catch (\Throwable $e) {
+            $conn->rollBack();
+            $r['error'] = $e->getMessage();
+        }
+
+        $this->addFlash('lictype', $r);
         return $this->redirectToRoute('modern_system');
     }
 
@@ -502,6 +560,37 @@ class ModernSystemController extends AbstractController
         );
 
         return ['deleted' => $deleted, 'pending' => $pending - $deleted];
+    }
+
+    /**
+     * Liste aller AKTIVEN Lizenztypen samt Nutzung, fuer die Auswahl im
+     * Deaktivieren-Werkzeug: aktive/geloeschte Halter + Anzahl der
+     * Flugzeugtyp-Anforderungen. Bereits deaktivierte Typen erscheinen nicht.
+     *
+     * @return array{types: array<int, array{id:int,label:string,aktiv:int,geloescht:int,req:int}>}
+     */
+    private function licTypeStatus(EntityManagerInterface $em): array
+    {
+        $sql = "SELECT lt.id, lt.categoryname, lt.longname,
+            (SELECT COUNT(*) FROM FRes_userLicences ul WHERE ul.licenceid = lt.id AND (ul.status IS NULL OR ul.status <> 'geloescht')) AS aktiv,
+            (SELECT COUNT(*) FROM FRes_userLicences ul WHERE ul.licenceid = lt.id AND ul.status = 'geloescht') AS geloescht,
+            (SELECT COUNT(*) FROM FRes_aircraftType2Licences a WHERE a.licenceid = lt.id) AS req
+            FROM FRes_licenceType lt
+            WHERE (lt.status <> 'geloescht' OR lt.status IS NULL)
+            ORDER BY lt.categoryid, lt.longname";
+
+        $types = [];
+        foreach ($em->getConnection()->fetchAllAssociative($sql) as $row) {
+            $types[] = [
+                'id'        => (int) $row['id'],
+                'label'     => trim(($row['categoryname'] ? '[' . $row['categoryname'] . '] ' : '') . $row['longname']),
+                'aktiv'     => (int) $row['aktiv'],
+                'geloescht' => (int) $row['geloescht'],
+                'req'       => (int) $row['req'],
+            ];
+        }
+
+        return ['types' => $types];
     }
 
     // -------------------------------------------------------------- Utils ----

@@ -307,6 +307,11 @@ modern_system_liccleanup:
     controller: App\Controller\ModernSystemController::licencesCleanup
     methods: POST
 
+modern_system_lictype_deactivate:
+    path: /web/system/lizenztyp-deaktivieren
+    controller: App\Controller\ModernSystemController::licenceTypeDeactivate
+    methods: POST
+
 # --- /mobile -> /mobile/ (PWA wird statisch aus public/mobile/ ausgeliefert) ---
 mobile_slash_redirect:
     path: /mobile
