@@ -10,9 +10,6 @@ use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Passport;
 use Symfony\Component\Security\Http\Authenticator\Passport\PassportInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Badge\CsrfTokenBadge;
-use Symfony\Component\Security\Http\Authenticator\Passport\Credentials\PasswordCredentials;
 use App\LogonType;
 
 class FlyResAuthenticator extends AbstractAuthenticator
@@ -38,21 +35,9 @@ class FlyResAuthenticator extends AbstractAuthenticator
 
     public function authenticate(Request $request): Passport
     {
-      $username = $request->request->get('_username');
-      $password = $request->request->get('_password');
-      $client = $request->request->get('client');
-      $clientid = Clients::GetClientIdByName($this->entityManager, $client);
-      $this->entityManager->getRepository(FresAccounts::class)->setClient($clientid);
-      
-      $ub = new UserBadge($username);
-              
-      $passport =  new Passport($ub, new PasswordCredentials($password), 
-      [
-        //new CsrfTokenBadge('authenticate', $request->get('_csrf_token')),      
-        new RememberMeBadge()
-      ]);  
-      return $passport;
-      
+      // Von AbstractAuthenticator gefordert, hier aber nie aufgerufen: der Login
+      // laeuft ausschliesslich programmatisch ueber authenticateUser().
+      throw new \LogicException('FlyResAuthenticator wird nur programmatisch genutzt (authenticateUser); authenticate() ist nicht vorgesehen.');
     }
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response

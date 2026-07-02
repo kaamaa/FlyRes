@@ -90,15 +90,10 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
       return new RedirectResponse($this->urlGenerator->generate('app_login'));
     }
     
-    public function start(Request $request, AuthenticationException $authException = null) : Response
+    public function start(Request $request, ?AuthenticationException $authException = null) : Response
     {
       // Wird aufgerufen, wenn eine geschützte Seite ohne Login aufgerufen wird
       return new RedirectResponse($this->urlGenerator->generate('app_login'));
-    }
-    
-    public function supportsRememberMe()
-    {
-      return true;
     }
     
     public function createAuthenticatedToken(Passport $passport, string $firewallName): TokenInterface
