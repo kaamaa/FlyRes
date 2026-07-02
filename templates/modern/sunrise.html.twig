@@ -20,6 +20,9 @@
   .srss-lbl b{font-weight:700;}
   .srss-lbl .w{color:var(--fr-mut);}
   .srss-row.we .srss-lbl,.srss-row.we .srss-lbl .w{color:var(--fr-amber);}
+  .srss-row.today{background:#e9f3ff;border-radius:7px;}
+  .srss-row.today .srss-lbl,.srss-row.today .srss-lbl .w{color:var(--fr-blue-d);font-weight:800;}
+  .srss-heute{display:inline-block;background:var(--fr-blue);color:#fff;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:1px 5px;border-radius:20px;vertical-align:1px;margin-left:2px;}
   .srss-track{position:relative;height:16px;border-radius:5px;background:#dfe7f0;overflow:hidden;}
   .srss-twi{position:absolute;top:0;height:100%;background:#ffe3a8;}
   .srss-sun{position:absolute;top:0;height:100%;background:linear-gradient(90deg,#ffcf5c,#ff9d3c);}
@@ -35,13 +38,14 @@
 <form id="srssForm" class="srss-form" method="post" action="{{ path('modern_sunrise') }}">
   <div><label for="form_Country_Name">Land</label>{{ form_widget(form.Country_Name) }}</div>
   <div><label for="form_Airport_Name">Flugplatz</label>{{ form_widget(form.Airport_Name) }}</div>
-  <div><label for="form_SRSSDate">Monat (MM.JJJJ)</label>{{ form_widget(form.SRSSDate, {'attr': {'placeholder': 'MM.JJJJ'}}) }}</div>
+  <div><label for="form_SRSSMonth">Monat</label>{{ form_widget(form.SRSSMonth) }}</div>
+  <div><label for="form_TimeZone_Mode">Zeitform</label>{{ form_widget(form.TimeZone_Mode) }}</div>
   <div><button type="submit" class="fr-btn">Anzeigen</button></div>
   {{ form_rest(form) }}
 </form>
 
 {% if title %}<div class="srss-title">{{ title }}</div>{% endif %}
-{% if subtitle %}<div class="srss-sub">{{ subtitle }} · Zeiten in Ortszeit</div>{% endif %}
+{% if subtitle %}<div class="srss-sub">{{ subtitle }}</div>{% endif %}
 
 {% if days is not empty %}
 <div class="srss-card">
@@ -56,7 +60,7 @@
 
   {% for d in days %}
     <div class="srss-row {{ d.today ? 'today' : (d.weekend ? 'we' : '') }}">
-      <div class="srss-lbl"><b>{{ d.day }}.</b> <span class="w">{{ d.wd }}</span></div>
+      <div class="srss-lbl"><b>{{ d.day }}.</b> <span class="w">{{ d.wd }}</span>{% if d.today %} <span class="srss-heute">heute</span>{% endif %}</div>
       <div class="srss-track">
         {% if d.polar == 'day' %}
           <div class="srss-sun" style="left:0;width:100%"></div>
@@ -88,7 +92,7 @@
 <script>
   (function () {
     var f = document.getElementById('srssForm');
-    ['form_Country_Name', 'form_Airport_Name', 'form_SRSSDate'].forEach(function (id) {
+    ['form_Country_Name', 'form_Airport_Name', 'form_SRSSMonth', 'form_TimeZone_Mode'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) { el.addEventListener('change', function () { f.submit(); }); }
     });

@@ -213,7 +213,7 @@ class Sunrise_SunsetController extends AbstractController
    *
    * @return array<int, array<string,mixed>>
    */
-  protected function generateMonthlyData($date, $decimalLatitude, $decimalLongitude, $timezone): array
+  protected function generateMonthlyData($date, $decimalLatitude, $decimalLongitude, $timezone, string $tzMode = 'local'): array
   {
     $date = new \DateTime($date->format('Y-m-01'));
     $endOfMonth = (clone $date)->modify('last day of this month');
@@ -226,10 +226,14 @@ class Sunrise_SunsetController extends AbstractController
       $sr = $info['sunrise'];   $ss = $info['sunset'];
       $dawn = $info['civil_twilight_begin']; $dusk = $info['civil_twilight_end'];
 
-      // Ortszeit-Offset des Flugplatzes fuer diesen Tag (beruecksichtigt Sommerzeit).
-      $locDate = clone $date;
-      $locDate->setTimezone(new DateTimeZone($timezone));
-      $off = $locDate->getOffset();
+      // Offset je nach gewaehlter Zeitform (beruecksichtigt Sommerzeit pro Tag).
+      if ($tzMode === 'utc') {
+        $off = 0;
+      } else {
+        $ref = clone $date;
+        $ref->setTimezone(new DateTimeZone($tzMode === 'mez' ? 'Europe/Berlin' : $timezone));
+        $off = $ref->getOffset();
+      }
       $mod = static fn ($ts) => (int) (((($ts + $off) % 86400) + 86400) % 86400 / 60);
 
       $N = (int) $date->format('N'); // 1=Mo .. 7=So
@@ -287,21 +291,26 @@ class Sunrise_SunsetController extends AbstractController
     $form = $this->createFormBuilder()->getForm();
     $form->handleRequest($request);
     $data = $request->request->all('form');
+
+    // Sonnenzeiten sind jahresunabhaengig -> aktuelles Jahr, nur der Monat wird gewaehlt.
+    $year   = (int) (new \DateTime('now'))->format('Y');
+    $tzMode = 'local';
     if (empty($data))
     {
       $country = "Germany";
       $airport = "WORMS EDFV (GERMANY)";
       $country_code = ToolsCountryRepository::GetCountryCode($em, $country);
-      $dateTime = new \DateTime('now');
+      $month = (int) (new \DateTime('now'))->format('n');
     }
     else
     {
       $country = $data['Country_Name'];
       $country_code = ToolsCountryRepository::GetCountryCode($em, $country);
       $airport = $data['Airport_Name'];
-      $date = $data['SRSSDate'];
-      $dateTime = \DateTime::createFromFormat('m.Y', $date);
+      $month  = max(1, min(12, (int) ($data['SRSSMonth'] ?? 1)));
+      $tzMode = in_array(($data['TimeZone_Mode'] ?? 'local'), ['local', 'mez', 'utc'], true) ? $data['TimeZone_Mode'] : 'local';
     }
+    $dateTime = (new \DateTime())->setDate($year, $month, 1)->setTime(12, 0, 0);
     
     $countrylist = ToolsCountryRepository::GetAllCountriesForListbox($em);
     $airportlist = ToolsAirportRepository::GetAllAirportsForListbox($em, $country_code);
@@ -313,14 +322,19 @@ class Sunrise_SunsetController extends AbstractController
       $airport = $airportchoice;
     }
     
+    $monthChoices = ['Januar' => 1, 'Februar' => 2, 'März' => 3, 'April' => 4, 'Mai' => 5, 'Juni' => 6,
+                     'Juli' => 7, 'August' => 8, 'September' => 9, 'Oktober' => 10, 'November' => 11, 'Dezember' => 12];
+    $tzChoices    = ['Ortszeit (Flugplatz)' => 'local', 'MEZ/MESZ (Deutschland)' => 'mez', 'UTC' => 'utc'];
+
     $form = $this->createFormBuilder()
-    ->add('Country_Name', ChoiceType::class, array ('choices' => $countrylist, 
+    ->add('Country_Name', ChoiceType::class, array ('choices' => $countrylist,
           'required' => false, 'mapped' => false, 'data' => $country))
-    ->add('Airport_Name', ChoiceType::class, array ('choices' => $airportlist, 
+    ->add('Airport_Name', ChoiceType::class, array ('choices' => $airportlist,
           'required' => false, 'mapped' => false, 'data' => $airportchoice))
-    ->add('SRSSDate', DateTimeType::class, array('html5' => false, 'format' => Sunrise_SunsetController::DateFormat, 
-          'widget' => 'single_text', 'mapped' => false, 'data' => $dateTime))    
-              
+    ->add('SRSSMonth', ChoiceType::class, array ('choices' => $monthChoices,
+          'required' => false, 'mapped' => false, 'data' => $month))
+    ->add('TimeZone_Mode', ChoiceType::class, array ('choices' => $tzChoices,
+          'required' => false, 'mapped' => false, 'data' => $tzMode))
     ->getForm();
     
     if (!empty($airportlist)) 
@@ -341,10 +355,11 @@ class Sunrise_SunsetController extends AbstractController
       $decimalLatitude = $this->convertToDecimal($firstElement->getsLat());
       $decimalLongitude = $this->convertToDecimal($firstElement->getsLong());
       $timezone = ToolsCountryRepository::GetTimeZone($em, $firstElement->getCountry());
-      $days = $this->generateMonthlyData($dateTime, $decimalLatitude, $decimalLongitude, $timezone);
+      $days = $this->generateMonthlyData($dateTime, $decimalLatitude, $decimalLongitude, $timezone, $tzMode);
       $title = $airport . ' · ' . $dateTime->format('m.Y');
+      $tzLabel = $tzMode === 'utc' ? 'UTC' : ($tzMode === 'mez' ? 'MEZ/MESZ (Deutschland)' : 'Ortszeit ' . $timezone);
       $subtitle = 'Breite/Länge ' . $this->decimalToDMS($decimalLatitude, true) . ' ' . $this->decimalToDMS($decimalLongitude, false)
-                . ' · Ortszeit ' . $timezone;
+                . ' · Zeiten in ' . $tzLabel;
     }
     else
     {
