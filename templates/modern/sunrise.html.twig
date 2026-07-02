@@ -35,7 +35,7 @@
   .srss-legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
 </style>
 
-<form id="srssForm" class="srss-form" method="post" action="{{ path('modern_sunrise') }}">
+<form id="srssForm" class="srss-form" method="post" action="{{ path('modern_sunrise', app.request.query.all) }}">
   <div><label for="form_Country_Name">Land</label>{{ form_widget(form.Country_Name) }}</div>
   <div><label for="form_Airport_Name">Flugplatz</label>{{ form_widget(form.Airport_Name) }}</div>
   <div><label for="form_SRSSMonth">Monat</label>{{ form_widget(form.SRSSMonth) }}</div>
