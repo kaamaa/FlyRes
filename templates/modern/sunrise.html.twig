@@ -4,40 +4,86 @@
 
 {% block content %}
 <style>
-  .fr-srss-form{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin-bottom:14px;}
-  .fr-srss-form label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
-  .fr-srss-form select,.fr-srss-form input{padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;min-width:220px;}
-  .fr-srss-hint{font-size:12px;color:var(--fr-mut);margin:-6px 0 12px;}
-  .fr-srss-title{font-weight:700;color:var(--fr-ink);margin:6px 0 12px;line-height:1.5;}
-  .fr-srss-wrap{overflow-x:auto;border:1px solid var(--fr-line,#e5e5e5);border-radius:10px;}
-  .fr-srss-wrap table{border-collapse:collapse;width:100%;font-size:12.5px;}
-  .fr-srss-wrap th,.fr-srss-wrap td{border:1px solid #e6e6e6;padding:4px 8px;white-space:nowrap;text-align:center;}
-  .fr-srss-wrap th{background:#eef3f7;color:var(--fr-blue-d);font-weight:700;}
+  .srss-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px;}
+  .srss-form label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+  .srss-form select,.srss-form input{padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;min-width:210px;}
+  .srss-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:16px 18px;overflow-x:auto;}
+  .srss-title{font-weight:800;color:var(--fr-ink);font-size:16px;margin:4px 0 1px;}
+  .srss-sub{color:var(--fr-mut);font-size:12.5px;margin:0 0 14px;}
+
+  .srss-axis,.srss-row{display:grid;grid-template-columns:60px 1fr 188px;align-items:center;gap:10px;}
+  .srss-axis{color:var(--fr-mut);font-size:11px;margin-bottom:3px;}
+  .srss-ticks{position:relative;height:14px;}
+  .srss-ticks span{position:absolute;transform:translateX(-50%);}
+  .srss-row{height:25px;}
+  .srss-lbl{font-size:12px;color:var(--fr-ink);white-space:nowrap;}
+  .srss-lbl b{font-weight:700;}
+  .srss-lbl .w{color:var(--fr-mut);}
+  .srss-row.we .srss-lbl,.srss-row.we .srss-lbl .w{color:var(--fr-amber);}
+  .srss-track{position:relative;height:16px;border-radius:5px;background:#dfe7f0;overflow:hidden;}
+  .srss-twi{position:absolute;top:0;height:100%;background:#ffe3a8;}
+  .srss-sun{position:absolute;top:0;height:100%;background:linear-gradient(90deg,#ffcf5c,#ff9d3c);}
+  .srss-now{position:absolute;top:-3px;height:22px;width:2px;background:var(--fr-blue-d);}
+  .srss-row.today .srss-track{outline:2px solid var(--fr-blue);outline-offset:1px;}
+  .srss-times{font-size:12px;color:var(--fr-ink);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .srss-times b{font-weight:700;}
+  .srss-polar{color:var(--fr-mut);font-style:italic;}
+  .srss-legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--fr-mut);margin-top:14px;}
+  .srss-legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
 </style>
 
-<div class="fr-srss-hint">Sonnenauf- und -untergang, Dämmerung und Tageslänge je Tag eines Monats für einen Flugplatz – in UTC, MEZ/MESZ und Ortszeit. Nur für Global-Administratoren.</div>
-
-<form id="srssForm" class="fr-srss-form" method="post" action="{{ path('modern_sunrise') }}">
-  <div>
-    <label for="form_Country_Name">Land</label>
-    {{ form_widget(form.Country_Name) }}
-  </div>
-  <div>
-    <label for="form_Airport_Name">Flugplatz</label>
-    {{ form_widget(form.Airport_Name) }}
-  </div>
-  <div>
-    <label for="form_SRSSDate">Monat (MM.JJJJ)</label>
-    {{ form_widget(form.SRSSDate, {'attr': {'placeholder': 'MM.JJJJ'}}) }}
-  </div>
-  <div>
-    <button type="submit" class="fr-btn">Anzeigen</button>
-  </div>
+<form id="srssForm" class="srss-form" method="post" action="{{ path('modern_sunrise') }}">
+  <div><label for="form_Country_Name">Land</label>{{ form_widget(form.Country_Name) }}</div>
+  <div><label for="form_Airport_Name">Flugplatz</label>{{ form_widget(form.Airport_Name) }}</div>
+  <div><label for="form_SRSSDate">Monat (MM.JJJJ)</label>{{ form_widget(form.SRSSDate, {'attr': {'placeholder': 'MM.JJJJ'}}) }}</div>
+  <div><button type="submit" class="fr-btn">Anzeigen</button></div>
   {{ form_rest(form) }}
 </form>
 
-{% if title %}<div class="fr-srss-title">{{ title|raw }}</div>{% endif %}
-<div class="fr-srss-wrap">{{ htmlTable|raw }}</div>
+{% if title %}<div class="srss-title">{{ title }}</div>{% endif %}
+{% if subtitle %}<div class="srss-sub">{{ subtitle }} · Zeiten in Ortszeit</div>{% endif %}
+
+{% if days is not empty %}
+<div class="srss-card">
+  {% set L = 100 / 1440 %}
+  <div class="srss-axis">
+    <span></span>
+    <div class="srss-ticks">
+      {% for h in [0,3,6,9,12,15,18,21,24] %}<span style="left:{{ (h/24*100)|round(2) }}%">{{ h }}</span>{% endfor %}
+    </div>
+    <span style="text-align:right;">🌅 Aufgang · 🌇 Untergang · Länge</span>
+  </div>
+
+  {% for d in days %}
+    <div class="srss-row {{ d.today ? 'today' : (d.weekend ? 'we' : '') }}">
+      <div class="srss-lbl"><b>{{ d.day }}.</b> <span class="w">{{ d.wd }}</span></div>
+      <div class="srss-track">
+        {% if d.polar == 'day' %}
+          <div class="srss-sun" style="left:0;width:100%"></div>
+        {% elseif d.polar == 'night' %}
+        {% else %}
+          <div class="srss-twi" style="left:{{ (d.dawnMin*L)|round(2) }}%;width:{{ ((d.srMin-d.dawnMin)*L)|round(2) }}%"></div>
+          <div class="srss-sun" style="left:{{ (d.srMin*L)|round(2) }}%;width:{{ ((d.ssMin-d.srMin)*L)|round(2) }}%"></div>
+          <div class="srss-twi" style="left:{{ (d.ssMin*L)|round(2) }}%;width:{{ ((d.duskMin-d.ssMin)*L)|round(2) }}%"></div>
+          {% if d.nowMin is defined %}<div class="srss-now" style="left:{{ (d.nowMin*L)|round(2) }}%"></div>{% endif %}
+        {% endif %}
+      </div>
+      <div class="srss-times">
+        {% if d.polar == 'day' %}<span class="srss-polar">Polartag (durchgehend hell)</span>
+        {% elseif d.polar == 'night' %}<span class="srss-polar">Polarnacht (durchgehend dunkel)</span>
+        {% else %}🌅 {{ d.srStr }} · 🌇 {{ d.ssStr }} · <b>{{ d.lenStr }}</b> h{% endif %}
+      </div>
+    </div>
+  {% endfor %}
+
+  <div class="srss-legend">
+    <span><i style="background:#dfe7f0"></i>Nacht</span>
+    <span><i style="background:#ffe3a8"></i>Bürgerliche Dämmerung</span>
+    <span><i style="background:linear-gradient(90deg,#ffcf5c,#ff9d3c)"></i>Tageslicht (Sonnenauf- bis -untergang)</span>
+    <span><i style="background:var(--fr-blue-d);width:3px;"></i>jetzt</span>
+  </div>
+</div>
+{% endif %}
 
 <script>
   (function () {
