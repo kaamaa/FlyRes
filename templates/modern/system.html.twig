@@ -179,6 +179,17 @@
     Setzt Lizenzen, deren Pilot bereits gelöscht ist (Account <span class="sys-mono">status='geloescht'</span>), ebenfalls auf <span class="sys-mono">geloescht</span>.
     Reiner <b>Soft-Delete</b> – nichts wird physisch entfernt, bereits gelöschte bleiben unberührt, beliebig wiederholbar.
   </div>
+  {% if lic.list is not empty %}
+  <div style="margin-top:12px;">
+    <label class="sys-hint" style="display:block;margin-bottom:4px;font-weight:700;">Konkret betroffene Lizenzen ({{ lic.list|length }}) – Pilot — Lizenztyp:</label>
+    <select multiple size="{{ min(lic.list|length, 10) }}" style="width:100%;padding:6px 8px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;">
+      {% for item in lic.list %}
+        <option>{{ item.label }}</option>
+      {% endfor %}
+    </select>
+    <div class="sys-hint" style="margin-top:4px;">Nur zur Information – die Bereinigung markiert alle aufgeführten Lizenzen.</div>
+  </div>
+  {% endif %}
   <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
     <form method="post" action="{{ path('modern_system_liccleanup') }}">
       <input type="hidden" name="mode" value="dry">

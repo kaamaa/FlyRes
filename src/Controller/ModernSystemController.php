@@ -471,14 +471,34 @@ class ModernSystemController extends AbstractController
         "FRes_userLicences l JOIN FRes_accounts a ON a.id = l.accountid "
         . "WHERE a.status = 'geloescht' AND (l.status IS NULL OR l.status = '0')";
 
-    /** @return array{pending:int} Anzahl aktiver Lizenzen an geloeschten Piloten. */
+    /**
+     * @return array{pending:int, list:array<int,array{id:int,label:string}>}
+     * Anzahl UND konkrete Liste der aktiven Lizenzen an geloeschten Piloten
+     * (Pilot + Lizenztyp), damit vor der Bereinigung sichtbar ist, was betroffen ist.
+     */
     private function licStatus(EntityManagerInterface $em): array
     {
-        $pending = (int) $em->getConnection()
-            ->executeQuery('SELECT COUNT(*) FROM ' . self::LIC_ORPHAN_WHERE)
-            ->fetchOne();
+        $conn = $em->getConnection();
+        $pending = (int) $conn->executeQuery('SELECT COUNT(*) FROM ' . self::LIC_ORPHAN_WHERE)->fetchOne();
 
-        return ['pending' => $pending];
+        // Identische Bedingung wie LIC_ORPHAN_WHERE, zusaetzlich der Lizenztyp-Name.
+        $rows = $conn->executeQuery(
+            "SELECT l.id, a.lastname, a.firstname, lt.categoryname, lt.longname "
+            . "FROM FRes_userLicences l "
+            . "JOIN FRes_accounts a ON a.id = l.accountid "
+            . "LEFT JOIN FRes_licenceType lt ON lt.id = l.licenceid "
+            . "WHERE a.status = 'geloescht' AND (l.status IS NULL OR l.status = '0') "
+            . "ORDER BY a.lastname, a.firstname, lt.longname"
+        )->fetchAllAssociative();
+
+        $list = [];
+        foreach ($rows as $r) {
+            $name = trim(trim((string) $r['lastname']) . ', ' . trim((string) $r['firstname']), ', ');
+            $typ  = trim(($r['categoryname'] ? '[' . $r['categoryname'] . '] ' : '') . ($r['longname'] ?? '(unbekannter Lizenztyp)'));
+            $list[] = ['id' => (int) $r['id'], 'label' => ($name !== '' ? $name : '(ohne Namen)') . ' — ' . $typ];
+        }
+
+        return ['pending' => $pending, 'list' => $list];
     }
 
     /**
