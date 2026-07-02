@@ -19,6 +19,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use App\Entities\Clients;
 use App\Entity\FresAccounts;
 use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
+use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use App\LogonType;
 
 class LoginFormAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface 
@@ -86,6 +87,14 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
+      // Fehler + eingegebenen Nutzernamen in der Session ablegen, damit der
+      // LoginController sie via AuthenticationUtils::getLastAuthenticationError()
+      // / getLastUsername() auslesen und im Formular anzeigen kann. Ohne diese
+      // Zeilen laedt das Formular nach falschem Login kommentarlos neu.
+      if ($request->hasSession()) {
+          $request->getSession()->set(SecurityRequestAttributes::AUTHENTICATION_ERROR, $exception);
+          $request->getSession()->set(SecurityRequestAttributes::LAST_USERNAME, (string) $request->request->get('_username'));
+      }
 
       return new RedirectResponse($this->urlGenerator->generate('app_login'));
     }
