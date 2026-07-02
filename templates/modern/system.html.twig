@@ -194,61 +194,49 @@
 </div>
 {% endif %}
 
-{# ---------- Lizenztyp deaktivieren (nur Global-Admin: mandantenuebergreifend) ---------- #}
+{# ---------- Lizenztypen: Nutzungs-Übersicht (nur Anzeige, Global-Admin) ---------- #}
 {% if lictype is not null %}
-<div class="sys-sec">Lizenztyp deaktivieren</div>
-
-{% for f in app.flashes('lictype') %}
-  {% if f.notFound %}
-    <div class="sys-card" style="border-color:#e6c3bf;background:#fbeeec;margin-bottom:12px;">
-      <div style="font-weight:700;color:var(--fr-red,#c9453b);">Lizenztyp nicht gefunden</div>
-    </div>
-  {% elseif f.alreadyInactive %}
-    <div class="sys-card" style="border-color:#e6ddbf;background:#fbf7ec;margin-bottom:12px;">
-      <div style="font-weight:700;">Bereits deaktiviert</div>
-      <div class="sys-hint">„{{ f.name }}" ist schon auf <span class="sys-mono">geloescht</span> gesetzt.</div>
-    </div>
-  {% elseif f.dryRun %}
-    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
-      <div style="font-weight:700;color:var(--fr-green);">Vorschau (Dry-Run) – es wurde nichts geschrieben</div>
-      <div class="sys-hint">
-        „<b>{{ f.name }}</b>": es würden <b>{{ f.reqCount }}</b> Flugzeugtyp-Anforderung(en) entfernt und der Typ auf <span class="sys-mono">geloescht</span> gesetzt.<br>
-        Halter: {{ f.aktiv }} aktiv, {{ f.geloescht }} gelöscht (Lizenzen bleiben unangetastet).
-        {% if f.aktiv > 0 %}<br><b style="color:var(--fr-red,#c9453b);">⚠ Achtung: {{ f.aktiv }} Nutzer haben diesen Typ noch aktiv!</b>{% endif %}
-      </div>
-    </div>
-  {% elseif f.done %}
-    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
-      <div style="font-weight:700;color:var(--fr-green);">Lizenztyp deaktiviert ✓</div>
-      <div class="sys-hint">„<b>{{ f.name }}</b>": <b>{{ f.reqRemoved }}</b> Flugzeugtyp-Anforderung(en) entfernt, Typ auf <span class="sys-mono">geloescht</span> gesetzt.</div>
-    </div>
-  {% else %}
-    <div class="sys-card" style="border-color:#e6c3bf;background:#fbeeec;margin-bottom:12px;">
-      <div style="font-weight:700;color:var(--fr-red,#c9453b);">Fehler</div>
-      <div class="sys-hint">{{ f.error|default('Unbekannter Fehler') }}</div>
-    </div>
-  {% endif %}
-{% endfor %}
+<div class="sys-sec">Lizenztypen – Nutzungsübersicht</div>
 
 <div class="sys-card">
-  <div class="sys-hint" style="margin-bottom:10px;">
-    Wählt einen Lizenztyp, entfernt dessen <b>Flugzeugtyp-Anforderungen</b> und setzt ihn auf
-    <span class="sys-mono">geloescht</span> (Soft-Delete – Typ verschwindet aus den Listen, bestehende Nutzer-Lizenzen und die Historie bleiben erhalten, reversibel per DB).
-    Tipp: erst <b>Vorschau</b>, dann <b>Deaktivieren</b>. Spalten je Typ: aktive/gelöschte Halter · FZ-Anf. = Flugzeugtyp-Anforderungen.
+  <div class="sys-hint" style="margin-bottom:12px;">
+    Zeigt für jeden Lizenztyp, ob er noch gebraucht wird. Reine Anzeige – es wird nichts geändert.
+    Insgesamt <b>{{ lictype.total }}</b> Typen{% if lictype.unused > 0 %}, davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
+    <div style="margin-top:8px;line-height:1.6;">
+      <b>Aktive Inhaber</b> = Piloten, die diese Lizenz derzeit gültig hinterlegt haben (nicht gelöscht).<br>
+      <b>Historie (gelöscht)</b> = Anzahl bereits gelöschter Nutzer-Lizenzen dieses Typs – zeigt, ob der Typ <i>jemals</i> verwendet wurde.<br>
+      <b>Flugzeug-Anforderung</b> = für so viele Flugzeugtypen ist dieser Typ als <i>Pflichtlizenz</i> hinterlegt (wird zum Buchen dieser Flugzeuge verlangt).
+    </div>
+    <div style="margin-top:8px;">
+      <span class="sys-badge bad">nie genutzt</span> = 0 Inhaber, 0 Historie, keine Anforderung → überflüssig ·
+      <span class="sys-badge" style="background:#fbf3dd;color:#8a6d1a;">keine aktiven Inhaber</span> = aktuell niemand, aber früher genutzt oder als Anforderung hinterlegt ·
+      <span class="sys-badge ok">in Nutzung</span>
+    </div>
   </div>
-  <form method="post" action="{{ path('modern_system_lictype_deactivate') }}" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-    <select name="id" required style="min-width:min(560px,100%);padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;background:#fff;font:inherit;">
-      <option value="">— Lizenztyp wählen —</option>
-      {% for t in lictype.types %}
-        <option value="{{ t.id }}">{{ t.label }} · {{ t.aktiv }} aktiv / {{ t.geloescht }} gel. · {{ t.req }} FZ-Anf.</option>
-      {% endfor %}
-    </select>
-    <button type="submit" name="mode" value="dry" class="fr-btn ghost">Vorschau</button>
-    <button type="submit" name="mode" value="run" class="fr-btn"
-            onclick="return confirm('Lizenztyp deaktivieren?\n\nEntfernt die Flugzeugtyp-Anforderungen dieses Typs und setzt ihn auf gelöscht (Soft-Delete, reversibel).');">
-      Deaktivieren
-    </button>
-  </form>
+
+  <table class="sys-kv" style="width:100%;">
+    <tr style="font-weight:700;">
+      <td>Kategorie</td><td>Lizenztyp</td>
+      <td style="text-align:right;">Aktive&nbsp;Inhaber</td>
+      <td style="text-align:right;">Historie&nbsp;(gelöscht)</td>
+      <td style="text-align:right;">Flugzeug-Anforderung</td>
+      <td>Bewertung</td>
+    </tr>
+    {% for t in lictype.types %}
+      <tr{% if t.neverUsed %} style="background:#fbeeec;"{% endif %}>
+        <td>{{ t.category }}</td>
+        <td>{{ t.name }}{% if t.inactive %} <span class="sys-badge" style="background:#eee;color:#777;">deaktiviert</span>{% endif %}</td>
+        <td style="text-align:right;">{{ t.aktiv }}</td>
+        <td style="text-align:right;">{{ t.geloescht }}</td>
+        <td style="text-align:right;">{{ t.req }}</td>
+        <td>
+          {% if t.neverUsed %}<span class="sys-badge bad">nie genutzt</span>
+          {% elseif t.noActive %}<span class="sys-badge" style="background:#fbf3dd;color:#8a6d1a;">keine aktiven Inhaber</span>
+          {% else %}<span class="sys-badge ok">in Nutzung</span>{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </table>
 </div>
 {% endif %}
 
