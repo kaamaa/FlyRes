@@ -252,7 +252,9 @@ class WbCalc
         $X = static fn ($x) => $ml + ($x - $v['xMin']) / ($v['xMax'] - $v['xMin']) * $pw;
         $Y = static fn ($y) => $mt + (1 - ($y - $v['yMin']) / ($v['yMax'] - $v['yMin'])) * $ph;
 
-        $s = '<svg viewBox="0 0 ' . $w . ' ' . $h . '" width="100%" height="' . $h . '">';
+        // user-select:none -> Achsen-/Punktbeschriftungen lassen sich nicht markieren/kopieren.
+        $s = '<svg viewBox="0 0 ' . $w . ' ' . $h . '" width="100%" height="' . $h . '"'
+            . ' style="user-select:none;-webkit-user-select:none;-moz-user-select:none">';
         $s .= '<rect x="' . $ml . '" y="' . $mt . '" width="' . $pw . '" height="' . $ph . '" fill="#fbfcfe" stroke="#e3e8ee"/>';
         // Ticks
         for ($i = 0; $i <= 5; $i++) {

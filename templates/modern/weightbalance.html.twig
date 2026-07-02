@@ -34,6 +34,8 @@
   .wb-warn{list-style:none;margin:10px 0 0;padding:0;} .wb-warn li{color:var(--fr-red,#c9453b);font-size:12.5px;padding:2px 0;}
   .wb-note{font-size:11.5px;color:var(--fr-mut);margin-top:12px;border-top:1px dashed var(--fr-line);padding-top:8px;}
   .wb-src{font-size:11px;color:var(--fr-mut);margin-top:6px;}
+  /* CG-Diagramm: Text nicht markierbar (Kopierschutz). */
+  #wb-env, #wb-env svg, #wb-env text{-webkit-user-select:none;-moz-user-select:none;user-select:none;}
   @media print{ .fr-side,.fr-top{display:none!important;} .fr-app,.fr-main{display:block!important;} .fr-body{padding:0!important;} .wb-grid{grid-template-columns:1fr;} .wb-card{border:none;} table.wb input{border:none;background:transparent;} }
   @media (max-width:900px){ .wb-grid{grid-template-columns:1fr;} }
 </style>
