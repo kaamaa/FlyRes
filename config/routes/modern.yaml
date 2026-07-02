@@ -296,12 +296,10 @@ modern_wb:
     path: /web/weight-balance
     controller: App\Controller\WeightBalanceController::index
     methods: GET
-modern_wb_type:
-    path: /web/weight-balance/typ/{id}
-    controller: App\Controller\WeightBalanceController::typeJson
-    methods: GET
-    requirements:
-        id: '[A-Za-z0-9_]+'
+modern_wb_calc:
+    path: /web/weight-balance/berechnen
+    controller: App\Controller\WeightBalanceController::calc
+    methods: POST
 
 # --- Sonnenzeiten (Sunrise/Sunset) – nur ROLE_GLOBAL_ADMIN ---
 modern_sunrise:
