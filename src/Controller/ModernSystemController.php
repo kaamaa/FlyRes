@@ -527,21 +527,24 @@ class ModernSystemController extends AbstractController
     }
 
     /**
-     * Reine Nutzungs-Uebersicht aller Lizenztypen (nur Anzeige, keine Aenderung):
-     * je Typ die aktiven Inhaber, die Historie (geloeschte Nutzer-Lizenzen) und
-     * die Anzahl Flugzeugtypen, die diesen Typ als Pflichtlizenz verlangen. Aus
-     * diesen drei Zahlen ergibt sich, ob ein Typ noch gebraucht wird.
+     * Lizenztypen fuer ein Dropdown, sortiert nach Nutzung aufsteigend
+     * (am wenigsten genutzte zuerst). Jede Zeile traegt ausgeschrieben, wie oft
+     * der Typ genutzt wird (aktive Inhaber, fruehere/geloeschte Lizenzen, von wie
+     * vielen Flugzeugtypen verlangt) und einen Status in Klartext.
      *
-     * @return array{types: array<int, array<string,mixed>>, total:int, unused:int}
+     * @return array{types: array<int, array{id:int,label:string}>, total:int, unused:int}
      */
     private function licTypeStatus(EntityManagerInterface $em): array
     {
+        // Sortierung: zuerst aktive Inhaber, dann Gesamtnutzung, dann Flugzeug-
+        // Anforderungen – jeweils aufsteigend, damit die am wenigsten genutzten
+        // Typen oben stehen.
         $sql = "SELECT lt.id, lt.categoryname, lt.longname, lt.status,
             (SELECT COUNT(*) FROM FRes_userLicences ul WHERE ul.licenceid = lt.id AND (ul.status IS NULL OR ul.status <> 'geloescht')) AS aktiv,
             (SELECT COUNT(*) FROM FRes_userLicences ul WHERE ul.licenceid = lt.id AND ul.status = 'geloescht') AS geloescht,
             (SELECT COUNT(*) FROM FRes_aircraftType2Licences a WHERE a.licenceid = lt.id) AS req
             FROM FRes_licenceType lt
-            ORDER BY lt.categoryid, lt.longname";
+            ORDER BY aktiv ASC, (aktiv + geloescht) ASC, req ASC, lt.longname ASC";
 
         $types  = [];
         $unused = 0;
@@ -549,22 +552,25 @@ class ModernSystemController extends AbstractController
             $aktiv = (int) $row['aktiv'];
             $gel   = (int) $row['geloescht'];
             $req   = (int) $row['req'];
+
             $neverUsed = ($aktiv === 0 && $gel === 0 && $req === 0);
             if ($neverUsed) {
                 $unused++;
             }
-            $types[] = [
-                'id'         => (int) $row['id'],
-                'category'   => $row['categoryname'] ?: '–',
-                'name'       => $row['longname'],
-                'aktiv'      => $aktiv,
-                'geloescht'  => $gel,
-                'req'        => $req,
-                'inactive'   => ($row['status'] === 'geloescht'),
-                'neverUsed'  => $neverUsed,
-                'onlyReq'    => ($aktiv === 0 && $gel === 0 && $req > 0),   // nie zugewiesen, nur als Anforderung hinterlegt
-                'noActive'   => ($aktiv === 0 && ($gel > 0 || $req > 0)),   // keine aktiven Inhaber mehr, aber frueher/als Anforderung genutzt
-            ];
+            $statusWord = $neverUsed ? 'nie genutzt' : ($aktiv === 0 ? 'keine aktiven Inhaber' : 'in Nutzung');
+
+            $name = trim(($row['categoryname'] ? $row['categoryname'] . ': ' : '') . $row['longname']);
+            if ($row['status'] === 'geloescht') {
+                $name .= ' (deaktiviert)';
+            }
+
+            $label = $name
+                . '  —  aktive Inhaber: ' . $aktiv
+                . ', frühere/gelöschte: ' . $gel
+                . ', von ' . $req . ' Flugzeugtyp' . ($req === 1 ? '' : 'en') . ' verlangt'
+                . '  —  ' . $statusWord;
+
+            $types[] = ['id' => (int) $row['id'], 'label' => $label];
         }
 
         return ['types' => $types, 'total' => count($types), 'unused' => $unused];

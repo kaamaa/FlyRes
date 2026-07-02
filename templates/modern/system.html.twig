@@ -210,44 +210,18 @@
 <div class="sys-sec">Lizenztypen – Nutzungsübersicht</div>
 
 <div class="sys-card">
-  <div class="sys-hint" style="margin-bottom:12px;">
-    Zeigt für jeden Lizenztyp, ob er noch gebraucht wird. Reine Anzeige – es wird nichts geändert.
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Lizenztypen nach Nutzung – die <b>am wenigsten genutzten stehen oben</b>. Reine Anzeige.
+    Jeder Eintrag nennt ausgeschrieben: <b>aktive Inhaber</b> (Piloten mit derzeit gültiger Lizenz),
+    <b>frühere/gelöschte</b> (bereits gelöschte Nutzer-Lizenzen dieses Typs) und von wie vielen
+    <b>Flugzeugtypen</b> der Typ als Pflichtlizenz verlangt wird.
     Insgesamt <b>{{ lictype.total }}</b> Typen{% if lictype.unused > 0 %}, davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
-    <div style="margin-top:8px;line-height:1.6;">
-      <b>Aktive Inhaber</b> = Piloten, die diese Lizenz derzeit gültig hinterlegt haben (nicht gelöscht).<br>
-      <b>Historie (gelöscht)</b> = Anzahl bereits gelöschter Nutzer-Lizenzen dieses Typs – zeigt, ob der Typ <i>jemals</i> verwendet wurde.<br>
-      <b>Flugzeug-Anforderung</b> = für so viele Flugzeugtypen ist dieser Typ als <i>Pflichtlizenz</i> hinterlegt (wird zum Buchen dieser Flugzeuge verlangt).
-    </div>
-    <div style="margin-top:8px;">
-      <span class="sys-badge bad">nie genutzt</span> = 0 Inhaber, 0 Historie, keine Anforderung → überflüssig ·
-      <span class="sys-badge" style="background:#fbf3dd;color:#8a6d1a;">keine aktiven Inhaber</span> = aktuell niemand, aber früher genutzt oder als Anforderung hinterlegt ·
-      <span class="sys-badge ok">in Nutzung</span>
-    </div>
   </div>
-
-  <table class="sys-kv" style="width:100%;">
-    <tr style="font-weight:700;">
-      <td>Kategorie</td><td>Lizenztyp</td>
-      <td style="text-align:right;">Aktive&nbsp;Inhaber</td>
-      <td style="text-align:right;">Historie&nbsp;(gelöscht)</td>
-      <td style="text-align:right;">Flugzeug-Anforderung</td>
-      <td>Bewertung</td>
-    </tr>
+  <select size="1" style="width:100%;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;">
     {% for t in lictype.types %}
-      <tr{% if t.neverUsed %} style="background:#fbeeec;"{% endif %}>
-        <td>{{ t.category }}</td>
-        <td>{{ t.name }}{% if t.inactive %} <span class="sys-badge" style="background:#eee;color:#777;">deaktiviert</span>{% endif %}</td>
-        <td style="text-align:right;">{{ t.aktiv }}</td>
-        <td style="text-align:right;">{{ t.geloescht }}</td>
-        <td style="text-align:right;">{{ t.req }}</td>
-        <td>
-          {% if t.neverUsed %}<span class="sys-badge bad">nie genutzt</span>
-          {% elseif t.noActive %}<span class="sys-badge" style="background:#fbf3dd;color:#8a6d1a;">keine aktiven Inhaber</span>
-          {% else %}<span class="sys-badge ok">in Nutzung</span>{% endif %}
-        </td>
-      </tr>
+      <option>{{ t.label }}</option>
     {% endfor %}
-  </table>
+  </select>
 </div>
 {% endif %}
 
