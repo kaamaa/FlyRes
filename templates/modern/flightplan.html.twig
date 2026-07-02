@@ -7,141 +7,223 @@
   .fp-params{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:16px;}
   .fp-params label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
   .fp-params input{width:110px;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;}
-  .fp-sec{font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.5px;margin:0 0 8px;}
-  .wp-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
-  .wp-num{width:22px;text-align:right;color:var(--fr-mut);font-size:12px;font-variant-numeric:tabular-nums;}
-  .wp-in{flex:0 0 240px;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;text-transform:uppercase;letter-spacing:.5px;}
-  .wp-btn{width:32px;height:32px;border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:8px;cursor:pointer;font-size:15px;line-height:1;color:var(--fr-mut);}
-  .wp-btn.ins{color:var(--fr-blue-d);} .wp-btn.del{color:var(--fr-red,#c9453b);}
-  .wp-btn:hover{background:#f2f5f8;}
-  .fp-hint{font-size:12px;color:var(--fr-mut);margin:6px 0 0;}
-  .fp-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;margin-top:16px;overflow-x:auto;}
+  .fp-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;overflow-x:auto;}
   table.fp{border-collapse:collapse;width:100%;font-size:13px;}
-  table.fp th,table.fp td{padding:7px 10px;border-bottom:1px solid var(--fr-line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  table.fp th,table.fp td{padding:6px 9px;border-bottom:1px solid var(--fr-line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;vertical-align:middle;}
   table.fp th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);border-bottom:2px solid var(--fr-line);}
   table.fp td.l,table.fp th.l{text-align:left;}
-  table.fp tr.wp td{background:#f6f9fc;border-bottom:none;}
-  table.fp tr.wp td.l{font-size:14px;}
-  table.fp tr.wp .nm{color:var(--fr-mut);font-weight:400;margin-left:6px;}
-  table.fp tr.leg td{color:var(--fr-ink);}
-  table.fp tr.leg td.l{color:var(--fr-mut);text-align:center;}
-  table.fp tr.err td{color:var(--fr-red,#c9453b);}
-  table.fp tr.tot td{font-weight:800;border-top:2px solid var(--fr-line);border-bottom:none;background:#eef3f7;}
-  .fp-badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;}
-  .fp-bad{background:#fbeeec;color:var(--fr-red,#c9453b);}
-  .fp-disc{font-size:11.5px;color:var(--fr-mut);margin-top:14px;border-top:1px dashed var(--fr-line);padding-top:8px;}
+  table.fp .wp-num{color:var(--fr-mut);width:22px;}
+  table.fp .wp-in{width:150px;padding:8px 9px;border:1px solid var(--fr-line,#d8d8d8);border-radius:7px;font:inherit;text-transform:uppercase;letter-spacing:.5px;}
+  table.fp .wp-name{text-align:left;color:var(--fr-ink);max-width:220px;overflow:hidden;text-overflow:ellipsis;}
+  table.fp .wp-name.bad{color:var(--fr-red,#c9453b);font-size:12px;}
+  table.fp .verr{text-align:left;color:var(--fr-red,#c9453b);white-space:normal;}
+  table.fp .wp-act{white-space:nowrap;}
+  .wp-btn{width:30px;height:30px;border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:7px;cursor:pointer;font-size:14px;line-height:1;color:var(--fr-mut);}
+  .wp-btn.ins{color:var(--fr-blue-d);} .wp-btn.del{color:var(--fr-red,#c9453b);}
+  .wp-btn:hover{background:#f2f5f8;}
+  table.fp tfoot td{font-weight:800;border-top:2px solid var(--fr-line);border-bottom:none;background:#eef3f7;}
+  .fp-badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;background:#fbeeec;color:var(--fr-red,#c9453b);}
+  .fp-hint{font-size:12px;color:var(--fr-mut);margin:10px 0 0;}
+  .fp-disc{font-size:11.5px;color:var(--fr-mut);margin-top:12px;border-top:1px dashed var(--fr-line);padding-top:8px;}
 </style>
 
-<form method="post" action="{{ path('modern_flightplan') }}">
-  <div class="fp-params">
-    <div><label>TAS (kt)</label><input type="number" name="tas" value="{{ tas|round }}" min="1" step="1"></div>
-    <div><label>Wind aus (°)</label><input type="number" name="wind_dir" value="{{ windDir|round }}" min="0" max="360" step="1"></div>
-    <div><label>Wind (kt)</label><input type="number" name="wind_speed" value="{{ windSpeed|round }}" min="0" step="1"></div>
-    <div><label>Verbrauch (l/h)</label><input type="number" name="fuel_rate" value="{{ fuelRate|round(1) }}" min="0" step="0.5"></div>
-  </div>
-
-  <div class="fp-sec">Route – Wegpunkte</div>
-  <div id="wp-list">
-    {% for wp in wpInputs %}
-      {% if wp is not empty %}
-      <div class="wp-row">
-        <span class="wp-num"></span>
-        <input name="waypoints[]" class="wp-in" placeholder="ICAO (z. B. EDFV)" autocomplete="off" value="{{ wp }}">
-        <button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button>
-        <button type="button" class="wp-btn del" title="Zeile löschen">✕</button>
-      </div>
-      {% endif %}
-    {% endfor %}
-  </div>
-  <div class="fp-hint">Je Zeile ein Wegpunkt (ICAO-Code). ＋ fügt eine Zeile darunter ein, ✕ löscht sie; am Ende ist immer eine leere Zeile frei. <b>Enter</b> springt in die nächste Zeile.</div>
-
-  <div style="margin-top:14px;"><button type="submit" class="fr-btn">Berechnen</button></div>
-</form>
-
-{% if points is not empty %}
-<div class="fp-card">
-  <div class="fp-sec">Navigations-Log</div>
-  <table class="fp">
-    <tr>
-      <th class="l">Wegpunkt / Strecke</th>
-      <th>Distanz</th><th>Kurs TC</th><th>Steuerkurs TH</th><th>GS</th><th>Zeit</th><th>Sprit</th>
-    </tr>
-    {% for p in points %}
-      <tr class="wp">
-        <td class="l"><b>{{ p.icao }}</b>{% if p.found %}<span class="nm">{{ p.name }}</span>{% else %} <span class="fp-badge fp-bad">nicht gefunden</span>{% endif %}</td>
-        <td colspan="6"></td>
-      </tr>
-      {% if not loop.last %}
-        {% set leg = legs[loop.index0] %}
-        {% if leg.error %}
-          <tr class="leg err"><td class="l">↓</td><td colspan="6" class="l">⚠ {{ leg.error }}</td></tr>
-        {% else %}
-          <tr class="leg">
-            <td class="l">↓</td>
-            <td>{{ leg.dist|round(1) }} NM</td>
-            <td>{{ '%03d°'|format(leg.tc|round) }}</td>
-            <td>{{ '%03d°'|format(leg.th|round) }}</td>
-            <td>{{ leg.gs|round }} kt</td>
-            <td>{{ leg.timeStr }}</td>
-            <td>{{ leg.fuel|round(1) }} l</td>
-          </tr>
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-    <tr class="tot">
-      <td class="l">Gesamt{% if not ok %} <span class="fp-badge fp-bad">unvollständig</span>{% endif %}</td>
-      <td>{{ totDist|round(1) }} NM</td><td></td><td></td><td></td>
-      <td>{{ totTimeStr }}</td><td>{{ totFuel|round(1) }} l</td>
-    </tr>
-  </table>
-  <div class="fp-disc">
-    <b>Achtung:</b> Die verwendeten Navigationsdaten sind nicht auf dem aktuellen Stand. Ergebnisse vor Flugantritt anhand der offiziell gültigen Unterlagen (AIP, ICAO-Karten, Flughandbuch) überprüfen. Benutzung auf eigene Gefahr.
-  </div>
+<div class="fp-params">
+  <div><label>TAS (kt)</label><input type="number" id="p-tas" value="{{ tas }}" min="1" step="1"></div>
+  <div><label>Wind aus (°)</label><input type="number" id="p-wdir" value="{{ windDir }}" min="0" max="360" step="1"></div>
+  <div><label>Wind (kt)</label><input type="number" id="p-wspd" value="{{ windSpeed }}" min="0" step="1"></div>
+  <div><label>Verbrauch (l/h)</label><input type="number" id="p-fuel" value="{{ fuelRate }}" min="0" step="0.5"></div>
 </div>
-{% endif %}
+
+<div class="fp-card">
+  <table class="fp" id="fp-table">
+    <thead>
+      <tr>
+        <th></th><th class="l">Wegpunkt</th><th class="l">Name</th>
+        <th>Distanz</th><th>Kurs&nbsp;TC</th><th>Steuerkurs&nbsp;TH</th><th>GS</th><th>Zeit</th><th>Sprit</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="wp-body">
+      {% for wp in wpInputs %}
+        <tr class="wp-row">
+          <td class="wp-num"></td>
+          <td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO" value="{{ wp }}"></td>
+          <td class="wp-name"></td>
+          <td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td><td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>
+          <td class="wp-act"><button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" title="Zeile löschen">✕</button></td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td></td><td class="l" colspan="2">Gesamt <span id="tot-flag"></span></td>
+        <td id="tot-dist">–</td><td></td><td></td><td></td><td id="tot-time">–</td><td id="tot-fuel">–</td><td></td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="fp-hint">Je Zeile ein Wegpunkt (ICAO). Die Werte rechts werden <b>automatisch</b> berechnet. ＋ fügt eine Zeile darunter ein, ✕ löscht sie, <b>Enter</b> springt weiter; am Ende bleibt immer eine leere Zeile frei.</div>
+  <div class="fp-disc"><b>Achtung:</b> Die verwendeten Navigationsdaten sind nicht auf dem aktuellen Stand. Ergebnisse vor Flugantritt anhand der offiziell gültigen Unterlagen (AIP, ICAO-Karten, Flughandbuch) überprüfen. Benutzung auf eigene Gefahr.</div>
+</div>
 
 <script>
 (function () {
-  var list = document.getElementById('wp-list');
-  function makeRow(val) {
-    var row = document.createElement('div');
-    row.className = 'wp-row';
-    row.innerHTML =
-      '<span class="wp-num"></span>' +
-      '<input name="waypoints[]" class="wp-in" placeholder="ICAO (z. B. EDFV)" autocomplete="off">' +
-      '<button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button>' +
-      '<button type="button" class="wp-btn del" title="Zeile löschen">✕</button>';
-    row.querySelector('.wp-in').value = val || '';
-    return row;
+  var RESOLVE_URL = '{{ path('modern_flightplan_resolve') }}';
+  var body = document.getElementById('wp-body');
+  var cache = {};              // ICAO -> {found, name, lat, lon}
+  var R_NM = 3437.7467707849396;
+  var rad = function (d) { return d * Math.PI / 180; }, deg = function (r) { return r * 180 / Math.PI; };
+
+  function distanceNm(la1, lo1, la2, lo2) {
+    var p1 = rad(la1), p2 = rad(la2), dp = rad(la2 - la1), dl = rad(lo2 - lo1);
+    var a = Math.sin(dp / 2) * Math.sin(dp / 2) + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) * Math.sin(dl / 2);
+    return R_NM * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
+  function bearing(la1, lo1, la2, lo2) {
+    var p1 = rad(la1), p2 = rad(la2), dl = rad(lo2 - lo1);
+    var y = Math.sin(dl) * Math.cos(p2);
+    var x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+    return (deg(Math.atan2(y, x)) + 360) % 360;
+  }
+  function windTriangle(tc, tas, wd, ws) {
+    if (tas <= 0) return null;
+    var wtc = rad(wd - tc), swc = (ws / tas) * Math.sin(wtc);
+    if (Math.abs(swc) > 1) return null;
+    var wca = Math.asin(swc), gs = tas * Math.cos(wca) - ws * Math.cos(wtc);
+    if (gs <= 0) return null;
+    return { gs: gs, hdg: (tc + deg(wca) + 360) % 360 };
+  }
+  function fmtTime(min) { var m = Math.round(min); return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }
+  function pad3(c) { return ('00' + Math.round(c)).slice(-3) + '°'; }
+
+  function makeRow(val) {
+    var tr = document.createElement('tr');
+    tr.className = 'wp-row';
+    tr.innerHTML =
+      '<td class="wp-num"></td>' +
+      '<td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO"></td>' +
+      '<td class="wp-name"></td>' +
+      '<td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td><td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>' +
+      '<td class="wp-act"><button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" title="Zeile löschen">✕</button></td>';
+    tr.querySelector('.wp-in').value = val || '';
+    return tr;
+  }
+  function valCells(tr) {
+    return ['.v-dist', '.v-tc', '.v-th', '.v-gs', '.v-time', '.v-fuel'].map(function (s) { return tr.querySelector(s); });
+  }
+  function clearVals(tr) {
+    var c = valCells(tr);
+    c[0].colSpan = 1; c[0].className = 'v-dist';
+    for (var i = 0; i < 6; i++) { c[i].style.display = ''; c[i].textContent = ''; }
+  }
+  function setLeg(tr, o) {
+    var c = valCells(tr);
+    c[0].colSpan = 1; c[0].className = 'v-dist';
+    for (var i = 0; i < 6; i++) c[i].style.display = '';
+    c[0].textContent = o.dist.toFixed(1) + ' NM';
+    c[1].textContent = pad3(o.tc);
+    c[2].textContent = pad3(o.th);
+    c[3].textContent = Math.round(o.gs) + ' kt';
+    c[4].textContent = fmtTime(o.time);
+    c[5].textContent = o.fuel.toFixed(1) + ' l';
+  }
+  function setLegErr(tr, msg) {
+    var c = valCells(tr);
+    for (var i = 1; i < 6; i++) c[i].style.display = 'none';
+    c[0].colSpan = 6; c[0].className = 'v-dist verr'; c[0].textContent = '⚠ ' + msg;
+  }
+
   function renumber() {
-    var rows = list.querySelectorAll('.wp-row');
+    var rows = body.querySelectorAll('.wp-row');
     for (var i = 0; i < rows.length; i++) rows[i].querySelector('.wp-num').textContent = (i + 1) + '.';
   }
   function ensureTrailingEmpty() {
-    var rows = list.querySelectorAll('.wp-row');
+    var rows = body.querySelectorAll('.wp-row');
     var last = rows[rows.length - 1];
-    if (!last || last.querySelector('.wp-in').value.trim() !== '') list.appendChild(makeRow(''));
+    if (!last || last.querySelector('.wp-in').value.trim() !== '') body.appendChild(makeRow(''));
     renumber();
   }
-  list.addEventListener('click', function (e) {
+
+  var timer = null;
+  function schedule() { clearTimeout(timer); timer = setTimeout(recompute, 250); }
+
+  async function recompute() {
+    var rows = [].slice.call(body.querySelectorAll('.wp-row'));
+    // ICAOs aufloesen (nur unbekannte nachladen)
+    var icaos = rows.map(function (r) { return r.querySelector('.wp-in').value.trim().toUpperCase(); });
+    var need = icaos.filter(function (x) { return x && !(x in cache); });
+    if (need.length) {
+      try {
+        var b = new URLSearchParams();
+        need.forEach(function (i) { b.append('icaos[]', i); });
+        var res = await fetch(RESOLVE_URL, { method: 'POST', body: b, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } });
+        var data = await res.json();
+        need.forEach(function (i) { cache[i] = data[i] || { found: false }; });
+      } catch (e) { need.forEach(function (i) { cache[i] = { found: false }; }); }
+    }
+
+    var tas = parseFloat(document.getElementById('p-tas').value) || 0;
+    var wd = ((parseFloat(document.getElementById('p-wdir').value) || 0) % 360 + 360) % 360;
+    var ws = parseFloat(document.getElementById('p-wspd').value) || 0;
+    var fr = parseFloat(document.getElementById('p-fuel').value) || 0;
+
+    // Punkte = Zeilen mit nicht-leerem ICAO
+    var pts = rows.filter(function (r) { return r.querySelector('.wp-in').value.trim() !== ''; });
+    rows.forEach(function (r) { clearVals(r); r.querySelector('.wp-name').textContent = ''; r.querySelector('.wp-name').className = 'wp-name'; });
+
+    var totD = 0, totT = 0, totF = 0, ok = true, legcount = 0;
+    for (var j = 0; j < pts.length; j++) {
+      var r = pts[j], ic = r.querySelector('.wp-in').value.trim().toUpperCase(), c = cache[ic];
+      var nameCell = r.querySelector('.wp-name');
+      if (c && c.found) { nameCell.textContent = c.name; }
+      else { nameCell.textContent = 'nicht gefunden'; nameCell.className = 'wp-name bad'; ok = false; }
+
+      if (j < pts.length - 1) {
+        var r2 = pts[j + 1], ic2 = r2.querySelector('.wp-in').value.trim().toUpperCase(), c2 = cache[ic2];
+        if (c && c.found && c2 && c2.found) {
+          var dist = distanceNm(c.lat, c.lon, c2.lat, c2.lon), tc = bearing(c.lat, c.lon, c2.lat, c2.lon);
+          var wt = windTriangle(tc, tas, wd, ws);
+          if (wt) {
+            var t = dist / wt.gs * 60, fuel = t / 60 * fr;
+            setLeg(r, { dist: dist, tc: tc, th: wt.hdg, gs: wt.gs, time: t, fuel: fuel });
+            totD += dist; totT += t; totF += fuel; legcount++;
+          } else { setLegErr(r, 'Wind zu stark – nicht fliegbar'); ok = false; }
+        } else { setLegErr(r, 'Wegpunkt nicht gefunden'); ok = false; }
+      }
+    }
+
+    document.getElementById('tot-dist').textContent = legcount ? totD.toFixed(1) + ' NM' : '–';
+    document.getElementById('tot-time').textContent = legcount ? fmtTime(totT) : '–';
+    document.getElementById('tot-fuel').textContent = legcount ? totF.toFixed(1) + ' l' : '–';
+    document.getElementById('tot-flag').innerHTML = (!ok && pts.length >= 2) ? '<span class="fp-badge">unvollständig</span>' : '';
+  }
+
+  // Interaktion
+  body.addEventListener('click', function (e) {
     var btn = e.target.closest('.wp-btn'); if (!btn) return;
     var row = btn.closest('.wp-row');
-    if (btn.classList.contains('del')) { row.remove(); if (!list.querySelector('.wp-row')) list.appendChild(makeRow('')); }
+    if (btn.classList.contains('del')) { row.remove(); if (!body.querySelector('.wp-row')) body.appendChild(makeRow('')); }
     else { var nr = makeRow(''); row.after(nr); nr.querySelector('.wp-in').focus(); }
-    ensureTrailingEmpty();
+    ensureTrailingEmpty(); recompute();
   });
-  list.addEventListener('input', function (e) { if (e.target.classList.contains('wp-in')) ensureTrailingEmpty(); });
-  list.addEventListener('keydown', function (e) {
+  body.addEventListener('input', function (e) {
+    if (!e.target.classList.contains('wp-in')) return;
+    e.target.value = e.target.value.toUpperCase();
+    ensureTrailingEmpty(); schedule();
+  });
+  body.addEventListener('keydown', function (e) {
     if (e.target.classList.contains('wp-in') && e.key === 'Enter') {
       e.preventDefault();
       var row = e.target.closest('.wp-row'); var nr = makeRow(''); row.after(nr);
       nr.querySelector('.wp-in').focus(); ensureTrailingEmpty();
     }
   });
-  // Start: mindestens zwei Zeilen
-  if (!list.querySelector('.wp-row')) { list.appendChild(makeRow('')); list.appendChild(makeRow('')); }
+  ['p-tas', 'p-wdir', 'p-wspd', 'p-fuel'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', schedule);
+  });
+
+  // Start
+  if (!body.querySelector('.wp-row')) { body.appendChild(makeRow('')); body.appendChild(makeRow('')); }
   ensureTrailingEmpty();
+  recompute();
 })();
 </script>
 {% endblock %}

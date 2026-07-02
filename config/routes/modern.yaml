@@ -286,6 +286,10 @@ modern_flightplan:
     path: /web/flugplanung
     controller: App\Controller\FlightPlanController::plan
     methods: [GET, POST]
+modern_flightplan_resolve:
+    path: /web/flugplanung/aufloesen
+    controller: App\Controller\FlightPlanController::resolve
+    methods: POST
 
 # --- Sonnenzeiten (Sunrise/Sunset) – nur ROLE_GLOBAL_ADMIN ---
 modern_sunrise:
