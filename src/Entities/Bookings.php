@@ -1233,11 +1233,16 @@ class Bookings
     // Doppelte Array-Einträge löschen
     $mails = array_unique($mails);
 
+    // Diagnose-/Fehler-Log an fester Stelle (immer auffindbar).
+    $mailLog = dirname(__DIR__, 2) . '/var/log/mailerror.log';
+    $sent = 0; $fail = 0; $valid = array();
+
     //Mails versenden
     foreach ($mails as $mail)
     {
       if (Users::IsMailAdressValid($mail))
       {
+        $valid[] = $mail;
         $message = (new Email())
           ->subject($type . ' · ' . $parameter['program_version'] . ' · ' . $sourceLabel)
           ->html($twig->render('emails/bookingmail.html.twig', $data))
@@ -1246,18 +1251,25 @@ class Bookings
           ->to($mail);
         try {
          $mailer->send($message);
+         $sent++;
         }
         catch (\Throwable $e) {
-          // Fehler nicht mehr verschlucken. Schleife laeuft weiter, damit ein
-          // schlechter Empfaenger die uebrigen nicht blockiert. Ausgabe an ZWEI
-          // Stellen: PHP-Fehlerlog (hosterabhaengig) UND eine feste Datei
-          // var/log/mailerror.log (immer auffindbar).
+          // Fehler nicht mehr verschlucken; Schleife laeuft weiter, damit ein
+          // schlechter Empfaenger die uebrigen nicht blockiert.
+          $fail++;
           $line = date('Y-m-d H:i:s') . '  Buchungsmail (' . $type . ') an "' . $mail
                 . '" fehlgeschlagen: ' . $e->getMessage() . "\n";
           error_log('FlyRes: ' . $line);
-          @file_put_contents(dirname(__DIR__, 2) . '/var/log/mailerror.log', $line, FILE_APPEND);
+          @file_put_contents($mailLog, $line, FILE_APPEND);
         }
       }
     }
+
+    // Diagnose: JEDES Mail-Ereignis protokollieren (Empfaengerzahl + Ergebnis),
+    // damit man sieht, ob ueberhaupt gueltige Empfaenger ermittelt wurden und ob
+    // der Versand durchlief. (Kann nach der Fehlersuche wieder entfernt werden.)
+    @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  ' . $type . ': '
+      . count($valid) . ' Empfaenger [' . implode(', ', $valid) . '], '
+      . $sent . ' gesendet, ' . $fail . ' Fehler' . "\n", FILE_APPEND);
   }
 }
