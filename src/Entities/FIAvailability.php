@@ -261,7 +261,7 @@ class FIAvailability
   public static function GetAvailabilitiesForRange ($em, $clientid, \DateTime $from, \DateTime $to, $fid = 0)
   {
     $q = "SELECT b FROM App\Entity\FresFIAvailability b WHERE "
-       . "b.clientid = :cid and (b.typ = 1 or b.typ = 2) and "
+       . "b.clientid = :cid and (b.typ = 1 or b.typ = 2 or b.typ = 3) and "
        . "b.status <> 'storniert' and b.status <> '" . FIAvailability::const_geloescht . "' and "
        . "b.itemstart < :to and b.itemstop > :from";
     $params = array('cid' => $clientid, 'from' => $from->format('Y-m-d H:i:s'), 'to' => $to->format('Y-m-d H:i:s'));

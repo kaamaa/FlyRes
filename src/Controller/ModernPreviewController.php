@@ -726,19 +726,36 @@ class ModernPreviewController extends AbstractController
         $instructors = Users::GetAllFlightinstructorsForListbox($em, $clientid);   // name => id
         $avails = FIAvailability::GetAvailabilitiesForRange($em, $clientid, $monday, $weekEnd);
 
-        // je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}; typ 2 = auf Anfrage
+        // je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}; typ 2 = auf Anfrage,
+        // typ 3 = nicht verfuegbar (Abwesenheit). Zusaetzlich Listen-Zeilen.
         $byFi = [];
+        $listItems = [];
         foreach ($avails as $a) {
             $fiObj  = $a->getFlightinstructor();
             $fid    = is_object($fiObj) ? (int) $fiObj->getId() : (int) $fiObj;
             $typObj = $a->getTyp();
             $typId  = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
-            $st     = ($typId === 2) ? 'anfrageD' : 'frei';
+            $st     = ($typId === 2) ? 'anfrageD' : (($typId === 3) ? 'abw' : 'frei');
+
+            $start = $a->getItemstart();
+            $stop  = $a->getItemstop();
+            $sameDay = $start->format('Y-m-d') === $stop->format('Y-m-d');
+            $listItems[] = [
+                'id'      => (int) $a->getId(),
+                'fid'     => $fid,
+                'st'      => $st,
+                'typname' => is_object($typObj) ? $typObj->getName() : '',
+                'von'     => $wdShort[(int) $start->format('N')] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
+                'bis'     => $sameDay ? ($stop->format('H:i') . ' Uhr') : ($wdShort[(int) $stop->format('N')] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
+                'comment' => trim((string) $a->getComment()),
+                'fi'      => is_object($fiObj) ? trim($fiObj->getFirstname() . ' ' . $fiObj->getLastname()) : '',
+            ];
+
             for ($d = 0; $d < 7; $d++) {
                 $dayStart = (clone $monday)->modify("+$d days");
                 $dayEnd   = (clone $dayStart)->modify('+1 day');
-                $s = ($a->getItemstart() > $dayStart) ? $a->getItemstart() : $dayStart;
-                $e = ($a->getItemstop()  < $dayEnd)   ? $a->getItemstop()  : $dayEnd;
+                $s = ($start > $dayStart) ? $start : $dayStart;
+                $e = ($stop  < $dayEnd)   ? $stop  : $dayEnd;
                 if ($s < $e) {
                     $end = $e->format('H:i');
                     $byFi[$fid][$d][] = ['s' => $s->format('H:i'), 'e' => ($end === '00:00' ? '24:00' : $end), 'st' => $st];
@@ -760,15 +777,19 @@ class ModernPreviewController extends AbstractController
             $dayLabels[] = ['wd' => $wdShort[(int) $dt->format('N')], 'dd' => $dt->format('d.m.')];
         }
 
+        $tab = ($request->query->get('tab') === 'meine') ? 'meine' : 'alle';
+
         $response = $this->render('modern/fiweek.html.twig', [
-            'data'      => $data,
-            'dayLabels' => $dayLabels,
-            'monday'    => $monday->format('Y-m-d'),
-            'prevWeek'  => (clone $monday)->modify('-7 days')->format('Y-m-d'),
-            'nextWeek'  => (clone $monday)->modify('+7 days')->format('Y-m-d'),
-            'weekLabel' => $monday->format('d.m.') . '–' . (clone $monday)->modify('+6 days')->format('d.m.Y'),
-            'myId'      => (int) $loggedin_user->getId(),
-            'isFi'      => $this->isGranted('ROLE_FI'),
+            'data'       => $data,
+            'listItems'  => $listItems,
+            'dayLabels'  => $dayLabels,
+            'monday'     => $monday->format('Y-m-d'),
+            'prevWeek'   => (clone $monday)->modify('-7 days')->format('Y-m-d'),
+            'nextWeek'   => (clone $monday)->modify('+7 days')->format('Y-m-d'),
+            'weekLabel'  => $monday->format('d.m.') . '–' . (clone $monday)->modify('+6 days')->format('d.m.Y'),
+            'myId'       => (int) $loggedin_user->getId(),
+            'isFi'       => $this->isGranted('ROLE_FI'),
+            'initialTab' => $tab,
         ]);
         $response->setExpires(new \DateTime());
         return $response;
