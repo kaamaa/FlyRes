@@ -24,7 +24,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FlyRes · {% block ptitle %}Flight Preparation{% endblock %}</title>
+  <title>FlyRes · {% block ptitle %}Flugvorbereitung{% endblock %}</title>
   <link href="{{ asset('images/css/modern.css') }}?v={{ 'now'|date('YmdHis') }}" rel="stylesheet">
   <script src="{{ asset('images/js/fravail.js') }}?v={{ 'now'|date('YmdHis') }}"></script>
   <style>
@@ -57,11 +57,11 @@
   <div class="fr-pubapp">
     <nav class="fr-pubside">
       <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15.5 13.5 11V4.2a1.5 1.5 0 0 0-3 0V11L3 15.5V17l7.5-2.3V19l-2 1.4V22l3.5-1 3.5 1v-1.6L13.5 19v-4.3L21 17z"/></svg> FlyRes</div>
-      <div class="sec">Flight Preparation</div>
+      <div class="sec">Flugvorbereitung</div>
       <a class="pnav {{ route starts with 'modern_wb' ? 'on' : '' }}" href="{{ path('modern_wb') }}">{{ pub.pic('chart') }} Weight &amp; Balance</a>
-      <a class="pnav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ pub.pic('plane') }} Flight Planning</a>
-      <a class="pnav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ pub.pic('clock') }} Sunrise / Sunset</a>
-      <a class="plogin" href="{{ path('app_login') }}">Login</a>
+      <a class="pnav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ pub.pic('plane') }} Flugplanung</a>
+      <a class="pnav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ pub.pic('clock') }} Sonnenaufgang / Untergang</a>
+      <a class="plogin" href="{{ path('app_login') }}">Anmelden</a>
     </nav>
     <div class="fr-pubmain">
       <div class="fr-pub-top">
