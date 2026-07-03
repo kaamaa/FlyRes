@@ -2271,72 +2271,6 @@ class ModernPreviewController extends AbstractController
 
     private const FIAVAIL_STATE = [1 => 'green', 2 => 'amber', 3 => 'red'];
 
-    /** Liste der Schulungszeiten (eigene; Admins zusätzlich „Alle"). */
-    public function fiAvail(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
-    {
-        $this->denyAccessUnlessGranted('ROLE_FI');
-        $clientid = $loggedin_user->getClientid();
-        $myId     = (int) $loggedin_user->getId();
-        $isAdmin  = $this->isGranted('ROLE_ADMIN');
-        $isFi     = Users::isFlightinstructor($em, $myId);
-
-        $scope = (string) $request->query->get('scope', 'meine');
-        if (!$isAdmin || !in_array($scope, ['meine', 'alle'], true)) { $scope = 'meine'; }
-        if ($isAdmin && !$isFi) { $scope = 'alle'; }   // Admin ohne FI-Rolle: nur „Alle" sinnvoll
-
-        $since = (new \DateTime('today'))->modify('-1 day');
-        $dql = "SELECT a FROM App\Entity\FresFIAvailability a WHERE a.clientid = :cid "
-             . "AND a.status <> :del AND a.itemstop >= :since";
-        if ($scope === 'meine') { $dql .= ' AND a.flightinstructor = :uid'; }
-        $dql .= ' ORDER BY a.itemstart ASC';
-        $q = $em->createQuery($dql)
-                ->setParameter('cid', $clientid)
-                ->setParameter('del', FIAvailability::const_geloescht)
-                ->setParameter('since', $since);
-        if ($scope === 'meine') { $q->setParameter('uid', $myId); }
-
-        $wd = TimeFunctions::WEEKDAYS_SHORT;   // 1-indexiert (1=Mo)
-        $items = [];
-        foreach ($q->getResult() as $a) {
-            $start = $a->getItemstart();
-            $stop  = $a->getItemstop();
-            $typ   = $a->getTyp();
-            $fi    = $a->getFlightinstructor();
-            $sameDay = $start->format('Y-m-d') === $stop->format('Y-m-d');
-            $items[] = [
-                'id'      => $a->getId(),
-                'state'   => self::FIAVAIL_STATE[$typ ? (int) $typ->getId() : 0] ?? 'amber',
-                'typname' => $typ ? $typ->getName() : '',
-                'von'     => $wd[(int) $start->format('N')] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
-                'bis'     => $sameDay ? $stop->format('H:i') . ' Uhr' : ($wd[(int) $stop->format('N')] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
-                'comment' => trim((string) $a->getComment()),
-                'fi'      => $fi ? trim($fi->getFirstname() . ' ' . $fi->getLastname()) : '',
-            ];
-        }
-
-        // Ergebnis-Hinweis nach Serien-Anlage / Mehrfach-Löschen
-        $created = (int) $request->query->get('created', 0);
-        $skipped = (int) $request->query->get('skipped', 0);
-        $deleted = (int) $request->query->get('deleted', 0);
-        $notice = null;
-        if ($created || $skipped) {
-            $notice = $created . ' Termin(e) angelegt' . ($skipped ? ', ' . $skipped . ' wegen Überschneidung übersprungen' : '') . '.';
-        } elseif ($deleted) {
-            $notice = $deleted . ' Termin(e) gelöscht.';
-        }
-
-        $response = $this->render('modern/fiavail.html.twig', [
-            'items'   => $items,
-            'scope'   => $scope,
-            'isAdmin' => $isAdmin,
-            'isFi'    => $isFi,
-            'notice'  => $notice,
-        ]);
-        $response->setExpires(new \DateTime());
-
-        return $response;
-    }
-
     /** Schulungszeit-Formular (Neu). */
     public function fiAvailNew(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
@@ -2457,7 +2391,7 @@ class ModernPreviewController extends AbstractController
         $em->persist($a);
         $em->flush();
 
-        return $this->redirectToRoute('modern_fiavail', $fiId !== $myId ? ['scope' => 'alle'] : []);
+        return $this->redirectToRoute('modern_fiweek', ['tab' => $fiId !== $myId ? 'alle' : 'meine', 'view' => 'liste']);
     }
 
     /** Schulungszeit (soft) löschen. */
@@ -2476,7 +2410,7 @@ class ModernPreviewController extends AbstractController
             }
         }
 
-        return $this->redirectToRoute('modern_fiavail');
+        return $this->redirectToRoute('modern_fiweek', ['tab' => 'meine', 'view' => 'liste']);
     }
 
     private function renderFiAvailForm(EntityManagerInterface $em, UserInterface $loggedin_user, array $values, array $errors): Response
@@ -2592,10 +2526,9 @@ class ModernPreviewController extends AbstractController
             $cur->modify('+1 day');
         }
 
-        return $this->redirectToRoute('modern_fiavail', array_merge(
-            ['created' => $created, 'skipped' => $skipped],
-            $fiId !== $myId ? ['scope' => 'alle'] : []
-        ));
+        return $this->redirectToRoute('modern_fiweek', [
+            'tab' => $fiId !== $myId ? 'alle' : 'meine', 'view' => 'liste',
+        ]);
     }
 
     private function renderFiAvailSeries(EntityManagerInterface $em, UserInterface $loggedin_user, array $values, array $errors): Response
@@ -2676,10 +2609,9 @@ class ModernPreviewController extends AbstractController
         }
         if ($deleted) { $em->flush(); }
 
-        return $this->redirectToRoute('modern_fiavail', array_merge(
-            ['deleted' => $deleted],
-            $fiId !== $myId ? ['scope' => 'alle'] : []
-        ));
+        return $this->redirectToRoute('modern_fiweek', [
+            'tab' => $fiId !== $myId ? 'alle' : 'meine', 'view' => 'liste',
+        ]);
     }
 
     private function renderFiAvailBulk(EntityManagerInterface $em, UserInterface $loggedin_user, array $values, array $errors): Response

@@ -137,12 +137,8 @@ modern_note_edit:
     requirements:
         id: '\d+'
 
-# --- Fluglehrer: verfügbare Schulungszeiten (ROLE_FI) ---
-modern_fiavail:
-    path: /web/schulungszeiten
-    controller: App\Controller\ModernPreviewController::fiAvail
-    methods: GET
-
+# --- Fluglehrer-Verfügbarkeit: Formulare (ROLE_FI). Die Listen-Ansicht wurde in
+#     modern_fiweek ("Verfügbarkeit Fluglehrer") integriert. ---
 modern_fiavail_new:
     path: /web/schulungszeit/neu
     controller: App\Controller\ModernPreviewController::fiAvailNew
