@@ -729,9 +729,11 @@ class ModernPreviewController extends AbstractController
         // je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}; typ 2 = auf Anfrage
         $byFi = [];
         foreach ($avails as $a) {
-            $fiObj = $a->getFlightinstructor();
-            $fid   = is_object($fiObj) ? (int) $fiObj->getId() : (int) $fiObj;
-            $st    = ((int) $a->getTyp() === 2) ? 'anfrageD' : 'frei';
+            $fiObj  = $a->getFlightinstructor();
+            $fid    = is_object($fiObj) ? (int) $fiObj->getId() : (int) $fiObj;
+            $typObj = $a->getTyp();
+            $typId  = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
+            $st     = ($typId === 2) ? 'anfrageD' : 'frei';
             for ($d = 0; $d < 7; $d++) {
                 $dayStart = (clone $monday)->modify("+$d days");
                 $dayEnd   = (clone $dayStart)->modify('+1 day');
