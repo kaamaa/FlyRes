@@ -3,6 +3,15 @@
 {% block ptitle %}{{ editId ? 'Buchung bearbeiten' : 'Reservieren' }}{% endblock %}
 
 {% block content %}
+<style>
+  .fr-fiwarn{margin:12px 0 2px;background:#fff6e9;border:1px solid #f0d59a;border-radius:12px;padding:13px 14px;}
+  .fr-fiwarn .fw-hd{display:flex;gap:10px;align-items:flex-start;color:#8a5d0e;}
+  .fr-fiwarn .fw-ic{color:#c9781a;flex:none;} .fr-fiwarn .fw-ic svg{width:20px;height:20px;}
+  .fr-fiwarn b{color:#7a4f08;} .fr-fiwarn p{margin:5px 0 0;font-size:13.5px;line-height:1.5;color:#8a5d0e;}
+  .fr-fiwarn .fw-chk{display:flex;align-items:flex-start;gap:9px;margin:12px 0 0;font-weight:700;color:#7a4f08;font-size:13.5px;cursor:pointer;}
+  .fr-fiwarn .fw-chk input{width:18px;height:18px;margin-top:1px;accent-color:#c9781a;flex:none;}
+  .fr-fiwarn.bad{border-color:#e0894a;box-shadow:0 0 0 3px rgba(224,137,74,.18);}
+</style>
 <form class="fr-form" action="#" method="post" data-edit="{{ editId ?: '' }}">
 
   <div class="fr-formsec">Flugzeug &amp; Fluglehrer</div>
@@ -26,6 +35,16 @@
           {% for label, id in instructors %}<option value="{{ id }}" {{ edit and id == edit.flightinstructor ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
         </select>
       </div>
+    </div>
+
+    {# MVP 1: Pflicht-Hinweis, wenn der Platzhalter "Fluglehrer zuweisen" gewaehlt ist #}
+    <div id="r_fiwarn" class="fr-fiwarn" hidden>
+      <div class="fw-hd">
+        <span class="fw-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.8 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+        <div><b>Das ist noch kein bestätigter Fluglehrer.</b>
+          <p>„Fluglehrer zuweisen" ist nur ein Platzhalter. <b>Du musst dir selbst einen echten Fluglehrer organisieren</b> – sonst kann der Flug nicht stattfinden.</p></div>
+      </div>
+      <label class="fw-chk"><input type="checkbox" id="r_fiack"> Ich kümmere mich selbst darum, einen Fluglehrer zu finden.</label>
     </div>
   </div>
 
@@ -153,6 +172,14 @@
       ed=document.getElementById('r_enddate'), et=document.getElementById('r_endtime'),
       box=document.getElementById('r_avail');
   var lastData=null, timeOpts=[], combos=[];
+
+  // MVP 1: Pflicht-Hinweis bei Platzhalter "Fluglehrer zuweisen"
+  var ASSIGN_FI={{ assignFiId }}, fiwarn=document.getElementById('r_fiwarn'), fiack=document.getElementById('r_fiack');
+  function assignSelected(){ return ASSIGN_FI && parseInt(fi.value||'0',10)===ASSIGN_FI; }
+  function syncFiWarn(){ if(!fiwarn) return; var on=assignSelected(); fiwarn.hidden=!on; if(!on){ if(fiack) fiack.checked=false; fiwarn.classList.remove('bad'); } }
+  if(fi){ fi.addEventListener('change',syncFiWarn); }
+  if(fiack){ fiack.addEventListener('change',function(){ if(fiack.checked&&fiwarn) fiwarn.classList.remove('bad'); }); }
+  syncFiWarn();
 
   // Zeit-Optionen (30-Min) im Öffnungszeit-Fenster setzen; offene Listen neu aufbauen
   function fillTimes(sMin,eMin){
@@ -358,6 +385,10 @@
     var body=buildBody(), errs=[];
     if(!body.aircraftId) errs.push('Bitte ein Flugzeug wählen.');
     if(!st.value||!et.value) errs.push('Bitte Von-/Bis-Zeit angeben.');
+    if(assignSelected() && (!fiack||!fiack.checked)){
+      errs.push('Fluglehrer zuweisen: Bitte bestätige, dass du dich selbst um einen Fluglehrer kümmerst.');
+      if(fiwarn) fiwarn.classList.add('bad');
+    }
     if(errs.length){ showMsg(errs.join('<br>'),'err'); return; }
     saveBtn.disabled=true; saveBtn.textContent='Speichern…'; msg.hidden=true;
     fetch(EDIT_ID?('/api/bookings/'+EDIT_ID):'/api/bookings',

@@ -108,6 +108,17 @@ class ModernPreviewController extends AbstractController
         )->setParameter('cid', $clientid)->setParameter('uid', $myId)->setParameter('now', $now)
          ->setMaxResults(5)->getResult());
 
+        // --- Offene Buchungen ohne echten Fluglehrer (Platzhalter "Fluglehrer zuweisen") ---
+        $assignFiId = Users::GetAssignInstructorId($em, $clientid);
+        $openFi = [];
+        if ($assignFiId) {
+            $openFi = array_map($mapBooking, $em->createQuery(
+                "SELECT b FROM App\Entity\FresBooking b WHERE b.clientid = :cid AND b.createdbyuserid = :uid "
+                . "AND b.flightinstructor = :aid AND b.itemstop >= :now AND $statusOk ORDER BY b.itemstart ASC"
+            )->setParameter('cid', $clientid)->setParameter('uid', $myId)->setParameter('aid', $assignFiId)
+             ->setParameter('now', $now)->getResult());
+        }
+
         // --- Schulungstermine (nur Fluglehrer) ---
         $fiBookings = [];
         if ($isFi) {
@@ -392,6 +403,7 @@ class ModernPreviewController extends AbstractController
             'heute'      => $heute,
             'warn'       => $warn,
             'myBookings' => $myBookings,
+            'openFi'     => $openFi,
             'myLicences' => $myLicences,
             'kpi'        => $kpi,
             'notes'      => $notes,
@@ -1003,6 +1015,7 @@ class ModernPreviewController extends AbstractController
         $response = $this->render('modern/reserve.html.twig', [
             'aircraft'    => Planes::GetAllPlanesForListbox($em, $clientid),
             'instructors' => Users::GetAllFlightinstructorsForListbox($em, $clientid),
+            'assignFiId'  => Users::GetAssignInstructorId($em, $clientid),
             'airfields'   => Airfields::GetAllAirportsForListbox($em),
             'purposes'    => FlightPurposes::GetFlightPuposeArray($em),
             'users'       => Users::GetAllUsersForListbox($em, $clientid),

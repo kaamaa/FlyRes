@@ -29,6 +29,21 @@
   </div>
   {% endif %}
 
+  {# ---- Offene Buchungen ohne echten Fluglehrer (MVP 2) ---- #}
+  {% if openFi %}
+  <div class="fr-dash-warn" style="background:linear-gradient(180deg,#fff9ef,#fff4e2);border-color:#f0d59a;color:#7a4f08;">
+    <span class="ic">⚠️</span>
+    <div class="t">
+      <b>{{ openFi|length }} {{ openFi|length == 1 ? 'Reservierung' : 'Reservierungen' }} ohne Fluglehrer</b>
+      <div style="color:#8a5d0e;">
+        {%- for b in openFi|slice(0,2) %}{{ b.tag }} · {{ b.zeit }} · {{ b.flugzeug }}{{ not loop.last ? '  ·  ' : '' }}{% endfor -%}
+        {%- if openFi|length > 2 %} …{% endif %} – noch kein Fluglehrer bestätigt. Bitte selbst darum kümmern.
+      </div>
+    </div>
+    <a class="fr-btn" href="{{ path('modern_booking', {id: openFi[0].id}) }}" style="background:#c9781a;border-color:#c9781a;">Fluglehrer suchen</a>
+  </div>
+  {% endif %}
+
   {# ---- Hauptraster ---- #}
   <div class="fr-dash-grid">
 
