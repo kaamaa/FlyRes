@@ -734,6 +734,8 @@ class ModernPreviewController extends AbstractController
             $typObj = $a->getTyp();
             $typId  = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
             $st     = ($typId === 2) ? 'anfrageD' : (($typId === 3) ? 'abw' : 'frei');
+            $start  = $a->getItemstart();
+            $stop   = $a->getItemstop();
             // Tageweise auf Basis der Wanduhr-Zeiten (tz-unabhaengig): ein
             // DateTime-Vergleich waere durch UTC-Hydration vs. Berlin-Grenzen um
             // Stunden verschoben und wuerde Fenster faelschlich in den Folgetag ziehen.
