@@ -144,12 +144,21 @@ class HtmlSanitizer
             }
             [$prop, $val] = array_map('trim', explode(':', $decl, 2));
             $prop = strtolower($prop);
-            if (!in_array($prop, ['color', 'background-color'], true)) {
-                continue;
+            $ok = false;
+            // Diese Eigenschaften erzeugt der Browser fuer Fett/Kursiv/Unterstrichen/
+            // Farbe/Markieren (execCommand mit styleWithCSS). Nur Token-Werte zulassen.
+            if ($prop === 'color' || $prop === 'background-color') {
+                $ok = (bool) (preg_match('/^#[0-9a-f]{3,8}$/i', $val)
+                    || preg_match('/^rgba?\([\d\s.,%]+\)$/i', $val)
+                    || preg_match('/^[a-z]{3,20}$/i', $val));
+            } elseif ($prop === 'font-weight') {
+                $ok = (bool) preg_match('/^(bold|bolder|lighter|normal|[1-9]00)$/i', $val);
+            } elseif ($prop === 'font-style') {
+                $ok = (bool) preg_match('/^(italic|oblique|normal)$/i', $val);
+            } elseif ($prop === 'text-decoration' || $prop === 'text-decoration-line') {
+                $ok = (bool) preg_match('/^(underline|line-through|overline|none)( (underline|line-through|overline))*$/i', $val);
             }
-            if (preg_match('/^#[0-9a-f]{3,8}$/i', $val)
-                || preg_match('/^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)$/i', $val)
-                || preg_match('/^[a-z]{3,20}$/i', $val)) {
+            if ($ok) {
                 $out[] = $prop . ':' . $val;
             }
         }
