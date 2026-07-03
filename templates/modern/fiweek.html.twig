@@ -4,9 +4,11 @@
 
 {% block content %}
 <style>
-  .tabs{display:inline-flex;background:#eef2f6;border-radius:10px;padding:3px;margin-bottom:14px;}
-  .tabs button{border:none;background:none;padding:9px 15px;border-radius:8px;font:inherit;font-weight:700;color:var(--fr-mut);cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
-  .tabs button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .tabs,.seg{display:inline-flex;background:#eef2f6;border-radius:10px;padding:3px;}
+  .tabs button,.seg button{border:none;background:none;border-radius:8px;font:inherit;font-weight:700;color:var(--fr-mut);cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .tabs button{padding:9px 15px;} .seg button{padding:8px 12px;font-size:13px;}
+  .tabs button.on,.seg button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .fiw-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
   .fiw-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
   .fiw-bar .wk{font-weight:800;color:var(--fr-blue-d);}
   .fiw-bar .navbtn{width:32px;height:32px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--fr-ink);font-size:16px;background:#fff;}
@@ -26,26 +28,34 @@
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--fr-mut);margin-top:12px;}
   .legend i{display:inline-block;width:13px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
   .fiw-empty{color:var(--fr-mut);padding:22px 6px;}
-  .fiw-mtools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .fiw-mtools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
   .fiw-mtools a{border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:8px;padding:7px 12px;font-weight:700;font-size:12.5px;text-decoration:none;color:var(--fr-ink);}
   .fiw-mtools a.pri{background:var(--fr-blue);border-color:var(--fr-blue);color:#fff;}
-  .fiw-listhd{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);margin:22px 0 10px;border-top:1px solid var(--fr-line);padding-top:14px;}
+  .fiw-listhd{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);margin:6px 0 10px;}
   .fiw-li{display:flex;align-items:center;gap:11px;border:1px solid var(--fr-line);border-radius:10px;padding:9px 12px;margin-bottom:8px;background:#fff;}
   .fiw-li .bar{width:5px;align-self:stretch;min-height:34px;border-radius:4px;background:#c4ccd6;}
-  .fiw-li.frei .bar{background:#2e9e5b;} .fiw-li.anfrageD .bar{background:#d79a1e;} .fiw-li.abw .bar{background:#aab4c0;}
+  .fiw-li.frei .bar{background:#2e9e5b;} .fiw-li.anfrageD .bar{background:#d79a1e;} .fiw-li.abw .bar{background:#c9453b;}
   .fiw-li .info{flex:1;min-width:0;text-decoration:none;color:var(--fr-ink);}
   .fiw-li .info .t{font-weight:600;font-size:13.5px;} .fiw-li .info .m{color:var(--fr-mut);font-size:12px;margin-top:2px;}
-  .fiw-li .tag{font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;}
+  .fiw-li .tag{font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;white-space:nowrap;}
   .fiw-li form{margin:0;} .fiw-li .del{border:1px solid var(--fr-line);background:#fff;border-radius:7px;width:32px;height:32px;cursor:pointer;color:var(--fr-red,#c9453b);}
 </style>
 
 {% set tab0 = initialTab|default('alle') %}
-<div class="tabs" id="tabs">
-  <button type="button" data-t="alle" class="{{ tab0 == 'alle' ? 'on' : '' }}">🕘 Verfügbarkeit (alle)</button>
-  {% if isFi %}<button type="button" data-t="meine" class="{{ tab0 == 'meine' ? 'on' : '' }}">🕗 Meine Verfügbarkeiten</button>{% endif %}
+{% set view0 = initialView|default('woche') %}
+
+<div class="fiw-top">
+  <div class="tabs" id="tabs">
+    <button type="button" data-t="alle" class="{{ tab0 == 'alle' ? 'on' : '' }}">🕘 Verfügbarkeit (alle)</button>
+    {% if isFi %}<button type="button" data-t="meine" class="{{ tab0 == 'meine' ? 'on' : '' }}">🕗 Meine Verfügbarkeiten</button>{% endif %}
+  </div>
+  <span class="seg" id="viewseg">
+    <button type="button" data-v="woche" class="{{ view0 == 'woche' ? 'on' : '' }}">📅 Woche</button>
+    <button type="button" data-v="liste" class="{{ view0 == 'liste' ? 'on' : '' }}">📋 Alle Termine</button>
+  </span>
 </div>
 
-<div class="fiw-bar">
+<div class="fiw-bar" id="wbar" {{ view0 == 'liste' ? 'style="display:none"' : '' }}>
   <a class="navbtn" id="navPrev" href="{{ path('modern_fiweek', {week: prevWeek, tab: tab0}) }}" title="Vorige Woche">‹</a>
   <span class="wk">{{ weekLabel }}</span>
   <a class="navbtn" id="navNext" href="{{ path('modern_fiweek', {week: nextWeek, tab: tab0}) }}" title="Nächste Woche">›</a>
@@ -54,9 +64,7 @@
   <label>Sortieren:</label>
   <select id="sortsel">
     <option value="early">Frühester freier Termin</option>
-    <option value="hours">Meiste freie Stunden</option>
     <option value="name">Name (A–Z)</option>
-    <option value="direct">Nur direkt buchbar</option>
   </select>
 </div>
 
@@ -65,38 +73,41 @@
   <div class="fiw-mtools" id="meineTools" {{ tab0 == 'meine' ? '' : 'hidden' }}>
     <a class="pri" href="{{ path('modern_fiavail_new') }}">＋ Einzeln freigeben</a>
     <a href="{{ path('modern_fiavail_series') }}">🔁 Terminserie</a>
-    <a href="{{ path('modern_fiavail') }}">Alle meine Freigaben verwalten →</a>
+    <a href="{{ path('modern_fiavail_bulk') }}">🗑 Terminserie löschen</a>
   </div>
   {% endif %}
 
-  <div id="matrix"></div>
-  <div class="legend">
-    <span><i style="background:#2e9e5b"></i>frei / direkt buchbar</span>
-    <span><i style="background:#d79a1e"></i>auf Anfrage</span>
-    <span><i style="background:#aab4c0"></i>abwesend / nicht verfügbar</span>
-    <span><i style="background:#f4f6f9;border:1px solid #e3e8ee"></i>keine Freigabe</span>
+  {# --- Woche: Matrix --- #}
+  <div id="matrixWrap" {{ view0 == 'liste' ? 'hidden' : '' }}>
+    <div id="matrix"></div>
+    <div class="legend">
+      <span><i style="background:#2e9e5b"></i>frei / direkt buchbar</span>
+      <span><i style="background:#d79a1e"></i>auf Anfrage</span>
+      <span><i style="background:#aab4c0"></i>abwesend / nicht verfügbar</span>
+      <span><i style="background:#f4f6f9;border:1px solid #e3e8ee"></i>keine Freigabe</span>
+    </div>
   </div>
 
-  <div class="fiw-listhd">Diese Woche als Liste</div>
-
-  <div id="list-alle" {{ tab0 == 'alle' ? '' : 'hidden' }}>
-    {% for it in listItems %}
-      <div class="fiw-li {{ it.st }}">
-        <span class="bar"></span>
+  {# --- Liste: alle kommenden Termine --- #}
+  <div id="tlist-alle" {{ (view0 == 'liste' and tab0 == 'alle') ? '' : 'hidden' }}>
+    <div class="fiw-listhd">Alle kommenden Termine</div>
+    {% for it in termine %}
+      <div class="fiw-li {{ it.st }}"><span class="bar"></span>
         <div class="info"><div class="t">{{ it.von }} – {{ it.bis }}{% if it.fi %} · <b>{{ it.fi }}</b>{% endif %}</div>
           {% if it.comment %}<div class="m">{{ it.comment }}</div>{% endif %}</div>
         <span class="tag chip {{ 'st-' ~ it.st }}">{{ it.typname }}</span>
       </div>
     {% else %}
-      <div class="fiw-empty">Keine Einträge in dieser Woche.</div>
+      <div class="fiw-empty">Keine kommenden Termine eingetragen.</div>
     {% endfor %}
   </div>
 
-  <div id="list-meine" {{ tab0 == 'meine' ? '' : 'hidden' }}>
-    {% set mine = listItems|filter(it => it.fid == myId) %}
+  {# --- Liste: meine kommenden Termine (verwalten) --- #}
+  <div id="tlist-meine" {{ (view0 == 'liste' and tab0 == 'meine') ? '' : 'hidden' }}>
+    <div class="fiw-listhd">Meine kommenden Termine</div>
+    {% set mine = termine|filter(it => it.fid == myId) %}
     {% for it in mine %}
-      <div class="fiw-li {{ it.st }}">
-        <span class="bar"></span>
+      <div class="fiw-li {{ it.st }}"><span class="bar"></span>
         <a class="info" href="{{ path('modern_fiavail_edit', {id: it.id}) }}"><div class="t">{{ it.von }} – {{ it.bis }}</div>
           {% if it.comment %}<div class="m">{{ it.comment }}</div>{% endif %}</a>
         <span class="tag chip {{ 'st-' ~ it.st }}">{{ it.typname }}</span>
@@ -106,7 +117,7 @@
         </form>
       </div>
     {% else %}
-      <div class="fiw-empty">Du hast in dieser Woche keine Verfügbarkeiten eingetragen.</div>
+      <div class="fiw-empty">Du hast keine kommenden Verfügbarkeiten eingetragen.</div>
     {% endfor %}
   </div>
 </div>
@@ -117,26 +128,23 @@
   var DLAB = {{ dayLabels|json_encode|raw }};
   var MYID = {{ myId }};
   var URL  = '{{ path('modern_fiweek') }}', PREV = '{{ prevWeek }}', NEXT = '{{ nextWeek }}';
-  var mode = 'early', tab = '{{ tab0 }}';
+  var mode = 'early', tab = '{{ tab0 }}', view = '{{ view0 }}';
 
   function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
   function toMin(t){var p=t.split(':');return +p[0]*60+ +p[1];}
   function ini(n){return n.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();}
   function freeH(fi){var h=0;fi.days.forEach(function(d){d.forEach(function(w){if(w.st==='frei'||w.st==='anfrageD')h+=(toMin(w.e)-toMin(w.s))/60;});});return h;}
   function early(fi){for(var i=0;i<7;i++){for(var j=0;j<fi.days[i].length;j++)if(fi.days[i][j].st==='frei')return{i:i,s:fi.days[i][j].s};}return null;}
-  function hasDir(fi){return !!early(fi);}
-  function sortF(list,m){var a=list.slice();
-    if(m==='name')a.sort(function(x,y){return x.name.localeCompare(y.name);});
-    else if(m==='hours')a.sort(function(x,y){return freeH(y)-freeH(x);});
-    else if(m==='early')a.sort(function(x,y){var ex=early(x),ey=early(y),vx=ex?ex.i*1440+toMin(ex.s):1e9,vy=ey?ey.i*1440+toMin(ey.s):1e9;return vx-vy;});
-    else if(m==='direct'){a=a.filter(hasDir);a.sort(function(x,y){return freeH(y)-freeH(x);});}
+  function sortF(list){var a=list.slice();
+    if(mode==='name')a.sort(function(x,y){return x.name.localeCompare(y.name);});
+    else a.sort(function(x,y){var ex=early(x),ey=early(y),vx=ex?ex.i*1440+toMin(ex.s):1e9,vy=ey?ey.i*1440+toMin(ey.s):1e9;return vx-vy;});
     return a;}
   function chipFor(w){
     if(w.st==='abw'){var full=(w.s==='00:00'&&w.e==='24:00');return '<span class="chip st-abw">🏖 '+(full?'Abwesend':(w.s+'–'+w.e))+'</span>';}
     return '<span class="chip st-'+w.st+'">'+w.s+'–'+w.e+'</span>';
   }
   function matrix(list){
-    var l=sortF(list,mode);
+    var l=sortF(list);
     if(!l.length)return '<div class="fiw-empty">Keine Fluglehrer-Verfügbarkeit in dieser Woche.</div>';
     var h='<table class="mx"><thead><tr><th class="fi">Fluglehrer</th>';
     DLAB.forEach(function(d,i){var we=i>4?' we':'';h+='<th class="'+we.trim()+'">'+d.wd+'<br><small>'+d.dd+'</small></th>';});
@@ -151,15 +159,17 @@
     return h+'</tbody></table>';}
 
   function updateNav(){
-    document.getElementById('navPrev').href = URL+'?week='+PREV+'&tab='+tab;
-    document.getElementById('navNext').href = URL+'?week='+NEXT+'&tab='+tab;
+    document.getElementById('navPrev').href = URL+'?week='+PREV+'&tab='+tab+'&view=woche';
+    document.getElementById('navNext').href = URL+'?week='+NEXT+'&tab='+tab+'&view=woche';
   }
   function render(){
-    var list = (tab==='meine') ? DATA.filter(function(f){return f.id===MYID;}) : DATA;
-    document.getElementById('matrix').innerHTML = matrix(list);
-    document.getElementById('list-alle').hidden  = (tab!=='alle');
-    document.getElementById('list-meine').hidden = (tab!=='meine');
-    var mt=document.getElementById('meineTools'); if(mt){ mt.hidden = (tab!=='meine'); }
+    var isW = (view==='woche');
+    document.getElementById('wbar').style.display = isW ? '' : 'none';
+    document.getElementById('matrixWrap').hidden = !isW;
+    if(isW){ var list=(tab==='meine')?DATA.filter(function(f){return f.id===MYID;}):DATA; document.getElementById('matrix').innerHTML=matrix(list); }
+    document.getElementById('tlist-alle').hidden  = !( !isW && tab==='alle' );
+    document.getElementById('tlist-meine').hidden = !( !isW && tab==='meine' );
+    var mt=document.getElementById('meineTools'); if(mt){ mt.hidden=(tab!=='meine'); }
     updateNav();
   }
 
@@ -168,8 +178,12 @@
     document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
     tab=b.getAttribute('data-t'); render();
   });});
+  document.querySelectorAll('#viewseg button').forEach(function(b){ b.addEventListener('click', function(){
+    document.querySelectorAll('#viewseg button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+    view=b.getAttribute('data-v'); render();
+  });});
   document.getElementById('weekPick').addEventListener('change', function(){
-    if(this.value){ window.location = URL+'?week='+this.value+'&tab='+tab; }
+    if(this.value){ window.location = URL+'?week='+this.value+'&tab='+tab+'&view=woche'; }
   });
   render();
 })();

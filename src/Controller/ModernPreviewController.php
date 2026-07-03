@@ -726,31 +726,17 @@ class ModernPreviewController extends AbstractController
         $instructors = Users::GetAllFlightinstructorsForListbox($em, $clientid);   // name => id
         $avails = FIAvailability::GetAvailabilitiesForRange($em, $clientid, $monday, $weekEnd);
 
-        // je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}; typ 2 = auf Anfrage,
-        // typ 3 = nicht verfuegbar (Abwesenheit). Zusaetzlich Listen-Zeilen.
+        // Woche-Matrix: je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}
+        // (typ 2 = auf Anfrage, typ 3 = nicht verfuegbar/Abwesenheit).
         $byFi = [];
-        $listItems = [];
         foreach ($avails as $a) {
             $fiObj  = $a->getFlightinstructor();
             $fid    = is_object($fiObj) ? (int) $fiObj->getId() : (int) $fiObj;
             $typObj = $a->getTyp();
             $typId  = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
             $st     = ($typId === 2) ? 'anfrageD' : (($typId === 3) ? 'abw' : 'frei');
-
-            $start = $a->getItemstart();
-            $stop  = $a->getItemstop();
-            $sameDay = $start->format('Y-m-d') === $stop->format('Y-m-d');
-            $listItems[] = [
-                'id'      => (int) $a->getId(),
-                'fid'     => $fid,
-                'st'      => $st,
-                'typname' => is_object($typObj) ? $typObj->getName() : '',
-                'von'     => $wdShort[(int) $start->format('N')] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
-                'bis'     => $sameDay ? ($stop->format('H:i') . ' Uhr') : ($wdShort[(int) $stop->format('N')] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
-                'comment' => trim((string) $a->getComment()),
-                'fi'      => is_object($fiObj) ? trim($fiObj->getFirstname() . ' ' . $fiObj->getLastname()) : '',
-            ];
-
+            $start  = $a->getItemstart();
+            $stop   = $a->getItemstop();
             for ($d = 0; $d < 7; $d++) {
                 $dayStart = (clone $monday)->modify("+$d days");
                 $dayEnd   = (clone $dayStart)->modify('+1 day');
@@ -777,19 +763,46 @@ class ModernPreviewController extends AbstractController
             $dayLabels[] = ['wd' => $wdShort[(int) $dt->format('N')], 'dd' => $dt->format('d.m.')];
         }
 
-        $tab = ($request->query->get('tab') === 'meine') ? 'meine' : 'alle';
+        // Alle kommenden Termine (fuer die Umschalter-Liste "Alle Termine").
+        $since   = (new \DateTime('today', $tz))->modify('-1 day');
+        $future  = (new \DateTime('today', $tz))->modify('+2 years');
+        $termine = [];
+        foreach (FIAvailability::GetAvailabilitiesForRange($em, $clientid, $since, $future) as $a) {
+            $fiObj  = $a->getFlightinstructor();
+            $typObj = $a->getTyp();
+            $typId  = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
+            $start  = $a->getItemstart();
+            $stop   = $a->getItemstop();
+            $sameDay = $start->format('Y-m-d') === $stop->format('Y-m-d');
+            $termine[] = [
+                'id'      => (int) $a->getId(),
+                'fid'     => is_object($fiObj) ? (int) $fiObj->getId() : (int) $fiObj,
+                'st'      => ($typId === 2) ? 'anfrageD' : (($typId === 3) ? 'abw' : 'frei'),
+                'typname' => is_object($typObj) ? $typObj->getName() : '',
+                'von'     => $wdShort[(int) $start->format('N')] . ' ' . $start->format('d.m.Y') . ' · ' . $start->format('H:i'),
+                'bis'     => $sameDay ? ($stop->format('H:i') . ' Uhr') : ($wdShort[(int) $stop->format('N')] . ' ' . $stop->format('d.m.Y') . ' · ' . $stop->format('H:i')),
+                'comment' => trim((string) $a->getComment()),
+                'fi'      => is_object($fiObj) ? trim($fiObj->getFirstname() . ' ' . $fiObj->getLastname()) : '',
+                'sort'    => $start->format('Y-m-d H:i'),
+            ];
+        }
+        usort($termine, static fn ($x, $y) => strcmp($x['sort'], $y['sort']));
+
+        $tab  = ($request->query->get('tab') === 'meine') ? 'meine' : 'alle';
+        $view = ($request->query->get('view') === 'liste') ? 'liste' : 'woche';
 
         $response = $this->render('modern/fiweek.html.twig', [
-            'data'       => $data,
-            'listItems'  => $listItems,
-            'dayLabels'  => $dayLabels,
-            'monday'     => $monday->format('Y-m-d'),
-            'prevWeek'   => (clone $monday)->modify('-7 days')->format('Y-m-d'),
-            'nextWeek'   => (clone $monday)->modify('+7 days')->format('Y-m-d'),
-            'weekLabel'  => $monday->format('d.m.') . '–' . (clone $monday)->modify('+6 days')->format('d.m.Y'),
-            'myId'       => (int) $loggedin_user->getId(),
-            'isFi'       => $this->isGranted('ROLE_FI'),
-            'initialTab' => $tab,
+            'data'        => $data,
+            'termine'     => $termine,
+            'dayLabels'   => $dayLabels,
+            'monday'      => $monday->format('Y-m-d'),
+            'prevWeek'    => (clone $monday)->modify('-7 days')->format('Y-m-d'),
+            'nextWeek'    => (clone $monday)->modify('+7 days')->format('Y-m-d'),
+            'weekLabel'   => $monday->format('d.m.') . '–' . (clone $monday)->modify('+6 days')->format('d.m.Y'),
+            'myId'        => (int) $loggedin_user->getId(),
+            'isFi'        => $this->isGranted('ROLE_FI'),
+            'initialTab'  => $tab,
+            'initialView' => $view,
         ]);
         $response->setExpires(new \DateTime());
         return $response;
