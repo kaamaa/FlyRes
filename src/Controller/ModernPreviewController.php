@@ -695,6 +695,7 @@ class ModernPreviewController extends AbstractController
         $response = $this->render('modern/day.html.twig', [
             'planeId'   => $planeId,
             'planeName' => $planeName,
+            'dateIso'   => $date->format('Y-m-d'),
             'label'     => self::WEEKDAYS_DE[(int) $date->format('N')] . ', ' . $date->format('d.m.Y'),
             'prev'      => (clone $date)->modify('-1 day')->format('Y-m-d'),
             'next'      => (clone $date)->modify('+1 day')->format('Y-m-d'),

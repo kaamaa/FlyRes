@@ -9,6 +9,7 @@
     <b>{{ label }}</b>
     <a href="{{ path('modern_day', {plane: planeId, date: next}) }}">›</a>
   </span>
+  <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_reserve', {date: dateIso, plane: planeId}) }}">＋ Reservieren</a>
 {% endblock %}
 
 {% block content %}
