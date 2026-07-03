@@ -50,11 +50,11 @@
           <span class="sep"></span>
           <button type="button" data-cmd="insertUnorderedList" title="Aufzählung">•</button>
           <button type="button" data-cmd="insertOrderedList" title="Nummerierung">1.</button>
-          <button type="button" data-cmd="formatBlock" data-val="h5" title="Überschrift">H</button>
+          <button type="button" data-cmd="heading" title="Überschrift ein/aus">H</button>
           <span class="sep"></span>
           <button type="button" data-cmd="createLink" title="Link einfügen">🔗</button>
-          <button type="button" data-cmd="unlink" title="Link entfernen">⛔</button>
-          <button type="button" data-cmd="removeFormat" title="Formatierung entfernen">✕</button>
+          <button type="button" data-cmd="unlink" title="Link entfernen"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M5.17 11.75l-1.72 1.71a5 5 0 0 0 7.07 7.07l1.72-1.71"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="2" y1="8" x2="5" y2="8"/><line x1="16" y1="19" x2="16" y2="22"/><line x1="19" y1="16" x2="22" y2="16"/></svg></button>
+          <button type="button" data-cmd="removeFormat" title="Formatierung entfernen (Fett/Kursiv/Farbe)">✕</button>
         </div>
         <div class="fr-editor" id="n_editor" contenteditable="true" data-ph="Nachricht für die Pinnwand …">{{ v.description|note_html }}</div>
       </div>
@@ -131,6 +131,11 @@
     var b = e.target.closest('button'); if (!b) { return; }
     e.preventDefault();                                   // Auswahl im Editor behalten
     var cmd = b.getAttribute('data-cmd'), val = b.getAttribute('data-val');
+    if (cmd === 'heading') {                               // Überschrift umschalten (an/aus)
+      var cur = (document.queryCommandValue('formatBlock') || '').toLowerCase();
+      exec('formatBlock', /^h[1-6]$/.test(cur) ? 'p' : 'h5');
+      return;
+    }
     if (cmd === 'hilite') { exec('hiliteColor', val || '#fff3bf'); return; }
     if (cmd === 'createLink') { var u = window.prompt('Link-Adresse (https://…):', 'https://'); if (u) { exec('createLink', u); } return; }
     if (cmd === 'formatBlock') { exec('formatBlock', val); return; }
