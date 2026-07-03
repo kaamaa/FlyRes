@@ -4,10 +4,15 @@
 
 {% block content %}
 <style>
-  .tabs,.seg{display:inline-flex;background:#eef2f6;border-radius:10px;padding:3px;}
-  .tabs button,.seg button{border:none;background:none;border-radius:8px;font:inherit;font-weight:700;color:var(--fr-mut);cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
-  .tabs button{padding:9px 15px;} .seg button{padding:8px 12px;font-size:13px;}
-  .tabs button.on,.seg button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .fiw-top svg,.fiw-mtools svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+  /* Alle/Meine – solide Blau-Toggle */
+  .tabs{display:inline-flex;background:#eaf0f9;border:1px solid #dbe6f5;border-radius:11px;padding:4px;gap:4px;}
+  .tabs button{border:none;background:none;border-radius:8px;font:inherit;font-weight:750;font-size:13.5px;color:var(--fr-blue-d);cursor:pointer;padding:9px 16px;display:inline-flex;align-items:center;gap:8px;transition:.15s;}
+  .tabs button.on{background:linear-gradient(180deg,#3a76de,#2b60c6);color:#fff;box-shadow:0 2px 6px rgba(43,96,198,.35),inset 0 1px 0 rgba(255,255,255,.2);}
+  /* Woche/Liste – weiche Segmented-Pille */
+  .seg{display:inline-flex;background:#e6edf6;border-radius:11px;padding:4px;gap:3px;box-shadow:inset 0 1px 2px rgba(30,50,90,.05);}
+  .seg button{border:none;background:none;border-radius:8px;font:inherit;font-weight:700;font-size:13px;color:var(--fr-mut);cursor:pointer;padding:8px 13px;display:inline-flex;align-items:center;gap:7px;transition:.15s;}
+  .seg button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 2px rgba(20,40,80,.12),0 2px 6px rgba(20,40,80,.06);}
   .fiw-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
   .fiw-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
   .fiw-bar .wk{font-weight:800;color:var(--fr-blue-d);}
@@ -28,9 +33,17 @@
   .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--fr-mut);margin-top:12px;}
   .legend i{display:inline-block;width:13px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
   .fiw-empty{color:var(--fr-mut);padding:22px 6px;}
-  .fiw-mtools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
-  .fiw-mtools a{border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:8px;padding:7px 12px;font-weight:700;font-size:12.5px;text-decoration:none;color:var(--fr-ink);}
-  .fiw-mtools a.pri{background:var(--fr-blue);border-color:var(--fr-blue);color:#fff;}
+  .fiw-mtools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+  .fiw-mtools .lbl{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#9aa6b6;}
+  .fiw-mtools .group{display:inline-flex;border-radius:12px;box-shadow:0 1px 2px rgba(20,40,80,.08);overflow:hidden;}
+  .fiw-mtools .group a{border:1px solid var(--fr-line);background:#fff;font-weight:700;font-size:13.5px;color:var(--fr-ink);padding:11px 16px;display:inline-flex;align-items:center;gap:9px;text-decoration:none;transition:.15s;}
+  .fiw-mtools .group a:hover{background:#f4f7fb;}
+  .fiw-mtools .group a+a{border-left:none;}
+  .fiw-mtools .group a.pri{background:linear-gradient(180deg,#3a76de,#2b60c6);border-color:#2b60c6;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.18);}
+  .fiw-mtools .group a.pri:hover{background:linear-gradient(180deg,#3369cf,#254fa8);}
+  .fiw-mtools .spring{flex:1;}
+  .fiw-mtools .danger{border:1px solid #eccfca;background:#fff;border-radius:12px;font-weight:700;font-size:13.5px;color:#b23528;padding:11px 16px;display:inline-flex;align-items:center;gap:9px;text-decoration:none;transition:.15s;box-shadow:0 1px 2px rgba(20,40,80,.05);}
+  .fiw-mtools .danger:hover{background:#fdeeec;border-color:#e3b6af;}
   .fiw-listhd{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);margin:6px 0 10px;}
   .fiw-li{display:flex;align-items:center;gap:11px;border:1px solid var(--fr-line);border-radius:10px;padding:9px 12px;margin-bottom:8px;background:#fff;}
   .fiw-li .bar{width:5px;align-self:stretch;min-height:34px;border-radius:4px;background:#c4ccd6;}
@@ -38,7 +51,9 @@
   .fiw-li .info{flex:1;min-width:0;text-decoration:none;color:var(--fr-ink);}
   .fiw-li .info .t{font-weight:600;font-size:13.5px;} .fiw-li .info .m{color:var(--fr-mut);font-size:12px;margin-top:2px;}
   .fiw-li .tag{font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;white-space:nowrap;}
-  .fiw-li form{margin:0;} .fiw-li .del{border:1px solid var(--fr-line);background:#fff;border-radius:7px;width:32px;height:32px;cursor:pointer;color:var(--fr-red,#c9453b);}
+  .fiw-li form{margin:0;} .fiw-li .del{border:1px solid var(--fr-line);background:#fff;border-radius:8px;width:36px;height:36px;cursor:pointer;color:#b23528;display:inline-flex;align-items:center;justify-content:center;transition:.15s;}
+  .fiw-li .del:hover{background:#fdeeec;border-color:#e3b6af;}
+  .fiw-li .del svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 
 {% set tab0 = initialTab|default('alle') %}
@@ -46,12 +61,12 @@
 
 <div class="fiw-top">
   <div class="tabs" id="tabs">
-    <button type="button" data-t="alle" class="{{ tab0 == 'alle' ? 'on' : '' }}">🕘 Verfügbarkeit (alle)</button>
-    {% if isFi %}<button type="button" data-t="meine" class="{{ tab0 == 'meine' ? 'on' : '' }}">🕗 Meine Verfügbarkeiten</button>{% endif %}
+    <button type="button" data-t="alle" class="{{ tab0 == 'alle' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>Alle</button>
+    {% if isFi %}<button type="button" data-t="meine" class="{{ tab0 == 'meine' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Meine</button>{% endif %}
   </div>
   <span class="seg" id="viewseg">
-    <button type="button" data-v="woche" class="{{ view0 == 'woche' ? 'on' : '' }}">📅 Woche</button>
-    <button type="button" data-v="liste" class="{{ view0 == 'liste' ? 'on' : '' }}">📋 Alle Termine</button>
+    <button type="button" data-v="woche" class="{{ view0 == 'woche' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg>Woche</button>
+    <button type="button" data-v="liste" class="{{ view0 == 'liste' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.6" cy="6" r=".9"/><circle cx="3.6" cy="12" r=".9"/><circle cx="3.6" cy="18" r=".9"/></svg>Liste</button>
   </span>
 </div>
 
@@ -71,9 +86,13 @@
 <div class="fr-card">
   {% if isFi %}
   <div class="fiw-mtools" id="meineTools" {{ tab0 == 'meine' ? '' : 'hidden' }}>
-    <a class="pri" href="{{ path('modern_fiavail_new') }}">＋ Einzeln freigeben</a>
-    <a href="{{ path('modern_fiavail_series') }}">🔁 Neue Terminserie</a>
-    <a href="{{ path('modern_fiavail_bulk') }}">🗑 Terminserie löschen</a>
+    <span class="lbl">Neu erstellen</span>
+    <span class="group">
+      <a class="pri" href="{{ path('modern_fiavail_new') }}"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Einzeln</a>
+      <a href="{{ path('modern_fiavail_series') }}"><svg viewBox="0 0 24 24"><polyline points="17 1.5 21 5.5 17 9.5"/><path d="M3 11.5v-1a4 4 0 0 1 4-4h14"/><polyline points="7 22.5 3 18.5 7 14.5"/><path d="M21 12.5v1a4 4 0 0 1-4 4H3"/></svg>Serie</a>
+    </span>
+    <span class="spring"></span>
+    <a class="danger" href="{{ path('modern_fiavail_bulk') }}"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>Serie löschen</a>
   </div>
   {% endif %}
 
@@ -113,7 +132,7 @@
         <span class="tag chip {{ 'st-' ~ it.st }}">{{ it.typname }}</span>
         <form method="post" action="{{ path('modern_fiavail_delete') }}" onsubmit="return confirm('Diesen Eintrag löschen?');">
           <input type="hidden" name="id" value="{{ it.id }}">
-          <button type="submit" class="del" title="Löschen">🗑</button>
+          <button type="submit" class="del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
         </form>
       </div>
     {% else %}
