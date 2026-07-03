@@ -140,9 +140,12 @@ class Bookings
           if ($booking === reset($bookings))
           {
             // FIRST ELEMENT
-            // Beginnt das Element auch am Tagesbeginn oder davor, oder muss eine freie
-            // Lücke vorne eingefügt werden
-            if (!Bookings::IsInbound($booking, $mindate, $maxdate))
+            // Vordere Luecke nur, wenn die (erste) Buchung NACH Tagesbeginn startet.
+            // Eine mehrtaegige Buchung beginnt an einem Vortag (<= $mindate) und darf
+            // hier KEINE Luecke erzeugen. (Frueher via IsInbound geprueft – das schlug
+            // bei ganztaegig ueberspannenden Buchungen fehl und erzeugte eine
+            // Scheinluecke mit den Roh-Zeiten des anderen Tages.)
+            if ($booking->getItemstart() > $mindate)
             {
               $e = new BookingGap();
               $e->setStart($mindate);
@@ -163,9 +166,9 @@ class Bookings
           if ($booking === $bookings[count($bookings)-1])
           {
             // LAST ELEMENT
-            // Endet das Element auch am Tagesende oder danach, oder muss eine freie
-            // Lücke am Ende eingefügt werden
-            if (!Bookings::IsOutbound($booking, $mindate, $maxdate))
+            // Hintere Luecke nur, wenn die (letzte) Buchung VOR Tagesende endet.
+            // Endet sie an einem Folgetag (>= $maxdate), gibt es danach keine Luecke.
+            if ($booking->getItemstop() < $maxdate)
             {
               $e = new BookingGap();
               $e->setStart($booking->getItemstop());
