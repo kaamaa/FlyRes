@@ -9,6 +9,27 @@ class Planes
   const const_geloescht = 'geloescht';
   const const_inactive = 'inactive';
   
+  /**
+   * Spaetester buchbarer Zeitpunkt (Start) fuer ein Flugzeug mit N Tagen
+   * Vorausbuchung. Regel: es zaehlen ganze Tage; der aeusserste Tag (heute + N)
+   * wird erst am Vorabend um 20:00 Uhr komplett freigegeben. Davor endet das
+   * Fenster am Vortag. Rueckgabe = Ende (23:59:59) des letzten buchbaren Tages,
+   * oder null bei 0 = unbegrenzt.
+   */
+  public static function GetAdvanceBookingCutoff ($advancebooking, ?\DateTime $now = null)
+  {
+    $advancebooking = (int) $advancebooking;
+    if ($advancebooking <= 0) return null;                 // unbegrenzt
+
+    $now    = $now ?: new \DateTime();
+    $maxday = (new \DateTime('today'))->add(new \DateInterval('P' . $advancebooking . 'D'));   // heute + N Tage
+    // Der neue aeusserste Tag wird erst am Vorabend um 20:00 Uhr freigegeben.
+    if ($now < (new \DateTime('today'))->setTime(20, 0)) {
+      $maxday->sub(new \DateInterval('P1D'));
+    }
+    return $maxday->setTime(23, 59, 59);                    // ganzer Tag buchbar
+  }
+
   public static function CheckIfBookingIsInAdvanceRange ($em, $clientid, $id, $bookingdate)
   {
     $querystring = "SELECT b FROM App\Entity\FresAircraft b WHERE b.clientid = :clientID and b.id = :id and b.status <> '" . Planes::const_geloescht . "'and b.status <> '" . Planes::const_inactive . "'";
@@ -16,16 +37,22 @@ class Planes
     $plane = $query->getSingleResult();
     if ($plane)
     {
-      $advancebooking = $plane->getAdvancebooking();
+      $advancebooking = (int) $plane->getAdvancebooking();
       if ($advancebooking == 0) return '';
-      
-      $maxdate = new \DateTime();
-      $maxdate = $maxdate->add(new \DateInterval('P' . $advancebooking . 'D'));
-      
-      if ($bookingdate > $maxdate) return 'Eine Vorrausbuchung für dieses Flugzeug ist für maximal ' . $advancebooking. ' Tage (' . $maxdate->format('d.m.Y') . ') möglich';
-        else return '';
+
+      $cutoff = self::GetAdvanceBookingCutoff($advancebooking);
+      if ($cutoff !== null && $bookingdate > $cutoff)
+      {
+        // Zeitpunkt, ab dem der gewaehlte Tag freigegeben wird: (Tag - N Tage) um 20:00 Uhr.
+        $opens = (clone $bookingdate);
+        $opens->setTime(0, 0, 0);
+        $opens->sub(new \DateInterval('P' . $advancebooking . 'D'));
+        return 'Dieses Flugzeug kann maximal ' . $advancebooking . ' Tage im Voraus gebucht werden. Der '
+             . $bookingdate->format('d.m.Y') . ' wird am ' . $opens->format('d.m.Y') . ' um 20:00 Uhr freigegeben.';
+      }
+      return '';
     }
-  } 
+  }
   
   public static function GetPlaneObject ($em, $clientid, $id, $inactive = false)
   {

@@ -295,17 +295,16 @@ class AvailabilityController extends ApiController
         // Flugzeug ist optional. Nur wenn eines gewaehlt ist, holen wir das Objekt
         // und die maximale Vorausbuchungszeit – die ist flugzeugspezifisch.
         // Maximale Vorausbuchungszeit des Flugzeugs (Tage; 0 = unbegrenzt) – exakt
-        // dieselbe Regel wie beim Speichern (Planes::CheckIfBookingIsInAdvanceRange):
-        // ein Slot, dessen Start nach "jetzt + N Tage" liegt, ist nicht buchbar und
-        // wird daher gar nicht erst vorgeschlagen.
+        // dieselbe Regel wie beim Speichern (Planes::GetAdvanceBookingCutoff): ganze
+        // Tage, der aeusserste Tag wird am Vorabend um 20:00 Uhr freigegeben. Ein Slot
+        // jenseits dieser Grenze wird gar nicht erst vorgeschlagen.
         $maxBookDt = null;
         if ($aircraftId) {
             $plane = Planes::GetPlaneObject($em, $clientid, $aircraftId);
             if ($plane === null || $plane->getKennung() === null) {
                 return $this->json(['slots' => []]);
             }
-            $advance   = (int) $plane->getAdvancebooking();
-            $maxBookDt = $advance > 0 ? (new \DateTime())->add(new \DateInterval('P' . $advance . 'D')) : null;
+            $maxBookDt = Planes::GetAdvanceBookingCutoff((int) $plane->getAdvancebooking());
         }
 
         $fiName      = null;
