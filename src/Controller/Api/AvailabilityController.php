@@ -304,7 +304,11 @@ class AvailabilityController extends ApiController
             if ($plane === null || $plane->getKennung() === null) {
                 return $this->json(['slots' => []]);
             }
-            $maxBookDt = Planes::GetAdvanceBookingCutoff((int) $plane->getAdvancebooking());
+            // Admins sind – exakt wie beim Speichern (BookingController) – von der
+            // Vorausbuchungsfrist ausgenommen; fuer alle anderen gilt dasselbe Fenster.
+            $maxBookDt = $this->isGranted('ROLE_ADMIN')
+                ? null
+                : Planes::GetAdvanceBookingCutoff((int) $plane->getAdvancebooking());
         }
 
         $fiName      = null;
