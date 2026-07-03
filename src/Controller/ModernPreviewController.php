@@ -734,16 +734,18 @@ class ModernPreviewController extends AbstractController
             $typObj = $a->getTyp();
             $typId  = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
             $st     = ($typId === 2) ? 'anfrageD' : (($typId === 3) ? 'abw' : 'frei');
-            $start  = $a->getItemstart();
-            $stop   = $a->getItemstop();
+            // Tageweise auf Basis der Wanduhr-Zeiten (tz-unabhaengig): ein
+            // DateTime-Vergleich waere durch UTC-Hydration vs. Berlin-Grenzen um
+            // Stunden verschoben und wuerde Fenster faelschlich in den Folgetag ziehen.
+            $startYmd = $start->format('Y-m-d'); $startHi = $start->format('H:i');
+            $stopYmd  = $stop->format('Y-m-d');  $stopHi  = $stop->format('H:i');
             for ($d = 0; $d < 7; $d++) {
-                $dayStart = (clone $monday)->modify("+$d days");
-                $dayEnd   = (clone $dayStart)->modify('+1 day');
-                $s = ($start > $dayStart) ? $start : $dayStart;
-                $e = ($stop  < $dayEnd)   ? $stop  : $dayEnd;
-                if ($s < $e) {
-                    $end = $e->format('H:i');
-                    $byFi[$fid][$d][] = ['s' => $s->format('H:i'), 'e' => ($end === '00:00' ? '24:00' : $end), 'st' => $st];
+                $dayDate = (clone $monday)->modify("+$d days")->format('Y-m-d');
+                if ($startYmd > $dayDate || $stopYmd < $dayDate) { continue; }   // Tag nicht abgedeckt
+                $ws = ($startYmd < $dayDate) ? '00:00' : $startHi;
+                $we = ($stopYmd  > $dayDate) ? '24:00' : $stopHi;
+                if ($we !== '00:00' && $ws < $we) {                              // '00:00' = endet zu Tagesbeginn -> Vortag
+                    $byFi[$fid][$d][] = ['s' => $ws, 'e' => $we, 'st' => $st];
                 }
             }
         }
