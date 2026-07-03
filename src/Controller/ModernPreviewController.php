@@ -748,18 +748,17 @@ class ModernPreviewController extends AbstractController
             }
         }
 
-        // Instruktoren als Objekte -> Nachname/Vorname + "immer verfuegbar"-Flag.
-        // Dummy "Fluglehrer zuweisen" (fiallwaysavailable == 1) gilt ganztaegig frei.
-        $isAdmin = $this->isGranted('ROLE_ADMIN');
-        $myId    = (int) $loggedin_user->getId();
+        // Instruktoren als Objekte -> Nachname/Vorname. Nur ein Fluglehrer, der fuer
+        // JEDEN immer verfuegbar ist (fiallwaysavailable == 1, z. B. der Dummy
+        // "Fluglehrer zuweisen"), gilt in der Uebersicht als ganztaegig frei.
+        // Werte 2/3 = "darf ohne Freigabe zugeordnet werden" -> NICHT ganztaegig frei.
         $allFree = [];
         for ($d = 0; $d < 7; $d++) { $allFree[$d] = [['s' => '00:00', 'e' => '24:00', 'st' => 'frei']]; }
 
         $data = [];
         foreach (Users::GetAllFlightinstructorsAsObject($em, $clientid) as $u) {
             $id     = (int) $u->getId();
-            $flag   = (int) $u->getFiallwaysavailable();
-            $always = ($flag === 1) || ($flag === 2 && $id === $myId) || ($flag === 3 && $isAdmin);
+            $always = ((int) $u->getFiallwaysavailable() === 1);
             if ($always) {
                 $days = $allFree;
             } else {
