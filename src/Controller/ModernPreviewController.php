@@ -723,7 +723,6 @@ class ModernPreviewController extends AbstractController
         $monday = (clone $ref)->modify('monday this week');
         $weekEnd = (clone $monday)->modify('+7 days');
 
-        $instructors = Users::GetAllFlightinstructorsForListbox($em, $clientid);   // name => id
         $avails = FIAvailability::GetAvailabilitiesForRange($em, $clientid, $monday, $weekEnd);
 
         // Woche-Matrix: je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}
@@ -749,12 +748,30 @@ class ModernPreviewController extends AbstractController
             }
         }
 
+        // Instruktoren als Objekte -> Nachname/Vorname + "immer verfuegbar"-Flag.
+        // Dummy "Fluglehrer zuweisen" (fiallwaysavailable == 1) gilt ganztaegig frei.
+        $isAdmin = $this->isGranted('ROLE_ADMIN');
+        $myId    = (int) $loggedin_user->getId();
+        $allFree = [];
+        for ($d = 0; $d < 7; $d++) { $allFree[$d] = [['s' => '00:00', 'e' => '24:00', 'st' => 'frei']]; }
+
         $data = [];
-        foreach ($instructors as $name => $id) {
-            $id = (int) $id;
-            $days = [];
-            for ($d = 0; $d < 7; $d++) { $days[$d] = $byFi[$id][$d] ?? []; }
-            $data[] = ['id' => $id, 'name' => $name, 'days' => $days];
+        foreach (Users::GetAllFlightinstructorsAsObject($em, $clientid) as $u) {
+            $id     = (int) $u->getId();
+            $flag   = (int) $u->getFiallwaysavailable();
+            $always = ($flag === 1) || ($flag === 2 && $id === $myId) || ($flag === 3 && $isAdmin);
+            if ($always) {
+                $days = $allFree;
+            } else {
+                $days = [];
+                for ($d = 0; $d < 7; $d++) { $days[$d] = $byFi[$id][$d] ?? []; }
+            }
+            $data[] = [
+                'id'       => $id,
+                'name'     => trim($u->getFirstname() . ' ' . $u->getLastname()),
+                'sortname' => trim($u->getLastname() . ' ' . $u->getFirstname()),
+                'days'     => $days,
+            ];
         }
 
         $dayLabels = [];

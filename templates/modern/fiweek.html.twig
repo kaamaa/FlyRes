@@ -72,7 +72,7 @@
   {% if isFi %}
   <div class="fiw-mtools" id="meineTools" {{ tab0 == 'meine' ? '' : 'hidden' }}>
     <a class="pri" href="{{ path('modern_fiavail_new') }}">＋ Einzeln freigeben</a>
-    <a href="{{ path('modern_fiavail_series') }}">🔁 Terminserie</a>
+    <a href="{{ path('modern_fiavail_series') }}">🔁 Neue Terminserie</a>
     <a href="{{ path('modern_fiavail_bulk') }}">🗑 Terminserie löschen</a>
   </div>
   {% endif %}
@@ -136,11 +136,12 @@
   function freeH(fi){var h=0;fi.days.forEach(function(d){d.forEach(function(w){if(w.st==='frei'||w.st==='anfrageD')h+=(toMin(w.e)-toMin(w.s))/60;});});return h;}
   function early(fi){for(var i=0;i<7;i++){for(var j=0;j<fi.days[i].length;j++)if(fi.days[i][j].st==='frei')return{i:i,s:fi.days[i][j].s};}return null;}
   function sortF(list){var a=list.slice();
-    if(mode==='name')a.sort(function(x,y){return x.name.localeCompare(y.name);});
+    if(mode==='name')a.sort(function(x,y){return (x.sortname||x.name).localeCompare(y.sortname||y.name);});
     else a.sort(function(x,y){var ex=early(x),ey=early(y),vx=ex?ex.i*1440+toMin(ex.s):1e9,vy=ey?ey.i*1440+toMin(ey.s):1e9;return vx-vy;});
     return a;}
   function chipFor(w){
     if(w.st==='abw'){var full=(w.s==='00:00'&&w.e==='24:00');return '<span class="chip st-abw">🏖 '+(full?'Abwesend':(w.s+'–'+w.e))+'</span>';}
+    if(w.st==='frei'&&w.s==='00:00'&&w.e==='24:00')return '<span class="chip st-frei">ganztägig</span>';
     return '<span class="chip st-'+w.st+'">'+w.s+'–'+w.e+'</span>';
   }
   function matrix(list){
