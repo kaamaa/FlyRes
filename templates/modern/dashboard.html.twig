@@ -85,7 +85,7 @@
     <section class="fr-dash-card">
       <div class="fr-dash-ch"><h3>📌 Pinnwand</h3><a href="{{ path('modern_notes') }}">alle ›</a></div>
       {% for n in notes %}
-        <div class="fr-dash-note"><b>{{ n.header }}</b><p>{{ n.text }}</p><small>{{ n.author }}{% if n.validuntil %} · bis {{ n.validuntil }}{% endif %}</small></div>
+        <div class="fr-dash-note"><b>{{ n.header }}</b><p>{{ n.text|note_text }}</p><small>{{ n.author }}{% if n.validuntil %} · bis {{ n.validuntil }}{% endif %}</small></div>
       {% else %}
         <div class="fr-dash-empty">Keine aktuellen Aushänge.</div>
       {% endfor %}

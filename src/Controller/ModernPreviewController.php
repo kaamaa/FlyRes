@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entities\Airfields;
 use App\Entities\Bookings;
+use App\Tools\HtmlSanitizer;
 use App\Entities\FIAvailability;
 use App\Entities\FlightPurposes;
 use App\Entities\Functions;
@@ -1419,7 +1420,8 @@ class ModernPreviewController extends AbstractController
 
         $id          = (int) $request->request->get('id', 0);
         $header      = trim((string) $request->request->get('header', ''));
-        $description = (string) $request->request->get('description', '');
+        // WYSIWYG-HTML serverseitig auf eine sichere Whitelist reduzieren.
+        $description = HtmlSanitizer::clean((string) $request->request->get('description', ''));
         $vuRaw       = trim((string) $request->request->get('validuntil', ''));
 
         if ($id !== 0) {
@@ -1453,7 +1455,7 @@ class ModernPreviewController extends AbstractController
         // Validierung (wie SaveAction)
         $errors = [];
         if ($header === '') { $errors[] = 'Bitte geben Sie einen Titel ein.'; }
-        if (trim($description) === '') { $errors[] = 'Bitte geben Sie einen Text ein.'; }
+        if (HtmlSanitizer::toText($description) === '') { $errors[] = 'Bitte geben Sie einen Text ein.'; }
         if (!$vuDate) {
             $errors[] = 'Das „Gültig bis"-Datum ist kein gültiges Datum.';
         } elseif (!$isSysAdmin) {

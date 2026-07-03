@@ -9,6 +9,12 @@
 {% endblock %}
 
 {% block content %}
+  <style>
+    .fr-note-body h3,.fr-note-body h4,.fr-note-body h5{font-size:14px;margin:9px 0 4px;color:var(--fr-blue-d,#1f4d73);}
+    .fr-note-body ul,.fr-note-body ol{margin:6px 0;padding-left:20px;} .fr-note-body li{margin:2px 0;}
+    .fr-note-body a{color:var(--fr-blue,#3b6ea5);} .fr-note-body mark{background:#fff3bf;padding:0 2px;border-radius:2px;}
+    .fr-note-body p{margin:6px 0;} .fr-note-body p:first-child{margin-top:0;}
+  </style>
   <div class="fr-notes">
     {% for n in items %}
       <article class="fr-note">
@@ -21,7 +27,7 @@
             </span>
           {% endif %}
         </header>
-        <div class="fr-note-body">{{ n.text|nl2br }}</div>
+        <div class="fr-note-body">{{ n.text|note_html }}</div>
         <footer class="fr-note-ft">
           <span class="fr-note-meta">
             <span class="av">{{ n.author|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>
