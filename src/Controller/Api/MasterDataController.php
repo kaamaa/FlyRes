@@ -45,9 +45,11 @@ class MasterDataController extends ApiController
         }
 
         // GetAllFlightinstructorsForListbox liefert [ "Vorname Nachname" => id ]
+        // isAssign markiert den Platzhalter "Fluglehrer zuweisen" (fuer den Pflicht-Hinweis).
+        $assignId = Users::GetAssignInstructorId($em, $user->getClientid());
         $result = [];
         foreach (Users::GetAllFlightinstructorsForListbox($em, $user->getClientid()) as $name => $id) {
-            $result[] = ['id' => $id, 'name' => $name];
+            $result[] = ['id' => $id, 'name' => trim($name), 'isAssign' => ((int) $id === $assignId)];
         }
 
         return $this->json($result);

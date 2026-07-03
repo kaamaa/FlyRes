@@ -27,6 +27,7 @@ const airfieldId = ref(props.initial?.airfieldId || 0)
 const description = ref(props.initial?.description || '')
 
 const errors = ref([])
+const fiAck = ref(false) // MVP 1: Bestaetigung bei Platzhalter "Fluglehrer zuweisen"
 const busy = ref(false)
 const autoPick = ref(!props.bookingId) // neue Buchung (auch vorbefüllt): ersten freien Block automatisch vorwählen
 
@@ -123,6 +124,9 @@ function stateSegsToPct(segments) {
 
 const aircraftLabel = computed(() => { const a = props.md.aircraft.find((x) => x.id === aircraftId.value); return a ? a.callsign : '' })
 const fiLabel = computed(() => { const i = props.md.instructors.find((x) => x.id === fiId.value); return i ? i.name : '' })
+// MVP 1: ist der gewaehlte Fluglehrer der Platzhalter "Fluglehrer zuweisen"?
+const fiIsAssign = computed(() => { const i = props.md.instructors.find((x) => x.id === fiId.value); return !!(i && i.isAssign) })
+watch(fiId, () => { if (!fiIsAssign.value) fiAck.value = false })
 
 const availRows = computed(() => {
   if (!avail.value || !dayBounds.value) return []
@@ -312,6 +316,7 @@ async function save() {
   if (busy.value) return
   errors.value = []
   if (!startTime.value || !endTime.value) { errors.value = ['Bitte Start- und Endzeit wählen']; return }
+  if (fiIsAssign.value && !fiAck.value) { errors.value = ['Fluglehrer zuweisen: Bitte bestätige, dass du dich selbst um einen Fluglehrer kümmerst.']; return }
   busy.value = true
   const body = {
     aircraftId: aircraftId.value,
@@ -362,6 +367,14 @@ defineExpose({ submit: save })
           <option :value="0">(keiner)</option>
           <option v-for="i in md.instructors" :key="i.id" :value="i.id">{{ i.name }}</option>
         </select>
+      </div>
+      <!-- MVP 1: Pflicht-Hinweis bei Platzhalter "Fluglehrer zuweisen" -->
+      <div v-if="fiIsAssign" class="fiwarn">
+        <div class="fw-hd"><span class="fw-ic">⚠️</span>
+          <div><b>Das ist noch kein bestätigter Fluglehrer.</b>
+            <p>„Fluglehrer offen" ist nur ein Platzhalter. Du musst dir selbst einen echten Fluglehrer organisieren – sonst kann der Flug nicht stattfinden.</p></div>
+        </div>
+        <label class="fw-chk"><input type="checkbox" v-model="fiAck"> Ich kümmere mich selbst darum, einen Fluglehrer zu finden.</label>
       </div>
     </div>
 

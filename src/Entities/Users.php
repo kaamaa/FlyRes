@@ -322,17 +322,19 @@ class Users
   }
 
   /**
-   * Liefert die ID des Platzhalter-Fluglehrers "Fluglehrer zuweisen" fuer den
-   * Mandanten (oder 0). Merkmal: aktiver Fluglehrer (function 1), fuer JEDEN
-   * immer verfuegbar (fiallwaysavailable = 1) und Name enthaelt "zuweisen".
-   * Eine Buchung mit diesem Fluglehrer = "Fluglehrer noch offen".
+   * Liefert die ID des Platzhalter-Fluglehrers (z. B. "Fluglehrer offen" /
+   * frueher "Fluglehrer zuweisen") fuer den Mandanten (oder 0). Merkmal:
+   * aktiver Fluglehrer (function 1), fuer JEDEN immer verfuegbar
+   * (fiallwaysavailable = 1) und Nachname beginnt mit "Fluglehrer" – das
+   * ueberlebt eine Umbenennung des Suffixes. Eine Buchung mit diesem
+   * Fluglehrer = "Fluglehrer noch offen".
    */
   public static function GetAssignInstructorId ($em, $clientid)
   {
     $r = $em->createQuery(
       "SELECT a.id FROM App\Entity\FresAccounts a INNER JOIN a.function f "
       . "WHERE f.id = 1 AND a.clientid = :cid AND a.status <> 'geloescht' "
-      . "AND a.fiallwaysavailable = 1 AND a.lastname LIKE '%zuweisen%'"
+      . "AND a.fiallwaysavailable = 1 AND a.lastname LIKE 'Fluglehrer%'"
     )->setParameter('cid', $clientid)->getResult();
     return $r ? (int) $r[0]['id'] : 0;
   }

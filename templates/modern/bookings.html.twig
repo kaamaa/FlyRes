@@ -71,7 +71,7 @@
     {% set pcls = 'charter' %}
     {% if 'chul' in p %}{% set pcls = 'schul' %}{% elseif 'artung' in p %}{% set pcls = 'wart' %}{% endif %}
     {# MVP 2: Schulung mit Platzhalter "Fluglehrer zuweisen" = Fluglehrer noch offen #}
-    {% set fiOpen = b.isflighttraining and 'zuweisen' in (b.flightinstructor|default('')|lower) %}
+    {% set fiOpen = b.isflighttraining and 'fluglehrer' in (b.flightinstructor|default('')|lower) %}
 
     <a class="fr-bk" href="{{ path('modern_booking', {id: b.bookingid}) }}">
       <span class="fr-tm">{{ b.start }}–{{ b.end }}</span>

@@ -19,6 +19,8 @@ async function load() {
 }
 watch(tab, load, { immediate: true })
 
+const openItems = computed(() => items.value.filter((b) => b.fiOpen)) // MVP 2: offene Buchungen
+
 const grouped = computed(() => {
   const g = []
   let last = null
@@ -43,6 +45,11 @@ const grouped = computed(() => {
     <div v-if="loading" class="center">Lädt…</div>
     <div v-else-if="!items.length" class="center">Keine Reservierungen</div>
     <div v-else>
+      <a v-if="openItems.length" class="fiopen-banner" @click="emit('open', openItems[0].id)">
+        <span class="bi">⚠️</span>
+        <span class="bt"><b>{{ openItems.length }} {{ openItems.length === 1 ? 'Reservierung' : 'Reservierungen' }} ohne Fluglehrer</b><small>Noch kein Fluglehrer bestätigt – bitte selbst darum kümmern.</small></span>
+        <span class="ba">›</span>
+      </a>
       <div v-for="g in grouped" :key="g.date">
         <DayHeader :label="dayLabel(g.date)" :count="g.items.length" />
         <div v-for="b in g.items" :key="b.id" class="mycard" @click="emit('open', b.id)">
@@ -54,8 +61,9 @@ const grouped = computed(() => {
             <div class="meta">
               {{ b.pilot }}<br>
               <span class="badge" :class="badgeClass(b.purpose)" style="margin-top:4px;">
-                {{ b.purpose }}<template v-if="b.instructor"> · FI {{ b.instructor }}</template>
+                {{ b.purpose }}<template v-if="!b.fiOpen && b.instructor"> · FI {{ b.instructor }}</template>
               </span>
+              <span v-if="b.fiOpen" class="fiopen-badge" style="margin-left:6px;">⚠ Fluglehrer offen</span>
             </div>
           </div>
         </div>

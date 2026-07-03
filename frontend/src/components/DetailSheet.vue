@@ -53,11 +53,17 @@ async function del() {
         </div>
         <div class="formgroup" style="margin-top:14px;">
           <div class="drow"><span class="k">Zweck</span><span class="v"><span class="badge" :class="badgeClass(d.purpose)">{{ d.purpose }}</span></span></div>
-          <div class="drow" v-if="d.instructor"><span class="k">Fluglehrer</span><span class="v">{{ d.instructor }}</span></div>
+          <div class="drow" v-if="d.fiOpen"><span class="k">Fluglehrer</span><span class="v" style="color:#c9781a;font-weight:700;">⚠ noch offen</span></div>
+          <div class="drow" v-else-if="d.instructor"><span class="k">Fluglehrer</span><span class="v">{{ d.instructor }}</span></div>
           <div class="drow"><span class="k">Flugplatz</span><span class="v">{{ d.airfield }}</span></div>
           <div class="drow"><span class="k">Ende</span><span class="v">{{ d.end }}</span></div>
           <div class="drow"><span class="k">Pilot</span><span class="v">{{ d.reservedFor }}</span></div>
           <div class="drow" v-if="d.phone && d.phone.mobile"><span class="k">Telefon</span><span class="v">{{ d.phone.mobile }}</span></div>
+        </div>
+        <div v-if="d.fiOpen" class="fiopen-cta">
+          <b>Diese Buchung hat noch keinen echten Fluglehrer.</b>
+          <p>„Fluglehrer offen" ist nur ein Platzhalter. Bitte such dir selbst einen Fluglehrer und trage ihn ein – sonst kann der Flug nicht stattfinden.</p>
+          <button v-if="d.canEditDate ?? d.canEdit" class="btn" @click="emit('edit', d)">Fluglehrer eintragen</button>
         </div>
         <template v-if="d.description">
           <div class="ftitle">Beschreibung</div>

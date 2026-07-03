@@ -97,6 +97,7 @@ class BookingController extends ApiController
                 'instructor'  => $row['flightinstructor'] ?: null,
                 'purpose'     => $row['flightpurpose'],
                 'isTraining'  => (bool) $row['isflighttraining'],
+                'fiOpen'      => ((bool) $row['isflighttraining']) && stripos((string) $row['flightinstructor'], 'Fluglehrer') !== false,
                 'description' => $row['description'],
             ];
         }
@@ -393,6 +394,7 @@ class BookingController extends ApiController
             'id'              => $d['id'],
             'aircraft'        => $d['flugzeug'],
             'instructor'      => $d['flightinstructor'] ?: null,
+            'fiOpen'          => stripos((string) ($d['flightinstructor'] ?? ''), 'Fluglehrer') !== false,
             'airfield'        => $d['airfield'],
             'purpose'         => $d['flightpurpose'],
             'start'           => $d['start'],
