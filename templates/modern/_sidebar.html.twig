@@ -34,10 +34,7 @@
   <a class="fr-nav {{ route == 'modern_overview' ? 'on' : '' }}" href="{{ path('modern_overview') }}">{{ ui.ic('chart') }} Übersichten</a>
   <a class="fr-nav {{ route == 'modern_bookings' and u != 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings', {umfang: 'meine'}) }}">{{ ui.ic('user') }} Meine Buchungen</a>
   <a class="fr-nav {{ route == 'modern_bookings' and u == 'alle' ? 'on' : '' }}" href="{{ path('modern_bookings') }}">{{ ui.ic('list') }} Alle Buchungen</a>
-  <a class="fr-nav {{ route starts with 'modern_fiweek' ? 'on' : '' }}" href="{{ path('modern_fiweek') }}">{{ ui.ic('clock') }} Verfügbarkeit</a>
-  {% if is_granted('ROLE_FI') %}
-    <a class="fr-nav {{ route starts with 'modern_fiavail' ? 'on' : '' }}" href="{{ path('modern_fiavail') }}">{{ ui.ic('clock') }} Schulungszeiten</a>
-  {% endif %}
+  <a class="fr-nav {{ route starts with 'modern_fiweek' or route starts with 'modern_fiavail' ? 'on' : '' }}" href="{{ path('modern_fiweek') }}">{{ ui.ic('clock') }} Verfügbarkeit</a>
 
   <div class="fr-navsec">Stammdaten</div>
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
