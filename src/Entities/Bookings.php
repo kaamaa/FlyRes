@@ -1195,12 +1195,14 @@ class Bookings
     // Alle Administratoren informieren
     $adminMails = Users::GetAllAdminMailaddresses($em, $clientId, Users::const_Buchungsmail);
     
-    // Alle internen Mailadresseen ermitteln
-    if (isset($datanew['primary_' . 'EmailInfoIntern']) && trim($datanew['primary_' . 'EmailInfoIntern'], ' ,')) 
-      $mailIntern = explode(",", trim($datanew['primary_' . 'EmailInfoIntern'], ' ,'));
-    // Alle externen Mailadressen ermitteln
-    if (isset($datanew['primary_' . 'EmailInfoExtern']) && trim($datanew['primary_' . 'EmailInfoExtern'], ' ,')) 
-      $mailExtern = explode(",", trim($datanew['primary_' . 'EmailInfoExtern'], ' ,'));
+    // Alle internen/externen Mailadressen aus $data lesen (= zusammengefuehrt).
+    // Beim Storno ist $datanew leer, die Buchungsdaten stehen unter 'primary_' in
+    // $dataold und damit in $data -> so bekommen die "Info an"-Empfaenger auch
+    // die Stornierungs-Mail (frueher wurde nur $datanew geprueft = leer).
+    if (isset($data['primary_' . 'EmailInfoIntern']) && trim($data['primary_' . 'EmailInfoIntern'], ' ,'))
+      $mailIntern = explode(",", trim($data['primary_' . 'EmailInfoIntern'], ' ,'));
+    if (isset($data['primary_' . 'EmailInfoExtern']) && trim($data['primary_' . 'EmailInfoExtern'], ' ,'))
+      $mailExtern = explode(",", trim($data['primary_' . 'EmailInfoExtern'], ' ,'));
     
     // alten und neuen Nutzer informieren
     if ($newbooking) $mailNewOwner = Users::GetUserMailaddress($em, $newbooking->getClientid(), $newbooking->getCreatedbyuserid(), Users::const_Buchungsmail);
@@ -1245,8 +1247,12 @@ class Bookings
         try {
          $mailer->send($message);
         }
-        catch (\Exception $e) {
-          // 09.09.22 - hier muss noch etwas codiert werden
+        catch (\Throwable $e) {
+          // Fehler nicht mehr verschlucken: ins PHP-Fehlerlog schreiben, damit
+          // ein defekter Mailversand (z. B. SMTP-Login/Server) sichtbar wird.
+          // Schleife laeuft weiter, damit ein schlechter Empfaenger die uebrigen
+          // nicht blockiert.
+          error_log('FlyRes: Buchungsmail (' . $type . ') an "' . $mail . '" fehlgeschlagen: ' . $e->getMessage());
         }
       }
     }
