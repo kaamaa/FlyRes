@@ -706,6 +706,71 @@ class ModernPreviewController extends AbstractController
         return $response;
     }
 
+    /**
+     * Fluglehrer-Verfuegbarkeit als 7-Tage-Wochenmatrix (alle Fluglehrer) plus
+     * Tab "Meine Verfuegbarkeiten" fuer Fluglehrer. Woche ueber ?week=YYYY-MM-DD
+     * (auf Montag gesnappt). Daten aus FIAvailability::GetAvailabilitiesForRange.
+     */
+    public function fiWeek(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_PILOT');
+        $clientid = $loggedin_user->getClientid();
+        $tz = new \DateTimeZone('Europe/Berlin');
+        $wdShort = [1 => 'Mo', 2 => 'Di', 3 => 'Mi', 4 => 'Do', 5 => 'Fr', 6 => 'Sa', 7 => 'So'];
+
+        $ref = \DateTime::createFromFormat('Y-m-d', (string) $request->query->get('week', ''), $tz) ?: new \DateTime('today', $tz);
+        $ref->setTime(0, 0, 0);
+        $monday = (clone $ref)->modify('monday this week');
+        $weekEnd = (clone $monday)->modify('+7 days');
+
+        $instructors = Users::GetAllFlightinstructorsForListbox($em, $clientid);   // name => id
+        $avails = FIAvailability::GetAvailabilitiesForRange($em, $clientid, $monday, $weekEnd);
+
+        // je Fluglehrer -> Tag (0..6) -> Fenster {s,e,st}; typ 2 = auf Anfrage
+        $byFi = [];
+        foreach ($avails as $a) {
+            $fid = (int) $a->getFlightinstructor();
+            $st  = ((int) $a->getTyp() === 2) ? 'anfrageD' : 'frei';
+            for ($d = 0; $d < 7; $d++) {
+                $dayStart = (clone $monday)->modify("+$d days");
+                $dayEnd   = (clone $dayStart)->modify('+1 day');
+                $s = ($a->getItemstart() > $dayStart) ? $a->getItemstart() : $dayStart;
+                $e = ($a->getItemstop()  < $dayEnd)   ? $a->getItemstop()  : $dayEnd;
+                if ($s < $e) {
+                    $end = $e->format('H:i');
+                    $byFi[$fid][$d][] = ['s' => $s->format('H:i'), 'e' => ($end === '00:00' ? '24:00' : $end), 'st' => $st];
+                }
+            }
+        }
+
+        $data = [];
+        foreach ($instructors as $name => $id) {
+            $id = (int) $id;
+            $days = [];
+            for ($d = 0; $d < 7; $d++) { $days[$d] = $byFi[$id][$d] ?? []; }
+            $data[] = ['id' => $id, 'name' => $name, 'days' => $days];
+        }
+
+        $dayLabels = [];
+        for ($d = 0; $d < 7; $d++) {
+            $dt = (clone $monday)->modify("+$d days");
+            $dayLabels[] = ['wd' => $wdShort[(int) $dt->format('N')], 'dd' => $dt->format('d.m.')];
+        }
+
+        $response = $this->render('modern/fiweek.html.twig', [
+            'data'      => $data,
+            'dayLabels' => $dayLabels,
+            'monday'    => $monday->format('Y-m-d'),
+            'prevWeek'  => (clone $monday)->modify('-7 days')->format('Y-m-d'),
+            'nextWeek'  => (clone $monday)->modify('+7 days')->format('Y-m-d'),
+            'weekLabel' => $monday->format('d.m.') . '–' . (clone $monday)->modify('+6 days')->format('d.m.Y'),
+            'myId'      => (int) $loggedin_user->getId(),
+            'isFi'      => $this->isGranted('ROLE_FI'),
+        ]);
+        $response->setExpires(new \DateTime());
+        return $response;
+    }
+
     /** Einzelne Buchung im Detail (modern). Nutzt Bookings::GetBookingDetails. */
     public function booking(int $id, UserInterface $loggedin_user, EntityManagerInterface $em): Response
     {

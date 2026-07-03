@@ -253,6 +253,23 @@ class FIAvailability
     return $result;  
   }
   
+  /**
+   * Alle Fluglehrer-Verfuegbarkeiten, die in den Zeitraum [from, to) fallen
+   * (typ 1 = verfuegbar, typ 2 = auf Anfrage; ohne geloeschte/stornierte).
+   * Optional auf einen Fluglehrer eingeschraenkt. Fuer die Wochen-Matrix.
+   */
+  public static function GetAvailabilitiesForRange ($em, $clientid, \DateTime $from, \DateTime $to, $fid = 0)
+  {
+    $q = "SELECT b FROM App\Entity\FresFIAvailability b WHERE "
+       . "b.clientid = :cid and (b.typ = 1 or b.typ = 2) and "
+       . "b.status <> 'storniert' and b.status <> '" . FIAvailability::const_geloescht . "' and "
+       . "b.itemstart < :to and b.itemstop > :from";
+    $params = array('cid' => $clientid, 'from' => $from->format('Y-m-d H:i:s'), 'to' => $to->format('Y-m-d H:i:s'));
+    if ($fid) { $q .= " and b.flightinstructor = :fid"; $params['fid'] = $fid; }
+    $q .= " ORDER BY b.flightinstructor, b.itemstart";
+    return $em->createQuery($q)->setParameters($params)->getResult();
+  }
+
   public static function GetAllAvailabilityStates ($em)
   {
     $availabilitystateList = array ();

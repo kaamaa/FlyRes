@@ -30,6 +30,11 @@ modern_day:
     controller: App\Controller\ModernPreviewController::day
     methods: GET
 
+modern_fiweek:
+    path: /web/verfuegbarkeit
+    controller: App\Controller\ModernPreviewController::fiWeek
+    methods: GET
+
 modern_booking:
     path: /web/buchung/{id}
     controller: App\Controller\ModernPreviewController::booking

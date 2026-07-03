@@ -1,0 +1,121 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Fluglehrer-Verfügbarkeit{% endblock %}
+
+{% block content %}
+<style>
+  .tabs{display:inline-flex;background:#eef2f6;border-radius:10px;padding:3px;margin-bottom:14px;}
+  .tabs button{border:none;background:none;padding:9px 15px;border-radius:8px;font:inherit;font-weight:700;color:var(--fr-mut);cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+  .tabs button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+  .fiw-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+  .fiw-bar .wk{font-weight:800;color:var(--fr-blue-d);}
+  .fiw-bar .navbtn{width:32px;height:32px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--fr-ink);font-size:16px;background:#fff;}
+  .fiw-bar .navbtn:hover{background:#f2f5f8;}
+  .fiw-bar input[type=date],.fiw-bar select{padding:7px 9px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;background:#fff;font:inherit;}
+  .fiw-bar label{font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;}
+  .chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:6px;line-height:1.4;white-space:nowrap;margin:1px 0;}
+  .st-frei{background:#e7f6ee;color:#1e7a44;} .st-anfrageD{background:#fdf3dd;color:#9a6c12;}
+  table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px;}
+  table.mx th,table.mx td{padding:7px 8px;border-bottom:1px solid var(--fr-line);vertical-align:top;text-align:center;}
+  table.mx thead th{font-size:11px;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;}
+  table.mx thead th.we,table.mx td.we{background:#fbfcf7;}
+  table.mx .fi{text-align:left;white-space:nowrap;min-width:190px;}
+  table.mx .fi .nm{font-weight:700;font-size:13.5px;} table.mx .fi .st{color:var(--fr-mut);font-size:11px;}
+  table.mx td .empty{color:#c4ccd6;} table.mx tbody tr:hover td{background:#f5f9fd;}
+  .av{width:24px;height:24px;border-radius:50%;background:var(--fr-blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:8px;vertical-align:-7px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--fr-mut);margin-top:12px;}
+  .legend i{display:inline-block;width:13px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+  .fiw-empty{color:var(--fr-mut);padding:22px 6px;}
+  .fiw-mtools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+  .fiw-mtools a{border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:8px;padding:7px 12px;font-weight:700;font-size:12.5px;text-decoration:none;color:var(--fr-ink);}
+  .fiw-mtools a.pri{background:var(--fr-blue);border-color:var(--fr-blue);color:#fff;}
+</style>
+
+<div class="tabs" id="tabs">
+  <button type="button" data-t="alle" class="on">🕘 Verfügbarkeit (alle)</button>
+  {% if isFi %}<button type="button" data-t="meine">🕗 Meine Verfügbarkeiten</button>{% endif %}
+</div>
+
+<div class="fiw-bar">
+  <a class="navbtn" href="{{ path('modern_fiweek', {week: prevWeek}) }}" title="Vorige Woche">‹</a>
+  <span class="wk">{{ weekLabel }}</span>
+  <a class="navbtn" href="{{ path('modern_fiweek', {week: nextWeek}) }}" title="Nächste Woche">›</a>
+  <input type="date" id="weekPick" value="{{ monday }}" title="Woche wählen">
+  <span style="flex:1"></span>
+  <label>Sortieren:</label>
+  <select id="sortsel">
+    <option value="early">Frühester freier Termin</option>
+    <option value="hours">Meiste freie Stunden</option>
+    <option value="name">Name (A–Z)</option>
+    <option value="direct">Nur direkt buchbar</option>
+  </select>
+</div>
+
+<div class="fr-card">
+  {% if isFi %}
+  <div class="fiw-mtools" id="meineTools" hidden>
+    <a class="pri" href="{{ path('modern_fiavail_new') }}">＋ Einzeln freigeben</a>
+    <a href="{{ path('modern_fiavail_series') }}">🔁 Terminserie</a>
+    <a href="{{ path('modern_fiavail') }}">Alle meine Freigaben verwalten →</a>
+  </div>
+  {% endif %}
+  <div id="matrix"></div>
+  <div class="legend">
+    <span><i style="background:#2e9e5b"></i>frei / direkt buchbar</span>
+    <span><i style="background:#d79a1e"></i>auf Anfrage</span>
+    <span><i style="background:#f4f6f9;border:1px solid #e3e8ee"></i>keine Freigabe</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  var DATA = {{ data|json_encode|raw }};
+  var DLAB = {{ dayLabels|json_encode|raw }};
+  var MYID = {{ myId }};
+  var mode = 'early', tab = 'alle';
+
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+  function toMin(t){var p=t.split(':');return +p[0]*60+ +p[1];}
+  function ini(n){return n.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();}
+  function freeH(fi){var h=0;fi.days.forEach(function(d){d.forEach(function(w){if(w.st==='frei'||w.st==='anfrageD')h+=(toMin(w.e)-toMin(w.s))/60;});});return h;}
+  function early(fi){for(var i=0;i<7;i++){for(var j=0;j<fi.days[i].length;j++)if(fi.days[i][j].st==='frei')return{i:i,s:fi.days[i][j].s};}return null;}
+  function hasDir(fi){return !!early(fi);}
+  function sortF(list,m){var a=list.slice();
+    if(m==='name')a.sort(function(x,y){return x.name.localeCompare(y.name);});
+    else if(m==='hours')a.sort(function(x,y){return freeH(y)-freeH(x);});
+    else if(m==='early')a.sort(function(x,y){var ex=early(x),ey=early(y),vx=ex?ex.i*1440+toMin(ex.s):1e9,vy=ey?ey.i*1440+toMin(ey.s):1e9;return vx-vy;});
+    else if(m==='direct'){a=a.filter(hasDir);a.sort(function(x,y){return freeH(y)-freeH(x);});}
+    return a;}
+  function matrix(list){
+    var l=sortF(list,mode);
+    if(!l.length)return '<div class="fiw-empty">Keine Fluglehrer-Verfügbarkeit in dieser Woche.</div>';
+    var h='<table class="mx"><thead><tr><th class="fi">Fluglehrer</th>';
+    DLAB.forEach(function(d,i){var we=i>4?' we':'';h+='<th class="'+we.trim()+'">'+d.wd+'<br><small>'+d.dd+'</small></th>';});
+    h+='</tr></thead><tbody>';
+    l.forEach(function(fi){var e=early(fi);
+      h+='<tr><td class="fi"><span class="av">'+ini(fi.name)+'</span><span class="nm">'+esc(fi.name)+'</span><br><span class="st">'+freeH(fi).toFixed(0)+' h · '+(e?('ab '+DLAB[e.i].wd+' '+e.s):'—')+'</span></td>';
+      for(var i=0;i<7;i++){var d=fi.days[i],we=i>4?' we':'',cell;
+        if(!d.length)cell='<span class="empty">–</span>';
+        else cell=d.map(function(w){return '<span class="chip st-'+w.st+'">'+w.s+'–'+w.e+'</span>';}).join('<br>');
+        h+='<td class="'+we.trim()+'">'+cell+'</td>';}
+      h+='</tr>';});
+    return h+'</tbody></table>';}
+
+  function render(){
+    var list = (tab==='meine') ? DATA.filter(function(f){return f.id===MYID;}) : DATA;
+    document.getElementById('matrix').innerHTML = matrix(list);
+    var mt=document.getElementById('meineTools'); if(mt){ mt.hidden = (tab!=='meine'); }
+  }
+
+  document.getElementById('sortsel').addEventListener('change', function(){ mode=this.value; render(); });
+  document.querySelectorAll('#tabs button').forEach(function(b){ b.addEventListener('click', function(){
+    document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+    tab=b.getAttribute('data-t'); render();
+  });});
+  document.getElementById('weekPick').addEventListener('change', function(){
+    if(this.value){ window.location = '{{ path('modern_fiweek') }}?week=' + this.value; }
+  });
+  render();
+})();
+</script>
+{% endblock %}
