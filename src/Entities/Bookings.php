@@ -1248,11 +1248,14 @@ class Bookings
          $mailer->send($message);
         }
         catch (\Throwable $e) {
-          // Fehler nicht mehr verschlucken: ins PHP-Fehlerlog schreiben, damit
-          // ein defekter Mailversand (z. B. SMTP-Login/Server) sichtbar wird.
-          // Schleife laeuft weiter, damit ein schlechter Empfaenger die uebrigen
-          // nicht blockiert.
-          error_log('FlyRes: Buchungsmail (' . $type . ') an "' . $mail . '" fehlgeschlagen: ' . $e->getMessage());
+          // Fehler nicht mehr verschlucken. Schleife laeuft weiter, damit ein
+          // schlechter Empfaenger die uebrigen nicht blockiert. Ausgabe an ZWEI
+          // Stellen: PHP-Fehlerlog (hosterabhaengig) UND eine feste Datei
+          // var/log/mailerror.log (immer auffindbar).
+          $line = date('Y-m-d H:i:s') . '  Buchungsmail (' . $type . ') an "' . $mail
+                . '" fehlgeschlagen: ' . $e->getMessage() . "\n";
+          error_log('FlyRes: ' . $line);
+          @file_put_contents(dirname(__DIR__, 2) . '/var/log/mailerror.log', $line, FILE_APPEND);
         }
       }
     }
