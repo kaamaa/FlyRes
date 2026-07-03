@@ -211,6 +211,13 @@ class ModernSystemController extends AbstractController
             $w("SET NAMES utf8mb4;\n");
             $w("SET FOREIGN_KEY_CHECKS = 0;\n");
 
+            // WICHTIG: Die LESE-Session ebenfalls auf UTC stellen, damit die exportierten
+            // TIMESTAMP-Werte tatsaechlich UTC sind und zum "SET time_zone=+00:00"-Header
+            // oben passen. Ohne das kaemen sie in Server-Zeit (CEST) heraus, waehrend der
+            // Import sie als UTC interpretiert -> beim Wiederherstellen 2 h Versatz.
+            // (mysqldump --tz-utc / phpMyAdmin machen genau diese UTC-Lesung.)
+            $conn->executeStatement('SET time_zone = "+00:00"');
+
             foreach ($conn->executeQuery('SHOW TABLES')->fetchFirstColumn() as $table) {
                 $create = $conn->executeQuery('SHOW CREATE TABLE `' . $table . '`')->fetchAssociative();
                 $ddl = $create['Create Table'] ?? null;
