@@ -231,7 +231,7 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-pp input{display:none;}
 .fr-pp:has(input:checked){background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
 .fr-formfoot{display:flex;align-items:center;gap:12px;margin-top:18px;}
-.fr-formfoot .fr-cancel{margin-left:auto;}
+/* Abbrechen sitzt direkt neben Speichern (kein Auto-Abstand nach rechts) */
 .fr-btn:disabled{opacity:.5;cursor:not-allowed;}
 .fr-msg{margin-top:16px;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;max-width:680px;}
 .fr-msg.err{background:#fdeaea;color:#c0392b;border:1px solid #f1c8c8;}
@@ -625,6 +625,11 @@ button.fr-sechdr:hover{background:var(--fr-blue-d);}
 /* Sekundaerer Kontur-Button fuer die Kopfzeile (echtes Weiss mit Rahmen) */
 .fr-btn.sec{background:#fff;color:var(--fr-ink);border:1px solid #c9d3e0;}
 .fr-btn.sec:hover{background:var(--fr-blue-l);color:var(--fr-blue-d);border-color:#c9d3e0;}
+/* Zeile 2 unter den Reitern: Aktionsleiste – linksbuendig, dezent hinterlegt.
+   Buttons einheitlich .fr-btn (Pinnwand-Blau). Destruktives via .fr-pgap absetzen. */
+.fr-pactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--fr-line);background:#f7f9fc;}
+.fr-pactions:empty{display:none;}
+.fr-pgap{width:18px;flex:none;}
 /* Seiten mit eigener Karte (Uebersichten) sitzen im Panel -> Doppelrahmen weg */
 .fr-pbody > .fr-daypanel{box-shadow:none;border-radius:0;padding:0;max-width:none;background:transparent;}
 .fr-pbody .fr-ovcard{box-shadow:none;border-radius:0;background:transparent;padding:0;}

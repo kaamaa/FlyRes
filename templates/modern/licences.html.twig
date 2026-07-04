@@ -18,12 +18,13 @@
   {{ ph.tabs(ltabs) }}
 
   <div class="fr-panel">
+    {% if userName %}
     <div class="fr-phead">
-      {% if userName %}
-        <span class="fr-chip on">🎓 {{ userName }}</span>
-        <a class="fr-btn sec" href="{{ path('modern_licences', {scope: 'alle'}) }}">‹ Alle Lizenzen</a>
-      {% endif %}
-      <span class="fr-phspring"></span>
+      <span class="fr-chip on">🎓 {{ userName }}</span>
+      <a class="fr-btn sec" href="{{ path('modern_licences', {scope: 'alle'}) }}">‹ Alle Lizenzen</a>
+    </div>
+    {% endif %}
+    <div class="fr-pactions">
       {% if userName %}
         <a class="fr-btn" href="{{ path('modern_licence_new', {user: userFilter}) }}">{{ icon.ic('plus') }} Neue Lizenz</a>
       {% else %}
