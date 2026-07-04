@@ -1,6 +1,6 @@
 {% extends 'modern/layout.html.twig' %}
 
-{% block ptitle %}Fluglehrer-Verfügbarkeit{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
 <style>
@@ -59,16 +59,16 @@
 {% set tab0 = initialTab|default('alle') %}
 {% set view0 = initialView|default('woche') %}
 
-<div class="fiw-top">
-  <div class="tabs" id="tabs">
-    <button type="button" data-t="alle" class="{{ tab0 == 'alle' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></svg>Alle</button>
-    {% if isFi %}<button type="button" data-t="meine" class="{{ tab0 == 'meine' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>Meine</button>{% endif %}
-  </div>
-  <span class="seg" id="viewseg">
-    <button type="button" data-v="woche" class="{{ view0 == 'woche' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2.5" x2="8" y2="6"/><line x1="16" y1="2.5" x2="16" y2="6"/></svg>Woche</button>
-    <button type="button" data-v="liste" class="{{ view0 == 'liste' ? 'on' : '' }}"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3.6" cy="6" r=".9"/><circle cx="3.6" cy="12" r=".9"/><circle cx="3.6" cy="18" r=".9"/></svg>Liste</button>
-  </span>
+{# 4 kombinierte Karteireiter (Alle/Meine x Woche/Liste), Umschaltung client-seitig #}
+<div class="fr-tabrow" id="fitabs">
+  <button type="button" class="fr-tab {{ (tab0 == 'alle' and view0 == 'woche') ? 'on' : '' }}" data-t="alle" data-v="woche"><span>Alle · Woche</span></button>
+  <button type="button" class="fr-tab {{ (tab0 == 'alle' and view0 == 'liste') ? 'on' : '' }}" data-t="alle" data-v="liste"><span>Alle · Liste</span></button>
+  {% if isFi %}
+  <button type="button" class="fr-tab {{ (tab0 == 'meine' and view0 == 'woche') ? 'on' : '' }}" data-t="meine" data-v="woche"><span>Meine · Woche</span></button>
+  <button type="button" class="fr-tab {{ (tab0 == 'meine' and view0 == 'liste') ? 'on' : '' }}" data-t="meine" data-v="liste"><span>Meine · Liste</span></button>
+  {% endif %}
 </div>
+<div class="fr-panel"><div class="fr-pbody">
 
 <div class="fiw-bar" id="wbar" {{ view0 == 'liste' ? 'style="display:none"' : '' }}>
   <a class="navbtn" id="navPrev" href="{{ path('modern_fiweek', {week: prevWeek, tab: tab0}) }}" title="Vorige Woche">‹</a>
@@ -83,7 +83,6 @@
   </select>
 </div>
 
-<div class="fr-card">
   {% if isFi %}
   <div class="fiw-mtools" id="meineTools" {{ tab0 == 'meine' ? '' : 'hidden' }}>
     <span class="lbl">Neu erstellen</span>
@@ -139,7 +138,8 @@
       <div class="fiw-empty">Du hast keine kommenden Verfügbarkeiten eingetragen.</div>
     {% endfor %}
   </div>
-</div>
+  </div>{# fr-pbody #}
+</div>{# fr-panel #}
 
 <script>
 (function () {
@@ -194,13 +194,9 @@
   }
 
   document.getElementById('sortsel').addEventListener('change', function(){ mode=this.value; render(); });
-  document.querySelectorAll('#tabs button').forEach(function(b){ b.addEventListener('click', function(){
-    document.querySelectorAll('#tabs button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
-    tab=b.getAttribute('data-t'); render();
-  });});
-  document.querySelectorAll('#viewseg button').forEach(function(b){ b.addEventListener('click', function(){
-    document.querySelectorAll('#viewseg button').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
-    view=b.getAttribute('data-v'); render();
+  document.querySelectorAll('#fitabs .fr-tab').forEach(function(b){ b.addEventListener('click', function(){
+    document.querySelectorAll('#fitabs .fr-tab').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+    tab=b.getAttribute('data-t'); view=b.getAttribute('data-v'); render();
   });});
   document.getElementById('weekPick').addEventListener('change', function(){
     if(this.value){ window.location = URL+'?week='+this.value+'&tab='+tab+'&view=woche'; }

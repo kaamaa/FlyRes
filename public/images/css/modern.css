@@ -606,7 +606,7 @@ button.fr-sechdr:hover{background:var(--fr-blue-d);}
    =========================================================================== */
 .fr-ic{width:16px;height:16px;flex:none;vertical-align:-2px;}
 .fr-tabrow{display:flex;gap:7px;padding-left:6px;position:relative;z-index:2;align-items:flex-end;flex-wrap:wrap;}
-.fr-tab{display:inline-flex;align-items:center;gap:7px;background:#e6ecf5;border:1.5px solid #c2cfe0;border-bottom:none;border-radius:12px 12px 0 0;padding:9px 15px;font-weight:700;font-size:13.5px;color:#5f6b80;text-decoration:none;cursor:pointer;position:relative;top:1.5px;box-shadow:0 -1px 2px rgba(25,50,95,.04);transition:background .12s,color .12s;}
+.fr-tab{display:inline-flex;align-items:center;gap:7px;background:#e6ecf5;border:1.5px solid #c2cfe0;border-bottom:none;border-radius:12px 12px 0 0;padding:9px 15px;font-family:inherit;font-weight:700;font-size:13.5px;color:#5f6b80;text-decoration:none;cursor:pointer;position:relative;top:1.5px;box-shadow:0 -1px 2px rgba(25,50,95,.04);transition:background .12s,color .12s;}
 .fr-tab .fr-ic{width:15px;height:15px;}
 .fr-tab:hover{background:#eef2f9;color:var(--fr-ink);}
 .fr-tab.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 -3px 8px rgba(25,50,95,.07);}
