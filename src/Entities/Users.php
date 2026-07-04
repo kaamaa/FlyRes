@@ -248,7 +248,31 @@ class Users
     //echo 'Mailadresses: ' . $mailadresses . '<br>';
     return $mailadresses;
   }
-  
+
+  /**
+   * Reverse zu GetAllMailsadressesByUserlist: aus einer gespeicherten Adressliste
+   * (kommagetrennt) die zugehoerigen Nutzer-IDs des Mandanten ermitteln – zum
+   * Vorbefuellen der Mitglieder-Auswahl beim Bearbeiten einer Buchung.
+   */
+  public static function GetUserlistByMailadresses ($em, $mailadresses, $clientid)
+  {
+    $ids = array();
+    $addr = array_filter(array_map('trim', explode(',', (string) $mailadresses)));
+    if ($addr)
+    {
+      $addrLower = array_map('strtolower', $addr);
+      $users = $em->createQuery(
+        "SELECT b FROM App\Entity\FresAccounts b WHERE b.clientid = :cid AND b.status <> 'geloescht'"
+      )->setParameter('cid', $clientid)->getResult();
+      foreach ($users as $user)
+      {
+        $mail = strtolower(trim((string) $user->getEmail()));
+        if ($mail !== '' && in_array($mail, $addrLower, true)) $ids[] = (int) $user->getId();
+      }
+    }
+    return $ids;
+  }
+
   public static function GetAllUsersForListbox ($em, $clientid)
   {
     $userlist = array();

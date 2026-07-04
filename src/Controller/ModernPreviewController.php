@@ -1004,6 +1004,10 @@ class ModernPreviewController extends AbstractController
                 'startTime'        => $b->getItemstart()->format('H:i'),
                 'endTime'          => $b->getItemstop()->format('H:i'),
                 'description'      => (string) $b->getDescription(),
+                // Fuer "Reserviert fuer" + E-Mail-Empfaenger auch im Bearbeiten-Modus:
+                'createdForUserId' => (int) $b->getCreatedbyuserid(),
+                'emailInfoExtern'  => (string) $b->getEmailinfoe(),
+                'emailInternIds'   => Users::GetUserlistByMailadresses($em, (string) $b->getEmailinfoi(), $clientid),
             ];
         }
 

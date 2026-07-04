@@ -199,8 +199,9 @@ class BookingController extends ApiController
         if (!Bookings::IsAllowedtoChangeBooking($em, $user, $booking)) {
             return $this->json(['error' => 'forbidden'], 403);
         }
-        // Vergangene Buchungen (Ende mehr als eine Woche her) nicht mehr bearbeitbar.
-        if (!Bookings::IsBookingDateEditable($booking)) {
+        // Vergangene Buchungen (Ende mehr als eine Woche her) nicht mehr bearbeitbar –
+        // Ausnahme: Admins duerfen sie noch korrigieren (z. B. tatsaechliche Zeiten).
+        if (!Bookings::IsBookingDateEditable($booking) && !$this->isGranted('ROLE_ADMIN')) {
             return $this->json(['error' => 'too_old', 'errors' => ['Buchungen, deren Ende mehr als eine Woche zurückliegt, können nicht mehr bearbeitet werden.']], 422);
         }
 
@@ -304,6 +305,17 @@ class BookingController extends ApiController
             $booking->setEmailinfoe((string) $data['emailInfoExtern']);
         } elseif ($isNew) {
             $booking->setEmailinfoe('');
+        }
+
+        // "Reserviert fuer" beim BEARBEITEN aendern: erlaubt fuer alle, die die
+        // Buchung ueberhaupt bearbeiten duerfen (Eigentuemer/FI/Admin – bereits
+        // durch IsAllowedtoChangeBooking gesichert). Beim Neuanlegen bleibt die
+        // create()-Logik (nur Admin darf im Namen anderer buchen).
+        if (!$isNew && !empty($data['createdForUserId'])) {
+            $newOwner = (int) $data['createdForUserId'];
+            if (Users::GetUserObject($em, $clientid, $newOwner)) {
+                $booking->setCreatedbyuserid($newOwner);
+            }
         }
 
         // --- Validierungskette, identisch zu SaveAction ---
