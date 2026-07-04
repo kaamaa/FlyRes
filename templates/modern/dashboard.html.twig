@@ -1,8 +1,12 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}Dashboard{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
+  {{ ph.tabs([{label:'Dashboard', icon:'home'}]) }}
+  <div class="fr-panel"><div class="fr-pbody">
+
   {# ---- Begrüßung + Schnellaktionen ---- #}
   <div class="fr-dash-hd">
     <div class="fr-dash-hi">
@@ -228,4 +232,5 @@
 
   </div>
   {% endif %}
+  </div>{# fr-pbody #}</div>{# fr-panel #}
 {% endblock %}

@@ -1,8 +1,11 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}{{ editId ? 'Buchung bearbeiten' : 'Reservieren' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
+  {{ ph.tabs([{label: editId ? 'Buchung bearbeiten' : 'Reservieren', icon: 'plus'}]) }}
+  <div class="fr-panel"><div class="fr-pbody">
 <style>
   .fr-fiwarn{margin:12px 0 2px;background:#fff6e9;border:1px solid #f0d59a;border-radius:12px;padding:13px 14px;}
   .fr-fiwarn .fw-hd{display:flex;gap:10px;align-items:flex-start;color:#8a5d0e;}
@@ -461,4 +464,5 @@
   fetchSlots(false);
 })();
 </script>
+  </div>{# fr-pbody #}</div>{# fr-panel #}
 {% endblock %}
