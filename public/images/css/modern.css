@@ -611,8 +611,9 @@ button.fr-sechdr:hover{background:var(--fr-blue-d);}
 .fr-tab:hover{background:#eef2f9;color:var(--fr-ink);}
 .fr-tab.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 -3px 8px rgba(25,50,95,.07);}
 .fr-tab.on::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;background:#fff;}
-.fr-tab.solo{cursor:default;}
-.fr-tab.solo:hover{background:#fff;color:var(--fr-blue-d);}
+/* Solo-Reiter (einzige Karte = Seitentitel): immer aktiv/weiss, nicht klickbar */
+.fr-tab.solo{background:#fff;color:var(--fr-blue-d);cursor:default;box-shadow:0 -3px 8px rgba(25,50,95,.07);}
+.fr-tab.solo::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;background:#fff;}
 .fr-tbadge{font-size:11px;font-weight:800;background:#d5deec;color:#6b7688;border-radius:20px;padding:1px 8px;}
 .fr-tab.on .fr-tbadge{background:var(--fr-blue-l);color:var(--fr-blue-d);}
 .fr-panel{background:#fff;border:1.5px solid #c2cfe0;border-radius:0 13px 13px 13px;box-shadow:0 4px 12px rgba(25,50,95,.05);position:relative;z-index:1;}
