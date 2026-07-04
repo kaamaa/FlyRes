@@ -232,6 +232,11 @@ modern_users:
     controller: App\Controller\ModernPreviewController::users
     methods: GET
 
+modern_maildist:
+    path: /web/mailverteiler
+    controller: App\Controller\ModernPreviewController::maildist
+    methods: GET
+
 modern_user_new:
     path: /web/nutzer/neu
     controller: App\Controller\ModernPreviewController::userNew

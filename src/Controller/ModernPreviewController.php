@@ -1922,6 +1922,40 @@ class ModernPreviewController extends AbstractController
     //  Nutzt die bestehende Users-/Functions-Logik (Rollen, Passwort, FI).
     // ====================================================================
 
+    /**
+     * Mailverteiler: Adressliste nach Rollen mit waehlbarem Trennzeichen (nur
+     * System-Admin+). Reicht alle aktiven Nutzer mit Mail + Rollen-Flags ans
+     * Template; Filterung/Trennzeichen/Kopieren passiert clientseitig.
+     */
+    public function maildist(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
+        $clientid = $loggedin_user->getClientid();
+
+        $users = $em->createQuery(
+            "SELECT a FROM App\Entity\FresAccounts a WHERE a.clientid = :cid "
+            . "AND a.status <> 'geloescht' ORDER BY a.lastname ASC, a.firstname ASC"
+        )->setParameter('cid', $clientid)->getResult();
+
+        $members = [];
+        foreach ($users as $u) {
+            $roles = $u->getRoles();
+            $members[] = [
+                'name'     => trim($u->getFirstname() . ' ' . $u->getLastname()),
+                'mail'     => trim((string) $u->getEmail()),
+                'pilot'    => true,   // jedes aktive Mitglied gilt als Pilot (Basis)
+                'fi'       => in_array('ROLE_FI', $roles, true),
+                'admin'    => in_array('ROLE_ADMIN', $roles, true),
+                'sysadmin' => in_array('ROLE_SYSTEM_ADMIN', $roles, true) || in_array('ROLE_GLOBAL_ADMIN', $roles, true),
+            ];
+        }
+
+        $response = $this->render('modern/maildist.html.twig', ['members' => $members]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
     /** Nutzerliste (Karten). */
     public function users(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {

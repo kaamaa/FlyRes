@@ -1,0 +1,111 @@
+{% extends 'modern/layout.html.twig' %}
+
+{% block ptitle %}Mailverteiler{% endblock %}
+
+{% block topactions %}
+  <a class="fr-btn ghost" href="{{ path('modern_users') }}">‹ Nutzer</a>
+{% endblock %}
+
+{% block content %}
+<style>
+  .md-wrap{max-width:760px;}
+  .md-lbl{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--fr-mut);margin:0 0 9px;}
+  .md-roles{display:flex;flex-wrap:wrap;gap:9px;}
+  .md-role{display:inline-flex;align-items:center;gap:9px;border:1px solid var(--fr-line);border-radius:11px;padding:10px 14px;cursor:pointer;font-weight:700;font-size:14px;background:#fff;user-select:none;}
+  .md-role .cb{width:20px;height:20px;border-radius:6px;border:2px solid #c4ccd6;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex:none;}
+  .md-role .cb svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;opacity:0;}
+  .md-role.on{background:#eaf1fc;border-color:#bcd3f2;color:var(--fr-blue-d);}
+  .md-role.on .cb{background:var(--fr-blue);border-color:var(--fr-blue);} .md-role.on .cb svg{opacity:1;}
+  .md-role .n{font-size:11px;color:var(--fr-mut);font-weight:700;}
+  .md-seps{display:flex;flex-direction:column;gap:9px;}
+  .md-sep{display:flex;align-items:center;gap:13px;border:1px solid var(--fr-line);border-radius:12px;padding:12px 14px;cursor:pointer;background:#fff;user-select:none;}
+  .md-sep.on{border-color:var(--fr-blue);box-shadow:inset 0 0 0 1px var(--fr-blue);background:#f7faff;}
+  .md-sep .radio{width:20px;height:20px;border-radius:50%;border:2px solid #c4ccd6;flex:none;position:relative;}
+  .md-sep.on .radio{border-color:var(--fr-blue);} .md-sep.on .radio::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--fr-blue);}
+  .md-sep .sym{width:34px;height:34px;border-radius:9px;background:#eef2f8;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:var(--fr-ink);flex:none;}
+  .md-sep .txt{flex:1;} .md-sep .txt b{font-size:14.5px;} .md-sep .txt small{display:block;color:var(--fr-mut);font-size:12.5px;margin-top:2px;}
+  .md-prog{font-size:11px;font-weight:800;color:#1e7a44;background:#e7f6ee;border-radius:20px;padding:3px 10px;white-space:nowrap;}
+  .md-out{border:1px solid var(--fr-line);border-radius:11px;background:#f6f9fc;padding:13px 14px;font:13px/1.7 ui-monospace,SFMono-Regular,Menlo,monospace;color:#2a3b52;min-height:80px;max-height:220px;overflow:auto;white-space:pre-wrap;word-break:break-all;}
+  .md-bar{display:flex;align-items:center;gap:10px;margin-top:12px;flex-wrap:wrap;}
+  .md-cnt{font-size:12.5px;color:var(--fr-mut);font-weight:600;}
+  .md-divid{height:1px;background:var(--fr-line);margin:20px 0;}
+  .md-copy svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+</style>
+
+<div class="fr-card md-wrap">
+  <div class="md-lbl">1 · Rollen wählen (Mehrfachauswahl)</div>
+  <div class="md-roles" id="md_roles">
+    <span class="md-role on" data-role="pilot"><span class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Piloten <span class="n" data-cnt></span></span>
+    <span class="md-role" data-role="fi"><span class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Fluglehrer <span class="n" data-cnt></span></span>
+    <span class="md-role" data-role="admin"><span class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Administratoren <span class="n" data-cnt></span></span>
+    <span class="md-role" data-role="sysadmin"><span class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>System-Admins <span class="n" data-cnt></span></span>
+  </div>
+
+  <div class="md-divid"></div>
+
+  <div class="md-lbl">2 · Trennzeichen (je nach Mailprogramm)</div>
+  <div class="md-seps" id="md_seps">
+    <label class="md-sep on" data-sep="semikolon"><span class="radio"></span><span class="sym">;</span><span class="txt"><b>Semikolon</b><small>Trennt Empfänger mit Semikolon</small></span><span class="md-prog">Outlook</span></label>
+    <label class="md-sep" data-sep="komma"><span class="radio"></span><span class="sym">,</span><span class="txt"><b>Komma</b><small>Trennt Empfänger mit Komma</small></span><span class="md-prog">Apple Mail (Mac) · Gmail · Thunderbird</span></label>
+    <label class="md-sep" data-sep="newline"><span class="radio"></span><span class="sym">⏎</span><span class="txt"><b>Zeilenumbruch</b><small>Eine Adresse pro Zeile</small></span><span class="md-prog">Listen / Serienmail</span></label>
+  </div>
+
+  <div class="md-divid"></div>
+
+  <div class="md-lbl">3 · Adressliste</div>
+  <div class="md-out" id="md_out"></div>
+  <div class="md-bar">
+    <span class="md-cnt" id="md_cnt"></span>
+    <span style="flex:1"></span>
+    <button type="button" class="fr-btn md-copy" id="md_copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Kopieren</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var MEMBERS = {{ members|json_encode|raw }};
+  var SEPCHAR = { semikolon: '; ', komma: ', ', newline: '\n' };
+  var roleEls = Array.prototype.slice.call(document.querySelectorAll('.md-role'));
+  var sepEls  = Array.prototype.slice.call(document.querySelectorAll('.md-sep'));
+  var out = document.getElementById('md_out'), cnt = document.getElementById('md_cnt'), copyBtn = document.getElementById('md_copy');
+
+  // Anzahl je Rolle (nur mit Mailadresse) in die Chips schreiben
+  roleEls.forEach(function(el){
+    var r = el.getAttribute('data-role');
+    var n = MEMBERS.filter(function(m){ return m[r] && m.mail; }).length;
+    el.querySelector('[data-cnt]').textContent = n;
+  });
+
+  function selectedRoles(){ return roleEls.filter(function(e){ return e.classList.contains('on'); }).map(function(e){ return e.getAttribute('data-role'); }); }
+  function currentSep(){ var s = document.querySelector('.md-sep.on'); return s ? s.getAttribute('data-sep') : 'semikolon'; }
+
+  function build(){
+    var roles = selectedRoles();
+    var seen = {}, mails = [], skipped = 0;
+    MEMBERS.forEach(function(m){
+      var match = roles.some(function(r){ return m[r]; });
+      if(!match) return;
+      if(!m.mail){ skipped++; return; }
+      var key = m.mail.toLowerCase();
+      if(!seen[key]){ seen[key] = 1; mails.push(m.mail); }
+    });
+    out.textContent = mails.length ? mails.join(SEPCHAR[currentSep()]) : '(keine Adressen – bitte mindestens eine Rolle wählen)';
+    cnt.textContent = mails.length + ' Adresse' + (mails.length === 1 ? '' : 'n')
+                    + (skipped ? ' · ' + skipped + ' ohne Mailadresse übersprungen' : '');
+    copyBtn.disabled = mails.length === 0;
+  }
+
+  roleEls.forEach(function(el){ el.addEventListener('click', function(){ el.classList.toggle('on'); build(); }); });
+  sepEls.forEach(function(el){ el.addEventListener('click', function(e){ e.preventDefault(); sepEls.forEach(function(s){ s.classList.remove('on'); }); el.classList.add('on'); build(); }); });
+
+  copyBtn.addEventListener('click', function(){
+    var text = out.textContent;
+    function done(){ var o = copyBtn.innerHTML; copyBtn.textContent = '✓ Kopiert'; setTimeout(function(){ copyBtn.innerHTML = o; }, 1500); }
+    if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, fallback); } else { fallback(); }
+    function fallback(){ var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); done(); }
+  });
+
+  build();
+})();
+</script>
+{% endblock %}
