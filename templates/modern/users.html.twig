@@ -12,28 +12,26 @@
 
   <div class="fr-panel">
     <div class="fr-phead">
+      <div class="fr-searchwrap" style="flex:0 1 280px;">
+        <input type="search" id="u_q" class="fr-search" placeholder="🔍 Suchen (Name, Nutzername, E-Mail, Telefon …)" autocomplete="off">
+      </div>
+      <label class="fr-fl">Anzeigen
+        <select id="u_filter">
+          <option value="alle">Alle</option>
+          <option value="fi">Fluglehrer</option>
+          <option value="admin">Admins</option>
+          <option value="locked">Gesperrt</option>
+        </select>
+      </label>
       <span class="fr-phspring"></span>
+      <span class="fr-fl" id="u_count"></span>
+    </div>
+
+    <div class="fr-pactions">
       <a class="fr-btn" href="{{ path('modern_user_new') }}">{{ icon.ic('plus') }} Neuer Nutzer</a>
     </div>
+
     <div class="fr-pbody">
-
-      <div class="fr-toolbar">
-        <div class="fr-trow">
-          <div class="fr-searchwrap">
-            <input type="search" id="u_q" class="fr-search" placeholder="🔍 Suchen (Name, Nutzername, E-Mail, Telefon …)" autocomplete="off">
-          </div>
-        </div>
-        <div class="fr-trow">
-          <div class="fr-seg" id="u_chips">
-            <button type="button" class="fr-segbtn on" data-f="alle">Alle</button>
-            <button type="button" class="fr-segbtn" data-f="fi">Fluglehrer</button>
-            <button type="button" class="fr-segbtn" data-f="admin">Admins</button>
-            <button type="button" class="fr-segbtn" data-f="locked">Gesperrt</button>
-          </div>
-          <span class="fr-fl" id="u_count"></span>
-        </div>
-      </div>
-
       <div class="fr-cards" id="u_list">
         {% for u in items %}
           <div class="fr-acard"
@@ -58,12 +56,11 @@
 
       <script>
       (function () {
-        var q = document.getElementById('u_q'), chips = document.getElementById('u_chips'),
+        var q = document.getElementById('u_q'), filterSel = document.getElementById('u_filter'),
             cards = Array.prototype.slice.call(document.querySelectorAll('#u_list .fr-acard[data-s]')),
-            countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none'),
-            filter = 'alle';
+            countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none');
         function apply() {
-          var term = (q.value || '').trim().toLowerCase(), n = 0;
+          var term = (q.value || '').trim().toLowerCase(), filter = filterSel.value, n = 0;
           cards.forEach(function (c) {
             var okText = !term || c.getAttribute('data-s').indexOf(term) >= 0;
             var okF = filter === 'alle' || c.getAttribute('data-' + filter) === '1';
@@ -71,19 +68,14 @@
             c.style.display = show ? '' : 'none';
             if (show) n++;
           });
-          countEl.textContent = n + (n === 1 ? ' Nutzer' : ' Nutzer');
+          countEl.textContent = n + ' Nutzer';
           noneEl.hidden = (n > 0 || cards.length === 0);
         }
         q.addEventListener('input', apply);
-        chips.addEventListener('click', function (e) {
-          var b = e.target.closest('[data-f]'); if (!b) return;
-          chips.querySelectorAll('[data-f]').forEach(function (x) { x.classList.remove('on'); });
-          b.classList.add('on'); filter = b.dataset.f; apply();
-        });
+        filterSel.addEventListener('change', apply);
         apply();
       })();
       </script>
-
     </div>
   </div>
 {% endblock %}
