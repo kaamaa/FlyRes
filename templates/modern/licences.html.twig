@@ -12,7 +12,7 @@
       {label:'Alle abgelaufene', icon:'clock', href: path('modern_licences', {scope:'abgelaufen'}), active: (scope == 'abgelaufen')}
     ]) %}
   {% endif %}
-  {% if is_granted('ROLE_GLOBAL_ADMIN') %}
+  {% if is_granted('ROLE_SYSTEM_ADMIN') %}
     {% set ltabs = ltabs|merge([{label:'Lizenztypen', icon:'award', href: path('modern_licencetypes'), active: false}]) %}
   {% endif %}
   {{ ph.tabs(ltabs) }}

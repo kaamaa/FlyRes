@@ -630,6 +630,11 @@ button.fr-sechdr:hover{background:var(--fr-blue-d);}
 .fr-pactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--fr-line);background:#f7f9fc;}
 .fr-pactions:empty{display:none;}
 .fr-pgap{width:18px;flex:none;}
+/* Buttons immer weiss – schlaegt ".fr-modern a{color:inherit}" (sonst schwarz, erst weiss bei :hover) */
+a.fr-btn, button.fr-btn{color:#fff;}
+a.fr-btn.sec{color:var(--fr-ink);} a.fr-btn.danger{color:var(--fr-red);}
+/* Destruktive Aktion: gleiches Blau, aber roter Rand (Warnhinweis) – ohne Groessenaenderung via inset-Shadow */
+.fr-btn.del{box-shadow:inset 0 0 0 2px var(--fr-red);}
 /* Seiten mit eigener Karte (Uebersichten) sitzen im Panel -> Doppelrahmen weg */
 .fr-pbody > .fr-daypanel{box-shadow:none;border-radius:0;padding:0;max-width:none;background:transparent;}
 .fr-pbody .fr-ovcard{box-shadow:none;border-radius:0;background:transparent;padding:0;}

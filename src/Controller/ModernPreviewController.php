@@ -1274,7 +1274,7 @@ class ModernPreviewController extends AbstractController
     /** Liste der Lizenztypen. */
     public function licenceTypes(EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $rows = $em->createQuery(
             "SELECT b FROM App\Entity\FresLicencetype b WHERE (b.status <> 'geloescht' OR b.status IS NULL) "
             . "ORDER BY b.categoryid ASC, b.longname ASC"
@@ -1296,7 +1296,7 @@ class ModernPreviewController extends AbstractController
     /** Lizenztyp-Formular (Neu). */
     public function licenceTypeNew(UserInterface $loggedin_user): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
 
         return $this->renderLicenceTypeForm(['id' => 0, 'categoryid' => '', 'categoryname' => '', 'longname' => '', 'description' => ''], []);
     }
@@ -1304,7 +1304,7 @@ class ModernPreviewController extends AbstractController
     /** Lizenztyp-Formular (Bearbeiten). */
     public function licenceTypeEdit(int $id, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $t = $em->getRepository(FresLicencetype::class)->find($id);
         if (!$t) {
             throw $this->createNotFoundException('Lizenztyp nicht gefunden.');
@@ -1322,7 +1322,7 @@ class ModernPreviewController extends AbstractController
     /** Lizenztyp speichern (Neu/Bearbeiten). */
     public function licenceTypeSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
 
         $id          = (int) $request->request->get('id', 0);
         $categoryid  = trim((string) $request->request->get('categoryid', ''));
@@ -1356,7 +1356,7 @@ class ModernPreviewController extends AbstractController
     /** Lizenztyp loeschen (Soft-Delete: Status 'geloescht'). */
     public function licenceTypeDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $id = (int) $request->request->get('id', 0);
         if ($id) {
             Licensetype::SetLicensetypeToInactive($em, $id);
