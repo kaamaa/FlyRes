@@ -1,12 +1,21 @@
 {% extends (app.user and app.request.query.get('embed') is null) ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
 {% block ptitle %}Weight &amp; Balance{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block topactions %}
   <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF / drucken</button>
 {% endblock %}
 
 {% block content %}
+{% set fr_full = app.user and app.request.query.get('embed') is null %}
+{% if fr_full %}
+  {{ ph.tabs([{label:'Weight & Balance', icon:'chart'}]) }}
+  <div class="fr-panel">
+    <div class="fr-phead"><span class="fr-phspring"></span><button type="button" class="fr-btn sec" onclick="window.print()">🖨 Als PDF / drucken</button></div>
+    <div class="fr-pbody">
+{% endif %}
 <style>
   .wb-top{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:14px;}
   .wb-top label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
@@ -176,4 +185,5 @@
   document.querySelectorAll('#wb-units button').forEach(function (b) { b.addEventListener('click', function () { setUnits(b.getAttribute('data-u')); }); });
 })();
 </script>
+{% if fr_full %}</div>{# fr-pbody #}</div>{# fr-panel #}{% endif %}
 {% endblock %}

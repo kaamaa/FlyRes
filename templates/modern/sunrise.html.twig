@@ -1,8 +1,12 @@
 {% extends (app.user and app.request.query.get('embed') is null) ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
 {% block ptitle %}Sonnenaufgang / Untergang{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
+{% set fr_full = app.user and app.request.query.get('embed') is null %}
+{% if fr_full %}{{ ph.tabs([{label:'Sonnenzeiten', icon:'clock'}]) }}<div class="fr-panel"><div class="fr-pbody">{% endif %}
 <style>
   .srss-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px;}
   .srss-form label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
@@ -98,4 +102,5 @@
     });
   })();
 </script>
+{% if fr_full %}</div>{# fr-pbody #}</div>{# fr-panel #}{% endif %}
 {% endblock %}
