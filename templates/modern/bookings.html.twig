@@ -13,52 +13,42 @@
   ]) }}
 
   <div class="fr-panel">
-    <div class="fr-phead">
-      <span class="fr-phspring"></span>
+
+    {# Zeile 1: Suche + Filter (aktiven Reiter/Umfang als Hidden-Feld erhalten) #}
+    <form method="get" action="{{ path('modern_bookings') }}" class="fr-phead">
+      <input type="hidden" name="umfang" value="{{ umfang }}">
+      <div class="fr-searchwrap" style="flex:0 1 280px;">
+        <input type="search" name="q" value="{{ q }}" class="fr-search"
+               placeholder="🔍 Suchen (Pilot, Flugzeug, Beschreibung, Fluglehrer …)">
+      </div>
+      <label class="fr-fl">Zeitraum
+        <select name="zeitraum" onchange="this.form.submit()" {{ umfang == 'historie' ? 'disabled' : '' }}>
+          {% set zopts = {'date':'Alle','today':'Heute','tomorrow':'Morgen','thisweek':'Diese Woche','weekafter':'Nächste Woche','thisweekend':'Dieses Wochenende','nextweekend':'Nächstes Wochenende','thismonth':'Dieser Monat'} %}
+          {% for v, l in zopts %}<option value="{{ v }}" {{ zeitraum == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fr-fl">Zweck
+        <select name="zweck" onchange="this.form.submit()">
+          {% set wopts = {'alle':'Alle','charter':'Charter','schulung':'Schulung','wartung':'Wartung'} %}
+          {% for v, l in wopts %}<option value="{{ v }}" {{ zweck == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fr-fl">Gruppieren
+        <select name="gruppieren" onchange="this.form.submit()">
+          {% set gopts = {'datum':'Datum','flugzeug':'Flugzeug','fluglehrer':'Fluglehrer','nutzer':'Nutzer'} %}
+          {% for v, l in gopts %}<option value="{{ v }}" {{ gruppieren == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="fr-btn">Suchen</button>
+      <a class="fr-clear" href="{{ path('modern_bookings', {umfang: umfang}) }}">Zurücksetzen</a>
+    </form>
+
+    {# Zeile 2: Aktionen #}
+    <div class="fr-pactions">
       <a class="fr-btn" href="{{ path('modern_reserve') }}">{{ icon.ic('plus') }} Neue Reservierung</a>
     </div>
+
     <div class="fr-pbody">
-
-      <form method="get" action="{{ path('modern_bookings') }}" class="fr-toolbar">
-        {# aktiven Reiter (Umfang) bei Filter-Submit erhalten #}
-        <input type="hidden" name="umfang" value="{{ umfang }}">
-
-        {# Zeile 1: Suche #}
-        <div class="fr-trow">
-          <div class="fr-searchwrap">
-            <input type="search" name="q" value="{{ q }}" class="fr-search"
-                   placeholder="🔍 Suchen (Pilot, Flugzeug, Beschreibung, Fluglehrer …)">
-          </div>
-        </div>
-
-        {# Zeile 2: Filter #}
-        <div class="fr-trow">
-          <label class="fr-fl">Zeitraum
-            <select name="zeitraum" onchange="this.form.submit()" {{ umfang == 'historie' ? 'disabled' : '' }}>
-              {% set zopts = {'date':'Alle','today':'Heute','tomorrow':'Morgen','thisweek':'Diese Woche','weekafter':'Nächste Woche','thisweekend':'Dieses Wochenende','nextweekend':'Nächstes Wochenende','thismonth':'Dieser Monat'} %}
-              {% for v, l in zopts %}<option value="{{ v }}" {{ zeitraum == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
-            </select>
-          </label>
-
-          <label class="fr-fl">Gruppieren
-            <select name="gruppieren" onchange="this.form.submit()">
-              {% set gopts = {'datum':'Datum','flugzeug':'Flugzeug','fluglehrer':'Fluglehrer','nutzer':'Nutzer'} %}
-              {% for v, l in gopts %}<option value="{{ v }}" {{ gruppieren == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
-            </select>
-          </label>
-
-          <label class="fr-fl">Zweck
-            <select name="zweck" onchange="this.form.submit()">
-              {% set wopts = {'alle':'Alle','charter':'Charter','schulung':'Schulung','wartung':'Wartung'} %}
-              {% for v, l in wopts %}<option value="{{ v }}" {{ zweck == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
-            </select>
-          </label>
-
-          <button type="submit" class="fr-applybtn">Suchen</button>
-          <a class="fr-clear" href="{{ path('modern_bookings', {umfang: umfang}) }}">Zurücksetzen</a>
-        </div>
-      </form>
-
       {% set g = gruppieren|default('datum') %}
       {% set group1 = '__none__' %}
       {% set group2 = '__none__' %}
@@ -100,7 +90,6 @@
       {% else %}
         <div class="fr-empty">Keine Buchungen für diese Filter.</div>
       {% endfor %}
-
     </div>
   </div>
 {% endblock %}
