@@ -39,7 +39,7 @@
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
     <a class="fr-nav {{ route starts with 'modern_aircraft' or route starts with 'modern_actype' ? 'on' : '' }}" href="{{ path('modern_aircraft') }}">{{ ui.ic('plane') }} Flugzeuge</a>
   {% endif %}
-  <a class="fr-nav {{ route == 'modern_licences' ? 'on' : '' }}" href="{{ path('modern_licences') }}">{{ ui.ic('award') }} Lizenzen</a>
+  <a class="fr-nav {{ route starts with 'modern_licence' ? 'on' : '' }}" href="{{ path('modern_licences') }}">{{ ui.ic('award') }} Lizenzen</a>
   <a class="fr-nav {{ route starts with 'modern_note' ? 'on' : '' }}" href="{{ path('modern_notes') }}">{{ ui.ic('pin') }} Pinnwand</a>
 
   {# Flugvorbereitungs-Werkzeuge – fuer alle sichtbar #}
@@ -53,7 +53,6 @@
     <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
       <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
-      <a class="fr-nav {{ route starts with 'modern_licencetype' ? 'on' : '' }}" href="{{ path('modern_licencetypes') }}">{{ ui.ic('award') }} Lizenztypen</a>
     {% endif %}
     <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
   {% endif %}

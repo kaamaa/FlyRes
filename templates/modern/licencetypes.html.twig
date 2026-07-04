@@ -1,30 +1,51 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
-{% block ptitle %}Lizenztypen{% endblock %}
-
-{% block topactions %}
-  <a class="fr-btn" style="margin-left:auto;" href="{{ path('modern_licencetype_new') }}">＋ Neuer Lizenztyp</a>
-{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
-  <div class="fr-cards">
-    {% for t in items %}
-      <div class="fr-acard">
-        <a class="fr-acard-main" href="{{ path('modern_licencetype_edit', {id: t.id}) }}">
-          <div class="fr-acard-ico">🎓</div>
-          <div class="fr-acard-info">
-            <div class="fr-acard-t">{{ t.longname }}</div>
-            <div class="fr-acard-meta">{% if t.categoryname %}Kategorie: {{ t.categoryname }}{% if t.categoryid %} (#{{ t.categoryid }}){% endif %}{% else %}ohne Kategorie{% endif %}{% if t.description %} · {{ t.description|slice(0, 80) }}{% if t.description|length > 80 %}…{% endif %}{% endif %}</div>
+  {# Gleiche Reiterleiste wie "Lizenzen" – hier ist "Lizenztypen" aktiv #}
+  {% set ltabs = [{label:'Meine Lizenzen', icon:'award', href: path('modern_licences'), active: false}] %}
+  {% if is_granted('ROLE_ADMIN') %}
+    {% set ltabs = ltabs|merge([
+      {label:'Alle Mitglieder',  icon:'users', href: path('modern_licences', {scope:'alle'}),       active: false},
+      {label:'Alle abgelaufene', icon:'clock', href: path('modern_licences', {scope:'abgelaufen'}), active: false}
+    ]) %}
+  {% endif %}
+  {% if is_granted('ROLE_GLOBAL_ADMIN') %}
+    {% set ltabs = ltabs|merge([{label:'Lizenztypen', icon:'award', href: path('modern_licencetypes'), active: true}]) %}
+  {% endif %}
+  {{ ph.tabs(ltabs) }}
+
+  <div class="fr-panel">
+    <div class="fr-phead">
+      <span class="fr-phspring"></span>
+      <a class="fr-btn" href="{{ path('modern_licencetype_new') }}">{{ icon.ic('plus') }} Neuer Lizenztyp</a>
+    </div>
+    <div class="fr-pbody">
+
+      <div class="fr-cards">
+        {% for t in items %}
+          <div class="fr-acard">
+            <a class="fr-acard-main" href="{{ path('modern_licencetype_edit', {id: t.id}) }}">
+              <div class="fr-acard-ico">🎓</div>
+              <div class="fr-acard-info">
+                <div class="fr-acard-t">{{ t.longname }}</div>
+                <div class="fr-acard-meta">{% if t.categoryname %}Kategorie: {{ t.categoryname }}{% if t.categoryid %} (#{{ t.categoryid }}){% endif %}{% else %}ohne Kategorie{% endif %}{% if t.description %} · {{ t.description|slice(0, 80) }}{% if t.description|length > 80 %}…{% endif %}{% endif %}</div>
+              </div>
+              <span class="fr-lchev">›</span>
+            </a>
+            <form class="fr-acard-del" method="post" action="{{ path('modern_licencetype_delete') }}" onsubmit="return confirm('Lizenztyp „{{ t.longname }}“ wirklich löschen?');">
+              <input type="hidden" name="id" value="{{ t.id }}">
+              <button type="submit" class="fr-btn ghost" title="Löschen">Löschen</button>
+            </form>
           </div>
-          <span class="fr-lchev">›</span>
-        </a>
-        <form class="fr-acard-del" method="post" action="{{ path('modern_licencetype_delete') }}" onsubmit="return confirm('Lizenztyp „{{ t.longname }}“ wirklich löschen?');">
-          <input type="hidden" name="id" value="{{ t.id }}">
-          <button type="submit" class="fr-btn ghost" title="Löschen">Löschen</button>
-        </form>
+        {% else %}
+          <div class="fr-empty">Keine Lizenztypen.</div>
+        {% endfor %}
       </div>
-    {% else %}
-      <div class="fr-empty">Keine Lizenztypen.</div>
-    {% endfor %}
+
+    </div>
   </div>
 {% endblock %}
