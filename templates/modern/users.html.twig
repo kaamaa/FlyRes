@@ -1,77 +1,89 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
-{% block ptitle %}Nutzer{% endblock %}
-
-{% block topactions %}
-  <a class="fr-btn ghost" style="margin-left:auto;" href="{{ path('modern_maildist') }}">✉ Mailverteiler</a>
-  <a class="fr-btn" href="{{ path('modern_user_new') }}">＋ Neuer Nutzer</a>
-{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
-  <div class="fr-toolbar">
-    <div class="fr-trow">
-      <div class="fr-searchwrap">
-        <input type="search" id="u_q" class="fr-search" placeholder="🔍 Suchen (Name, Nutzername, E-Mail, Telefon …)" autocomplete="off">
-      </div>
-    </div>
-    <div class="fr-trow">
-      <div class="fr-seg" id="u_chips">
-        <button type="button" class="fr-segbtn on" data-f="alle">Alle</button>
-        <button type="button" class="fr-segbtn" data-f="fi">Fluglehrer</button>
-        <button type="button" class="fr-segbtn" data-f="admin">Admins</button>
-        <button type="button" class="fr-segbtn" data-f="locked">Gesperrt</button>
-      </div>
-      <span class="fr-fl" id="u_count"></span>
-    </div>
-  </div>
+  {{ ph.tabs([
+    {label:'Nutzer',        icon:'users', href: path('modern_users'),    active: true},
+    {label:'Mailverteiler', icon:'mail',  href: path('modern_maildist'), active: false}
+  ]) }}
 
-  <div class="fr-cards" id="u_list">
-    {% for u in items %}
-      <div class="fr-acard"
-           data-s="{{ (u.name ~ ' ' ~ u.username ~ ' ' ~ u.email ~ ' ' ~ u.phone)|lower }}"
-           data-fi="{{ u.isFi ? 1 : 0 }}" data-admin="{{ u.isAdmin ? 1 : 0 }}" data-locked="{{ u.locked ? 1 : 0 }}">
-        <a class="fr-acard-main" href="{{ path('modern_user_edit', {id: u.id}) }}">
-          <span class="fr-uava">{{ u.name|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>
-          <div class="fr-acard-info">
-            <div class="fr-acard-t">{{ u.name }}{% if u.locked %} <span class="fr-ltag red">gesperrt</span>{% endif %}</div>
-            <div class="fr-acard-meta">{{ u.username }}{% if u.email %} · {{ u.email }}{% endif %}</div>
-            {% if u.roles %}<div class="fr-acard-lics">{% for r in u.roles %}<span class="fr-lic">{{ r }}</span>{% endfor %}</div>{% endif %}
+  <div class="fr-panel">
+    <div class="fr-phead">
+      <span class="fr-phspring"></span>
+      <a class="fr-btn" href="{{ path('modern_user_new') }}">{{ icon.ic('plus') }} Neuer Nutzer</a>
+    </div>
+    <div class="fr-pbody">
+
+      <div class="fr-toolbar">
+        <div class="fr-trow">
+          <div class="fr-searchwrap">
+            <input type="search" id="u_q" class="fr-search" placeholder="🔍 Suchen (Name, Nutzername, E-Mail, Telefon …)" autocomplete="off">
           </div>
-          <span class="fr-lchev">›</span>
-        </a>
-        <a class="fr-iconbtn" href="{{ path('modern_licences', {user: u.id}) }}" title="Lizenzen dieses Nutzers">🎓</a>
+        </div>
+        <div class="fr-trow">
+          <div class="fr-seg" id="u_chips">
+            <button type="button" class="fr-segbtn on" data-f="alle">Alle</button>
+            <button type="button" class="fr-segbtn" data-f="fi">Fluglehrer</button>
+            <button type="button" class="fr-segbtn" data-f="admin">Admins</button>
+            <button type="button" class="fr-segbtn" data-f="locked">Gesperrt</button>
+          </div>
+          <span class="fr-fl" id="u_count"></span>
+        </div>
       </div>
-    {% else %}
-      <div class="fr-empty">Keine Nutzer.</div>
-    {% endfor %}
-  </div>
-  <div class="fr-empty" id="u_none" hidden>Keine Treffer.</div>
 
-  <script>
-  (function () {
-    var q = document.getElementById('u_q'), chips = document.getElementById('u_chips'),
-        cards = Array.prototype.slice.call(document.querySelectorAll('#u_list .fr-acard[data-s]')),
-        countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none'),
-        filter = 'alle';
-    function apply() {
-      var term = (q.value || '').trim().toLowerCase(), n = 0;
-      cards.forEach(function (c) {
-        var okText = !term || c.getAttribute('data-s').indexOf(term) >= 0;
-        var okF = filter === 'alle' || c.getAttribute('data-' + filter) === '1';
-        var show = okText && okF;
-        c.style.display = show ? '' : 'none';
-        if (show) n++;
-      });
-      countEl.textContent = n + (n === 1 ? ' Nutzer' : ' Nutzer');
-      noneEl.hidden = (n > 0 || cards.length === 0);
-    }
-    q.addEventListener('input', apply);
-    chips.addEventListener('click', function (e) {
-      var b = e.target.closest('[data-f]'); if (!b) return;
-      chips.querySelectorAll('[data-f]').forEach(function (x) { x.classList.remove('on'); });
-      b.classList.add('on'); filter = b.dataset.f; apply();
-    });
-    apply();
-  })();
-  </script>
+      <div class="fr-cards" id="u_list">
+        {% for u in items %}
+          <div class="fr-acard"
+               data-s="{{ (u.name ~ ' ' ~ u.username ~ ' ' ~ u.email ~ ' ' ~ u.phone)|lower }}"
+               data-fi="{{ u.isFi ? 1 : 0 }}" data-admin="{{ u.isAdmin ? 1 : 0 }}" data-locked="{{ u.locked ? 1 : 0 }}">
+            <a class="fr-acard-main" href="{{ path('modern_user_edit', {id: u.id}) }}">
+              <span class="fr-uava">{{ u.name|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>
+              <div class="fr-acard-info">
+                <div class="fr-acard-t">{{ u.name }}{% if u.locked %} <span class="fr-ltag red">gesperrt</span>{% endif %}</div>
+                <div class="fr-acard-meta">{{ u.username }}{% if u.email %} · {{ u.email }}{% endif %}</div>
+                {% if u.roles %}<div class="fr-acard-lics">{% for r in u.roles %}<span class="fr-lic">{{ r }}</span>{% endfor %}</div>{% endif %}
+              </div>
+              <span class="fr-lchev">›</span>
+            </a>
+            <a class="fr-iconbtn" href="{{ path('modern_licences', {user: u.id}) }}" title="Lizenzen dieses Nutzers">🎓</a>
+          </div>
+        {% else %}
+          <div class="fr-empty">Keine Nutzer.</div>
+        {% endfor %}
+      </div>
+      <div class="fr-empty" id="u_none" hidden>Keine Treffer.</div>
+
+      <script>
+      (function () {
+        var q = document.getElementById('u_q'), chips = document.getElementById('u_chips'),
+            cards = Array.prototype.slice.call(document.querySelectorAll('#u_list .fr-acard[data-s]')),
+            countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none'),
+            filter = 'alle';
+        function apply() {
+          var term = (q.value || '').trim().toLowerCase(), n = 0;
+          cards.forEach(function (c) {
+            var okText = !term || c.getAttribute('data-s').indexOf(term) >= 0;
+            var okF = filter === 'alle' || c.getAttribute('data-' + filter) === '1';
+            var show = okText && okF;
+            c.style.display = show ? '' : 'none';
+            if (show) n++;
+          });
+          countEl.textContent = n + (n === 1 ? ' Nutzer' : ' Nutzer');
+          noneEl.hidden = (n > 0 || cards.length === 0);
+        }
+        q.addEventListener('input', apply);
+        chips.addEventListener('click', function (e) {
+          var b = e.target.closest('[data-f]'); if (!b) return;
+          chips.querySelectorAll('[data-f]').forEach(function (x) { x.classList.remove('on'); });
+          b.classList.add('on'); filter = b.dataset.f; apply();
+        });
+        apply();
+      })();
+      </script>
+
+    </div>
+  </div>
 {% endblock %}

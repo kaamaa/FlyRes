@@ -1,10 +1,7 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}Mailverteiler{% endblock %}
-
-{% block topactions %}
-  <a class="fr-btn ghost" href="{{ path('modern_users') }}">‹ Nutzer</a>
-{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
 <style>
@@ -32,7 +29,12 @@
   .md-copy svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
 </style>
 
-<div class="fr-card md-wrap">
+{{ ph.tabs([
+  {label:'Nutzer',        icon:'users', href: path('modern_users'),    active: false},
+  {label:'Mailverteiler', icon:'mail',  href: path('modern_maildist'), active: true}
+]) }}
+<div class="fr-panel"><div class="fr-pbody">
+<div class="md-wrap">
   <div class="md-lbl">1 · Rollen wählen (Mehrfachauswahl)</div>
   <div class="md-roles" id="md_roles">
     <span class="md-role on" data-role="pilot"><span class="cb"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>Piloten <span class="n" data-cnt></span></span>
@@ -60,6 +62,8 @@
     <button type="button" class="fr-btn md-copy" id="md_copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Kopieren</button>
   </div>
 </div>
+</div>{# fr-pbody #}
+</div>{# fr-panel #}
 
 <script>
 (function(){

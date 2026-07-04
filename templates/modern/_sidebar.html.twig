@@ -50,7 +50,7 @@
 
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
   <div class="fr-navsec">Administration</div>
-    <a class="fr-nav {{ route starts with 'modern_user' ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
+    <a class="fr-nav {{ (route starts with 'modern_user' or route == 'modern_maildist') ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
       <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
     {% endif %}
