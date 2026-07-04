@@ -8,9 +8,9 @@
    active (bool), badge. Ein Reiter ohne href wird als nicht-klickbarer
    Solo-Reiter (Seitentitel) dargestellt.
 #}
-{% import 'modern/_icons.html.twig' as icon %}
-
 {% macro tabs(items) %}
+  {# Makros haben eine isolierte Scope – Icon-Makro hier drin importieren. #}
+  {% import 'modern/_icons.html.twig' as icon %}
   <div class="fr-tabrow">
     {% for t in items %}
       {% set cls = 'fr-tab' ~ (t.active|default(false) ? ' on' : '') %}
