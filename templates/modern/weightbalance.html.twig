@@ -1,5 +1,6 @@
 {% extends (app.user and app.request.query.get('embed') is null) ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
 {% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
 {% block ptitle %}Weight &amp; Balance{% endblock %}
 {% block pagehead %}{% endblock %}
@@ -13,7 +14,7 @@
 {% if fr_full %}
   {{ ph.tabs([{label:'Weight & Balance', icon:'chart'}]) }}
   <div class="fr-panel">
-    <div class="fr-phead"><span class="fr-phspring"></span><button type="button" class="fr-btn sec" onclick="window.print()">🖨 Als PDF / drucken</button></div>
+    <div class="fr-pactions"><button type="button" class="fr-btn" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
     <div class="fr-pbody">
 {% endif %}
 <style>
