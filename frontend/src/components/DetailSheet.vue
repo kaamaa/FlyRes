@@ -61,8 +61,8 @@ async function del() {
           <div class="drow" v-if="d.phone && d.phone.mobile"><span class="k">Telefon</span><span class="v">{{ d.phone.mobile }}</span></div>
         </div>
         <div v-if="d.fiOpen" class="fiopen-cta">
-          <b>Diese Buchung hat noch keinen echten Fluglehrer.</b>
-          <p>„Fluglehrer offen" ist nur ein Platzhalter. Bitte such dir selbst einen Fluglehrer und trage ihn ein – sonst kann der Flug nicht stattfinden.</p>
+          <b>Für diesen Flug fehlt noch ein Fluglehrer.</b>
+          <p>„Fluglehrer offen" ist nur ein Platzhalter. Such dir einen passenden Fluglehrer und trag ihn hier ein, damit dein Flug stattfinden kann. Wir helfen dir dabei – bei Fragen ist die Flugschule für dich da.</p>
           <button v-if="d.canEditDate ?? d.canEdit" class="btn" @click="emit('edit', d)">Fluglehrer eintragen</button>
         </div>
         <template v-if="d.description">
