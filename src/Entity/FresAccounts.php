@@ -577,13 +577,15 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
     //return $this->salt;
   }
   
-  public function getRoles(): array 
+  public function getRoles(): array
   {
-    $roles = null;
+    $roles = array();   // leeres Array (nicht null) – Nutzer ohne Funktion ergaben sonst array_unique(null)
     $objects = $this->function;
-    foreach ($objects as $role) 
-    {
-      $roles [] = $role->getRole();
+    if ($objects) {
+      foreach ($objects as $role)
+      {
+        $roles [] = $role->getRole();
+      }
     }
     return array_unique($roles);
   }
