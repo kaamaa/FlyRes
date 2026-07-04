@@ -1,24 +1,27 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}Flottenauslastung{% endblock %}
-
-{% block topactions %}
-  <span class="fr-ansicht">
-    <a class="{{ ansicht == 'tag' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: 'tag'}) }}">Tag</a>
-    <a class="{{ ansicht == '14tage' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: '14tage'}) }}">14 Tage</a>
-    <a class="{{ ansicht == 'monat' ? 'on' : '' }}" href="{{ path('modern_overview', {ansicht: 'monat'}) }}">Monat</a>
-  </span>
-  {% if ansicht != 'tag' %}
-    <span class="fr-pernav">
-      <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
-      <b>{{ label }}</b>
-      <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
-    </span>
-    <span class="fr-scale">frei<i class="fr-scalebar"></i>ausgebucht</span>
-  {% endif %}
-{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
+  {{ ph.tabs([
+    {label:'Tag',     icon:'chart', href: path('modern_overview', {ansicht:'tag'}),    active: ansicht == 'tag'},
+    {label:'14 Tage', icon:'chart', href: path('modern_overview', {ansicht:'14tage'}), active: ansicht == '14tage'},
+    {label:'Monat',   icon:'chart', href: path('modern_overview', {ansicht:'monat'}),  active: ansicht == 'monat'}
+  ]) }}
+  <div class="fr-panel">
+    {% if ansicht != 'tag' %}
+    <div class="fr-phead">
+      <span class="fr-pernav">
+        <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
+        <b>{{ label }}</b>
+        <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
+      </span>
+      <span class="fr-phspring"></span>
+      <span class="fr-scale">frei<i class="fr-scalebar"></i>ausgebucht</span>
+    </div>
+    {% endif %}
+    <div class="fr-pbody">
 {% if ansicht == 'tag' %}
 
   {# ====== Tagesansicht (Stunden) ====== #}
@@ -202,6 +205,8 @@
   {% endif %}
 
 {% endif %}
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 
 {# Eigener Sofort-Tooltip für alle [data-tip]-Elemente (Matrix-Zellen + Tagesbalken) #}
 <script>

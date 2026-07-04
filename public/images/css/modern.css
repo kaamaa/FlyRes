@@ -624,3 +624,6 @@ button.fr-sechdr:hover{background:var(--fr-blue-d);}
 /* Sekundaerer Kontur-Button fuer die Kopfzeile (echtes Weiss mit Rahmen) */
 .fr-btn.sec{background:#fff;color:var(--fr-ink);border:1px solid #c9d3e0;}
 .fr-btn.sec:hover{background:var(--fr-blue-l);color:var(--fr-blue-d);border-color:#c9d3e0;}
+/* Seiten mit eigener Karte (Uebersichten) sitzen im Panel -> Doppelrahmen weg */
+.fr-pbody > .fr-daypanel{box-shadow:none;border-radius:0;padding:0;max-width:none;background:transparent;}
+.fr-pbody .fr-ovcard{box-shadow:none;border-radius:0;background:transparent;padding:0;}
