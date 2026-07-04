@@ -1,6 +1,7 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}System-Diagnose{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
 <style>
@@ -30,6 +31,9 @@
   .sys-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;}
   details.sys-det summary{cursor:pointer;font-weight:700;color:var(--fr-blue);padding:6px 0;}
 </style>
+
+{{ ph.tabs([{label:'Diagnose', icon:'diag'}]) }}
+<div class="fr-panel"><div class="fr-pbody">
 
 {# ---------- Caching-Status (die Kernfrage) ---------- #}
 <div class="sys-sec">Caching</div>
@@ -400,4 +404,6 @@
   <iframe class="sys-frame" src="{{ path('modern_system_phpinfo') }}" title="phpinfo"></iframe>
 </details>
 {% endif %}
+</div>{# fr-pbody #}
+</div>{# fr-panel #}
 {% endblock %}
