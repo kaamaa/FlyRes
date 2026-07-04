@@ -1,8 +1,11 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}Meine Daten{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
+  {{ ph.tabs([{label:'Meine Daten', icon:'user'}]) }}
+  <div class="fr-panel"><div class="fr-pbody">
 <form class="fr-form" action="{{ path('modern_mydata_save') }}" method="post">
 
   {% if ok %}<div class="fr-msg ok">{{ ok }}</div>{% endif %}
@@ -89,4 +92,5 @@
     <button type="submit" class="fr-btn">Speichern</button>
   </div>
 </form>
+  </div>{# fr-pbody #}</div>{# fr-panel #}
 {% endblock %}

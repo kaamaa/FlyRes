@@ -1,8 +1,11 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}Anleitung{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
+  {{ ph.tabs([{label:'Anleitung', icon:'help'}]) }}
+  <div class="fr-panel"><div class="fr-pbody">
   <div class="fr-help">
 
     <p class="fr-help-intro">
@@ -134,4 +137,5 @@
 
     <p class="fr-help-foot">Fragen oder etwas unklar? Wende dich an einen Administrator deiner Flugschule.</p>
   </div>
+  </div>{# fr-pbody #}</div>{# fr-panel #}
 {% endblock %}
