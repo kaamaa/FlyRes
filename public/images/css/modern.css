@@ -600,3 +600,27 @@ button.fr-sechdr:hover{background:var(--fr-blue-d);}
 .fr-slotmore{background:#fff;color:var(--fr-blue);border:1px solid #cfe0f1;border-radius:9px;padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
 .fr-slotmore:hover{background:var(--fr-blue-l);border-color:var(--fr-blue);}
 .fr-slotmore:disabled{opacity:.6;cursor:default;}
+
+/* ===========================================================================
+   Einheitliche Karteireiter-Kopfzeile (pagehead) – siehe _pagehead.html.twig
+   =========================================================================== */
+.fr-ic{width:16px;height:16px;flex:none;vertical-align:-2px;}
+.fr-tabrow{display:flex;gap:7px;padding-left:6px;position:relative;z-index:2;align-items:flex-end;flex-wrap:wrap;}
+.fr-tab{display:inline-flex;align-items:center;gap:7px;background:#e6ecf5;border:1.5px solid #c2cfe0;border-bottom:none;border-radius:12px 12px 0 0;padding:9px 15px;font-weight:700;font-size:13.5px;color:#5f6b80;text-decoration:none;cursor:pointer;position:relative;top:1.5px;box-shadow:0 -1px 2px rgba(25,50,95,.04);transition:background .12s,color .12s;}
+.fr-tab .fr-ic{width:15px;height:15px;}
+.fr-tab:hover{background:#eef2f9;color:var(--fr-ink);}
+.fr-tab.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 -3px 8px rgba(25,50,95,.07);}
+.fr-tab.on::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;background:#fff;}
+.fr-tab.solo{cursor:default;}
+.fr-tab.solo:hover{background:#fff;color:var(--fr-blue-d);}
+.fr-tbadge{font-size:11px;font-weight:800;background:#d5deec;color:#6b7688;border-radius:20px;padding:1px 8px;}
+.fr-tab.on .fr-tbadge{background:var(--fr-blue-l);color:var(--fr-blue-d);}
+.fr-panel{background:#fff;border:1.5px solid #c2cfe0;border-radius:0 13px 13px 13px;box-shadow:0 4px 12px rgba(25,50,95,.05);position:relative;z-index:1;}
+.fr-phead{display:flex;align-items:center;gap:9px;padding:11px 14px;border-bottom:1px solid var(--fr-line);flex-wrap:wrap;}
+.fr-phead:empty{display:none;}
+.fr-phlabel{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--fr-mut);}
+.fr-phspring{flex:1;}
+.fr-pbody{padding:14px;}
+/* Sekundaerer Kontur-Button fuer die Kopfzeile (echtes Weiss mit Rahmen) */
+.fr-btn.sec{background:#fff;color:var(--fr-ink);border:1px solid #c9d3e0;}
+.fr-btn.sec:hover{background:var(--fr-blue-l);color:var(--fr-blue-d);border-color:#c9d3e0;}
