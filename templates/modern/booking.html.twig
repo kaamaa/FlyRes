@@ -16,7 +16,7 @@
     <div class="fr-kv"><span class="k">Flugzeug</span><span class="v">{{ flugzeug }}</span></div>
     <div class="fr-kv"><span class="k">Flugzweck</span><span class="v">{{ flightpurpose }}</span></div>
     <div class="fr-kv"><span class="k">Pilot</span><span class="v">{{ ReservedForUser }}</span></div>
-    <div class="fr-kv"><span class="k">Fluglehrer</span><span class="v">{% if fiOpen %}<b style="color:#c9781a">⚠ noch offen – bitte selbst organisieren</b>{% else %}{{ flightinstructor ?: '—' }}{% endif %}</span></div>
+    <div class="fr-kv"><span class="k">Fluglehrer</span><span class="v">{% if fiOpen %}<b style="color:#c9781a">⚠ noch offen – wir unterstützen dich bei der Suche</b>{% else %}{{ flightinstructor ?: '—' }}{% endif %}</span></div>
     <div class="fr-kv"><span class="k">Flugplatz</span><span class="v">{{ airfield }}</span></div>
     <div class="fr-kv"><span class="k">Kontakt</span><span class="v">{{ telmobile ?: telhome ?: teloffice ?: '—' }}</span></div>
     <div class="fr-kv full"><span class="k">Beschreibung</span><span class="v">{{ description ?: '—' }}</span></div>

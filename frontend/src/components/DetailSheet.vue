@@ -53,7 +53,7 @@ async function del() {
         </div>
         <div class="formgroup" style="margin-top:14px;">
           <div class="drow"><span class="k">Zweck</span><span class="v"><span class="badge" :class="badgeClass(d.purpose)">{{ d.purpose }}</span></span></div>
-          <div class="drow" v-if="d.fiOpen"><span class="k">Fluglehrer</span><span class="v" style="color:#c9781a;font-weight:700;">⚠ noch offen</span></div>
+          <div class="drow" v-if="d.fiOpen"><span class="k">Fluglehrer</span><span class="v" style="color:#c9781a;font-weight:700;">⚠ noch offen – wir unterstützen dich bei der Suche</span></div>
           <div class="drow" v-else-if="d.instructor"><span class="k">Fluglehrer</span><span class="v">{{ d.instructor }}</span></div>
           <div class="drow"><span class="k">Flugplatz</span><span class="v">{{ d.airfield }}</span></div>
           <div class="drow"><span class="k">Ende</span><span class="v">{{ d.end }}</span></div>
