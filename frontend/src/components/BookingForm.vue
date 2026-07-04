@@ -371,10 +371,10 @@ defineExpose({ submit: save })
       <!-- MVP 1: Pflicht-Hinweis bei Platzhalter "Fluglehrer zuweisen" -->
       <div v-if="fiIsAssign" class="fiwarn">
         <div class="fw-hd"><span class="fw-ic">⚠️</span>
-          <div><b>Das ist noch kein bestätigter Fluglehrer.</b>
-            <p>„Fluglehrer offen" ist nur ein Platzhalter. Du musst dir selbst einen echten Fluglehrer organisieren – sonst kann der Flug nicht stattfinden.</p></div>
+          <div><b>Jetzt noch einen Fluglehrer finden.</b>
+            <p>„Fluglehrer offen" ist erst mal nur ein Platzhalter, damit du reservieren kannst. Für den Flug braucht es noch einen echten Fluglehrer – dabei helfen wir dir gern. Sieh unter „Verfügbarkeit Fluglehrer", wer Zeit hat.</p></div>
         </div>
-        <label class="fw-chk"><input type="checkbox" v-model="fiAck"> Ich kümmere mich selbst darum, einen Fluglehrer zu finden.</label>
+        <label class="fw-chk"><input type="checkbox" v-model="fiAck"> Ich kümmere mich um einen Fluglehrer – und frage nach, wenn ich Hilfe brauche.</label>
       </div>
     </div>
 

@@ -24,8 +24,8 @@
 
   {% if fiOpen %}
   <div style="margin-top:14px;background:#fff6e9;border:1px solid #f0d59a;border-radius:12px;padding:14px 15px;">
-    <div style="color:#7a4f08;font-weight:800;">Diese Buchung hat noch keinen echten Fluglehrer.</div>
-    <div style="color:#8a5d0e;font-size:13.5px;margin-top:3px;line-height:1.5;">„Fluglehrer offen" ist nur ein Platzhalter. Bitte such dir selbst einen Fluglehrer und trage ihn ein – sonst kann der Flug nicht stattfinden.</div>
+    <div style="color:#7a4f08;font-weight:800;">Für diesen Flug fehlt noch ein Fluglehrer.</div>
+    <div style="color:#8a5d0e;font-size:13.5px;margin-top:3px;line-height:1.5;">„Fluglehrer offen" ist nur ein Platzhalter. Such dir einen passenden Fluglehrer und trag ihn hier ein, damit dein Flug stattfinden kann. Wir helfen dir dabei: Über „Verfügbare Fluglehrer anzeigen" findest du, wer wann verfügbar ist – und bei Fragen ist die Flugschule für dich da.</div>
     <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px;">
       <a class="fr-btn" href="{{ path('modern_fiweek') }}" style="background:#c9781a;border-color:#c9781a;">Verfügbare Fluglehrer anzeigen</a>
       {% if editable %}<a class="fr-btn ghost" href="{{ path('modern_booking_edit', {id: id}) }}">Fluglehrer eintragen</a>{% endif %}
