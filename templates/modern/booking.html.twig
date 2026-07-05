@@ -1,42 +1,52 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
-{% block ptitle %}Buchungsdetails{% endblock %}
-
-{% block topactions %}
-  <a class="fr-btn ghost" href="javascript:history.back()">‹ Zurück</a>
-  {% if editable %}<a class="fr-btn ghost" style="margin-left:auto;" href="{{ path('modern_booking_edit', {id: id}) }}">Bearbeiten</a>{% endif %}
-  {% if modify %}<button type="button" class="fr-btn danger" id="b_cancel" data-id="{{ id }}" {% if not editable %}style="margin-left:auto;"{% endif %}>Stornieren</button>{% endif %}
-{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
   {# MVP 2: Platzhalter "Fluglehrer zuweisen" -> Fluglehrer noch offen #}
   {% set fiOpen = 'fluglehrer' in (flightinstructor|default('')|lower) %}
-  <div class="fr-detail">
-    <div class="fr-kv full"><span class="k">Zeitraum</span><span class="v">{{ start }} – {{ end }}</span></div>
-    <div class="fr-kv"><span class="k">Flugzeug</span><span class="v">{{ flugzeug }}</span></div>
-    <div class="fr-kv"><span class="k">Flugzweck</span><span class="v">{{ flightpurpose }}</span></div>
-    <div class="fr-kv"><span class="k">Pilot</span><span class="v">{{ ReservedForUser }}</span></div>
-    <div class="fr-kv"><span class="k">Fluglehrer</span><span class="v">{% if fiOpen %}<b style="color:#c9781a">⚠ noch offen – wir unterstützen dich bei der Suche</b>{% else %}{{ flightinstructor ?: '—' }}{% endif %}</span></div>
-    <div class="fr-kv"><span class="k">Flugplatz</span><span class="v">{{ airfield }}</span></div>
-    <div class="fr-kv"><span class="k">Kontakt</span><span class="v">{{ telmobile ?: telhome ?: teloffice ?: '—' }}</span></div>
-    <div class="fr-kv full"><span class="k">Beschreibung</span><span class="v">{{ description ?: '—' }}</span></div>
-  </div>
 
-  {% if fiOpen %}
-  <div style="margin-top:14px;background:#fff6e9;border:1px solid #f0d59a;border-radius:12px;padding:14px 15px;">
-    <div style="color:#7a4f08;font-weight:800;">Für diesen Flug fehlt noch ein Fluglehrer.</div>
-    <div style="color:#8a5d0e;font-size:13.5px;margin-top:3px;line-height:1.5;">„Fluglehrer offen" ist nur ein Platzhalter. Such dir einen passenden Fluglehrer und trag ihn hier ein, damit dein Flug stattfinden kann. Wir helfen dir dabei: Über „Verfügbare Fluglehrer anzeigen" findest du, wer wann verfügbar ist – und bei Fragen ist die Flugschule für dich da.</div>
-    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px;">
-      <a class="fr-btn" href="{{ path('modern_fiweek') }}" style="background:#c9781a;border-color:#c9781a;">Verfügbare Fluglehrer anzeigen</a>
-      {% if editable %}<a class="fr-btn ghost" href="{{ path('modern_booking_edit', {id: id}) }}">Fluglehrer eintragen</a>{% endif %}
+  {{ ph.tabs([{label: 'Buchungsdetails', icon: 'list'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <a class="fr-btn sec" href="javascript:history.back()">{{ icon.ic('chevleft') }} Zurück</a>
+      {% if editable or modify %}<span class="fr-pgap"></span>{% endif %}
+      {% if editable %}<a class="fr-btn" href="{{ path('modern_booking_edit', {id: id}) }}">{{ icon.ic('edit') }} Bearbeiten</a>{% endif %}
+      {% if modify %}<button type="button" class="fr-btn del" id="b_cancel" data-id="{{ id }}">Stornieren</button>{% endif %}
     </div>
-  </div>
-  {% endif %}
+    <div class="fr-pbody">
 
-  <div id="b_msg" class="fr-msg" hidden></div>
+      <div class="fr-detail">
+        <div class="fr-kv full"><span class="k">Zeitraum</span><span class="v">{{ start }} – {{ end }}</span></div>
+        <div class="fr-kv"><span class="k">Flugzeug</span><span class="v">{{ flugzeug }}</span></div>
+        <div class="fr-kv"><span class="k">Flugzweck</span><span class="v">{{ flightpurpose }}</span></div>
+        <div class="fr-kv"><span class="k">Pilot</span><span class="v">{{ ReservedForUser }}</span></div>
+        <div class="fr-kv"><span class="k">Fluglehrer</span><span class="v">{% if fiOpen %}<b style="color:#c9781a">⚠ noch offen – wir unterstützen dich bei der Suche</b>{% else %}{{ flightinstructor ?: '—' }}{% endif %}</span></div>
+        <div class="fr-kv"><span class="k">Flugplatz</span><span class="v">{{ airfield }}</span></div>
+        <div class="fr-kv"><span class="k">Kontakt</span><span class="v">{{ telmobile ?: telhome ?: teloffice ?: '—' }}</span></div>
+        <div class="fr-kv full"><span class="k">Beschreibung</span><span class="v">{{ description ?: '—' }}</span></div>
+      </div>
 
-  <div class="fr-detmeta">
-    Reserviert von {{ ReservedForUser }} am {{ ReservedAt }}{% if ChangedAt %} · zuletzt geändert am {{ ChangedAt }}{% endif %}
+      {% if fiOpen %}
+      <div style="margin-top:14px;background:#fff6e9;border:1px solid #f0d59a;border-radius:12px;padding:14px 15px;">
+        <div style="color:#7a4f08;font-weight:800;">Für diesen Flug fehlt noch ein Fluglehrer.</div>
+        <div style="color:#8a5d0e;font-size:13.5px;margin-top:3px;line-height:1.5;">„Fluglehrer offen" ist nur ein Platzhalter. Such dir einen passenden Fluglehrer und trag ihn hier ein, damit dein Flug stattfinden kann. Wir helfen dir dabei: Über „Verfügbare Fluglehrer anzeigen" findest du, wer wann verfügbar ist – und bei Fragen ist die Flugschule für dich da.</div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px;">
+          <a class="fr-btn" href="{{ path('modern_fiweek') }}" style="background:#c9781a;border-color:#c9781a;">Verfügbare Fluglehrer anzeigen</a>
+          {% if editable %}<a class="fr-btn sec" href="{{ path('modern_booking_edit', {id: id}) }}">Fluglehrer eintragen</a>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <div id="b_msg" class="fr-msg" hidden></div>
+
+      <div class="fr-detmeta">
+        Reserviert von {{ ReservedForUser }} am {{ ReservedAt }}{% if ChangedAt %} · zuletzt geändert am {{ ChangedAt }}{% endif %}
+      </div>
+
+    </div>
   </div>
 
   {% if modify %}
