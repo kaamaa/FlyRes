@@ -53,6 +53,11 @@ Fehlt eine Zeile (keine Filter / keine Aktion), entfällt sie (`.fr-pactions:emp
 - **Destruktiv (Löschen):** `.fr-btn.del` = gleiches Blau **+ roter Rand** (inset-Shadow,
   keine Größenänderung).
 - **Sekundär/Kontur:** `.fr-btn.sec` nur wo nötig (dunkler Text auf Weiß).
+- **Zurück (Detailseiten):** als Kontur-Button `.fr-btn.sec` **links in der Aktionszeile**
+  (Ebene 3), mit `.fr-pgap`-Abstand vor den eigentlichen Aktionen. Nicht in den Reiter.
+- **Werkzeug-Seiten (W&B, Flugplanung, Sonnenzeiten):** die Eingabe-/Parameterzeile bekommt
+  im eingeloggten Modus zusätzlich die Klasse `fr-phead` (= Ebene 2); die Aktion
+  (Drucken/Anzeigen) in `.fr-pactions` (Submit ggf. per `form="…"`). Im Embed-Modus unveraendert.
 - **Abbrechen:** sitzt **direkt neben Speichern** (kein `margin-left:auto`). Bei Formularen
   liegt die Aktionszeile **oben** im Panel; der obere Submit-Button erreicht das Formular
   per `form="<id>"`-Attribut, damit die Formularbreite unverändert bleibt.
