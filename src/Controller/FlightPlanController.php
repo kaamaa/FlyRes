@@ -102,8 +102,9 @@ class FlightPlanController extends AbstractController
                 $rows = $conn->fetchAllAssociative(
                     "SELECT ICAO, Airport, Type, sLat, sLong, ELEV, Country FROM tools_airports "
                     . "WHERE Type IN ($typePh) AND (ICAO LIKE ? OR Airport LIKE ?)$regSql "
-                    . "ORDER BY (ICAO = ?) DESC, (Airport LIKE ?) DESC, CASE WHEN Type = 'A' THEN 0 ELSE 1 END, CHAR_LENGTH(Airport) LIMIT 8",
-                    array_merge($types, ['%' . $q . '%', '%' . $q . '%'], $regP, [$q, $q . '%'])
+                    . "ORDER BY (ICAO = ?) DESC, (ICAO LIKE ?) DESC, (Airport LIKE ?) DESC, "
+                    . "CASE WHEN Type = 'A' THEN 0 ELSE 1 END, ICAO ASC, CHAR_LENGTH(Airport) LIMIT 60",
+                    array_merge($types, ['%' . $q . '%', '%' . $q . '%'], $regP, [$q, $q . '%', $q . '%'])
                 );
             }
 
@@ -133,7 +134,8 @@ class FlightPlanController extends AbstractController
                     'country' => (string) ($r['Country'] ?? ''),
                 ];
             }
-            $out[] = ['candidates' => $cands];
+            // Fuer die Auswahl auf eine handhabbare Zahl begrenzen (nach Dedup).
+            $out[] = ['candidates' => array_slice($cands, 0, 25)];
         }
 
         return new JsonResponse(['results' => $out]);
