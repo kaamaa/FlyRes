@@ -53,8 +53,8 @@
     <a class="fr-nav {{ (route starts with 'modern_user' or route == 'modern_maildist') ? 'on' : '' }}" href="{{ path('modern_users') }}">{{ ui.ic('users') }} Nutzer</a>
     {% if is_granted('ROLE_GLOBAL_ADMIN') %}
       <a class="fr-nav {{ route starts with 'modern_mandant' ? 'on' : '' }}" href="{{ path('modern_mandanten') }}">{{ ui.ic('building') }} Mandanten</a>
+      <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
     {% endif %}
-    <a class="fr-nav {{ route starts with 'modern_system' ? 'on' : '' }}" href="{{ path('modern_system') }}">{{ ui.ic('diag') }} Diagnose</a>
   {% endif %}
 
   <div class="fr-navsep"></div>

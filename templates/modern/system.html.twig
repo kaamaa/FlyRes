@@ -57,9 +57,16 @@
   .aud-ev.ok{background:#e7f7ee;color:var(--fr-green);}
 </style>
 
-{{ ph.tabs([{label:'Diagnose', icon:'diag'}]) }}
+{{ ph.tabs([
+  {label:'System',      icon:'diag',     href: path('modern_system', {tab:'system'}),  active: tab == 'system'},
+  {label:'Datenbank',   icon:'building', href: path('modern_system', {tab:'db'}),      active: tab == 'db'},
+  {label:'Audit',       icon:'list',     href: path('modern_system', {tab:'audit'}),   active: tab == 'audit'},
+  {label:'Lizenztypen', icon:'award',    href: path('modern_system', {tab:'lictype'}), active: tab == 'lictype'},
+  {label:'phpinfo',     icon:'chart',    href: path('modern_system', {tab:'phpinfo'}), active: tab == 'phpinfo'}
+]) }}
 <div class="fr-panel"><div class="fr-pbody">
 
+{% if tab == 'system' %}
 {# ---------- Caching-Status (die Kernfrage) ---------- #}
 <div class="sys-sec">Caching</div>
 <div class="sys-grid">
@@ -137,9 +144,10 @@
     {% endif %}
   </div>
 </div>
+{% endif %}{# Ende System-Tab: Caching #}
 
-{# ---------- Lizenztypen-Übersicht (nur Global-Admin) ---------- #}
-{% if lictype is not null %}
+{# ---------- Lizenztypen-Übersicht ---------- #}
+{% if tab == 'lictype' and lictype is not null %}
 <div class="sys-sec">Lizenztypen-Übersicht</div>
 <div class="sys-card">
   <div class="sys-hint" style="margin-bottom:12px;">
@@ -166,8 +174,8 @@
 </div>
 {% endif %}
 
-{# ---------- Audit-Protokoll (nur Global-Admin) ---------- #}
-{% if audit is not null %}
+{# ---------- Audit-Protokoll ---------- #}
+{% if tab == 'audit' and audit is not null %}
 <div class="sys-sec">Audit-Protokoll</div>
 <div class="sys-card">
   <div class="sys-hint" style="margin-bottom:10px;">
@@ -202,8 +210,8 @@
 </div>
 {% endif %}
 
-{# ---------- Datenbank-Backup (nur Global-Admin: mandantenuebergreifend) ---------- #}
-{% if is_granted('ROLE_GLOBAL_ADMIN') %}
+{# ---------- Datenbank-Backup ---------- #}
+{% if tab == 'db' %}
 <div class="sys-sec">Datenbank-Backup</div>
 <div class="sys-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
   <div>
@@ -214,6 +222,7 @@
 </div>
 {% endif %}
 
+{% if tab == 'db' %}
 {# ---------- Datenbank ---------- #}
 <div class="sys-sec">Datenbank</div>
 {% if db.error %}
@@ -270,7 +279,9 @@
     wäre <b>InnoDB</b> robuster (Row-Locking, absturzsicher).
   </div>
 {% endif %}
+{% endif %}{# Ende Datenbank-Tab #}
 
+{% if tab == 'system' %}
 {# ---------- PHP ---------- #}
 <div class="sys-sec">PHP &amp; Umgebung</div>
 <div class="sys-grid">
@@ -306,9 +317,10 @@
     <div class="sys-hint">{{ php.ext_all|length }} Erweiterungen insgesamt geladen.</div>
   </div>
 </div>
+{% endif %}{# Ende System-Tab: PHP #}
 
-{# ---------- phpinfo() (nur Global-Admin: legt Server-Secrets offen) ---------- #}
-{% if is_granted('ROLE_GLOBAL_ADMIN') %}
+{# ---------- phpinfo() (legt Server-Secrets offen) ---------- #}
+{% if tab == 'phpinfo' %}
 <div class="sys-sec">phpinfo()</div>
 <details class="sys-det" open>
   <summary>Vollständige phpinfo()-Ausgabe anzeigen/ausblenden</summary>

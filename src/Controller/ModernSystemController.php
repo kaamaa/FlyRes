@@ -22,22 +22,26 @@ use Symfony\Component\HttpKernel\Kernel;
 class ModernSystemController extends AbstractController
 {
     /** Diagnose-Uebersicht. */
-    public function system(EntityManagerInterface $em): Response
+    public function system(Request $request, EntityManagerInterface $em): Response
     {
-        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
+        // Die komplette Diagnose ist ausschliesslich fuer Global-System-Admins.
+        $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
 
-        // Lizenztypen-Uebersicht nur fuer Global-Admins (mandantenuebergreifend).
-        $isGlobal = $this->isGranted('ROLE_GLOBAL_ADMIN');
-        $lictype = $isGlobal ? $this->licTypeStatus($em) : null;
+        $allowed = ['system', 'db', 'audit', 'lictype', 'phpinfo'];
+        $tab = (string) $request->query->get('tab', 'system');
+        if (!in_array($tab, $allowed, true)) {
+            $tab = 'system';
+        }
 
         return $this->render('modern/system.html.twig', [
+            'tab'      => $tab,
             'php'      => $this->collectPhp(),
             'opcache'  => $this->collectOpcache(),
             'apcu'     => $this->collectApcu(),
             'doctrine' => $this->collectDoctrineCache($em),
             'db'       => $this->collectDatabase($em),
-            'lictype'  => $lictype,
-            'audit'    => $isGlobal ? $this->readAuditLog() : null,
+            'lictype'  => $this->licTypeStatus($em),
+            'audit'    => $this->readAuditLog(),
         ]);
     }
 
