@@ -242,8 +242,9 @@
     pick = Math.max(0, Math.min(pick, cands.length - 1));
     var ch = cands[pick];
     var badge = ch.type === 'W' ? '<span class="wp-type">WP</span>' : '';
-    var many = cands.length > 1 ? ('mehrere Treffer (' + cands.length + ') · ') : '';
-    var meta = '<span class="wp-meta">' + many + metaStr(ch) + '</span>';
+    var many = cands.length > 1 ? ('mehrere Treffer (' + cands.length + (cands.truncated ? '+' : '') + ') · ') : '';
+    var hint = cands.truncated ? ' · <b style="color:#c9781a">weitere – Suche verfeinern</b>' : '';
+    var meta = '<span class="wp-meta">' + many + metaStr(ch) + hint + '</span>';
     if (cands.length === 1) {
       cell.innerHTML = '<b>' + esc(ch.icao || '?') + '</b> ' + esc(ch.name) + badge + meta;
     } else {
@@ -288,7 +289,12 @@
         missKeys.forEach(function (k) { b.append('q[]', need[k]); });
         var res = await fetch(RESOLVE_URL, { method: 'POST', body: b, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } });
         var data = await res.json();
-        missKeys.forEach(function (k, i) { cache[k] = (data.results && data.results[i] && data.results[i].candidates) || []; });
+        missKeys.forEach(function (k, i) {
+          var rr = (data.results && data.results[i]) || {};
+          var arr = rr.candidates || [];
+          arr.truncated = !!rr.truncated;   // mehr Treffer als angezeigt?
+          cache[k] = arr;
+        });
       } catch (e) { /* Netzwerkfehler: NICHT cachen -> naechster Lauf versucht erneut */ }
     }
 
