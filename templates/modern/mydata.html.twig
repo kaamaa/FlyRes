@@ -5,8 +5,13 @@
 
 {% block content %}
   {{ ph.tabs([{label:'Meine Daten', icon:'user'}]) }}
-  <div class="fr-panel"><div class="fr-pbody">
-<form class="fr-form" action="{{ path('modern_mydata_save') }}" method="post">
+  <div class="fr-panel">
+  <div class="fr-pactions">
+    <button type="submit" form="mydata_form" class="fr-btn">Speichern</button>
+    <a class="fr-btn" href="javascript:history.back()">Abbrechen</a>
+  </div>
+  <div class="fr-pbody">
+<form id="mydata_form" class="fr-form" action="{{ path('modern_mydata_save') }}" method="post">
 
   {% if ok %}<div class="fr-msg ok">{{ ok }}</div>{% endif %}
   {% if errors %}<div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
@@ -88,9 +93,6 @@
     </div>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Speichern</button>
-  </div>
 </form>
   </div>{# fr-pbody #}</div>{# fr-panel #}
 {% endblock %}
