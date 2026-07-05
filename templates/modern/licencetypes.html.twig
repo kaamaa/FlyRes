@@ -14,7 +14,10 @@
     ]) %}
   {% endif %}
   {% if is_granted('ROLE_SYSTEM_ADMIN') %}
-    {% set ltabs = ltabs|merge([{label:'Lizenztypen', icon:'award', href: path('modern_licencetypes'), active: true}]) %}
+    {% set ltabs = ltabs|merge([
+      {label:'Lizenztypen',        icon:'award', href: path('modern_licencetypes'),      active: true},
+      {label:'Lizenztypennutzung', icon:'chart', href: path('modern_licencetype_usage'), active: false}
+    ]) %}
   {% endif %}
   {{ ph.tabs(ltabs) }}
 

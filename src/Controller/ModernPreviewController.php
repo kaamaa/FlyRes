@@ -1300,6 +1300,17 @@ class ModernPreviewController extends AbstractController
         return $response;
     }
 
+    /** Lizenztypen-Nutzungsuebersicht (eigener Reiter unter Lizenzen). */
+    public function licenceTypeUsage(UserInterface $loggedin_user, \App\Service\LicenceTypeUsageProvider $lictypeUsage): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
+
+        $response = $this->render('modern/licencetype_usage.html.twig', ['lictype' => $lictypeUsage->usage()]);
+        $response->setExpires(new \DateTime());
+
+        return $response;
+    }
+
     /** Lizenztyp-Formular (Neu). */
     public function licenceTypeNew(UserInterface $loggedin_user): Response
     {

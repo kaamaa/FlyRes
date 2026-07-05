@@ -85,6 +85,9 @@ modern_mydata_save:
 modern_licencetypes:
     path: /web/lizenztypen
     controller: App\Controller\ModernPreviewController::licenceTypes
+modern_licencetype_usage:
+    path: /web/lizenztypen/nutzung
+    controller: App\Controller\ModernPreviewController::licenceTypeUsage
 modern_licencetype_new:
     path: /web/lizenztyp/neu
     controller: App\Controller\ModernPreviewController::licenceTypeNew

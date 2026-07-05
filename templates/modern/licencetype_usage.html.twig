@@ -1,0 +1,62 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {# Gleiche Reiterleiste wie "Lizenzen" – hier ist "Lizenztypennutzung" aktiv #}
+  {% set ltabs = [{label:'Meine Lizenzen', icon:'award', href: path('modern_licences'), active: false}] %}
+  {% if is_granted('ROLE_ADMIN') %}
+    {% set ltabs = ltabs|merge([
+      {label:'Alle Mitglieder',  icon:'users', href: path('modern_licences', {scope:'alle'}),       active: false},
+      {label:'Alle abgelaufene', icon:'clock', href: path('modern_licences', {scope:'abgelaufen'}), active: false}
+    ]) %}
+  {% endif %}
+  {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+    {% set ltabs = ltabs|merge([
+      {label:'Lizenztypen',        icon:'award', href: path('modern_licencetypes'),      active: false},
+      {label:'Lizenztypennutzung', icon:'chart', href: path('modern_licencetype_usage'), active: true}
+    ]) %}
+  {% endif %}
+  {{ ph.tabs(ltabs) }}
+
+  <style>
+    .lt-list{display:flex;flex-direction:column;gap:1px;background:var(--fr-line);border:1px solid var(--fr-line);border-radius:12px;overflow:hidden;}
+    .lt-row{display:grid;grid-template-columns:minmax(160px,1.3fr) 2fr auto;gap:14px;align-items:center;background:#fff;padding:11px 14px;}
+    .lt-row.lt-unused{background:#fafbfc;}
+    .lt-name{font-weight:700;color:var(--fr-ink);font-size:13.5px;}
+    .lt-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:5px;margin-left:7px;background:#eef1f5;color:var(--fr-mut);}
+    .lt-stats{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--fr-mut);}
+    .lt-stats b{color:var(--fr-ink);font-variant-numeric:tabular-nums;}
+    .lt-status{justify-self:end;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+    .lt-status.on{background:#e7f7ee;color:var(--fr-green);}
+    .lt-status.idle{background:#fdf2e3;color:var(--fr-amber);}
+    .lt-status.none{background:#eef1f5;color:var(--fr-mut);}
+    .lt-hint{font-size:12px;color:var(--fr-mut);margin-bottom:12px;line-height:1.5;}
+    @media(max-width:640px){.lt-row{grid-template-columns:1fr;gap:6px;}.lt-status{justify-self:start;}}
+  </style>
+
+  <div class="fr-panel"><div class="fr-pbody">
+    <div class="lt-hint">
+      Alle <b>{{ lictype.total }}</b> Lizenztypen und wie oft sie genutzt werden{% if lictype.unused > 0 %} – davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
+      Anlegen, bearbeiten und löschen unter dem Reiter <b>Lizenztypen</b>. (Lizenztypen gelten programmweit.)
+    </div>
+    {% if lictype.types is empty %}
+      <div class="lt-hint">Keine Lizenztypen vorhanden.</div>
+    {% else %}
+    <div class="lt-list">
+      {% for t in lictype.types %}
+      <div class="lt-row{% if t.neverUsed %} lt-unused{% endif %}">
+        <div class="lt-name">{{ t.name }}{% if t.deaktiviert %}<span class="lt-badge">deaktiviert</span>{% endif %}</div>
+        <div class="lt-stats">
+          <span><b>{{ t.aktiv }}</b> aktive Inhaber</span>
+          <span><b>{{ t.geloescht }}</b> frühere/gelöschte</span>
+          <span>von <b>{{ t.req }}</b> Flugzeugtyp{{ t.req == 1 ? '' : 'en' }} verlangt</span>
+        </div>
+        <div class="lt-status {{ t.aktiv > 0 ? 'on' : (t.neverUsed ? 'none' : 'idle') }}">{{ t.status }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div></div>
+{% endblock %}
