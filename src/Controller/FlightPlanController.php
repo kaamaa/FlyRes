@@ -108,12 +108,21 @@ class FlightPlanController extends AbstractController
             }
 
             $cands = [];
+            $seen = [];
             foreach ($rows as $r) {
                 $lat = NavCalc::parseCoordinate((string) $r['sLat']);
                 $lon = NavCalc::parseCoordinate((string) $r['sLong']);
                 if ($lat === null || $lon === null) {
                     continue;
                 }
+                // Doppelte Datensaetze je ICAO (mehrere DAFIF-Zeilen pro Platz) zusammenfassen;
+                // Punkte ohne ICAO ueber Name+Koordinaten unterscheiden.
+                $ic = (string) ($r['ICAO'] ?? '');
+                $dk = $ic !== '' ? 'I:' . $ic : 'N:' . ($r['Airport'] ?? '') . ':' . round($lat, 3) . ':' . round($lon, 3);
+                if (isset($seen[$dk])) {
+                    continue;
+                }
+                $seen[$dk] = true;
                 $cands[] = [
                     'icao'    => (string) ($r['ICAO'] ?? ''),
                     'name'    => (string) ($r['Airport'] ?? ''),
