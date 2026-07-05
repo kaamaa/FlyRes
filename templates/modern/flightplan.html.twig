@@ -9,19 +9,26 @@
 {% set fr_full = app.user and app.request.query.get('embed') is null %}
 {% if fr_full %}{{ ph.tabs([{label:'Flugplanung', icon:'plane'}]) }}<div class="fr-panel">{% endif %}
 <style>
-  .fp-params{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:16px;}
+  .fp-params{display:flex;flex-wrap:wrap;gap:11px 12px;align-items:flex-end;margin-bottom:16px;}
   .fp-params.fr-phead{margin-bottom:0;}
-  .fp-params label{display:block;font-size:10.5px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
-  .fp-params input{width:100px;height:38px;padding:0 10px;border:1px solid #c9d3e0;border-radius:9px;font:inherit;font-size:13px;background:#fff;}
+  .fp-params label{display:block;font-size:10px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+  .fp-params input,.fp-params select{height:38px;padding:0 10px;border:1px solid #c9d3e0;border-radius:9px;font:inherit;font-size:13px;background:#fff;}
+  .fp-params input{width:88px;}
+  .fp-grp{align-self:center;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);padding:0 2px 4px;}
+  .fp-brk{flex-basis:100%;height:0;}
   .fp-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;overflow-x:auto;}
   table.fp{border-collapse:collapse;width:100%;font-size:13px;}
   table.fp th,table.fp td{padding:6px 9px;border-bottom:1px solid var(--fr-line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;vertical-align:middle;}
   table.fp th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);border-bottom:2px solid var(--fr-line);}
   table.fp td.l,table.fp th.l{text-align:left;}
+  table.fp td.mag,table.fp th.mag{color:var(--fr-blue-d);}
   table.fp .wp-num{color:var(--fr-mut);width:22px;}
-  table.fp .wp-in{width:150px;padding:8px 9px;border:1px solid var(--fr-line,#d8d8d8);border-radius:7px;font:inherit;text-transform:uppercase;letter-spacing:.5px;}
-  table.fp .wp-name{text-align:left;color:var(--fr-ink);max-width:220px;overflow:hidden;text-overflow:ellipsis;}
-  table.fp .wp-name.bad{color:var(--fr-red,#c9453b);font-size:12px;}
+  table.fp .wp-in{width:130px;padding:8px 9px;border:1px solid var(--fr-line,#d8d8d8);border-radius:7px;font:inherit;text-transform:uppercase;letter-spacing:.5px;}
+  table.fp .wp-name{text-align:left;color:var(--fr-ink);max-width:260px;}
+  table.fp .wp-name .bad{color:var(--fr-red,#c9453b);font-size:12px;}
+  table.fp .wp-meta{display:block;font-size:11px;color:var(--fr-mut);font-weight:400;letter-spacing:0;text-transform:none;margin-top:1px;}
+  table.fp .wp-pick{border:1px solid #c9d3e0;border-radius:7px;height:30px;font:inherit;font-size:12px;padding:0 6px;background:#fff;color:var(--fr-blue-d);max-width:240px;}
+  table.fp .wp-type{display:inline-block;font-size:9.5px;font-weight:800;border-radius:5px;padding:1px 5px;background:#eef3f9;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.3px;margin-left:5px;}
   table.fp .verr{text-align:left;color:var(--fr-red,#c9453b);white-space:normal;}
   table.fp .wp-act{white-space:nowrap;}
   .wp-btn{width:30px;height:30px;border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:7px;cursor:pointer;font-size:14px;line-height:1;color:var(--fr-mut);}
@@ -29,7 +36,10 @@
   .wp-btn:hover{background:#f2f5f8;}
   table.fp tfoot td{font-weight:800;border-top:2px solid var(--fr-line);border-bottom:none;background:#eef3f7;}
   .fp-badge{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:20px;background:#fbeeec;color:var(--fr-red,#c9453b);}
-  .fp-hint{font-size:12px;color:var(--fr-mut);margin:10px 0 0;}
+  .fp-foot{display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;}
+  .fp-foot .k{background:#f6f9fc;border:1px solid var(--fr-line);border-radius:11px;padding:9px 13px;font-size:12.5px;min-width:120px;}
+  .fp-foot .k b{display:block;font-size:17px;color:var(--fr-blue-d);line-height:1.1;} .fp-foot .k small{color:var(--fr-mut);}
+  .fp-hint{font-size:12px;color:var(--fr-mut);margin:12px 0 0;}
   .fp-disc{font-size:11.5px;color:var(--fr-mut);margin-top:12px;border-top:1px dashed var(--fr-line);padding-top:8px;}
   .fp-print-head{display:none;}
   .fp-top{display:flex;justify-content:flex-end;margin-bottom:12px;}
@@ -41,11 +51,13 @@
     .fp-card{border:none !important;box-shadow:none !important;padding:0 !important;overflow:visible !important;}
     .fp-print-head{display:block !important;margin-bottom:10px;}
     .fp-print-head h2{margin:0 0 2px;font-size:18px;}
-    .fp-print-head .m{color:#444;font-size:12px;}
+    .fp-print-head .m{color:#444;font-size:11.5px;}
+    table.fp{font-size:11px;} table.fp th,table.fp td{padding:3px 5px;}
     table.fp .wp-in{border:none !important;background:transparent !important;padding:2px 2px !important;width:auto !important;font-weight:700;text-transform:uppercase;}
+    table.fp .wp-pick{border:none !important;-webkit-appearance:none;appearance:none;color:#000 !important;}
     table.fp th,table.fp td{border-color:#999 !important;}
     table.fp tfoot td{background:transparent !important;}
-    .fp-disc{color:#333 !important;}
+    .fp-foot .k{background:transparent !important;} .fp-disc{color:#333 !important;}
   }
 </style>
 
@@ -62,10 +74,33 @@
 {% endif %}
 
 <div class="fp-params{% if fr_full %} fr-phead{% endif %}">
+  <span class="fp-grp">Flugzeug &amp; Wind</span>
   <div><label>TAS (kt)</label><input type="number" id="p-tas" value="{{ tas }}" min="1" step="1"></div>
+  <div><label>Verbrauch (l/h)</label><input type="number" id="p-fuel" value="{{ fuelRate }}" min="0" step="0.5"></div>
   <div><label>Wind aus (°)</label><input type="number" id="p-wdir" value="{{ windDir }}" min="0" max="360" step="1"></div>
   <div><label>Wind (kt)</label><input type="number" id="p-wspd" value="{{ windSpeed }}" min="0" step="1"></div>
-  <div><label>Verbrauch (l/h)</label><input type="number" id="p-fuel" value="{{ fuelRate }}" min="0" step="0.5"></div>
+  <div><label>Missweisung (°)</label><input type="number" id="p-var" value="{{ variation }}" step="1" title="Ortsmissweisung (Ost = positiv). MC = TC − Missweisung."></div>
+  <span class="fp-brk"></span>
+  <span class="fp-grp">Suche</span>
+  <div><label>Suchraum</label>
+    <select id="p-region">
+      <option value="de"{{ region == 'de' ? ' selected' : '' }}>Deutschland</option>
+      <option value="eu"{{ region == 'eu' ? ' selected' : '' }}>Europa</option>
+      <option value="all"{{ region == 'all' ? ' selected' : '' }}>Weltweit</option>
+    </select>
+  </div>
+  <div><label>Punktarten</label>
+    <select id="p-types">
+      <option value="AW"{{ types == 'AW' ? ' selected' : '' }}>Flugplätze + Waypoints</option>
+      <option value="A"{{ types == 'A' ? ' selected' : '' }}>Nur Flugplätze</option>
+      <option value="W"{{ types == 'W' ? ' selected' : '' }}>Nur Waypoints</option>
+    </select>
+  </div>
+  <span class="fp-brk"></span>
+  <span class="fp-grp">Zuschläge (min)</span>
+  <div><label>Start/Rollen</label><input type="number" id="p-add-start" value="{{ addStart }}" min="0" step="1"></div>
+  <div><label>Anflug/Landung</label><input type="number" id="p-add-land" value="{{ addLand }}" min="0" step="1"></div>
+  <div><label>Alternate</label><input type="number" id="p-add-alt" value="{{ addAlt }}" min="0" step="1"></div>
 </div>
 {% if fr_full %}
   <div class="fr-pactions"><button type="button" class="fr-btn no-print" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
@@ -76,37 +111,49 @@
   <table class="fp" id="fp-table">
     <thead>
       <tr>
-        <th></th><th class="l">Wegpunkt</th><th class="l">Name</th>
-        <th>Distanz</th><th>Kurs&nbsp;TC</th><th>Steuerkurs&nbsp;TH</th><th>GS</th><th>Zeit</th><th>Sprit</th><th></th>
+        <th></th><th class="l">Wegpunkt</th><th class="l">Name / Info</th>
+        <th>Distanz</th><th>Kurs&nbsp;TC</th><th>Steuerkurs&nbsp;TH</th>
+        <th class="mag">MC</th><th class="mag">MH</th>
+        <th>GS</th><th>Zeit</th><th>Sprit</th><th></th>
       </tr>
     </thead>
     <tbody id="wp-body">
       {% for wp in wpInputs %}
         <tr class="wp-row">
           <td class="wp-num"></td>
-          <td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO" value="{{ wp }}"></td>
+          <td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO / Name" value="{{ wp }}"></td>
           <td class="wp-name"></td>
-          <td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td><td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>
+          <td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td>
+          <td class="v-mc mag"></td><td class="v-mh mag"></td>
+          <td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>
           <td class="wp-act"><button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" title="Zeile löschen">✕</button></td>
         </tr>
       {% endfor %}
     </tbody>
     <tfoot>
       <tr>
-        <td></td><td class="l" colspan="2">Gesamt <span id="tot-flag"></span></td>
-        <td id="tot-dist">–</td><td></td><td></td><td></td><td id="tot-time">–</td><td id="tot-fuel">–</td><td></td>
+        <td></td><td class="l" colspan="2">Gesamt Strecke <span id="tot-flag"></span></td>
+        <td id="tot-dist">–</td><td></td><td></td><td class="mag"></td><td class="mag"></td><td></td><td id="tot-time">–</td><td id="tot-fuel">–</td><td></td>
       </tr>
     </tfoot>
   </table>
-  <div class="fp-hint">Je Zeile ein Wegpunkt (ICAO). Die Werte rechts werden <b>automatisch</b> berechnet. ＋ fügt eine Zeile darunter ein, ✕ löscht sie, <b>Enter</b> springt weiter; am Ende bleibt immer eine leere Zeile frei.</div>
-  <div class="fp-disc"><b>Achtung:</b> Die verwendeten Navigationsdaten sind nicht auf dem aktuellen Stand. Ergebnisse vor Flugantritt anhand der offiziell gültigen Unterlagen (AIP, ICAO-Karten, Flughandbuch) überprüfen. Benutzung auf eigene Gefahr.</div>
+
+  <div class="fp-foot">
+    <span class="k"><b id="f-legtime">–</b><small>Streckenzeit</small></span>
+    <span class="k"><b id="f-addtime">–</b><small>Zuschläge (Start · Landung · Alternate)</small></span>
+    <span class="k"><b id="f-block">–</b><small>Blockzeit gesamt</small></span>
+    <span class="k"><b id="f-fuel">–</b><small>Sprit gesamt (inkl. Zuschläge)</small></span>
+  </div>
+
+  <div class="fp-hint">Je Zeile ein Wegpunkt (ICAO <b>oder</b> Name). Werte rechts werden <b>automatisch</b> berechnet. Bei mehreren Treffern erscheint ein Auswahlfeld. MC/MH = missweisend (aus TC/TH − Missweisung). ＋ fügt eine Zeile ein, ✕ löscht, <b>Enter</b> springt weiter.</div>
+  <div class="fp-disc"><b>Achtung:</b> Die verwendeten Navigationsdaten sind nicht auf dem aktuellen Stand (nur Flugplätze/Waypoints, Elevation; keine Frequenzen/Pisten). Ergebnisse vor Flugantritt anhand der offiziell gültigen Unterlagen (AIP, ICAO-Karten, Flughandbuch) überprüfen. Benutzung auf eigene Gefahr.</div>
 </div>
 
 <script>
 (function () {
   var RESOLVE_URL = '{{ path('modern_flightplan_resolve') }}';
   var body = document.getElementById('wp-body');
-  var cache = {};              // ICAO -> {found, name, lat, lon}
+  var cache = {};              // "region|types|query" -> [candidates]
   var R_NM = 3437.7467707849396;
   var rad = function (d) { return d * Math.PI / 180; }, deg = function (r) { return r * 180 / Math.PI; };
 
@@ -130,44 +177,84 @@
     return { gs: gs, hdg: (tc + deg(wca) + 360) % 360 };
   }
   function fmtTime(min) { var m = Math.round(min); return Math.floor(m / 60) + ':' + ('0' + (m % 60)).slice(-2); }
-  function pad3(c) { return ('00' + Math.round(c)).slice(-3) + '°'; }
-  function esc(s) { return String(s).replace(/[&<>]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]; }); }
+  function pad3(c) { return ('00' + Math.round(((c % 360) + 360) % 360)).slice(-3) + '°'; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]; }); }
 
-  function makeRow(val) {
-    var tr = document.createElement('tr');
-    tr.className = 'wp-row';
-    tr.innerHTML =
-      '<td class="wp-num"></td>' +
-      '<td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO"></td>' +
+  function param(id) { var el = document.getElementById(id); return el ? el.value : ''; }
+  function num(id) { return parseFloat(param(id)) || 0; }
+  function region() { return document.getElementById('p-region').value; }
+  function types() { return document.getElementById('p-types').value; }
+  function keyFor(q) { return region() + '|' + types() + '|' + q; }
+  function query(tr) { return tr.querySelector('.wp-in').value.trim().toUpperCase(); }
+
+  function ROW_HTML() {
+    return '<td class="wp-num"></td>' +
+      '<td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO / Name"></td>' +
       '<td class="wp-name"></td>' +
-      '<td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td><td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>' +
+      '<td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td>' +
+      '<td class="v-mc mag"></td><td class="v-mh mag"></td>' +
+      '<td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>' +
       '<td class="wp-act"><button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" title="Zeile löschen">✕</button></td>';
+  }
+  function makeRow(val) {
+    var tr = document.createElement('tr'); tr.className = 'wp-row'; tr.innerHTML = ROW_HTML();
     tr.querySelector('.wp-in').value = val || '';
     return tr;
   }
   function valCells(tr) {
-    return ['.v-dist', '.v-tc', '.v-th', '.v-gs', '.v-time', '.v-fuel'].map(function (s) { return tr.querySelector(s); });
+    return ['.v-dist', '.v-tc', '.v-th', '.v-mc', '.v-mh', '.v-gs', '.v-time', '.v-fuel'].map(function (s) { return tr.querySelector(s); });
   }
   function clearVals(tr) {
     var c = valCells(tr);
     c[0].colSpan = 1; c[0].className = 'v-dist';
-    for (var i = 0; i < 6; i++) { c[i].style.display = ''; c[i].textContent = ''; }
+    for (var i = 0; i < c.length; i++) { c[i].style.display = ''; c[i].textContent = ''; }
+    c[3].classList.add('mag'); c[4].classList.add('mag');
   }
   function setLeg(tr, o) {
-    var c = valCells(tr);
+    var c = valCells(tr), v = num('p-var');
     c[0].colSpan = 1; c[0].className = 'v-dist';
-    for (var i = 0; i < 6; i++) c[i].style.display = '';
+    for (var i = 0; i < c.length; i++) c[i].style.display = '';
     c[0].textContent = o.dist.toFixed(1) + ' NM';
     c[1].textContent = pad3(o.tc);
     c[2].textContent = pad3(o.th);
-    c[3].textContent = Math.round(o.gs) + ' kt';
-    c[4].textContent = fmtTime(o.time);
-    c[5].textContent = o.fuel.toFixed(1) + ' l';
+    c[3].textContent = pad3(o.tc - v); c[3].classList.add('mag');
+    c[4].textContent = pad3(o.th - v); c[4].classList.add('mag');
+    c[5].textContent = Math.round(o.gs) + ' kt';
+    c[6].textContent = fmtTime(o.time);
+    c[7].textContent = o.fuel.toFixed(1) + ' l';
   }
   function setLegErr(tr, msg) {
     var c = valCells(tr);
-    for (var i = 1; i < 6; i++) c[i].style.display = 'none';
-    c[0].colSpan = 6; c[0].className = 'v-dist verr'; c[0].textContent = '⚠ ' + msg;
+    for (var i = 1; i < c.length; i++) c[i].style.display = 'none';
+    c[0].colSpan = c.length; c[0].className = 'v-dist verr'; c[0].textContent = '⚠ ' + msg;
+  }
+
+  function metaStr(cd) {
+    var m = [];
+    if (cd.elev !== null && cd.elev !== undefined) m.push('Elev ' + cd.elev + ' ft');
+    if (cd.country) m.push(esc(cd.country));
+    return m.join(' · ');
+  }
+  function renderName(tr, cands, pick) {
+    var cell = tr.querySelector('.wp-name');
+    if (!cands || !cands.length) { cell.innerHTML = '<span class="bad">nicht gefunden</span>'; return null; }
+    pick = Math.max(0, Math.min(pick, cands.length - 1));
+    var ch = cands[pick];
+    var badge = ch.type === 'W' ? '<span class="wp-type">WP</span>' : '';
+    var many = cands.length > 1 ? ('mehrere Treffer (' + cands.length + ') · ') : '';
+    var meta = '<span class="wp-meta">' + many + metaStr(ch) + '</span>';
+    if (cands.length === 1) {
+      cell.innerHTML = '<b>' + esc(ch.icao || '?') + '</b> ' + esc(ch.name) + badge + meta;
+    } else {
+      var opts = '';
+      for (var i = 0; i < cands.length; i++) {
+        var cc = cands[i];
+        opts += '<option value="' + i + '"' + (i === pick ? ' selected' : '') + '>' +
+          esc((cc.icao || '?') + ' · ' + cc.name + (cc.country ? ' (' + cc.country + ')' : '')) + '</option>';
+      }
+      cell.innerHTML = '<select class="wp-pick">' + opts + '</select>' + badge + meta;
+    }
+    return ch;
   }
 
   function renumber() {
@@ -186,39 +273,45 @@
 
   async function recompute() {
     var rows = [].slice.call(body.querySelectorAll('.wp-row'));
-    // ICAOs aufloesen (nur unbekannte nachladen)
-    var icaos = rows.map(function (r) { return r.querySelector('.wp-in').value.trim().toUpperCase(); });
-    var need = icaos.filter(function (x) { return x && !(x in cache); });
-    if (need.length) {
+    var pts = rows.filter(function (r) { return query(r) !== ''; });
+
+    // Fehlende Treffer nachladen (nach Suchraum/Punktarten)
+    var need = {};
+    pts.forEach(function (r) { var q = query(r), k = keyFor(q); if (!(k in cache)) need[k] = q; });
+    var missKeys = Object.keys(need);
+    if (missKeys.length) {
       try {
         var b = new URLSearchParams();
-        need.forEach(function (i) { b.append('icaos[]', i); });
+        b.append('region', region()); b.append('types', types());
+        missKeys.forEach(function (k) { b.append('q[]', need[k]); });
         var res = await fetch(RESOLVE_URL, { method: 'POST', body: b, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } });
         var data = await res.json();
-        need.forEach(function (i) { cache[i] = data[i] || { found: false }; });
-      } catch (e) { need.forEach(function (i) { cache[i] = { found: false }; }); }
+        missKeys.forEach(function (k, i) { cache[k] = (data.results && data.results[i] && data.results[i].candidates) || []; });
+      } catch (e) { missKeys.forEach(function (k) { cache[k] = []; }); }
     }
 
-    var tas = parseFloat(document.getElementById('p-tas').value) || 0;
-    var wd = ((parseFloat(document.getElementById('p-wdir').value) || 0) % 360 + 360) % 360;
-    var ws = parseFloat(document.getElementById('p-wspd').value) || 0;
-    var fr = parseFloat(document.getElementById('p-fuel').value) || 0;
+    var tas = num('p-tas');
+    var wd = ((num('p-wdir') % 360) + 360) % 360;
+    var ws = num('p-wspd');
+    var fr = num('p-fuel');
 
-    // Punkte = Zeilen mit nicht-leerem ICAO
-    var pts = rows.filter(function (r) { return r.querySelector('.wp-in').value.trim() !== ''; });
-    rows.forEach(function (r) { clearVals(r); r.querySelector('.wp-name').textContent = ''; r.querySelector('.wp-name').className = 'wp-name'; });
+    rows.forEach(function (r) { clearVals(r); if (query(r) === '') { r.querySelector('.wp-name').innerHTML = ''; r._chosen = null; } });
+
+    // Namen/Treffer je Punkt rendern und Auswahl merken
+    pts.forEach(function (r) {
+      var cands = cache[keyFor(query(r))] || [];
+      var pick = parseInt(r.dataset.pick || '0', 10) || 0;
+      r._chosen = renderName(r, cands, pick);
+    });
 
     var totD = 0, totT = 0, totF = 0, ok = true, legcount = 0;
     for (var j = 0; j < pts.length; j++) {
-      var r = pts[j], ic = r.querySelector('.wp-in').value.trim().toUpperCase(), c = cache[ic];
-      var nameCell = r.querySelector('.wp-name');
-      if (c && c.found) { nameCell.innerHTML = '<b>' + esc(c.icao) + '</b> · ' + esc(c.name); }
-      else { nameCell.textContent = 'nicht gefunden'; nameCell.className = 'wp-name bad'; ok = false; }
-
-      if (j > 0) {   // Leg vom vorigen Punkt zu DIESEM -> wird auf DIESER Zeile gezeigt
-        var rp = pts[j - 1], icp = rp.querySelector('.wp-in').value.trim().toUpperCase(), cp = cache[icp];
-        if (cp && cp.found && c && c.found) {
-          var dist = distanceNm(cp.lat, cp.lon, c.lat, c.lon), tc = bearing(cp.lat, cp.lon, c.lat, c.lon);
+      var r = pts[j], ch = r._chosen;
+      if (!ch) ok = false;
+      if (j > 0) {
+        var cp = pts[j - 1]._chosen;
+        if (cp && ch) {
+          var dist = distanceNm(cp.lat, cp.lon, ch.lat, ch.lon), tc = bearing(cp.lat, cp.lon, ch.lat, ch.lon);
           var wt = windTriangle(tc, tas, wd, ws);
           if (wt) {
             var t = dist / wt.gs * 60, fuel = t / 60 * fr;
@@ -229,10 +322,18 @@
       }
     }
 
+    // Summen + Zuschläge
+    var addMin = num('p-add-start') + num('p-add-land') + num('p-add-alt');
+    var addFuel = addMin / 60 * fr;
     document.getElementById('tot-dist').textContent = legcount ? totD.toFixed(1) + ' NM' : '–';
     document.getElementById('tot-time').textContent = legcount ? fmtTime(totT) : '–';
     document.getElementById('tot-fuel').textContent = legcount ? totF.toFixed(1) + ' l' : '–';
     document.getElementById('tot-flag').innerHTML = (!ok && pts.length >= 2) ? '<span class="fp-badge">unvollständig</span>' : '';
+
+    document.getElementById('f-legtime').textContent = legcount ? fmtTime(totT) : '–';
+    document.getElementById('f-addtime').textContent = addMin > 0 ? '+' + fmtTime(addMin) : '0:00';
+    document.getElementById('f-block').textContent = legcount ? fmtTime(totT + addMin) : (addMin > 0 ? fmtTime(addMin) : '–');
+    document.getElementById('f-fuel').textContent = (legcount || addMin > 0) ? (totF + addFuel).toFixed(1) + ' l' : '–';
   }
 
   // Interaktion
@@ -246,7 +347,13 @@
   body.addEventListener('input', function (e) {
     if (!e.target.classList.contains('wp-in')) return;
     e.target.value = e.target.value.toUpperCase();
+    e.target.closest('.wp-row').dataset.pick = '0';   // neue Eingabe -> Auswahl zuruecksetzen
     ensureTrailingEmpty(); schedule();
+  });
+  body.addEventListener('change', function (e) {
+    if (!e.target.classList.contains('wp-pick')) return;
+    e.target.closest('.wp-row').dataset.pick = e.target.value;
+    recompute();
   });
   body.addEventListener('keydown', function (e) {
     if (e.target.classList.contains('wp-in') && e.key === 'Enter') {
@@ -255,28 +362,29 @@
       nr.querySelector('.wp-in').focus(); ensureTrailingEmpty();
     }
   });
-  ['p-tas', 'p-wdir', 'p-wspd', 'p-fuel'].forEach(function (id) {
+  ['p-tas', 'p-wdir', 'p-wspd', 'p-fuel', 'p-var', 'p-add-start', 'p-add-land', 'p-add-alt'].forEach(function (id) {
     document.getElementById(id).addEventListener('input', schedule);
   });
+  // Suchraum/Punktarten aendern -> Cache verwerfen und neu aufloesen
+  ['p-region', 'p-types'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () { cache = {}; recompute(); });
+  });
 
-  // PDF / Druck: Metazeile fuellen und leere Zeilen ausblenden
+  // PDF / Druck
   window.addEventListener('beforeprint', function () {
     var pad = function (n) { return ('0' + n).slice(-2); };
     var d = new Date();
     document.getElementById('fp-print-meta').textContent =
-      'TAS ' + document.getElementById('p-tas').value + ' kt · Wind ' + document.getElementById('p-wdir').value + '°/' +
-      document.getElementById('p-wspd').value + ' kt · Verbrauch ' + document.getElementById('p-fuel').value + ' l/h · Stand ' +
-      pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
-    // Routen-Zusammenfassung (von -> nach + Summen)
-    var names = [].slice.call(body.querySelectorAll('.wp-row'))
-      .map(function (r) { return r.querySelector('.wp-in').value.trim().toUpperCase(); }).filter(Boolean);
+      'TAS ' + param('p-tas') + ' kt · Wind ' + param('p-wdir') + '°/' + param('p-wspd') + ' kt · Verbrauch ' + param('p-fuel') +
+      ' l/h · Missweisung ' + param('p-var') + '° · Blockzeit ' + document.getElementById('f-block').textContent +
+      ' · Sprit ' + document.getElementById('f-fuel').textContent + ' · Stand ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+    var names = [].slice.call(body.querySelectorAll('.wp-row')).map(function (r) { return query(r); }).filter(Boolean);
     var route = names.length >= 2 ? (names[0] + ' → ' + names[names.length - 1]) : (names[0] || '');
     document.getElementById('fp-print-route').textContent = names.length >= 2
-      ? route + ' · ' + names.length + ' Wegpunkte · ' + document.getElementById('tot-dist').textContent +
-        ' · ' + document.getElementById('tot-time').textContent + ' · ' + document.getElementById('tot-fuel').textContent
+      ? route + ' · ' + names.length + ' Wegpunkte · ' + document.getElementById('tot-dist').textContent
       : route;
     var rows = body.querySelectorAll('.wp-row');
-    for (var i = 0; i < rows.length; i++) if (rows[i].querySelector('.wp-in').value.trim() === '') rows[i].classList.add('no-print');
+    for (var i = 0; i < rows.length; i++) if (query(rows[i]) === '') rows[i].classList.add('no-print');
   });
   window.addEventListener('afterprint', function () {
     var rows = body.querySelectorAll('.wp-row.no-print');

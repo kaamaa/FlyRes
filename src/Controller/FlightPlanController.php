@@ -37,51 +37,96 @@ class FlightPlanController extends AbstractController
             'windDir'   => (int) $request->request->get('wind_dir', 0),
             'windSpeed' => (int) $request->request->get('wind_speed', 0),
             'fuelRate'  => (float) $request->request->get('fuel_rate', 25),
+            'variation' => (int) $request->request->get('variation', 0),
+            'region'    => (string) $request->request->get('region', 'de'),
+            'types'     => (string) $request->request->get('types', 'AW'),
+            'addStart'  => (int) $request->request->get('add_start', 0),
+            'addLand'   => (int) $request->request->get('add_land', 0),
+            'addAlt'    => (int) $request->request->get('add_alt', 0),
         ]);
     }
 
     /**
-     * JSON-Aufloesung: ICAO-Codes -> Name + Dezimalkoordinaten. Erwartet
-     * POST icaos[]; liefert eine Map { ICAO: {found, name, lat, lon} }.
+     * JSON-Aufloesung von Wegpunkt-Eingaben (ICAO oder Klarname). Erwartet POST
+     * q[] sowie region (de|eu|all) und types (A|W|AW). Liefert je Eingabe eine
+     * Liste moeglicher Treffer (Disambiguierung):
+     *   { results: [ { candidates: [ {icao,name,type,lat,lon,elev,country}, … ] }, … ] }
+     * Treffer sind auf den gewaehlten Suchraum und die Punktarten begrenzt.
      */
     public function resolve(Request $request, EntityManagerInterface $em): JsonResponse
     {
         // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
         $conn = $em->getConnection();
 
-        $icaos = $request->request->all('icaos');
-        if (!is_array($icaos)) {
-            $icaos = [];
+        $queries = $request->request->all('q');
+        if (!is_array($queries)) {
+            $queries = [];
         }
-        $icaos = array_unique(array_filter(array_map(static fn ($s) => strtoupper(trim((string) $s)), $icaos), static fn ($s) => $s !== ''));
+        $region = (string) $request->request->get('region', 'de');
+
+        // Punktarten: A (Flugplaetze), W (Waypoints)
+        $typesRaw = strtoupper((string) $request->request->get('types', 'AW'));
+        $types = array_values(array_filter(['A', 'W'], static fn ($t) => str_contains($typesRaw, $t)));
+        if (!$types) {
+            $types = ['A', 'W'];
+        }
+        $typePh = implode(',', array_fill(0, count($types), '?'));
+
+        // Suchraum: de = Deutschland (Country GM), eu = Europa (Continent 3+8), all = weltweit
+        $regSql = '';
+        $regP = [];
+        if ($region === 'de') {
+            $regSql = ' AND Country = ?';
+            $regP = ['GM'];
+        } elseif ($region === 'eu') {
+            $regSql = " AND Continent IN ('3','8')";
+        }
 
         $out = [];
-        foreach ($icaos as $q) {
-            // 1) exakter ICAO-Code (schnell)
-            $row = $conn->fetchAssociative(
-                "SELECT ICAO, Airport, sLat, sLong FROM tools_airports WHERE ICAO = ? "
-                . "ORDER BY CASE WHEN Type = 'A' THEN 0 ELSE 1 END LIMIT 1",
-                [$q]
+        foreach ($queries as $raw) {
+            $q = strtoupper(trim((string) $raw));
+            if ($q === '') {
+                $out[] = ['candidates' => []];
+                continue;
+            }
+
+            // 1) exakter ICAO-Code
+            $rows = $conn->fetchAllAssociative(
+                "SELECT ICAO, Airport, Type, sLat, sLong, ELEV, Country FROM tools_airports "
+                . "WHERE Type IN ($typePh) AND ICAO = ?$regSql "
+                . "ORDER BY CASE WHEN Type = 'A' THEN 0 ELSE 1 END LIMIT 8",
+                array_merge($types, [$q], $regP)
             );
-            // 2) sonst per Klarname (Flugplatzname), Praefix bevorzugt, Flugplaetze vor Waypoints
-            if (!$row && mb_strlen($q) >= 3) {
-                $row = $conn->fetchAssociative(
-                    "SELECT ICAO, Airport, sLat, sLong FROM tools_airports WHERE Airport LIKE ? "
-                    . "ORDER BY (Airport LIKE ?) DESC, CASE WHEN Type = 'A' THEN 0 ELSE 1 END, CHAR_LENGTH(Airport) LIMIT 1",
-                    ['%' . $q . '%', $q . '%']
+            // 2) sonst Teilsuche ICAO/Name (Praefix + Flugplaetze bevorzugt)
+            if (!$rows && mb_strlen($q) >= 2) {
+                $rows = $conn->fetchAllAssociative(
+                    "SELECT ICAO, Airport, Type, sLat, sLong, ELEV, Country FROM tools_airports "
+                    . "WHERE Type IN ($typePh) AND (ICAO LIKE ? OR Airport LIKE ?)$regSql "
+                    . "ORDER BY (ICAO = ?) DESC, (Airport LIKE ?) DESC, CASE WHEN Type = 'A' THEN 0 ELSE 1 END, CHAR_LENGTH(Airport) LIMIT 8",
+                    array_merge($types, ['%' . $q . '%', '%' . $q . '%'], $regP, [$q, $q . '%'])
                 );
             }
-            if ($row) {
-                $lat = NavCalc::parseCoordinate((string) $row['sLat']);
-                $lon = NavCalc::parseCoordinate((string) $row['sLong']);
-                $out[$q] = ($lat !== null && $lon !== null)
-                    ? ['found' => true, 'icao' => $row['ICAO'], 'name' => $row['Airport'], 'lat' => $lat, 'lon' => $lon]
-                    : ['found' => false];
-            } else {
-                $out[$q] = ['found' => false];
+
+            $cands = [];
+            foreach ($rows as $r) {
+                $lat = NavCalc::parseCoordinate((string) $r['sLat']);
+                $lon = NavCalc::parseCoordinate((string) $r['sLong']);
+                if ($lat === null || $lon === null) {
+                    continue;
+                }
+                $cands[] = [
+                    'icao'    => (string) ($r['ICAO'] ?? ''),
+                    'name'    => (string) ($r['Airport'] ?? ''),
+                    'type'    => (string) ($r['Type'] ?? ''),
+                    'lat'     => $lat,
+                    'lon'     => $lon,
+                    'elev'    => ($r['ELEV'] !== null && $r['ELEV'] !== '') ? (int) $r['ELEV'] : null,
+                    'country' => (string) ($r['Country'] ?? ''),
+                ];
             }
+            $out[] = ['candidates' => $cands];
         }
 
-        return new JsonResponse($out);
+        return new JsonResponse(['results' => $out]);
     }
 }
