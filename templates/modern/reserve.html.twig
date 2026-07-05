@@ -5,7 +5,13 @@
 
 {% block content %}
   {{ ph.tabs([{label: editId ? 'Buchung bearbeiten' : 'Reservieren', icon: 'plus'}]) }}
-  <div class="fr-panel"><div class="fr-pbody">
+  <div class="fr-panel">
+  <div class="fr-pactions">
+    <button type="submit" form="reserve_form" class="fr-btn" id="r_save">{{ editId ? 'Änderung speichern' : 'Reservierung speichern' }}</button>
+    <a class="fr-btn" href="javascript:history.back()">Abbrechen</a>
+  </div>
+  <div class="fr-pbody">
+  <div id="r_msg" class="fr-msg" hidden></div>
 <style>
   .fr-fiwarn{margin:12px 0 2px;background:#fff6e9;border:1px solid #f0d59a;border-radius:12px;padding:13px 14px;}
   .fr-fiwarn .fw-hd{display:flex;gap:10px;align-items:flex-start;color:#8a5d0e;}
@@ -15,7 +21,7 @@
   .fr-fiwarn .fw-chk input{width:18px;height:18px;margin-top:1px;accent-color:#c9781a;flex:none;}
   .fr-fiwarn.bad{border-color:#e0894a;box-shadow:0 0 0 3px rgba(224,137,74,.18);}
 </style>
-<form class="fr-form" action="#" method="post" data-edit="{{ editId ?: '' }}">
+<form id="reserve_form" class="fr-form" action="#" method="post" data-edit="{{ editId ?: '' }}">
 
   <div class="fr-formsec">Flugzeug &amp; Fluglehrer</div>
   <div class="fr-card">
@@ -154,11 +160,6 @@
     <div class="fr-frow"><div class="fr-box"><textarea name="description" rows="3" placeholder="z. B. Platzrunden, Überlandflug …">{{ edit ? edit.description : '' }}</textarea></div></div>
   </div>
 
-  <div id="r_msg" class="fr-msg" hidden></div>
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn" id="r_save">{{ editId ? 'Änderung speichern' : 'Reservierung speichern' }}</button>
-    <a class="fr-btn fr-cancel" href="javascript:history.back()">Abbrechen</a>
-  </div>
 </form>
 
 <script>
