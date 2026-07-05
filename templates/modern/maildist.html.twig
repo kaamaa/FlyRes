@@ -33,7 +33,12 @@
   {label:'Nutzer',        icon:'users', href: path('modern_users'),    active: false},
   {label:'Mailverteiler', icon:'mail',  href: path('modern_maildist'), active: true}
 ]) }}
-<div class="fr-panel"><div class="fr-pbody">
+<div class="fr-panel">
+<div class="fr-pactions">
+  <button type="button" class="fr-btn md-copy" id="md_copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Kopieren</button>
+  <span class="md-cnt" id="md_cnt"></span>
+</div>
+<div class="fr-pbody">
 <div class="md-wrap">
   <div class="md-lbl">1 · Rollen wählen (Mehrfachauswahl)</div>
   <div class="md-roles" id="md_roles">
@@ -56,11 +61,6 @@
 
   <div class="md-lbl">3 · Adressliste</div>
   <div class="md-out" id="md_out"></div>
-  <div class="md-bar">
-    <span class="md-cnt" id="md_cnt"></span>
-    <span style="flex:1"></span>
-    <button type="button" class="fr-btn md-copy" id="md_copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Kopieren</button>
-  </div>
 </div>
 </div>{# fr-pbody #}
 </div>{# fr-panel #}
