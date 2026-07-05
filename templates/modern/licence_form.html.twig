@@ -92,6 +92,13 @@
 </form>
 {% endif %}
 
+<style>
+  /* Schneller Jahreswechsel im Lizenz-Kalender (« Jahr, ‹ Monat) */
+  .fr-calpop .cal-head{justify-content:flex-start;gap:3px;}
+  .fr-calpop .cal-head b{flex:1;text-align:center;}
+  .fr-calpop .cal-head button.cal-yr{width:30px;font-size:15px;font-weight:800;color:var(--fr-blue-d);}
+</style>
+
 <script>
 (function () {
   var type = document.getElementById('l_type');
@@ -122,7 +129,7 @@
     function build() {
       var first = new Date(view.y, view.m-1, 1), lead = (first.getDay()+6)%7, dim = new Date(view.y, view.m, 0).getDate();
       var cells = Math.ceil((lead+dim)/7)*7, start = new Date(view.y, view.m-1, 1-lead);
-      var h = '<div class="cal-head"><button type="button" data-nav="-1">‹</button><b>' + MON[view.m-1] + ' ' + view.y + '</b><button type="button" data-nav="1">›</button></div><div class="cal-grid">';
+      var h = '<div class="cal-head"><button type="button" class="cal-yr" data-ynav="-1" title="Jahr zurück">«</button><button type="button" data-nav="-1" title="Monat zurück">‹</button><b>' + MON[view.m-1] + ' ' + view.y + '</b><button type="button" data-nav="1" title="Monat vor">›</button><button type="button" class="cal-yr" data-ynav="1" title="Jahr vor">»</button></div><div class="cal-grid">';
       ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function (w) { h += '<span class="cal-wd">' + w + '</span>'; });
       for (var i = 0; i < cells; i++) {
         var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
@@ -138,6 +145,7 @@
     wrap.addEventListener('click', function (e) { if (e.target.closest('.fr-calpop')) return; pop.hidden ? open() : close(); });
     pop.addEventListener('click', function (e) {
       e.stopPropagation();
+      var ynav = e.target.closest('[data-ynav]'); if (ynav) { view.y += +ynav.dataset.ynav; build(); return; }
       var nav = e.target.closest('[data-nav]'); if (nav) { view.m += +nav.dataset.nav; if (view.m<1){view.m=12;view.y--;} if (view.m>12){view.m=1;view.y++;} build(); return; }
       var day = e.target.closest('[data-iso]'); if (day) { inp.value = day.dataset.iso; refresh(); close(); }
     });
