@@ -1095,7 +1095,7 @@ class ModernPreviewController extends AbstractController
      * Ablauf der klassischen LicenceController::SaveAction nach, nutzt also die
      * gleiche geteilte Entity-/Lizenz-Logik (kein zweiter Datenpfad).
      */
-    public function licenceSave(MailerInterface $mailer, Environment $twig, Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function licenceSave(MailerInterface $mailer, Environment $twig, Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
         $clientid = $loggedin_user->getClientid();
@@ -1188,6 +1188,12 @@ class ModernPreviewController extends AbstractController
 
         $em->persist($ul);
         $em->flush();
+
+        $audit->log($id === 0 ? 'licence.create' : 'licence.update', [
+            'licenceId'     => $ul->getId(),
+            'accountId'     => $accountid,
+            'licenceTypeId' => $licenceid,
+        ]);
 
         // --- Info-Mail (darf den Speichervorgang nicht abbrechen) ---
         $parameter = $this->mailParams();
@@ -1929,7 +1935,7 @@ class ModernPreviewController extends AbstractController
      * System-Admin+). Reicht alle aktiven Nutzer mit Mail + Rollen-Flags ans
      * Template; Filterung/Trennzeichen/Kopieren passiert clientseitig.
      */
-    public function maildist(EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function maildist(EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $clientid = $loggedin_user->getClientid();
@@ -1938,6 +1944,9 @@ class ModernPreviewController extends AbstractController
             "SELECT a FROM App\Entity\FresAccounts a WHERE a.clientid = :cid "
             . "AND a.status <> 'geloescht' ORDER BY a.lastname ASC, a.firstname ASC"
         )->setParameter('cid', $clientid)->getResult();
+
+        // DSGVO: Zugriff auf die vollstaendige Mitglieder-Mailliste protokollieren.
+        $audit->log('maildist.view', ['members' => count($users)]);
 
         $members = [];
         foreach ($users as $u) {
@@ -2022,7 +2031,7 @@ class ModernPreviewController extends AbstractController
     }
 
     /** Nutzer speichern (Neu/Bearbeiten) – bildet EditUserController::SaveAction nach. */
-    public function userSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, UserPasswordHasherInterface $hasher): Response
+    public function userSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, UserPasswordHasherInterface $hasher, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $clientid = $loggedin_user->getClientid();
@@ -2052,6 +2061,14 @@ class ModernPreviewController extends AbstractController
             $u = new FresAccounts();
             $u->setClientid($clientid);
             $u->setStatus(0);
+        }
+
+        // Fuer das Audit: neu vs. Aenderung + bisherige Rollen (Vergleich nach dem Speichern).
+        $isNew = ($id === 0);
+        $oldRoleIds = [];
+        if (!$isNew) {
+            foreach ($u->getFunction() as $f) { $oldRoleIds[] = (int) $f->getId(); }
+            sort($oldRoleIds);
         }
 
         // --- Validierung (wie SaveAction) ---
@@ -2129,6 +2146,17 @@ class ModernPreviewController extends AbstractController
 
         $em->persist($u);
         $em->flush();
+
+        $newRoleIds = [];
+        foreach ($u->getFunction() as $f) { $newRoleIds[] = (int) $f->getId(); }
+        sort($newRoleIds);
+        $audit->log($isNew ? 'user.create' : 'user.update', [
+            'targetUserId' => $u->getId(),
+            'targetName'   => trim($firstname . ' ' . $lastname),
+            'targetLogin'  => $username,
+            'rolesChanged' => $isNew ? true : ($oldRoleIds !== $newRoleIds),
+            'roles'        => $newRoleIds,
+        ]);
 
         return $this->redirectToRoute('modern_users');
     }
@@ -2261,7 +2289,7 @@ class ModernPreviewController extends AbstractController
     }
 
     /** Mandant speichern (Neu/Bearbeiten). */
-    public function mandantSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function mandantSave(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
 
@@ -2291,6 +2319,12 @@ class ModernPreviewController extends AbstractController
         $c->setNextslotsDays($days);
         $em->persist($c);
         $em->flush();
+
+        $audit->log($id === 0 ? 'mandant.create' : 'mandant.update', [
+            'mandantId' => $c->getId(),
+            'name'      => $name,
+            'active'    => $active,
+        ]);
 
         return $this->redirectToRoute('modern_mandanten');
     }

@@ -62,6 +62,7 @@ class LoginController extends AbstractController
                           FlyResAuthenticator $loginAuthenticator,
                           UserPasswordHasherInterface $passwordHasher,
                           RememberMeHandlerInterface $rememberMeHandler,
+                          \App\Service\AuditLogger $audit,
                           EntityManagerInterface $em): JsonResponse
   {
     $data = json_decode($request->getContent(), true);
@@ -79,14 +80,17 @@ class LoginController extends AbstractController
 
     $user = Users::GetUserObjectByName($em, $username, $clientid);
     if (!$user || !$passwordHasher->isPasswordValid($user, $password)) {
+      $audit->log('login.failure', ['clientid' => $clientid, 'source' => 'api', 'reason' => 'invalid_credentials'], (string) $username);
       return new JsonResponse(['success' => false, 'error' => 'invalid_credentials'], 401);
     }
     if (Users::isDeleted($user) || Users::isLocked($user)) {
+      $audit->log('login.failure', ['clientid' => $clientid, 'source' => 'api', 'reason' => 'account_locked'], (string) $username);
       return new JsonResponse(['success' => false, 'error' => 'account_locked'], 403);
     }
     try {
       $checker->checkPreAuth($user);
     } catch (\Throwable $e) {
+      $audit->log('login.failure', ['clientid' => $clientid, 'source' => 'api', 'reason' => 'account_not_allowed'], (string) $username);
       return new JsonResponse(['success' => false, 'error' => 'account_not_allowed'], 403);
     }
 
@@ -99,6 +103,8 @@ class LoginController extends AbstractController
     if ($remember) {
       $rememberMeHandler->createRememberMeCookie($user);
     }
+
+    $audit->log('login.success', ['clientid' => $clientid, 'source' => 'api'], $user->getUserIdentifier());
 
     return new JsonResponse(['success' => true]);
   }
