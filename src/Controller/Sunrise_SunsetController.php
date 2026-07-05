@@ -329,13 +329,13 @@ class Sunrise_SunsetController extends AbstractController
 
     $form = $this->createFormBuilder()
     ->add('Country_Name', ChoiceType::class, array ('choices' => $countrylist,
-          'required' => false, 'mapped' => false, 'data' => $country))
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $country))
     ->add('Airport_Name', ChoiceType::class, array ('choices' => $airportlist,
-          'required' => false, 'mapped' => false, 'data' => $airportchoice))
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $airportchoice))
     ->add('SRSSMonth', ChoiceType::class, array ('choices' => $monthChoices,
-          'required' => false, 'mapped' => false, 'data' => $month))
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $month))
     ->add('TimeZone_Mode', ChoiceType::class, array ('choices' => $tzChoices,
-          'required' => false, 'mapped' => false, 'data' => $tzMode))
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $tzMode))
     ->getForm();
     
     if (!empty($airportlist)) 

@@ -441,7 +441,7 @@ class ModernPreviewController extends AbstractController
 
         // --- Filter aus der URL (mit Whitelist-Absicherung) ---
         $zeitraum   = $request->query->get('zeitraum', 'date');
-        $umfang     = $request->query->get('umfang', 'alle');
+        $umfang     = $request->query->get('umfang', 'meine');
         $zweck      = $request->query->get('zweck', 'alle');
         $gruppieren = $request->query->get('gruppieren', 'datum');
         $q          = trim((string) $request->query->get('q', ''));
