@@ -39,9 +39,13 @@ Fehlt eine Zeile (keine Filter / keine Aktion), entfällt sie (`.fr-pactions:emp
 
 ## Kontroll-Leiste (zweizeilig)
 
-- **Zeile 1 `.fr-phead`:** links Suche (`.fr-searchwrap` + `.fr-search`), dann Filter als
-  **Dropdowns** (`<label class="fr-fl">Label <select>…</select></label>`), dann Navigation
-  (`.fr-pernav` ‹ Label ›). Keine Filter-Chips – immer Dropdowns.
+- **Zeile 1 `.fr-phead`:** links Suche (`.fr-searchwrap` + `.fr-search`), dann Filter/Felder.
+  Einheitlicher Stil (Variante A): **gestapeltes Uppercase-Label über dem Feld** via
+  `<label class="fr-fl">Label <select>…</select></label>` (bzw. `<div class="fr-fl">` für
+  Navigation/Datum). Alle Felder **38px hoch**, Rahmen `#c9d3e0`, Radius 9px, unten buendig
+  (`.fr-phead{align-items:flex-end}`). Keine Filter-Chips – immer Dropdowns. Navigation als
+  `.fr-fl` mit `.fr-pernav`, Datum als `.fr-fl` mit `.fr-ctrl.dt`. Werkzeug-Filter
+  (`.wb-top`/`.fp-params`/`.srss-form`) folgen demselben Feld-/Label-Stil.
 - **Zeile 2 `.fr-pactions`:** alle Aktionsbuttons **linksbündig**. Destruktive Aktion mit
   `<span class="fr-pgap"></span>` abgesetzt.
 
