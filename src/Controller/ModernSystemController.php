@@ -26,11 +26,8 @@ class ModernSystemController extends AbstractController
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
 
-        // Passwort-Status + Lizenz-Bereinigung nur fuer Global-Admins
-        // (mandantenuebergreifend).
+        // Lizenztypen-Uebersicht nur fuer Global-Admins (mandantenuebergreifend).
         $isGlobal = $this->isGranted('ROLE_GLOBAL_ADMIN');
-        $pw  = $isGlobal ? $this->pwStatus($em) : null;
-        $lic = $isGlobal ? $this->licStatus($em) : null;
         $lictype = $isGlobal ? $this->licTypeStatus($em) : null;
 
         return $this->render('modern/system.html.twig', [
@@ -39,8 +36,6 @@ class ModernSystemController extends AbstractController
             'apcu'     => $this->collectApcu(),
             'doctrine' => $this->collectDoctrineCache($em),
             'db'       => $this->collectDatabase($em),
-            'pw'       => $pw,
-            'lic'      => $lic,
             'lictype'  => $lictype,
         ]);
     }
@@ -631,12 +626,13 @@ class ModernSystemController extends AbstractController
         // Sortierung: zuerst aktive Inhaber, dann Gesamtnutzung, dann Flugzeug-
         // Anforderungen – jeweils aufsteigend, damit die am wenigsten genutzten
         // Typen oben stehen.
+        // Sortierung: meistgenutzte Typen oben (aktive Inhaber, dann Gesamtnutzung).
         $sql = "SELECT lt.id, lt.categoryname, lt.longname, lt.status,
             (SELECT COUNT(*) FROM FRes_userLicences ul WHERE ul.licenceid = lt.id AND (ul.status IS NULL OR ul.status <> 'geloescht')) AS aktiv,
             (SELECT COUNT(*) FROM FRes_userLicences ul WHERE ul.licenceid = lt.id AND ul.status = 'geloescht') AS geloescht,
             (SELECT COUNT(*) FROM FRes_aircraftType2Licences a WHERE a.licenceid = lt.id) AS req
             FROM FRes_licenceType lt
-            ORDER BY aktiv ASC, (aktiv + geloescht) ASC, req ASC, lt.longname ASC";
+            ORDER BY aktiv DESC, (aktiv + geloescht) DESC, req DESC, lt.categoryname ASC, lt.longname ASC";
 
         $types  = [];
         $unused = 0;
@@ -649,20 +645,17 @@ class ModernSystemController extends AbstractController
             if ($neverUsed) {
                 $unused++;
             }
-            $statusWord = $neverUsed ? 'nie genutzt' : ($aktiv === 0 ? 'keine aktiven Inhaber' : 'in Nutzung');
 
-            $name = trim(($row['categoryname'] ? $row['categoryname'] . ': ' : '') . $row['longname']);
-            if ($row['status'] === 'geloescht') {
-                $name .= ' (deaktiviert)';
-            }
-
-            $label = $name
-                . '  —  aktive Inhaber: ' . $aktiv
-                . ', frühere/gelöschte: ' . $gel
-                . ', von ' . $req . ' Flugzeugtyp' . ($req === 1 ? '' : 'en') . ' verlangt'
-                . '  —  ' . $statusWord;
-
-            $types[] = ['id' => (int) $row['id'], 'label' => $label];
+            $types[] = [
+                'id'          => (int) $row['id'],
+                'name'        => trim(($row['categoryname'] ? $row['categoryname'] . ': ' : '') . $row['longname']),
+                'aktiv'       => $aktiv,
+                'geloescht'   => $gel,
+                'req'         => $req,
+                'status'      => $neverUsed ? 'nie genutzt' : ($aktiv === 0 ? 'keine aktiven Inhaber' : 'in Nutzung'),
+                'deaktiviert' => $row['status'] === 'geloescht',
+                'neverUsed'   => $neverUsed,
+            ];
         }
 
         return ['types' => $types, 'total' => count($types), 'unused' => $unused];

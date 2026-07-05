@@ -30,6 +30,20 @@
   .sys-frame{width:100%;height:75vh;border:1px solid var(--fr-line);border-radius:12px;background:#fff;}
   .sys-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;}
   details.sys-det summary{cursor:pointer;font-weight:700;color:var(--fr-blue);padding:6px 0;}
+  /* Lizenztypen-Uebersicht */
+  .lt-list{display:flex;flex-direction:column;gap:1px;background:var(--fr-line);border:1px solid var(--fr-line);border-radius:12px;overflow:hidden;}
+  .lt-row{display:grid;grid-template-columns:minmax(160px,1.3fr) 2fr auto;gap:14px;align-items:center;background:#fff;padding:11px 14px;}
+  .lt-row.lt-unused{background:#fafbfc;}
+  .lt-name{font-weight:700;color:var(--fr-ink);font-size:13.5px;}
+  .lt-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:5px;margin-left:7px;}
+  .lt-badge.off{background:#eef1f5;color:var(--fr-mut);}
+  .lt-stats{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--fr-mut);}
+  .lt-stats b{color:var(--fr-ink);font-variant-numeric:tabular-nums;}
+  .lt-status{justify-self:end;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+  .lt-status.on{background:#e7f7ee;color:var(--fr-green);}
+  .lt-status.idle{background:#fdf2e3;color:var(--fr-amber);}
+  .lt-status.none{background:#eef1f5;color:var(--fr-mut);}
+  @media(max-width:640px){.lt-row{grid-template-columns:1fr;gap:6px;}.lt-status{justify-self:start;}}
 </style>
 
 {{ ph.tabs([{label:'Diagnose', icon:'diag'}]) }}
@@ -113,182 +127,32 @@
   </div>
 </div>
 
-{# ---------- Passwort-Sicherheit (nur Global-Admin) ---------- #}
-{% if pw is not null %}
-<div class="sys-sec">Passwort-Sicherheit</div>
-
-{% for f in app.flashes('pwmigrate') %}
-  <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
-    {% if f.dryRun %}
-      <div style="font-weight:700;color:var(--fr-green);">Vorschau (Dry-Run) – es wurde nichts geschrieben</div>
-      <div class="sys-hint">Es würden <b>{{ f.pending }}</b> Konten von MD5 auf bcrypt migriert.</div>
-    {% else %}
-      <div style="font-weight:700;color:var(--fr-green);">{{ f.pending == 0 ? 'Migration abgeschlossen ✓' : 'Migration läuft …' }}</div>
-      <div class="sys-hint">In diesem Durchgang migriert: <b>{{ f.migrated }}</b> · noch offen: <b>{{ f.pending }}</b></div>
-      {% if f.pending > 0 and f.migrated > 0 %}
-        <div class="sys-hint" style="color:var(--fr-amber);">Setzt automatisch fort – bitte dieses Fenster offen lassen …</div>
-        <form id="pw-auto" method="post" action="{{ path('modern_system_pwmigrate') }}" style="display:none;"><input type="hidden" name="mode" value="run"></form>
-        <script>setTimeout(function(){ document.getElementById('pw-auto').submit(); }, 600);</script>
-      {% endif %}
-    {% endif %}
-  </div>
-{% endfor %}
-
-<div class="sys-card">
-  <table class="sys-kv">
-    <tr><td>Konten gesamt</td><td>{{ pw.total }}</td></tr>
-    <tr><td>bereits bcrypt</td><td>{{ pw.bcrypt }}</td></tr>
-    <tr><td>noch Legacy-MD5</td><td>{% if pw.md5 > 0 %}<span class="sys-badge bad">{{ pw.md5 }}</span>{% else %}<span class="sys-badge ok">0</span>{% endif %}</td></tr>
-  </table>
-  <div class="sys-hint">
-    Wandelt gespeicherte MD5-Hashes in gesalzenes <span class="sys-mono">bcrypt(MD5)</span> um – ohne Klartext, idempotent, beliebig wiederholbar.
-    <b>Voraussetzung:</b> die Spalte <span class="sys-mono">password</span> wurde bereits auf <span class="sys-mono">varchar(255)</span> erweitert (sonst schlägt es fehl).
-  </div>
-  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-    <form method="post" action="{{ path('modern_system_pwmigrate') }}">
-      <input type="hidden" name="mode" value="dry">
-      <button type="submit" class="fr-btn ghost">Vorschau (Dry-Run)</button>
-    </form>
-    {% if pw.md5 > 0 %}
-    <form method="post" action="{{ path('modern_system_pwmigrate') }}" onsubmit="return confirm('{{ pw.md5 }} Konten jetzt auf bcrypt migrieren?\n\nVorher muss die Spalte password auf varchar(255) erweitert sein.');">
-      <input type="hidden" name="mode" value="run">
-      <button type="submit" class="fr-btn">Migration ausführen ({{ pw.md5 }})</button>
-    </form>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-{# ---------- Lizenz-Bereinigung (nur Global-Admin: mandantenuebergreifend) ---------- #}
-{% if lic is not null %}
-<div class="sys-sec">Lizenz-Bereinigung</div>
-
-{% for f in app.flashes('liccleanup') %}
-  <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-bottom:12px;">
-    {% if f.dryRun %}
-      <div style="font-weight:700;color:var(--fr-green);">Vorschau (Dry-Run) – es wurde nichts geschrieben</div>
-      <div class="sys-hint">Es würden <b>{{ f.pending }}</b> Lizenzen als gelöscht markiert.</div>
-    {% else %}
-      <div style="font-weight:700;color:var(--fr-green);">Bereinigung abgeschlossen ✓</div>
-      <div class="sys-hint">Als gelöscht markiert: <b>{{ f.deleted }}</b> · noch offen: <b>{{ f.pending }}</b></div>
-    {% endif %}
-  </div>
-{% endfor %}
-
-<div class="sys-card">
-  <table class="sys-kv">
-    <tr><td>Aktive Lizenzen an gelöschten Piloten</td><td>{% if lic.pending > 0 %}<span class="sys-badge bad">{{ lic.pending }}</span>{% else %}<span class="sys-badge ok">0</span>{% endif %}</td></tr>
-  </table>
-  <div class="sys-hint">
-    Setzt Lizenzen, deren Pilot bereits gelöscht ist (Account <span class="sys-mono">status='geloescht'</span>), ebenfalls auf <span class="sys-mono">geloescht</span>.
-    Reiner <b>Soft-Delete</b> – nichts wird physisch entfernt, bereits gelöschte bleiben unberührt, beliebig wiederholbar.
-  </div>
-  {% if lic.list is not empty %}
-  <div style="margin-top:12px;">
-    <label class="sys-hint" style="display:block;margin-bottom:4px;font-weight:700;">Konkret betroffene Lizenzen ({{ lic.list|length }}) – Pilot — Lizenztyp:</label>
-    <select multiple size="{{ min(lic.list|length, 10) }}" style="width:100%;padding:6px 8px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;">
-      {% for item in lic.list %}
-        <option>{{ item.label }}</option>
-      {% endfor %}
-    </select>
-    <div class="sys-hint" style="margin-top:4px;">Nur zur Information – die Bereinigung markiert alle aufgeführten Lizenzen.</div>
-  </div>
-  {% endif %}
-  <div style="display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;">
-    <form method="post" action="{{ path('modern_system_liccleanup') }}">
-      <input type="hidden" name="mode" value="dry">
-      <button type="submit" class="fr-btn ghost">Vorschau (Dry-Run)</button>
-    </form>
-    {% if lic.pending > 0 %}
-    <form method="post" action="{{ path('modern_system_liccleanup') }}" onsubmit="return confirm('{{ lic.pending }} Lizenzen gelöschter Piloten jetzt als gelöscht markieren?\n\nNur Soft-Delete – reversibel.');">
-      <input type="hidden" name="mode" value="run">
-      <button type="submit" class="fr-btn">Bereinigung ausführen ({{ lic.pending }})</button>
-    </form>
-    {% endif %}
-  </div>
-</div>
-{% endif %}
-
-{# ---------- Lizenztypen löschen (3 Schritte, nur Global-Admin) ---------- #}
+{# ---------- Lizenztypen-Übersicht (nur Global-Admin) ---------- #}
 {% if lictype is not null %}
-<div class="sys-sec">Lizenztypen löschen</div>
-
-{# Schritt 1: Auswahl – kommt immer zuerst #}
+<div class="sys-sec">Lizenztypen-Übersicht</div>
 <div class="sys-card">
-  <div class="sys-hint" style="margin-bottom:10px;">
-    <b>Schritt 1 – Auswahl:</b> Lizenztyp(en) in der Liste markieren (mehrere mit <span class="sys-mono">Strg</span>/<span class="sys-mono">⌘</span> bzw. <span class="sys-mono">Umschalt</span>).
-    Die <b>am wenigsten genutzten stehen oben</b>; jeder Eintrag nennt aktive Inhaber, frühere/gelöschte Lizenzen und von wie vielen Flugzeugtypen er verlangt wird.<br>
-    Danach <b>Schritt 2 – Vorschau</b> ansehen, erst dann erscheint <b>Schritt 3 – Löschen</b>.
-    Löschen = Soft-Delete: der Typ verschwindet aus den Auswahllisten und seine Flugzeugtyp-Anforderungen werden entfernt; bestehende Nutzer-Lizenzen und die Historie bleiben erhalten (per DB reversibel).
-    Insgesamt <b>{{ lictype.total }}</b> Typen{% if lictype.unused > 0 %}, davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
+  <div class="sys-hint" style="margin-bottom:12px;">
+    Alle <b>{{ lictype.total }}</b> Lizenztypen und wie oft sie genutzt werden{% if lictype.unused > 0 %} – davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
+    Anlegen, bearbeiten und löschen kannst du Lizenztypen unter <b>Lizenzen → Lizenztypen</b>.
   </div>
-  <form method="post" action="{{ path('modern_system_lictype_delete') }}">
-    <select name="ids[]" multiple required size="{{ min(max(lictype.types|length, 4), 12) }}"
-            style="width:100%;padding:6px 8px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;">
-      {% for t in lictype.types %}
-        <option value="{{ t.id }}">{{ t.label }}</option>
-      {% endfor %}
-    </select>
-    <div style="margin-top:10px;">
-      <button type="submit" name="mode" value="dry" class="fr-btn ghost">Schritt 2: Vorschau anzeigen →</button>
-    </div>
-  </form>
-</div>
-
-{# Schritt 2 (Ergebnis) + Schritt 3 (Löschen-Button) – erscheint erst nach der Vorschau #}
-{% for f in app.flashes('lictypedel') %}
-  {% if f.empty is defined and f.empty %}
-    <div class="sys-card" style="border-color:#e6ddbf;background:#fbf7ec;margin-top:12px;">
-      <div style="font-weight:700;">Nichts ausgewählt</div>
-      <div class="sys-hint">Bitte in Schritt 1 mindestens einen Lizenztyp markieren.</div>
-    </div>
-  {% elseif f.dryRun %}
-    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-top:12px;">
-      <div style="font-weight:700;color:var(--fr-green);">Schritt 2 – Vorschau (es wurde nichts geändert)</div>
-      <div class="sys-hint" style="margin:4px 0 8px;">Folgende <b>{{ f.items|length }}</b> Lizenztyp(en) hast du gewählt – sie würden gelöscht (deaktiviert):</div>
-      <ul style="margin:0 0 10px;padding-left:20px;line-height:1.7;">
-        {% for it in f.items %}
-          <li>
-            <b>{{ it.name }}</b>
-            {% if it.already %}
-              — <span class="sys-mono">bereits deaktiviert</span> (wird übersprungen)
-            {% else %}
-              — Inhaber: {{ it.aktiv }} aktiv, {{ it.geloescht }} gelöscht
-              {% if it.aktiv > 0 %}<b style="color:var(--fr-red,#c9453b);"> ⚠ {{ it.aktiv }} aktive Inhaber!</b>{% endif %}
-              {% if it.reqCount > 0 %}
-                <div class="sys-hint" style="margin:2px 0 0 2px;">Wird als Pflichtlizenz entfernt von <b>{{ it.reqCount }}</b> Flugzeugtyp(en): {{ it.reqNames|join(', ') }}</div>
-              {% else %}
-                <div class="sys-hint" style="margin:2px 0 0 2px;">Keine Flugzeugtyp-Anforderung betroffen.</div>
-              {% endif %}
-            {% endif %}
-          </li>
-        {% endfor %}
-      </ul>
-      {% if f.ids is not empty %}
-      <form method="post" action="{{ path('modern_system_lictype_delete') }}"
-            onsubmit="return confirm('Schritt 3: {{ f.ids|length }} Lizenztyp(en) jetzt löschen?\n\nEntfernt deren Flugzeugtyp-Anforderungen und deaktiviert sie (Soft-Delete, reversibel).');">
-        {% for id in f.ids %}<input type="hidden" name="ids[]" value="{{ id }}">{% endfor %}
-        <input type="hidden" name="mode" value="run">
-        <button type="submit" class="fr-btn" style="background:#fff;color:var(--fr-red,#c9453b);border:1px solid var(--fr-red,#c9453b);">Schritt 3: Jetzt löschen ({{ f.ids|length }})</button>
-      </form>
-      {% endif %}
-    </div>
+  {% if lictype.types is empty %}
+    <div class="sys-hint">Keine Lizenztypen vorhanden.</div>
   {% else %}
-    <div class="sys-card" style="border-color:#bfe6cf;background:#eef9f2;margin-top:12px;">
-      <div style="font-weight:700;color:var(--fr-green);">Schritt 3 abgeschlossen ✓ – Lizenztyp(en) gelöscht</div>
-      <ul style="margin:6px 0 0;padding-left:20px;line-height:1.7;">
-        {% for it in f.items %}
-          <li>
-            <b>{{ it.name }}</b> —
-            {% if it.done and it.already %}war bereits deaktiviert
-            {% elseif it.done %}{{ it.reqRemoved }} Flugzeugtyp-Anforderung(en) entfernt, deaktiviert
-            {% else %}<b style="color:var(--fr-red,#c9453b);">Fehler: {{ it.error|default('unbekannt') }}</b>{% endif %}
-          </li>
-        {% endfor %}
-      </ul>
+  <div class="lt-list">
+    {% for t in lictype.types %}
+    <div class="lt-row{% if t.neverUsed %} lt-unused{% endif %}">
+      <div class="lt-name">{{ t.name }}{% if t.deaktiviert %}<span class="lt-badge off">deaktiviert</span>{% endif %}</div>
+      <div class="lt-stats">
+        <span><b>{{ t.aktiv }}</b> aktive Inhaber</span>
+        <span><b>{{ t.geloescht }}</b> frühere/gelöschte</span>
+        <span>von <b>{{ t.req }}</b> Flugzeugtyp{{ t.req == 1 ? '' : 'en' }} verlangt</span>
+      </div>
+      <div class="lt-status {{ t.aktiv > 0 ? 'on' : (t.neverUsed ? 'none' : 'idle') }}">{{ t.status }}</div>
     </div>
+    {% endfor %}
+  </div>
   {% endif %}
-{% endfor %}
+</div>
 {% endif %}
 
 {# ---------- Datenbank-Backup (nur Global-Admin: mandantenuebergreifend) ---------- #}
