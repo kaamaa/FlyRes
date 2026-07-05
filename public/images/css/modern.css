@@ -81,6 +81,8 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-fl .fr-pernav a{border:none;width:28px;height:28px;}
 .fr-fl .fr-scale{padding-bottom:0;}
 .fr-phead .fr-scale{align-self:flex-end;padding-bottom:11px;}
+/* Feld-Inhalt (Datum/Zeitraum) NICHT das Uppercase-Blau-Label erben – einheitliche Feld-Schrift */
+.fr-fl .fr-ctrl,.fr-fl .fr-datedisp,.fr-fl .fr-pernav b{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fr-ink);}
 .fr-umfang{display:inline-flex;border:1px solid var(--fr-line);border-radius:9px;overflow:hidden;}
 .fr-umfang label{font-size:12.5px;font-weight:600;color:#566;padding:8px 13px;cursor:pointer;}
 .fr-umfang label.on{background:var(--fr-blue);color:#fff;}
