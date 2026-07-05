@@ -94,10 +94,15 @@
       var date = dInp.value; if (!date) return;
       if (!AC.length) { acBox.innerHTML = '<div class="fr-avhint">Keine Flugzeuge.</div>'; return; }
       acBox.innerHTML = '<div class="fr-avhint">Lädt…</div>';
-      Promise.all(AC.map(function (a) { return get('date=' + date + '&aircraft=' + a.id + '&fi=0'); })).then(function (res) {
-        var bounds = null, rows = '';
-        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(AC[i].k, AC[i].t) + '<div class="fr-avbar" data-tip="' + freeTitle(d.aircraftFree) + '">' + busySegs(busy(d.aircraftFree, bounds[0], bounds[1]), bounds[0], bounds[1]) + '</div></div>'; });
-        acBox.innerHTML = bounds ? rows + axis(bounds[0], bounds[1]) : '<div class="fr-avhint">Keine Daten für diesen Tag.</div>';
+      get('date=' + date + '&aircraft=all').then(function (data) {   // EIN Request für alle Flugzeuge
+        if (!data || !data.aircraft) { acBox.innerHTML = '<div class="fr-avhint">Keine Daten für diesen Tag.</div>'; return; }
+        var bounds = [toMin(data.dayStart), toMin(data.dayEnd)], rows = '';
+        AC.forEach(function (a) {
+          var free = data.aircraft[a.id];
+          if (free === undefined) free = [{ start: data.dayStart, end: data.dayEnd }];  // Fallback: voll frei
+          rows += '<div class="fr-avrow">' + lab(a.k, a.t) + '<div class="fr-avbar" data-tip="' + freeTitle(free) + '">' + busySegs(busy(free, bounds[0], bounds[1]), bounds[0], bounds[1]) + '</div></div>';
+        });
+        acBox.innerHTML = rows + axis(bounds[0], bounds[1]);
       });
     }
     function loadFi() {

@@ -326,6 +326,57 @@ class Bookings
   }
 
   /**
+   * Freie Luecken ALLER Flugzeuge fuer EINEN Tag – in EINER DB-Abfrage.
+   * Beschleunigt die Tagesansicht, die sonst pro Flugzeug einen eigenen
+   * Request + Query feuert (N Requests). Nutzt dieselbe reine PHP-Lueckenlogik
+   * (FilterBookingsForDay + GetBookingGaps) wie GetFreeGapsForPlaneInRange, damit
+   * die Ergebnisse identisch sind. Rueckgabe: [planeId => [[startMin,endMin], …]].
+   */
+  public static function GetFreeGapsForAllPlanesOnDay($em, $clientid, \DateTime $date, array $planeIds)
+  {
+    date_default_timezone_set('Europe/Berlin');
+
+    $dayFrom = clone $date; $dayFrom->setTime(0, 0, 0);
+    $dayTo   = (clone $dayFrom)->modify('+1 day');
+
+    // Alle aktiven Buchungen, die den Kalendertag beruehren – fuer ALLE Flugzeuge
+    // in EINER Abfrage (gleiche Felder/Bedingungen wie die per-Flugzeug-Variante,
+    // zusaetzlich aircraftid zum Gruppieren).
+    $querystring = "SELECT partial b.{id, clientid, createdbyuserid, flightpurposeid, itemstart, itemstop, description, flightinstructor, aircraftid} FROM App\Entity\FresBooking b WHERE "
+      . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
+      . "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " "
+      . "ORDER BY b.aircraftid, b.itemstart";
+    $all = $em->createQuery($querystring)->setParameters(array(
+      'range_start' => $dayFrom->format('Y-m-d H:i:s'),
+      'range_end'   => $dayTo->format('Y-m-d H:i:s'),
+      'clientID'    => $clientid,
+    ))->getResult();
+
+    // Nach Flugzeug gruppieren (Startzeit-Reihenfolge bleibt erhalten).
+    $byPlane = array();
+    foreach ($all as $b) { $byPlane[(int) $b->getAircraftid()][] = $b; }
+
+    $iy = (int) $date->format('Y'); $im = (int) $date->format('m'); $id = (int) $date->format('d');
+    $mindate = clone $date; $sr = TimeFunctions::GetDayStart($date); $mindate->setTime($sr[0], $sr[1]);
+    $maxdate = clone $date; $sr = TimeFunctions::GetDayEnd($date);   $maxdate->setTime($sr[0], $sr[1]);
+
+    $out = array();
+    foreach ($planeIds as $pid) {
+      $pid = (int) $pid;
+      $dayBookings = self::FilterBookingsForDay($byPlane[$pid] ?? array(), $id, $im, $iy);
+      $list = array();
+      foreach (self::GetBookingGaps($dayBookings, $mindate, $maxdate) as $g) {
+        $s = (int) $g->getStart()->format('G') * 60 + (int) $g->getStart()->format('i');
+        $e = (int) $g->getEnd()->format('G')   * 60 + (int) $g->getEnd()->format('i');
+        if ($e > $s) { $list[] = array($s, $e); }
+      }
+      $out[$pid] = $list;
+    }
+
+    return $out;
+  }
+
+  /**
    * Buchungen der Vergangenheit duerfen nur begrenzt nachbearbeitet werden:
    * Liegt das Ende (Itemstop) mehr als eine Woche zurueck, ist Bearbeiten
    * gesperrt. (Storno/Loeschen bleibt von dieser Regel unberuehrt.)

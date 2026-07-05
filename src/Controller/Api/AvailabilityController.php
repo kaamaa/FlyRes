@@ -56,6 +56,26 @@ class AvailabilityController extends ApiController
         $dayStart = $dsH * 60 + $dsM;
         $dayEnd   = $deH * 60 + $deM;
 
+        // --- Buendel-Modus: alle Flugzeuge des Tages in EINER Antwort ---
+        // Beschleunigt die Tagesansicht drastisch (sonst 1 Request je Flugzeug).
+        if ($request->query->get('aircraft') === 'all') {
+            $planeIds = array_map(
+                static fn (array $p) => (int) $p['planeID'],
+                Planes::GetAllPlanesForMonthview($em, $clientid)
+            );
+            $gaps  = Bookings::GetFreeGapsForAllPlanesOnDay($em, $clientid, $date, $planeIds);
+            $acOut = [];
+            foreach ($gaps as $pid => $slots) {
+                $acOut[$pid] = $this->slotsOut($slots);
+            }
+            return $this->json([
+                'date'     => $date->format('Y-m-d'),
+                'dayStart' => $this->min2str($dayStart),
+                'dayEnd'   => $this->min2str($dayEnd),
+                'aircraft' => $acOut,
+            ]);
+        }
+
         // --- Verfuegbarkeit direkt als Daten (kein HTML-Parsing mehr) ---
         $dateStr  = $date->format('Y-m-d');
         $dayAfter = (clone $date)->modify('+1 day');
