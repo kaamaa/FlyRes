@@ -1,9 +1,17 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}{{ isNew ? 'Neues Flugzeug' : 'Flugzeug bearbeiten' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
-<form class="fr-form" action="{{ path('modern_aircraft_save') }}" method="post">
+  {{ ph.tabs([{label: isNew ? 'Neues Flugzeug' : 'Flugzeug bearbeiten', icon: 'plane'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="ac_form" class="fr-btn">Flugzeug speichern</button>
+      <a class="fr-btn" href="{{ path('modern_aircraft') }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="ac_form" class="fr-form" action="{{ path('modern_aircraft_save') }}" method="post">
   <input type="hidden" name="id" value="{{ v.id }}">
 
   {% if errors %}
@@ -56,9 +64,7 @@
     </label>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Flugzeug speichern</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_aircraft') }}">Abbrechen</a>
-  </div>
 </form>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {% endblock %}
