@@ -301,20 +301,29 @@
     var ws = num('p-wspd');
     var fr = num('p-fuel');
 
-    rows.forEach(function (r) { clearVals(r); if (query(r) === '') { r.querySelector('.wp-name').innerHTML = ''; r._chosen = null; } });
+    rows.forEach(function (r) { clearVals(r); if (query(r) === '') { r.querySelector('.wp-name').innerHTML = ''; r._chosen = null; r._renderedKey = null; } });
 
-    // Namen/Treffer je Punkt rendern, Auswahl merken und – wenn ein Punkt mit ICAO
-    // gewaehlt/aufgeloest ist – das Eingabefeld auf den ICAO-Code setzen (aber nicht,
-    // waehrend gerade in diesem Feld getippt wird).
     var canon = false;
     pts.forEach(function (r) {
-      var cands = cache[keyFor(query(r))] || [];
-      var pick = parseInt(r.dataset.pick || '0', 10) || 0;
-      var ch = renderName(r, cands, pick);
-      r._chosen = ch;
+      var key = keyFor(query(r));
+      var cands = cache[key] || [];
+      var sel = r.querySelector('.wp-pick');
+      // Aktuelle Auswahl bewahren: bei schon gerendertem Dropdown dessen Index nehmen
+      var pick = (sel && r._renderedKey === key) ? sel.selectedIndex : (parseInt(r.dataset.pick || '0', 10) || 0);
+      pick = Math.max(0, Math.min(pick, cands.length - 1));
+      r._chosen = cands.length ? (cands[pick] || null) : null;
+
+      // Namenszelle NUR neu aufbauen, wenn sich die Trefferliste geaendert hat –
+      // sonst wuerde ein gerade geoeffnetes Auswahl-Dropdown geschlossen/zurueckgesetzt.
+      if (r._renderedKey !== key) {
+        renderName(r, cands, pick);
+        r._renderedKey = key;
+      }
+
+      // Nur EINDEUTIGE Treffer (kein Dropdown) automatisch in den ICAO-Code umschreiben.
       var input = r.querySelector('.wp-in');
-      if (ch && ch.icao && document.activeElement !== input && query(r) !== ch.icao.toUpperCase()) {
-        input.value = ch.icao.toUpperCase(); r.dataset.pick = '0'; canon = true;
+      if (cands.length === 1 && cands[0].icao && document.activeElement !== input && query(r) !== cands[0].icao.toUpperCase()) {
+        input.value = cands[0].icao.toUpperCase(); r.dataset.pick = '0'; r._renderedKey = null; canon = true;
       }
     });
 
@@ -366,12 +375,17 @@
     e.target.closest('.wp-row').dataset.pick = '0';   // neue Eingabe -> Auswahl zuruecksetzen
     ensureTrailingEmpty(); schedule();
   });
+  // Echte Auswahl im Dropdown -> Feld auf den gewaehlten ICAO-Code umstellen
   body.addEventListener('change', function (e) {
     if (!e.target.classList.contains('wp-pick')) return;
-    e.target.closest('.wp-row').dataset.pick = e.target.value;
+    var row = e.target.closest('.wp-row');
+    var cands = cache[keyFor(query(row))] || [];
+    var ch = cands[e.target.selectedIndex];
+    if (ch && ch.icao) { row.querySelector('.wp-in').value = ch.icao.toUpperCase(); row.dataset.pick = '0'; row._renderedKey = null; }
+    else { row.dataset.pick = String(e.target.selectedIndex); }
     recompute();
   });
-  // Feld verlassen -> ggf. auf den ICAO-Code des aufgeloesten Punktes umstellen
+  // Feld verlassen -> eindeutige Treffer werden auf den ICAO-Code umgestellt (in recompute)
   body.addEventListener('focusout', function (e) {
     if (e.target.classList.contains('wp-in')) schedule();
   });
