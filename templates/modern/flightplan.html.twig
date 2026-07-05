@@ -154,6 +154,7 @@
   var RESOLVE_URL = '{{ path('modern_flightplan_resolve') }}';
   var body = document.getElementById('wp-body');
   var cache = {};              // "region|types|query" -> [candidates]
+  var gen = 0;                 // Generationszaehler gegen Race-Conditions bei parallelen Laeufen
   var R_NM = 3437.7467707849396;
   var rad = function (d) { return d * Math.PI / 180; }, deg = function (r) { return r * 180 / Math.PI; };
 
@@ -272,6 +273,7 @@
   function schedule() { clearTimeout(timer); timer = setTimeout(recompute, 250); }
 
   async function recompute() {
+    var myGen = ++gen;           // dieser Lauf; wird ein neuerer gestartet, bricht dieser ab
     var rows = [].slice.call(body.querySelectorAll('.wp-row'));
     var pts = rows.filter(function (r) { return query(r) !== ''; });
 
@@ -287,8 +289,12 @@
         var res = await fetch(RESOLVE_URL, { method: 'POST', body: b, credentials: 'same-origin', headers: { 'X-Requested-With': 'fetch' } });
         var data = await res.json();
         missKeys.forEach(function (k, i) { cache[k] = (data.results && data.results[i] && data.results[i].candidates) || []; });
-      } catch (e) { missKeys.forEach(function (k) { cache[k] = []; }); }
+      } catch (e) { /* Netzwerkfehler: NICHT cachen -> naechster Lauf versucht erneut */ }
     }
+
+    // Ein neuerer Lauf hat begonnen (weiteres Tippen/Aenderung) -> diesen abbrechen,
+    // damit ein veraltetes Ergebnis nicht das aktuelle ueberschreibt.
+    if (myGen !== gen) return;
 
     var tas = num('p-tas');
     var wd = ((num('p-wdir') % 360) + 360) % 360;
