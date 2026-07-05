@@ -61,6 +61,8 @@
   {label:'System',      icon:'diag',     href: path('modern_system', {tab:'system'}),  active: tab == 'system'},
   {label:'Datenbank',   icon:'building', href: path('modern_system', {tab:'db'}),      active: tab == 'db'},
   {label:'Audit',       icon:'list',     href: path('modern_system', {tab:'audit'}),   active: tab == 'audit'},
+  {label:'Fehler',      icon:'diag',     href: path('modern_system', {tab:'error'}),   active: tab == 'error'},
+  {label:'Mail',        icon:'mail',     href: path('modern_system', {tab:'mail'}),    active: tab == 'mail'},
   {label:'Lizenztypen', icon:'award',    href: path('modern_system', {tab:'lictype'}), active: tab == 'lictype'},
   {label:'phpinfo',     icon:'chart',    href: path('modern_system', {tab:'phpinfo'}), active: tab == 'phpinfo'}
 ]) }}
@@ -210,6 +212,62 @@
 </div>
 {% endif %}
 
+{# ---------- Fehler (Anwendungsfehler) ---------- #}
+{% if tab == 'error' %}
+<div class="sys-sec">Fehler (Anwendungsfehler)</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Letzte protokollierte Ausnahmen aus <span class="sys-mono">var/log/error-*.log</span> (JSON, unbegrenzte Aufbewahrung). Fehler werden zusätzlich per E-Mail gemeldet.
+  </div>
+  {% if errors is empty %}
+    <div class="sys-hint">Keine Fehler protokolliert. 🎉</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table class="aud-tbl">
+      <thead><tr><th>Zeit</th><th>Level</th><th>Kanal</th><th>Meldung</th></tr></thead>
+      <tbody>
+        {% for e in errors %}
+        <tr>
+          <td class="mono">{{ e.time }}</td>
+          <td><span class="aud-ev {{ e.level in ['CRITICAL', 'ALERT', 'EMERGENCY'] ? 'bad' : 'warn' }}">{{ e.level }}</span></td>
+          <td class="mono">{{ e.channel }}</td>
+          <td class="det">{{ e.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------- Mail-Versand ---------- #}
+{% if tab == 'mail' %}
+<div class="sys-sec">Mail-Versand</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Letzte Mail-Ereignisse aus <span class="sys-mono">var/log/mailerror.log</span> (Buchungs-/Lizenz-Mails: Empfänger, gesendet/Fehler).
+  </div>
+  {% if maillog is empty %}
+    <div class="sys-hint">Keine Mail-Ereignisse protokolliert.</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table class="aud-tbl">
+      <thead><tr><th>Zeit</th><th>Ereignis</th></tr></thead>
+      <tbody>
+        {% for m in maillog %}
+        <tr>
+          <td class="mono">{{ m.time }}</td>
+          <td class="det"{% if m.fail %} style="color:var(--fr-red);font-weight:600;"{% endif %}>{{ m.text }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 {# ---------- Datenbank-Backup ---------- #}
 {% if tab == 'db' %}
 <div class="sys-sec">Datenbank-Backup</div>
@@ -316,6 +374,19 @@
     </div>
     <div class="sys-hint">{{ php.ext_all|length }} Erweiterungen insgesamt geladen.</div>
   </div>
+</div>
+
+{# ---------- Deprecations (klein) ---------- #}
+<div class="sys-sec">Deprecations</div>
+<div class="sys-card">
+  {% if deprecations is empty %}
+    <div class="sys-hint">Keine Deprecations protokolliert (oder Datei nicht vorhanden).</div>
+  {% else %}
+    <div class="sys-hint" style="margin-bottom:8px;">Letzte {{ deprecations|length }} Meldungen aus <span class="sys-mono">{{ php.env }}.deprecations.log</span> – relevant vor PHP-/Symfony-Updates.</div>
+    <div style="max-height:260px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.6;color:var(--fr-mut);">
+      {% for d in deprecations %}<div style="border-bottom:1px solid var(--fr-bg);padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ d }}">{{ d }}</div>{% endfor %}
+    </div>
+  {% endif %}
 </div>
 {% endif %}{# Ende System-Tab: PHP #}
 

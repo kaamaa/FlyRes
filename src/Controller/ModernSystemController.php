@@ -27,21 +27,24 @@ class ModernSystemController extends AbstractController
         // Die komplette Diagnose ist ausschliesslich fuer Global-System-Admins.
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
 
-        $allowed = ['system', 'db', 'audit', 'lictype', 'phpinfo'];
+        $allowed = ['system', 'db', 'audit', 'lictype', 'error', 'mail', 'phpinfo'];
         $tab = (string) $request->query->get('tab', 'system');
         if (!in_array($tab, $allowed, true)) {
             $tab = 'system';
         }
 
         return $this->render('modern/system.html.twig', [
-            'tab'      => $tab,
-            'php'      => $this->collectPhp(),
-            'opcache'  => $this->collectOpcache(),
-            'apcu'     => $this->collectApcu(),
-            'doctrine' => $this->collectDoctrineCache($em),
-            'db'       => $this->collectDatabase($em),
-            'lictype'  => $this->licTypeStatus($em),
-            'audit'    => $this->readAuditLog(),
+            'tab'          => $tab,
+            'php'          => $this->collectPhp(),
+            'opcache'      => $this->collectOpcache(),
+            'apcu'         => $this->collectApcu(),
+            'doctrine'     => $this->collectDoctrineCache($em),
+            'deprecations' => $tab === 'system'  ? $this->readDeprecations()    : null,
+            'db'           => $tab === 'db'       ? $this->collectDatabase($em)  : null,
+            'lictype'      => $tab === 'lictype'  ? $this->licTypeStatus($em)    : null,
+            'audit'        => $tab === 'audit'    ? $this->readAuditLog()        : null,
+            'errors'       => $tab === 'error'    ? $this->readErrorLog()        : null,
+            'maillog'      => $tab === 'mail'     ? $this->readMailLog()         : null,
         ]);
     }
 
@@ -53,31 +56,11 @@ class ModernSystemController extends AbstractController
      */
     private function readAuditLog(int $limit = 200): array
     {
-        $dir = (string) $this->getParameter('kernel.logs_dir');
-        $files = glob($dir . '/audit-*.log') ?: [];
-        if (!$files && is_file($dir . '/audit.log')) {
-            $files = [$dir . '/audit.log'];   // Fallback: nicht-rotierende Datei
-        }
-        rsort($files);                        // neueste Datei (Datum im Namen) zuerst
-        $files = array_slice($files, 0, 3);   // hoechstens die 3 juengsten Tage
-        $files = array_reverse($files);       // chronologisch (aeltere Datei zuerst)
-
-        $lines = [];
-        foreach ($files as $f) {
-            $c = @file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
-            $lines = array_merge($lines, $c);
-        }
-        $lines = array_slice($lines, -$limit);   // die letzten N chronologisch
-
         $out = [];
-        foreach (array_reverse($lines) as $line) {   // neueste zuerst
-            $rec = json_decode($line, true);
-            if (!is_array($rec)) {
-                continue;
-            }
+        foreach ($this->readJsonRecords('audit', $limit) as $rec) {
             $ctx = is_array($rec['context'] ?? null) ? $rec['context'] : [];
             $out[] = [
-                'time'     => substr(str_replace('T', ' ', (string) ($rec['datetime'] ?? '')), 0, 19),
+                'time'     => $this->fmtLogTime($rec['datetime'] ?? ''),
                 'event'    => (string) ($rec['message'] ?? ''),
                 'actor'    => $ctx['actor'] ?? null,
                 'clientid' => $ctx['clientid'] ?? null,
@@ -87,6 +70,91 @@ class ModernSystemController extends AbstractController
         }
 
         return $out;
+    }
+
+    /** Letzte Anwendungsfehler aus den rotierenden JSON-Dateien (var/log/error-*.log). */
+    private function readErrorLog(int $limit = 150): array
+    {
+        $out = [];
+        foreach ($this->readJsonRecords('error', $limit) as $rec) {
+            $out[] = [
+                'time'    => $this->fmtLogTime($rec['datetime'] ?? ''),
+                'level'   => (string) ($rec['level_name'] ?? ''),
+                'channel' => (string) ($rec['channel'] ?? ''),
+                'message' => (string) ($rec['message'] ?? ''),
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Letzte Mail-Versand-Ereignisse aus var/log/mailerror.log (Zeilentext). Neueste zuerst. */
+    private function readMailLog(int $limit = 150): array
+    {
+        $file = (string) $this->getParameter('kernel.logs_dir') . '/mailerror.log';
+        if (!is_file($file)) {
+            return [];
+        }
+        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+        $lines = array_slice($lines, -$limit);
+
+        $out = [];
+        foreach (array_reverse($lines) as $line) {   // Format: "Y-m-d H:i:s  <Text>"
+            $out[] = [
+                'time' => substr($line, 0, 19),
+                'text' => ltrim(substr($line, 19)),
+                'fail' => stripos($line, 'fehlgeschlagen') !== false || preg_match('/\b[1-9]\d* Fehler/', $line) === 1,
+            ];
+        }
+
+        return $out;
+    }
+
+    /** Letzte Deprecation-Meldungen (Rohzeilen) aus var/log/<env>.deprecations.log. Neueste zuerst. */
+    private function readDeprecations(int $limit = 20): array
+    {
+        $env  = (string) $this->getParameter('kernel.environment');
+        $file = (string) $this->getParameter('kernel.logs_dir') . '/' . $env . '.deprecations.log';
+        if (!is_file($file)) {
+            return [];
+        }
+        $lines = @file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+
+        return array_reverse(array_slice($lines, -$limit));
+    }
+
+    /** Rohe JSON-Datensaetze aus rotierenden Log-Dateien (var/log/<prefix>-*.log), neueste zuerst. */
+    private function readJsonRecords(string $prefix, int $limit): array
+    {
+        $dir = (string) $this->getParameter('kernel.logs_dir');
+        $files = glob($dir . '/' . $prefix . '-*.log') ?: [];
+        if (!$files && is_file($dir . '/' . $prefix . '.log')) {
+            $files = [$dir . '/' . $prefix . '.log'];   // Fallback: nicht-rotierende Datei
+        }
+        rsort($files);                          // neueste Datei (Datum im Namen) zuerst
+        $files = array_reverse(array_slice($files, 0, 3));   // 3 juengste Tage, chronologisch
+
+        $lines = [];
+        foreach ($files as $f) {
+            $lines = array_merge($lines, @file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: []);
+        }
+        $lines = array_slice($lines, -$limit);
+
+        $out = [];
+        foreach (array_reverse($lines) as $line) {
+            $rec = json_decode($line, true);
+            if (is_array($rec)) {
+                $out[] = $rec;
+            }
+        }
+
+        return $out;
+    }
+
+    /** Monolog-Datetime ("...T...") in "Y-m-d H:i:s" kuerzen. */
+    private function fmtLogTime(mixed $dt): string
+    {
+        return substr(str_replace('T', ' ', (string) $dt), 0, 19);
     }
 
     /**

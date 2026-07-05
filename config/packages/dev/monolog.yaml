@@ -8,6 +8,13 @@ monolog:
             channels: [audit]
             max_files: 0
             formatter: monolog.formatter.json
+        apperror:
+            type: rotating_file
+            path: "%kernel.logs_dir%/error.log"
+            level: error
+            channels: ["!audit"]
+            max_files: 0
+            formatter: monolog.formatter.json
         main:
             type: stream
             action_level: debug

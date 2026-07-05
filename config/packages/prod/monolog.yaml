@@ -45,3 +45,12 @@ monolog:
             channels: [audit]
             max_files: 0
             formatter: monolog.formatter.json
+        # Fehler zusaetzlich als JSON in eine eigene Datei (strukturiert lesbar fuer die
+        # Diagnose), unabhaengig von fingers_crossed/Fehler-Mail.
+        apperror:
+            type: rotating_file
+            path: "%kernel.logs_dir%/error.log"
+            level: error
+            channels: ["!audit"]
+            max_files: 0
+            formatter: monolog.formatter.json
