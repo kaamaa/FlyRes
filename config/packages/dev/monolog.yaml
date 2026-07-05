@@ -6,7 +6,7 @@ monolog:
             path: "%kernel.logs_dir%/audit.log"
             level: info
             channels: [audit]
-            max_files: 90
+            max_files: 0
             formatter: monolog.formatter.json
         main:
             type: stream

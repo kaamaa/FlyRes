@@ -37,10 +37,11 @@ monolog:
             max_level: info
             channels: ["php"]
         # Eigener Audit-Kanal: rotierende Tagesdatei, IMMER geschrieben (nicht hinter fingers_crossed).
+        # max_files: 0 -> Dateien werden NICHT automatisch geloescht (unbegrenzte Aufbewahrung).
         audit:
             type: rotating_file
             path: "%kernel.logs_dir%/audit.log"
             level: info
             channels: [audit]
-            max_files: 90
+            max_files: 0
             formatter: monolog.formatter.json
