@@ -1286,12 +1286,15 @@ class Bookings
 
     // --- Kalender-Termin (.ics) vorbereiten: gleiche UID pro Buchung -> Aenderungen
     //     aktualisieren denselben Termin; Storno (METHOD:CANCEL) entfernt ihn. ---
+    // Schalter: .ics-Kalenderanhang aktuell AUS (Code bleibt erhalten).
+    // Zum Wiedereinschalten einfach auf true setzen.
+    $icsEnabled = false;
     $refBooking = $newbooking ?: $oldbooking;
     $icsMethod  = $newbooking ? 'REQUEST' : 'CANCEL';   // neu/Aenderung -> REQUEST, Storno -> CANCEL
     $icsCancel  = !$newbooking;
     $icsStart   = $refBooking ? $refBooking->getItemstart() : null;
     $icsEnd     = $refBooking ? $refBooking->getItemstop()  : null;
-    $attachIcs  = $refBooking && $icsStart instanceof \DateTime && $icsEnd instanceof \DateTime;
+    $attachIcs  = $icsEnabled && $refBooking && $icsStart instanceof \DateTime && $icsEnd instanceof \DateTime;
     if ($attachIcs) {
       // SEQUENCE muss je Aenderung steigen; Storno erfolgt nach der letzten Aenderung -> now.
       $icsSeq = $icsCancel
