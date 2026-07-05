@@ -303,11 +303,19 @@
 
     rows.forEach(function (r) { clearVals(r); if (query(r) === '') { r.querySelector('.wp-name').innerHTML = ''; r._chosen = null; } });
 
-    // Namen/Treffer je Punkt rendern und Auswahl merken
+    // Namen/Treffer je Punkt rendern, Auswahl merken und – wenn ein Punkt mit ICAO
+    // gewaehlt/aufgeloest ist – das Eingabefeld auf den ICAO-Code setzen (aber nicht,
+    // waehrend gerade in diesem Feld getippt wird).
+    var canon = false;
     pts.forEach(function (r) {
       var cands = cache[keyFor(query(r))] || [];
       var pick = parseInt(r.dataset.pick || '0', 10) || 0;
-      r._chosen = renderName(r, cands, pick);
+      var ch = renderName(r, cands, pick);
+      r._chosen = ch;
+      var input = r.querySelector('.wp-in');
+      if (ch && ch.icao && document.activeElement !== input && query(r) !== ch.icao.toUpperCase()) {
+        input.value = ch.icao.toUpperCase(); r.dataset.pick = '0'; canon = true;
+      }
     });
 
     var totD = 0, totT = 0, totF = 0, ok = true, legcount = 0;
@@ -340,6 +348,8 @@
     document.getElementById('f-addtime').textContent = addMin > 0 ? '+' + fmtTime(addMin) : '0:00';
     document.getElementById('f-block').textContent = legcount ? fmtTime(totT + addMin) : (addMin > 0 ? fmtTime(addMin) : '–');
     document.getElementById('f-fuel').textContent = (legcount || addMin > 0) ? (totF + addFuel).toFixed(1) + ' l' : '–';
+
+    if (canon) schedule();   // Felder wurden auf ICAO gesetzt -> mit den Codes neu aufloesen/rendern
   }
 
   // Interaktion
@@ -360,6 +370,10 @@
     if (!e.target.classList.contains('wp-pick')) return;
     e.target.closest('.wp-row').dataset.pick = e.target.value;
     recompute();
+  });
+  // Feld verlassen -> ggf. auf den ICAO-Code des aufgeloesten Punktes umstellen
+  body.addEventListener('focusout', function (e) {
+    if (e.target.classList.contains('wp-in')) schedule();
   });
   body.addEventListener('keydown', function (e) {
     if (e.target.classList.contains('wp-in') && e.key === 'Enter') {
