@@ -14,11 +14,10 @@
 {% if fr_full %}
   {{ ph.tabs([{label:'Weight & Balance', icon:'chart'}]) }}
   <div class="fr-panel">
-    <div class="fr-pactions"><button type="button" class="fr-btn" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
-    <div class="fr-pbody">
 {% endif %}
 <style>
   .wb-top{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:14px;}
+  .wb-top.fr-phead{margin-bottom:0;}
   .wb-top label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
   .wb-top select,.wb-top input{padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;}
   .wb-top select{min-width:300px;} .wb-top input{width:100px;}
@@ -50,7 +49,7 @@
   @media (max-width:900px){ .wb-grid{grid-template-columns:1fr;} }
 </style>
 
-<div class="wb-top">
+<div class="wb-top{% if fr_full %} fr-phead{% endif %}">
   <div>
     <label>Flugzeugmuster ({{ aircraft|length }})</label>
     <select id="wb-ac">
@@ -66,6 +65,10 @@
     <span class="seg" id="wb-units"><button type="button" data-u="metric" class="on">metrisch</button><button type="button" data-u="imperial">imperial</button></span>
   </div>
 </div>
+{% if fr_full %}
+  <div class="fr-pactions"><button type="button" class="fr-btn" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
+  <div class="fr-pbody">
+{% endif %}
 
 <div id="wb-body" style="display:none">
   <div class="wb-grid">

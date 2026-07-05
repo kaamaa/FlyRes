@@ -1,14 +1,16 @@
 {% extends (app.user and app.request.query.get('embed') is null) ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
 {% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
 {% block ptitle %}VFR-Flugplanung{% endblock %}
 {% block pagehead %}{% endblock %}
 
 {% block content %}
 {% set fr_full = app.user and app.request.query.get('embed') is null %}
-{% if fr_full %}{{ ph.tabs([{label:'Flugplanung', icon:'plane'}]) }}<div class="fr-panel"><div class="fr-pbody">{% endif %}
+{% if fr_full %}{{ ph.tabs([{label:'Flugplanung', icon:'plane'}]) }}<div class="fr-panel">{% endif %}
 <style>
   .fp-params{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:16px;}
+  .fp-params.fr-phead{margin-bottom:0;}
   .fp-params label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
   .fp-params input{width:110px;padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;}
   .fp-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;overflow-x:auto;}
@@ -33,7 +35,7 @@
   .fp-top{display:flex;justify-content:flex-end;margin-bottom:12px;}
 
   @media print {
-    .fr-side,.fr-top,.fr-pubside,.fr-pub-top,.fp-params,.fp-hint,.wp-act,.no-print{display:none !important;}
+    .fr-side,.fr-top,.fr-tabrow,.fr-pactions,.fr-pubside,.fr-pub-top,.fp-params,.fp-hint,.wp-act,.no-print{display:none !important;}
     .fr-app,.fr-main,.fr-pubmain,.fr-embed{display:block !important;padding:0 !important;}
     .fr-body{padding:0 !important;}
     .fp-card{border:none !important;box-shadow:none !important;padding:0 !important;overflow:visible !important;}
@@ -53,16 +55,22 @@
   <div class="m" id="fp-print-meta"></div>
 </div>
 
+{% if not fr_full %}
 <div class="fp-top no-print">
   <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF speichern / drucken</button>
 </div>
+{% endif %}
 
-<div class="fp-params">
+<div class="fp-params{% if fr_full %} fr-phead{% endif %}">
   <div><label>TAS (kt)</label><input type="number" id="p-tas" value="{{ tas }}" min="1" step="1"></div>
   <div><label>Wind aus (°)</label><input type="number" id="p-wdir" value="{{ windDir }}" min="0" max="360" step="1"></div>
   <div><label>Wind (kt)</label><input type="number" id="p-wspd" value="{{ windSpeed }}" min="0" step="1"></div>
   <div><label>Verbrauch (l/h)</label><input type="number" id="p-fuel" value="{{ fuelRate }}" min="0" step="0.5"></div>
 </div>
+{% if fr_full %}
+  <div class="fr-pactions"><button type="button" class="fr-btn no-print" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
+  <div class="fr-pbody">
+{% endif %}
 
 <div class="fp-card">
   <table class="fp" id="fp-table">
