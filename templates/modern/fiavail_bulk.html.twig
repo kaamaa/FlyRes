@@ -1,10 +1,19 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
-{% block ptitle %}Mehrere Termine löschen{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
 {% set wdays = {1:'Mo', 2:'Di', 3:'Mi', 4:'Do', 5:'Fr', 6:'Sa', 7:'So'} %}
-<form class="fr-form" action="{{ path('modern_fiavail_bulk_delete') }}" method="post"
+  {{ ph.tabs([{label: 'Mehrere Termine löschen', icon: 'trash'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="fib_form" class="fr-btn del">{{ icon.ic('trash') }} Termine löschen</button>
+      <a class="fr-btn" href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="fib_form" class="fr-form" action="{{ path('modern_fiavail_bulk_delete') }}" method="post"
       onsubmit="return confirm('Wirklich alle passenden Schulungszeiten in diesem Zeitraum löschen? Dies kann nicht rückgängig gemacht werden.');">
 
   {% if errors %}
@@ -39,11 +48,9 @@
     </div>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn danger">Termine löschen</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">Abbrechen</a>
-  </div>
 </form>
 
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {{ include('modern/_calendarjs.html.twig') }}
 {% endblock %}

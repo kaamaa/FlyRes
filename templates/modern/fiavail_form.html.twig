@@ -1,9 +1,17 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}{{ isNew ? 'Neue Schulungszeit' : 'Schulungszeit bearbeiten' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
-<form class="fr-form" action="{{ path('modern_fiavail_save') }}" method="post">
+  {{ ph.tabs([{label: isNew ? 'Neue Schulungszeit' : 'Schulungszeit bearbeiten', icon: 'clock'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="fia_form" class="fr-btn">Speichern</button>
+      <a class="fr-btn" href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="fia_form" class="fr-form" action="{{ path('modern_fiavail_save') }}" method="post">
   <input type="hidden" name="id" value="{{ v.id }}">
 
   {% if errors %}
@@ -56,10 +64,6 @@
     <div class="fr-frow col"><textarea name="comment" class="fr-area" rows="2" placeholder="Optional (z. B. nur Platzrunden)">{{ v.comment }}</textarea></div>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Speichern</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">Abbrechen</a>
-  </div>
 </form>
 
 <script>
@@ -105,4 +109,6 @@
   }
 })();
 </script>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {% endblock %}
