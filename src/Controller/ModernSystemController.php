@@ -37,7 +37,52 @@ class ModernSystemController extends AbstractController
             'doctrine' => $this->collectDoctrineCache($em),
             'db'       => $this->collectDatabase($em),
             'lictype'  => $lictype,
+            'audit'    => $isGlobal ? $this->readAuditLog() : null,
         ]);
+    }
+
+    /**
+     * Liest die letzten Audit-Ereignisse aus den rotierenden Tagesdateien
+     * (var/log/audit-YYYY-MM-DD.log, ein JSON-Objekt je Zeile). Neueste zuerst.
+     *
+     * @return array<int,array{time:string,event:string,actor:?string,clientid:?int,ip:?string,details:array}>
+     */
+    private function readAuditLog(int $limit = 200): array
+    {
+        $dir = (string) $this->getParameter('kernel.logs_dir');
+        $files = glob($dir . '/audit-*.log') ?: [];
+        if (!$files && is_file($dir . '/audit.log')) {
+            $files = [$dir . '/audit.log'];   // Fallback: nicht-rotierende Datei
+        }
+        rsort($files);                        // neueste Datei (Datum im Namen) zuerst
+        $files = array_slice($files, 0, 3);   // hoechstens die 3 juengsten Tage
+        $files = array_reverse($files);       // chronologisch (aeltere Datei zuerst)
+
+        $lines = [];
+        foreach ($files as $f) {
+            $c = @file($f, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [];
+            $lines = array_merge($lines, $c);
+        }
+        $lines = array_slice($lines, -$limit);   // die letzten N chronologisch
+
+        $out = [];
+        foreach (array_reverse($lines) as $line) {   // neueste zuerst
+            $rec = json_decode($line, true);
+            if (!is_array($rec)) {
+                continue;
+            }
+            $ctx = is_array($rec['context'] ?? null) ? $rec['context'] : [];
+            $out[] = [
+                'time'     => substr(str_replace('T', ' ', (string) ($rec['datetime'] ?? '')), 0, 19),
+                'event'    => (string) ($rec['message'] ?? ''),
+                'actor'    => $ctx['actor'] ?? null,
+                'clientid' => $ctx['clientid'] ?? null,
+                'ip'       => $ctx['ip'] ?? null,
+                'details'  => array_diff_key($ctx, array_flip(['actor', 'clientid', 'ip'])),
+            ];
+        }
+
+        return $out;
     }
 
     /**
@@ -180,7 +225,7 @@ class ModernSystemController extends AbstractController
      * Erzeugt einen phpMyAdmin-aehnlichen Dump und streamt ihn, damit auch grosse
      * Tabellen (z. B. tools_airports) ohne Speicherprobleme laufen.
      */
-    public function backup(EntityManagerInterface $em): Response
+    public function backup(EntityManagerInterface $em, \App\Service\AuditLogger $audit): Response
     {
         // Der Dump umfasst die GESAMTE (mandantenuebergreifende) DB inkl. aller
         // Passwort-Hashes/E-Mails. ROLE_SYSTEM_ADMIN ist pro-Mandant -> hier
@@ -190,6 +235,9 @@ class ModernSystemController extends AbstractController
         $conn     = $em->getConnection();
         $dbName   = (string) $conn->getDatabase();
         $filename = 'flyres-backup-' . date('Y-m-d_H-i-s') . '.sql';
+
+        // Sensibler Vorgang: kompletter DB-Export -> protokollieren.
+        $audit->log('backup.download', ['file' => $filename]);
 
         $response = new StreamedResponse(static function () use ($conn, $dbName) {
             $out = fopen('php://output', 'wb');

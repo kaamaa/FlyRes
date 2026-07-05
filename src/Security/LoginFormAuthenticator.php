@@ -21,12 +21,14 @@ use App\Entity\FresAccounts;
 use Symfony\Component\Security\Http\EntryPoint\AuthenticationEntryPointInterface;
 use Symfony\Component\Security\Http\SecurityRequestAttributes;
 use App\LogonType;
+use App\Service\AuditLogger;
 
-class LoginFormAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface 
+class LoginFormAuthenticator extends AbstractAuthenticator implements AuthenticationEntryPointInterface
 {
     public function __construct(
         private UrlGeneratorInterface $urlGenerator,
-        private EntityManagerInterface $entityManager) 
+        private EntityManagerInterface $entityManager,
+        private AuditLogger $audit)
     {}
     
     /** 
@@ -67,6 +69,11 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
+      $u = $token->getUser();
+      $this->audit->log('login.success', [
+          'clientid' => ($u && method_exists($u, 'getClientid')) ? $u->getClientid() : null,
+      ], $token->getUserIdentifier());
+
       $session = $request->getSession();
       LogonType::defineStandalone($session);
       // Nach Login wohin? (früher: default_target_path bei form_login)
@@ -87,6 +94,14 @@ class LoginFormAuthenticator extends AbstractAuthenticator implements Authentica
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
+      $client   = (string) $request->request->get('client');
+      $clientid = $client !== '' ? Clients::GetClientIdByName($this->entityManager, $client) : null;
+      $this->audit->log('login.failure', [
+          'clientid' => $clientid,
+          'client'   => $client ?: null,
+          'reason'   => $exception->getMessageKey(),
+      ], (string) $request->request->get('_username'));
+
       // Fehler + eingegebenen Nutzernamen in der Session ablegen, damit der
       // LoginController sie via AuthenticationUtils::getLastAuthenticationError()
       // / getLastUsername() auslesen und im Formular anzeigen kann. Ohne diese

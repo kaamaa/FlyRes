@@ -6,6 +6,7 @@ monolog:
             #handler: nested
             handler: deduplicated
             excluded_http_codes: [404, 405]
+            channels: ["!audit"]   # Audit laeuft ueber den eigenen audit-Handler (nicht ueber die Fehler-Mail)
         deduplicated:
             type:    deduplication
             handler: swift
@@ -35,3 +36,11 @@ monolog:
             handler: deprecation
             max_level: info
             channels: ["php"]
+        # Eigener Audit-Kanal: rotierende Tagesdatei, IMMER geschrieben (nicht hinter fingers_crossed).
+        audit:
+            type: rotating_file
+            path: "%kernel.logs_dir%/audit.log"
+            level: info
+            channels: [audit]
+            max_files: 90
+            formatter: monolog.formatter.json

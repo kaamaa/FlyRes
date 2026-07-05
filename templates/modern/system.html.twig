@@ -44,6 +44,17 @@
   .lt-status.idle{background:#fdf2e3;color:var(--fr-amber);}
   .lt-status.none{background:#eef1f5;color:var(--fr-mut);}
   @media(max-width:640px){.lt-row{grid-template-columns:1fr;gap:6px;}.lt-status{justify-self:start;}}
+  /* Audit-Protokoll */
+  .aud-tbl{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border:1px solid var(--fr-line);border-radius:12px;overflow:hidden;}
+  .aud-tbl th,.aud-tbl td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--fr-bg);vertical-align:top;white-space:nowrap;}
+  .aud-tbl th{background:var(--fr-bg);color:var(--fr-mut);font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  .aud-tbl tr:last-child td{border-bottom:none;}
+  .aud-tbl td.det{white-space:normal;color:var(--fr-mut);font-size:11.5px;}
+  .aud-tbl .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--fr-ink);}
+  .aud-ev{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:#eef1f5;color:var(--fr-ink);}
+  .aud-ev.warn{background:#fdf2e3;color:var(--fr-amber);}
+  .aud-ev.bad{background:#fbe9e9;color:var(--fr-red);}
+  .aud-ev.ok{background:#e7f7ee;color:var(--fr-green);}
 </style>
 
 {{ ph.tabs([{label:'Diagnose', icon:'diag'}]) }}
@@ -150,6 +161,42 @@
       <div class="lt-status {{ t.aktiv > 0 ? 'on' : (t.neverUsed ? 'none' : 'idle') }}">{{ t.status }}</div>
     </div>
     {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------- Audit-Protokoll (nur Global-Admin) ---------- #}
+{% if audit is not null %}
+<div class="sys-sec">Audit-Protokoll</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Letzte sicherheitsrelevante Ereignisse (Login, Buchungen, Löschungen, Zugriffe) aus dem eigenen
+    <span class="sys-mono">audit</span>-Kanal (<span class="sys-mono">var/log/audit-*.log</span>, Aufbewahrung 90 Tage).
+  </div>
+  {% if audit is empty %}
+    <div class="sys-hint">Noch keine Ereignisse protokolliert.</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table class="aud-tbl">
+      <thead><tr><th>Zeit</th><th>Ereignis</th><th>Akteur</th><th>Mandant</th><th>IP</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for a in audit %}
+          {% set cls = 'aud-ev' %}
+          {% if a.event in ['login.failure', 'access.denied'] %}{% set cls = 'aud-ev bad' %}
+          {% elseif 'delete' in a.event or a.event in ['booking.cancel', 'backup.download'] %}{% set cls = 'aud-ev warn' %}
+          {% elseif a.event == 'login.success' %}{% set cls = 'aud-ev ok' %}{% endif %}
+          <tr>
+            <td class="mono">{{ a.time }}</td>
+            <td><span class="{{ cls }}">{{ a.event }}</span></td>
+            <td>{{ a.actor ?: '—' }}</td>
+            <td>{{ a.clientid ?: '—' }}</td>
+            <td class="mono">{{ a.ip ?: '—' }}</td>
+            <td class="det">{% for k, v in a.details %}<b>{{ k }}</b>&nbsp;{{ v is same as(true) ? 'ja' : (v is same as(false) ? 'nein' : v) }}{% if not loop.last %} · {% endif %}{% else %}—{% endfor %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
   {% endif %}
 </div>

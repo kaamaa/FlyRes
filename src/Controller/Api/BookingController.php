@@ -10,6 +10,7 @@ use App\Entities\Planes;
 use App\Entities\Users;
 use App\Controller\MailParamsTrait;
 use App\Entity\FresBooking;
+use App\Service\AuditLogger;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -141,7 +142,7 @@ class BookingController extends ApiController
     // -------------------------------------------------------------- Schreiben
 
     /** POST /api/bookings */
-    public function create(Request $request, MailerInterface $mailer, EntityManagerInterface $em): JsonResponse
+    public function create(Request $request, MailerInterface $mailer, EntityManagerInterface $em, AuditLogger $audit): JsonResponse
     {
         $user = $this->requirePilot();
         if ($user instanceof JsonResponse) {
@@ -176,13 +177,21 @@ class BookingController extends ApiController
         $em->flush();
         $this->sendBookingMail($em, $user, $mailer, $booking, null, $this->clientSource($request));
 
+        $audit->log('booking.create', [
+            'bookingId'  => $booking->getId(),
+            'aircraftId' => $booking->getAircraftid(),
+            'start'      => $booking->getItemstart()?->format('Y-m-d H:i'),
+            'end'        => $booking->getItemstop()?->format('Y-m-d H:i'),
+            'for'        => $createdFor,
+        ]);
+
         $d = Bookings::GetBookingDetails($em, $user->getClientid(), $booking->getId(), $user);
 
         return $this->json($this->serializeDetail($d), 201);
     }
 
     /** PATCH /api/bookings/{id} */
-    public function update(int $id, Request $request, MailerInterface $mailer, EntityManagerInterface $em): JsonResponse
+    public function update(int $id, Request $request, MailerInterface $mailer, EntityManagerInterface $em, AuditLogger $audit): JsonResponse
     {
         $user = $this->requirePilot();
         if ($user instanceof JsonResponse) {
@@ -224,13 +233,20 @@ class BookingController extends ApiController
         $em->flush();
         $this->sendBookingMail($em, $user, $mailer, $booking, $bookingOld, $this->clientSource($request));
 
+        $audit->log('booking.update', [
+            'bookingId'  => $booking->getId(),
+            'aircraftId' => $booking->getAircraftid(),
+            'start'      => $booking->getItemstart()?->format('Y-m-d H:i'),
+            'end'        => $booking->getItemstop()?->format('Y-m-d H:i'),
+        ]);
+
         $d = Bookings::GetBookingDetails($em, $user->getClientid(), $booking->getId(), $user);
 
         return $this->json($this->serializeDetail($d));
     }
 
     /** DELETE /api/bookings/{id} */
-    public function delete(int $id, Request $request, MailerInterface $mailer, EntityManagerInterface $em): JsonResponse
+    public function delete(int $id, Request $request, MailerInterface $mailer, EntityManagerInterface $em, AuditLogger $audit): JsonResponse
     {
         $user = $this->requirePilot();
         if ($user instanceof JsonResponse) {
@@ -250,6 +266,14 @@ class BookingController extends ApiController
 
         // Erst Stornierungs-Mail (mit den noch vorhandenen Daten), dann loeschen – wie DeleteAction.
         $this->sendBookingMail($em, $user, $mailer, null, $booking, $this->clientSource($request));
+
+        $audit->log('booking.cancel', [
+            'bookingId'  => $id,
+            'aircraftId' => $booking->getAircraftid(),
+            'start'      => $booking->getItemstart()?->format('Y-m-d H:i'),
+            'owner'      => $booking->getCreatedbyuserid(),
+        ]);
+
         Bookings::DeleteBooking($em, $user->getClientid(), $id);
 
         return $this->json(['success' => true]);

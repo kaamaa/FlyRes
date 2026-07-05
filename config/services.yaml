@@ -49,3 +49,8 @@ services:
     App\EventSubscriber\CsrfOriginSubscriber:
         arguments:
             $allowedOrigins: '%app.cors_allowed_origins%'
+
+    # Audit-Logger schreibt in den eigenen Monolog-Kanal "audit"
+    App\Service\AuditLogger:
+        arguments:
+            $logger: '@monolog.logger.audit'

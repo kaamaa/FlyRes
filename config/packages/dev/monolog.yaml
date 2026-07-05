@@ -1,9 +1,18 @@
 monolog:
     handlers:
+        # Eigener Audit-Kanal auch in dev, damit man Ereignisse lokal testen kann.
+        audit:
+            type: rotating_file
+            path: "%kernel.logs_dir%/audit.log"
+            level: info
+            channels: [audit]
+            max_files: 90
+            formatter: monolog.formatter.json
         main:
             type: stream
             action_level: debug
             path: "%kernel.logs_dir%/%kernel.environment%.log"
+            channels: ["!audit"]
         #main:
         #    type: fingers_crossed
         #    action_level: debug

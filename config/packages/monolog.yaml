@@ -1,6 +1,7 @@
 monolog:
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        - audit       # Sicherheits-/Audit-Ereignisse (Login, Buchungen, Loeschungen, Zugriffe)
 
 when@dev:
     monolog:

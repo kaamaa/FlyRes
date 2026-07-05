@@ -1201,7 +1201,7 @@ class ModernPreviewController extends AbstractController
     }
 
     /** Lizenz loeschen (Soft-Delete) – bildet LicenceController::DeleteAction nach. */
-    public function licenceDelete(MailerInterface $mailer, Environment $twig, Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function licenceDelete(MailerInterface $mailer, Environment $twig, Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_PILOT');
         $clientid = $loggedin_user->getClientid();
@@ -1226,6 +1226,7 @@ class ModernPreviewController extends AbstractController
         }
 
         Licenses::DeleteLicence($em, $clientid, $id);
+        $audit->log('licence.delete', ['licenceId' => $id, 'accountId' => $accountid]);
 
         return $this->redirectToRoute('modern_licences', $accountid !== $myId ? ['scope' => 'alle'] : []);
     }
@@ -1354,12 +1355,13 @@ class ModernPreviewController extends AbstractController
     }
 
     /** Lizenztyp loeschen (Soft-Delete: Status 'geloescht'). */
-    public function licenceTypeDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function licenceTypeDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $id = (int) $request->request->get('id', 0);
         if ($id) {
             Licensetype::SetLicensetypeToInactive($em, $id);
+            $audit->log('licencetype.delete', ['licenceTypeId' => $id]);
         }
 
         return $this->redirectToRoute('modern_licencetypes');
@@ -2132,7 +2134,7 @@ class ModernPreviewController extends AbstractController
     }
 
     /** Nutzer loeschen (Soft-Delete inkl. Buchungen – wie Users::DeleteUser). */
-    public function userDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function userDelete(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_SYSTEM_ADMIN');
         $clientid = $loggedin_user->getClientid();
@@ -2142,6 +2144,11 @@ class ModernPreviewController extends AbstractController
             $u = Users::GetUserObject($em, $clientid, $id);
             if ($u && (string) $u->getStatus() !== 'geloescht') {
                 Users::DeleteUser($em, $clientid, $id);
+                $audit->log('user.delete', [
+                    'targetUserId' => $id,
+                    'targetName'   => trim($u->getFirstname() . ' ' . $u->getLastname()),
+                    'targetLogin'  => (string) $u->getUsername(),
+                ]);
             }
         }
 
@@ -2289,7 +2296,7 @@ class ModernPreviewController extends AbstractController
     }
 
     /** Mandant (de)aktivieren. */
-    public function mandantToggle(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user): Response
+    public function mandantToggle(Request $request, EntityManagerInterface $em, UserInterface $loggedin_user, \App\Service\AuditLogger $audit): Response
     {
         $this->denyAccessUnlessGranted('ROLE_GLOBAL_ADMIN');
 
@@ -2298,6 +2305,10 @@ class ModernPreviewController extends AbstractController
         if ($c) {
             $c->setActive(!$c->isActive());
             $em->flush();
+            $audit->log('mandant.toggle', [
+                'mandantId' => $id,
+                'active'    => $c->isActive(),
+            ]);
         }
 
         return $this->redirectToRoute('modern_mandanten');
