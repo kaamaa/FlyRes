@@ -1,5 +1,6 @@
 {% extends 'modern/layout.html.twig' %}
 {% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
 {% block pagehead %}{% endblock %}
 
@@ -10,7 +11,16 @@
     {label:'Monat',   icon:'chart', href: path('modern_overview', {ansicht:'monat'}),  active: ansicht == 'monat'}
   ]) }}
   <div class="fr-panel">
-    {% if ansicht != 'tag' %}
+    {% if ansicht == 'tag' %}
+    <div class="fr-phead">
+      <div class="fr-ctrl dt fr-date" id="dayPick">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <span class="fr-datedisp"></span>
+        <input type="hidden" id="dayDate" value="{{ today }}">
+        <div class="fr-calpop" hidden></div>
+      </div>
+    </div>
+    {% else %}
     <div class="fr-phead">
       <span class="fr-pernav">
         <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
@@ -26,21 +36,11 @@
 
   {# ====== Tagesansicht (Stunden) ====== #}
   <div class="fr-daypanel">
-    <div class="fr-dayhdr2">
-      <span class="t">📅 Tag · Stundenraster</span>
-      <div class="fr-ctrl dt fr-date" id="dayPick">
-        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
-        <span class="fr-datedisp"></span>
-        <input type="hidden" id="dayDate" value="{{ today }}">
-        <div class="fr-calpop" hidden></div>
-      </div>
-    </div>
-
-    <div class="fr-sechdr"><span class="t">🛩️ Flugzeuge</span></div>
+    <div class="fr-sechdr"><span class="t">{{ icon.ic('plane') }} Flugzeuge</span></div>
     <div id="dayAc" class="fr-avbox"><div class="fr-avhint">Lädt…</div></div>
 
     <button type="button" class="fr-sechdr fr-sectoggle" id="dayFiToggle" aria-expanded="false">
-      <span class="t">🕘 Fluglehrer · spezifische Verfügbarkeit</span>
+      <span class="t">{{ icon.ic('clock') }} Fluglehrer · spezifische Verfügbarkeit</span>
       <span class="ar">◀</span>
     </button>
     <div id="dayFiBody" class="fr-secbody" hidden>
