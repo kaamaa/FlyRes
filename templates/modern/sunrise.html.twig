@@ -46,11 +46,9 @@
   <div><label for="form_Airport_Name">Flugplatz</label>{{ form_widget(form.Airport_Name) }}</div>
   <div><label for="form_SRSSMonth">Monat</label>{{ form_widget(form.SRSSMonth) }}</div>
   <div><label for="form_TimeZone_Mode">Zeitform</label>{{ form_widget(form.TimeZone_Mode) }}</div>
-  {% if not fr_full %}<div><button type="submit" class="fr-btn">Anzeigen</button></div>{% endif %}
   {{ form_rest(form) }}
 </form>
 {% if fr_full %}
-  <div class="fr-pactions"><button type="submit" form="srssForm" class="fr-btn">{{ icon.ic('clock') }} Anzeigen</button></div>
   <div class="fr-pbody">
 {% endif %}
 
