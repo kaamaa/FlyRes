@@ -1325,8 +1325,14 @@ class Bookings
           ->from($parameter['mail_from'])
           ->to($mail);
         if ($attachIcs) {
-          $ics = self::buildBookingIcs($icsStart, $icsEnd, $icsUid, $icsSeq, $icsMethod, $icsCancel, $icsSummary, $icsLoc, $icsDesc, $icsOrganizer, $mail);
-          $message->attach($ics, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);
+          // .ics ist optional und darf den Mailversand/die Buchung NIE abbrechen
+          // (\Throwable faengt auch Error, z. B. bei unvollstaendigem Deploy).
+          try {
+            $ics = self::buildBookingIcs($icsStart, $icsEnd, $icsUid, $icsSeq, $icsMethod, $icsCancel, $icsSummary, $icsLoc, $icsDesc, $icsOrganizer, $mail);
+            $message->attach($ics, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);
+          } catch (\Throwable $e) {
+            @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Anhang fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
+          }
         }
         try {
          $mailer->send($message);
