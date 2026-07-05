@@ -1284,6 +1284,30 @@ class Bookings
     // Doppelte Array-Einträge löschen
     $mails = array_unique($mails);
 
+    // --- Kalender-Termin (.ics) vorbereiten: gleiche UID pro Buchung -> Aenderungen
+    //     aktualisieren denselben Termin; Storno (METHOD:CANCEL) entfernt ihn. ---
+    $refBooking = $newbooking ?: $oldbooking;
+    $icsMethod  = $newbooking ? 'REQUEST' : 'CANCEL';   // neu/Aenderung -> REQUEST, Storno -> CANCEL
+    $icsCancel  = !$newbooking;
+    $icsStart   = $refBooking ? $refBooking->getItemstart() : null;
+    $icsEnd     = $refBooking ? $refBooking->getItemstop()  : null;
+    $attachIcs  = $refBooking && $icsStart instanceof \DateTime && $icsEnd instanceof \DateTime;
+    if ($attachIcs) {
+      // SEQUENCE muss je Aenderung steigen; Storno erfolgt nach der letzten Aenderung -> now.
+      $icsSeq = $icsCancel
+        ? time()
+        : ($refBooking->getChangeddate() instanceof \DateTime ? $refBooking->getChangeddate()->getTimestamp() : time());
+      $icsUid = 'booking-' . $refBooking->getId() . '@flugschule-worms.de';
+      $icsSummary = trim(((string) ($data['primary_flugzeug'] ?? '')) . ' · ' . ((string) ($data['primary_flightpurpose'] ?? '')), " ·");
+      $icsLoc  = (string) ($data['primary_airfield'] ?? '');
+      $descParts = array();
+      if (trim((string) ($data['primary_ReservedForUser'] ?? '')) !== '')   { $descParts[] = 'Pilot: ' . $data['primary_ReservedForUser']; }
+      if (trim((string) ($data['primary_flightinstructor'] ?? '')) !== '')   { $descParts[] = 'Fluglehrer: ' . $data['primary_flightinstructor']; }
+      if (trim((string) ($data['primary_description'] ?? '')) !== '')        { $descParts[] = (string) $data['primary_description']; }
+      $icsDesc = implode("\n", $descParts);
+      $icsOrganizer = (string) ($parameter['mail_from'] ?? 'info@flugschule-worms.de');
+    }
+
     // Diagnose-/Fehler-Log an fester Stelle (immer auffindbar).
     $mailLog = dirname(__DIR__, 2) . '/var/log/mailerror.log';
     $sent = 0; $fail = 0; $valid = array();
@@ -1300,6 +1324,10 @@ class Bookings
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])
           ->to($mail);
+        if ($attachIcs) {
+          $ics = self::buildBookingIcs($icsStart, $icsEnd, $icsUid, $icsSeq, $icsMethod, $icsCancel, $icsSummary, $icsLoc, $icsDesc, $icsOrganizer, $mail);
+          $message->attach($ics, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);
+        }
         try {
          $mailer->send($message);
          $sent++;
@@ -1322,5 +1350,45 @@ class Bookings
     @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  ' . $type . ': '
       . count($valid) . ' Empfaenger [' . implode(', ', $valid) . '], '
       . $sent . ' gesendet, ' . $fail . ' Fehler' . "\n", FILE_APPEND);
+  }
+
+  /**
+   * Baut einen iCalendar-Termin (VEVENT) fuer eine Reservierung. Gleiche UID pro
+   * Buchung + steigende SEQUENCE -> das Kalenderprogramm aktualisiert denselben
+   * Eintrag; METHOD:CANCEL + STATUS:CANCELLED entfernt ihn. Zeiten in UTC.
+   */
+  private static function buildBookingIcs(\DateTime $start, \DateTime $end, string $uid, int $seq, string $method, bool $cancelled, string $summary, string $location, string $description, string $organizerMail, string $attendeeMail): string
+  {
+    $esc = static function (string $s): string {
+      return str_replace(array("\\", ";", ",", "\r\n", "\n", "\r"), array("\\\\", "\\;", "\\,", "\\n", "\\n", "\\n"), $s);
+    };
+    $utc = new \DateTimeZone('UTC');
+    $fmt = static function (\DateTime $d) use ($utc): string { $c = clone $d; $c->setTimezone($utc); return $c->format('Ymd\THis\Z'); };
+    $now = (new \DateTime('now'))->setTimezone($utc)->format('Ymd\THis\Z');
+
+    $lines = array(
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Flugschule Worms//FlyRes//DE',
+      'CALSCALE:GREGORIAN',
+      'METHOD:' . $method,
+      'BEGIN:VEVENT',
+      'UID:' . $uid,
+      'SEQUENCE:' . $seq,
+      'DTSTAMP:' . $now,
+      'DTSTART:' . $fmt($start),
+      'DTEND:' . $fmt($end),
+      'SUMMARY:' . $esc($summary !== '' ? $summary : 'Reservierung'),
+      'LOCATION:' . $esc($location),
+      'DESCRIPTION:' . $esc($description),
+      'ORGANIZER;CN=Flugschule Worms:mailto:' . $organizerMail,
+      'ATTENDEE;CN=' . $esc($attendeeMail) . ';ROLE=REQ-PARTICIPANT;PARTSTAT=' . ($cancelled ? 'DECLINED' : 'ACCEPTED') . ';RSVP=FALSE:mailto:' . $attendeeMail,
+      'STATUS:' . ($cancelled ? 'CANCELLED' : 'CONFIRMED'),
+      'TRANSP:OPAQUE',
+      'END:VEVENT',
+      'END:VCALENDAR',
+    );
+
+    return implode("\r\n", $lines) . "\r\n";
   }
 }
