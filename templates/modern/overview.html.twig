@@ -109,11 +109,15 @@
       var date = dInp.value; if (!date) return;
       if (!FI.length) { fiBox.innerHTML = '<div class="fr-avhint">Keine Fluglehrer.</div>'; return; }
       fiBox.innerHTML = '<div class="fr-avhint">Lädt…</div>';
-      Promise.all(FI.map(function (f) { return get('date=' + date + '&aircraft=0&fi=' + f.id); })).then(function (res) {
-        var bounds = null, rows = '';
-        res.forEach(function (d, i) { if (!d) return; if (!bounds) bounds = [toMin(d.dayStart), toMin(d.dayEnd)]; rows += '<div class="fr-avrow">' + lab(FI[i].name, '') + stateBar(d.instructorSegments, bounds[0], bounds[1]) + '</div>'; });
-        fiBox.innerHTML = bounds ? rows + axis(bounds[0], bounds[1]) : '<div class="fr-avhint">Keine Daten für diesen Tag.</div>';
-      });
+      fetch('/api/comparematrix?kind=fi&date=' + date, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
+        .then(function (data) {   // EIN Request für alle Fluglehrer
+          if (!data || !data.rows) { fiBox.innerHTML = '<div class="fr-avhint">Keine Daten für diesen Tag.</div>'; return; }
+          var bounds = [toMin(data.dayStart), toMin(data.dayEnd)], byId = {}, rows = '';
+          data.rows.forEach(function (r) { byId[r.id] = r.segments; });
+          FI.forEach(function (f) { rows += '<div class="fr-avrow">' + lab(f.name, '') + stateBar(byId[f.id] || [], bounds[0], bounds[1]) + '</div>'; });
+          fiBox.innerHTML = rows + axis(bounds[0], bounds[1]);
+        });
     }
     pick.addEventListener('datechange', function () { loadAc(); if (!fiB.hidden) loadFi(); });
     function setFi(open) { fiB.hidden = !open; fiT.setAttribute('aria-expanded', open ? 'true' : 'false'); fiAr.textContent = open ? '▼' : '◀'; if (open) loadFi(); }
