@@ -13,20 +13,24 @@
   <div class="fr-panel">
     {% if ansicht == 'tag' %}
     <div class="fr-phead">
-      <div class="fr-ctrl dt fr-date" id="dayPick">
-        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
-        <span class="fr-datedisp"></span>
-        <input type="hidden" id="dayDate" value="{{ today }}">
-        <div class="fr-calpop" hidden></div>
+      <div class="fr-fl">Datum
+        <div class="fr-ctrl dt fr-date" id="dayPick">
+          <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+          <span class="fr-datedisp"></span>
+          <input type="hidden" id="dayDate" value="{{ today }}">
+          <div class="fr-calpop" hidden></div>
+        </div>
       </div>
     </div>
     {% else %}
     <div class="fr-phead">
-      <span class="fr-pernav">
-        <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
-        <b>{{ label }}</b>
-        <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
-      </span>
+      <div class="fr-fl">Zeitraum
+        <span class="fr-pernav">
+          <a href="{{ path('modern_overview', {ansicht: ansicht, off: prevOff}) }}">‹</a>
+          <b>{{ label }}</b>
+          <a href="{{ path('modern_overview', {ansicht: ansicht, off: nextOff}) }}">›</a>
+        </span>
+      </div>
       <span class="fr-phspring"></span>
       <span class="fr-scale">frei<i class="fr-scalebar"></i>ausgebucht</span>
     </div>

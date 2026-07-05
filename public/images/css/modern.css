@@ -75,6 +75,12 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-phead .fr-search{height:38px;padding:0 12px;border-color:#c9d3e0;}
 .fr-phead .fr-btn{height:38px;}
 .fr-phead .fr-clear{align-self:flex-end;padding-bottom:10px;}
+/* Navigation & Datum als Filter-Feld (Variante A) */
+.fr-phead .fr-ctrl.dt{height:38px;}
+.fr-fl .fr-pernav{border:1px solid #c9d3e0;border-radius:9px;height:38px;padding:0 5px;gap:4px;}
+.fr-fl .fr-pernav a{border:none;width:28px;height:28px;}
+.fr-fl .fr-scale{padding-bottom:0;}
+.fr-phead .fr-scale{align-self:flex-end;padding-bottom:11px;}
 .fr-umfang{display:inline-flex;border:1px solid var(--fr-line);border-radius:9px;overflow:hidden;}
 .fr-umfang label{font-size:12.5px;font-weight:600;color:#566;padding:8px 13px;cursor:pointer;}
 .fr-umfang label.on{background:var(--fr-blue);color:#fff;}
