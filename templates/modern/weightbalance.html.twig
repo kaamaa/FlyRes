@@ -45,7 +45,29 @@
   .wb-src{font-size:11px;color:var(--fr-mut);margin-top:6px;}
   /* CG-Diagramm: Text nicht markierbar (Kopierschutz). */
   #wb-env, #wb-env svg, #wb-env text{-webkit-user-select:none;-moz-user-select:none;user-select:none;}
-  @media print{ .fr-side,.fr-top{display:none!important;} .fr-app,.fr-main{display:block!important;} .fr-body{padding:0!important;} .wb-grid{grid-template-columns:1fr;} .wb-card{border:none;} table.wb input{border:none;background:transparent;} }
+  /* Druck-Kopf nur beim Drucken sichtbar */
+  .wb-phead{display:none;font-size:13px;font-weight:700;color:var(--fr-ink);margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--fr-blue);}
+  .wb-phead small{font-weight:600;color:var(--fr-mut);}
+  @page{size:A4 portrait;margin:11mm;}
+  @media print{
+    .fr-side,.fr-top,.fr-tabrow,.fr-pactions,.wb-top{display:none!important;}
+    .fr-app,.fr-main{display:block!important;} .fr-body{padding:0!important;}
+    .fr-panel{border:none!important;box-shadow:none!important;border-radius:0!important;}
+    .fr-pbody{padding:0!important;}
+    .wb-phead{display:block!important;}
+    #wb-body{font-size:10.5px;}
+    .wb-grid{grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
+    .wb-card{border:1px solid #bbb;padding:8px 10px;page-break-inside:avoid;}
+    table.wb{font-size:10px;} table.wb th,table.wb td{padding:3px 6px;}
+    table.wb input{border:none;background:transparent;width:auto;padding:0;text-align:right;font-weight:700;}
+    .wb-kpi{gap:6px;margin-bottom:6px;} .wb-kpi .k{padding:6px 9px;min-width:78px;}
+    .wb-kpi .v{font-size:16px;} .wb-kpi .t{font-size:9px;margin-top:2px;}
+    .verdict{font-size:12px;padding:5px 10px;margin-bottom:7px;}
+    #wb-env{page-break-inside:avoid;} #wb-env svg{max-width:100%;height:auto;max-height:80mm;}
+    .wb-warn li{font-size:10px;padding:1px 0;}
+    .wb-note{font-size:8.5px;margin-top:7px;padding-top:5px;} .wb-src{font-size:8.5px;}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
   @media (max-width:900px){ .wb-grid{grid-template-columns:1fr;} }
 </style>
 
@@ -71,6 +93,7 @@
 {% endif %}
 
 <div id="wb-body" style="display:none">
+  <div class="wb-phead" id="wb-phead"></div>
   <div class="wb-grid">
     <div class="wb-card">
       <table class="wb" id="wb-load"></table>
@@ -146,6 +169,13 @@
     document.getElementById('wb-verdict').innerHTML = '<div class="verdict ' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? '✓ Innerhalb der Grenzen' : '✕ Grenzen verletzt') + '</div>';
     document.getElementById('wb-warn').innerHTML = (r.warnings || []).map(function (w) { return '<li>⚠ ' + esc(w) + '</li>'; }).join('');
     document.getElementById('wb-env').innerHTML = r.svg || '';
+
+    var acOpt = acSel.options[acSel.selectedIndex];
+    document.getElementById('wb-phead').innerHTML = 'Weight &amp; Balance · ' + esc(acOpt ? acOpt.text : '') +
+      ' <small>· Leermasse ' + esc(emEl.value || '0') + ' ' + r.units.mass +
+      ' · Leerarm ' + esc(eaEl.value || '0') + ' ' + r.units.arm +
+      ' · Trip-Fuel ' + esc(tripEl.value || '0') + ' ' + r.units.vol +
+      ' · Stand ' + new Date().toLocaleDateString('de-DE') + '</small>';
   }
 
   function schedule() { clearTimeout(timer); timer = setTimeout(function () { post(true).then(function (r) { if (r) render(r); }); }, 200); }
