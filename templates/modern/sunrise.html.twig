@@ -1,14 +1,16 @@
 {% extends (app.user and app.request.query.get('embed') is null) ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
 {% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
 
 {% block ptitle %}Sonnenaufgang / Untergang{% endblock %}
 {% block pagehead %}{% endblock %}
 
 {% block content %}
 {% set fr_full = app.user and app.request.query.get('embed') is null %}
-{% if fr_full %}{{ ph.tabs([{label:'Sonnenaufgang / Sonnenuntergang', icon:'clock'}]) }}<div class="fr-panel"><div class="fr-pbody">{% endif %}
+{% if fr_full %}{{ ph.tabs([{label:'Sonnenaufgang / Sonnenuntergang', icon:'clock'}]) }}<div class="fr-panel">{% endif %}
 <style>
   .srss-form{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px;}
+  .srss-form.fr-phead{margin-bottom:0;}
   .srss-form label{display:block;font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
   .srss-form select,.srss-form input{padding:9px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;font:inherit;background:#fff;min-width:210px;}
   .srss-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:16px 18px;overflow-x:auto;-webkit-user-select:none;-moz-user-select:none;user-select:none;}
@@ -39,14 +41,18 @@
   .srss-legend i{display:inline-block;width:14px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
 </style>
 
-<form id="srssForm" class="srss-form" method="post" action="{{ path('modern_sunrise', app.request.query.all) }}">
+<form id="srssForm" class="srss-form{% if fr_full %} fr-phead{% endif %}" method="post" action="{{ path('modern_sunrise', app.request.query.all) }}">
   <div><label for="form_Country_Name">Land</label>{{ form_widget(form.Country_Name) }}</div>
   <div><label for="form_Airport_Name">Flugplatz</label>{{ form_widget(form.Airport_Name) }}</div>
   <div><label for="form_SRSSMonth">Monat</label>{{ form_widget(form.SRSSMonth) }}</div>
   <div><label for="form_TimeZone_Mode">Zeitform</label>{{ form_widget(form.TimeZone_Mode) }}</div>
-  <div><button type="submit" class="fr-btn">Anzeigen</button></div>
+  {% if not fr_full %}<div><button type="submit" class="fr-btn">Anzeigen</button></div>{% endif %}
   {{ form_rest(form) }}
 </form>
+{% if fr_full %}
+  <div class="fr-pactions"><button type="submit" form="srssForm" class="fr-btn">{{ icon.ic('clock') }} Anzeigen</button></div>
+  <div class="fr-pbody">
+{% endif %}
 
 {% if title %}<div class="srss-title">{{ title }}</div>{% endif %}
 {% if subtitle %}<div class="srss-sub">{{ subtitle }}</div>{% endif %}
