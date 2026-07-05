@@ -71,17 +71,23 @@
 </div>
 <div class="fr-panel">
 
-<div class="fr-phead fiw-bar" id="wbar" {{ view0 == 'liste' ? 'style="display:none"' : '' }}>
-  <a class="navbtn" id="navPrev" href="{{ path('modern_fiweek', {week: prevWeek, tab: tab0}) }}" title="Vorige Woche">‹</a>
-  <span class="wk">{{ weekLabel }}</span>
-  <a class="navbtn" id="navNext" href="{{ path('modern_fiweek', {week: nextWeek, tab: tab0}) }}" title="Nächste Woche">›</a>
-  <input type="date" id="weekPick" value="{{ monday }}" title="Woche wählen">
-  <span style="flex:1"></span>
-  <label>Sortieren:</label>
-  <select id="sortsel">
-    <option value="early">Frühester freier Termin</option>
-    <option value="name">Name (A–Z)</option>
-  </select>
+<div class="fr-phead" id="wbar" {{ view0 == 'liste' ? 'style="display:none"' : '' }}>
+  <div class="fr-fl">Woche
+    <span class="fr-pernav">
+      <a id="navPrev" href="{{ path('modern_fiweek', {week: prevWeek, tab: tab0}) }}" title="Vorige Woche">‹</a>
+      <b class="wk">{{ weekLabel }}</b>
+      <a id="navNext" href="{{ path('modern_fiweek', {week: nextWeek, tab: tab0}) }}" title="Nächste Woche">›</a>
+    </span>
+  </div>
+  <label class="fr-fl">Woche wählen
+    <input type="date" id="weekPick" value="{{ monday }}">
+  </label>
+  <label class="fr-fl">Sortieren
+    <select id="sortsel">
+      <option value="early">Frühester freier Termin</option>
+      <option value="name">Name (A–Z)</option>
+    </select>
+  </label>
 </div>
 
   {% if isFi %}
