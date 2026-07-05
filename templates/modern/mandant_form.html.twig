@@ -1,9 +1,17 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}{{ isNew ? 'Neuer Mandant' : 'Mandant bearbeiten' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
-<form class="fr-form" action="{{ path('modern_mandant_save') }}" method="post">
+  {{ ph.tabs([{label: isNew ? 'Neuer Mandant' : 'Mandant bearbeiten', icon: 'building'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="mnd_form" class="fr-btn">Mandant speichern</button>
+      <a class="fr-btn" href="{{ path('modern_mandanten') }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="mnd_form" class="fr-form" action="{{ path('modern_mandant_save') }}" method="post">
   <input type="hidden" name="id" value="{{ v.id }}">
 
   {% if errors %}
@@ -37,9 +45,7 @@
     </div>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Mandant speichern</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_mandanten') }}">Abbrechen</a>
-  </div>
 </form>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {% endblock %}

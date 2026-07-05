@@ -1,6 +1,7 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 
-{% block ptitle %}{{ isNew ? 'Neuer Pinnwandeintrag' : 'Pinnwandeintrag bearbeiten' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
 <style>
@@ -16,7 +17,15 @@
   .fr-editor ul,.fr-editor ol{margin:6px 0;padding-left:20px;} .fr-editor li{margin:2px 0;}
   .fr-editor a{color:var(--fr-blue,#3b6ea5);} .fr-editor mark{background:#fff3bf;padding:0 2px;border-radius:2px;}
 </style>
-<form class="fr-form" action="{{ path('modern_note_save') }}" method="post">
+
+  {{ ph.tabs([{label: isNew ? 'Neuer Pinnwandeintrag' : 'Pinnwandeintrag bearbeiten', icon: 'pin'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="note_form" class="fr-btn">Eintrag speichern</button>
+      <a class="fr-btn" href="{{ path('modern_notes') }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="note_form" class="fr-form" action="{{ path('modern_note_save') }}" method="post">
   <input type="hidden" name="id" value="{{ v.id }}">
 
   {% if errors %}
@@ -78,10 +87,6 @@
     </div>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Eintrag speichern</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_notes') }}">Abbrechen</a>
-  </div>
 </form>
 
 <script>
@@ -149,4 +154,6 @@
   });
 })();
 </script>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {% endblock %}
