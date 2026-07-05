@@ -1,11 +1,23 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 {% import 'modern/_icons.html.twig' as icon %}
 
-{% block ptitle %}{{ isNew ? 'Neuer Nutzer' : 'Nutzer bearbeiten' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
 {% set mailOpts = v.isAdmin ? {'keine': 0, 'nur eigene': 1, 'alle': 2} : {'nein': 0, 'ja': 1} %}
-<form class="fr-form" action="{{ path('modern_user_save') }}" method="post" autocomplete="off">
+  {{ ph.tabs([{label: isNew ? 'Neuer Nutzer' : 'Nutzer bearbeiten', icon: 'users'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="usr_form" class="fr-btn">Nutzer speichern</button>
+      <a class="fr-btn" href="{{ path('modern_users') }}">Abbrechen</a>
+      {% if not isNew %}
+      <span class="fr-pgap"></span>
+      <button type="submit" form="u_delform" class="fr-btn del">{{ icon.ic('trash') }} Nutzer löschen</button>
+      {% endif %}
+    </div>
+    <div class="fr-pbody">
+<form id="usr_form" class="fr-form" action="{{ path('modern_user_save') }}" method="post" autocomplete="off">
   <input type="hidden" name="id" value="{{ v.id }}">
 
   {% if errors %}
@@ -95,13 +107,6 @@
   </div>
   {% endif %}
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Nutzer speichern</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_users') }}">Abbrechen</a>
-    {% if not isNew %}
-      <button type="submit" class="fr-btn del" style="margin-left:12px;" form="u_delform">{{ icon.ic('trash') }} Nutzer löschen</button>
-    {% endif %}
-  </div>
 </form>
 
 {% if not isNew %}
@@ -109,4 +114,6 @@
   <input type="hidden" name="id" value="{{ v.id }}">
 </form>
 {% endif %}
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {% endblock %}

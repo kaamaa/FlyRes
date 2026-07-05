@@ -1,10 +1,22 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
 {% import 'modern/_icons.html.twig' as icon %}
 
-{% block ptitle %}{{ isNew ? 'Neuer Lizenztyp' : 'Lizenztyp bearbeiten' }}{% endblock %}
+{% block pagehead %}{% endblock %}
 
 {% block content %}
-<form class="fr-form" action="{{ path('modern_licencetype_save') }}" method="post">
+  {{ ph.tabs([{label: isNew ? 'Neuer Lizenztyp' : 'Lizenztyp bearbeiten', icon: 'award'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="lt_form" class="fr-btn">Lizenztyp speichern</button>
+      <a class="fr-btn" href="{{ path('modern_licencetypes') }}">Abbrechen</a>
+      {% if not isNew %}
+      <span class="fr-pgap"></span>
+      <button type="submit" form="lt_delform" class="fr-btn del">{{ icon.ic('trash') }} Lizenztyp löschen</button>
+      {% endif %}
+    </div>
+    <div class="fr-pbody">
+<form id="lt_form" class="fr-form" action="{{ path('modern_licencetype_save') }}" method="post">
   <input type="hidden" name="id" value="{{ v.id }}">
 
   {% if errors %}
@@ -44,16 +56,13 @@
     </div>
   </div>
 
-  <div class="fr-formfoot">
-    <button type="submit" class="fr-btn">Lizenztyp speichern</button>
-    <a class="fr-btn fr-cancel" href="{{ path('modern_licencetypes') }}">Abbrechen</a>
-  </div>
 </form>
 
 {% if not isNew %}
-<form method="post" action="{{ path('modern_licencetype_delete') }}" onsubmit="return confirm('Diesen Lizenztyp wirklich löschen?');" style="margin:14px 16px 0;">
+<form id="lt_delform" method="post" action="{{ path('modern_licencetype_delete') }}" onsubmit="return confirm('Diesen Lizenztyp wirklich löschen?');">
   <input type="hidden" name="id" value="{{ v.id }}">
-  <button type="submit" class="fr-btn del">{{ icon.ic('trash') }} Lizenztyp löschen</button>
 </form>
 {% endif %}
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
 {% endblock %}
