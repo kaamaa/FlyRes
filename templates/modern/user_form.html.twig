@@ -1,4 +1,5 @@
 {% extends 'modern/layout.html.twig' %}
+{% import 'modern/_icons.html.twig' as icon %}
 
 {% block ptitle %}{{ isNew ? 'Neuer Nutzer' : 'Nutzer bearbeiten' }}{% endblock %}
 
@@ -98,7 +99,7 @@
     <button type="submit" class="fr-btn">Nutzer speichern</button>
     <a class="fr-btn fr-cancel" href="{{ path('modern_users') }}">Abbrechen</a>
     {% if not isNew %}
-      <button type="submit" class="fr-btn danger" style="margin-left:12px;" form="u_delform">Nutzer löschen</button>
+      <button type="submit" class="fr-btn del" style="margin-left:12px;" form="u_delform">{{ icon.ic('trash') }} Nutzer löschen</button>
     {% endif %}
   </div>
 </form>
