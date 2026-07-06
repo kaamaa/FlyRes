@@ -11,7 +11,7 @@
 
 parameters:
     locale: de_DE
-    app_version: '7.0'
+    app_version: '7.4'
     program_version: 'FlyRes %app_version%'
     mail_from: '%env(MAIL_FROM)%'
     # Vertrauenswuerdige Fremd-Origins fuer CORS (Joomla-Einbettung der FlyRes-Subdomain).
