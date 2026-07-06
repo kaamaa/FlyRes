@@ -1308,10 +1308,27 @@ class Bookings
       if (trim((string) ($data['primary_description'] ?? '')) !== '')        { $descParts[] = (string) $data['primary_description']; }
       $icsDesc = implode("\n", $descParts);
       $icsOrganizer = (string) ($parameter['mail_from'] ?? 'info@flugschule-worms.de');
+      // Benannte Teilnehmer: Pilot (Ersteller) + Fluglehrer (falls gebucht).
+      // Organizer bleibt die Schule (= Absender), damit Kalender-Updates ueberall greifen.
+      $icsPilotMail = trim((string) ($newbooking ? $mailNewOwner : $mailOldOwner));
+      $icsFiMail    = trim((string) ($newbooking ? $mailNewFI : $mailOldFI));
+      $icsAttendees = array();
+      if ($icsPilotMail !== '') { $icsAttendees[] = array('name' => (string) ($data['primary_ReservedForUser'] ?? ''), 'mail' => $icsPilotMail); }
+      if ($icsFiMail !== '')    { $icsAttendees[] = array('name' => (string) ($data['primary_flightinstructor'] ?? ''), 'mail' => $icsFiMail); }
     }
 
     // Diagnose-/Fehler-Log an fester Stelle (immer auffindbar).
     $mailLog = dirname(__DIR__, 2) . '/var/log/mailerror.log';
+
+    // .ics EINMAL bauen (fuer alle Empfaenger identisch); Fehler nie fatal.
+    $icsBody = null;
+    if ($attachIcs) {
+      try {
+        $icsBody = self::buildBookingIcs($icsStart, $icsEnd, $icsUid, $icsSeq, $icsMethod, $icsCancel, $icsSummary, $icsLoc, $icsDesc, $icsOrganizer, $icsAttendees);
+      } catch (\Throwable $e) {
+        @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Erzeugung fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
+      }
+    }
     $sent = 0; $fail = 0; $valid = array();
 
     //Mails versenden
@@ -1326,12 +1343,10 @@ class Bookings
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])
           ->to($mail);
-        if ($attachIcs) {
-          // .ics ist optional und darf den Mailversand/die Buchung NIE abbrechen
-          // (\Throwable faengt auch Error, z. B. bei unvollstaendigem Deploy).
+        if ($icsBody !== null) {
+          // .ics ist optional und darf den Mailversand/die Buchung NIE abbrechen.
           try {
-            $ics = self::buildBookingIcs($icsStart, $icsEnd, $icsUid, $icsSeq, $icsMethod, $icsCancel, $icsSummary, $icsLoc, $icsDesc, $icsOrganizer, $mail);
-            $message->attach($ics, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);
+            $message->attach($icsBody, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);
           } catch (\Throwable $e) {
             @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Anhang fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
           }
@@ -1365,7 +1380,7 @@ class Bookings
    * Buchung + steigende SEQUENCE -> das Kalenderprogramm aktualisiert denselben
    * Eintrag; METHOD:CANCEL + STATUS:CANCELLED entfernt ihn. Zeiten in UTC.
    */
-  private static function buildBookingIcs(\DateTime $start, \DateTime $end, string $uid, int $seq, string $method, bool $cancelled, string $summary, string $location, string $description, string $organizerMail, string $attendeeMail): string
+  private static function buildBookingIcs(\DateTime $start, \DateTime $end, string $uid, int $seq, string $method, bool $cancelled, string $summary, string $location, string $description, string $organizerMail, array $attendees): string
   {
     $esc = static function (string $s): string {
       return str_replace(array("\\", ";", ",", "\r\n", "\n", "\r"), array("\\\\", "\\;", "\\,", "\\n", "\\n", "\\n"), $s);
@@ -1390,12 +1405,20 @@ class Bookings
       'LOCATION:' . $esc($location),
       'DESCRIPTION:' . $esc($description),
       'ORGANIZER;CN=Flugschule Worms:mailto:' . $organizerMail,
-      'ATTENDEE;CN=' . $esc($attendeeMail) . ';ROLE=REQ-PARTICIPANT;PARTSTAT=' . ($cancelled ? 'DECLINED' : 'ACCEPTED') . ';RSVP=FALSE:mailto:' . $attendeeMail,
-      'STATUS:' . ($cancelled ? 'CANCELLED' : 'CONFIRMED'),
-      'TRANSP:OPAQUE',
-      'END:VEVENT',
-      'END:VCALENDAR',
     );
+    // Benannte Teilnehmer (Pilot, Fluglehrer) – nur mit gueltiger Mailadresse.
+    foreach ($attendees as $att) {
+      $amail = trim((string) ($att['mail'] ?? ''));
+      if ($amail === '' || strpos($amail, '@') === false) { continue; }
+      $cn = trim((string) ($att['name'] ?? ''));
+      $lines[] = 'ATTENDEE;CN=' . $esc($cn !== '' ? $cn : $amail)
+        . ';ROLE=REQ-PARTICIPANT;PARTSTAT=' . ($cancelled ? 'DECLINED' : 'ACCEPTED')
+        . ';RSVP=FALSE:mailto:' . $amail;
+    }
+    $lines[] = 'STATUS:' . ($cancelled ? 'CANCELLED' : 'CONFIRMED');
+    $lines[] = 'TRANSP:OPAQUE';
+    $lines[] = 'END:VEVENT';
+    $lines[] = 'END:VCALENDAR';
 
     return implode("\r\n", $lines) . "\r\n";
   }
