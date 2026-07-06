@@ -1,7 +1,4 @@
 {
-    "apy/datagrid-bundle": {
-        "version": "7.0.0"
-    },
     "doctrine/annotations": {
         "version": "2.0",
         "recipe": {
@@ -36,6 +33,15 @@
             "src/Entity/.gitignore",
             "src/Repository/.gitignore"
         ]
+    },
+    "phpstan/phpstan": {
+        "version": "2.2",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.0",
+            "ref": "5e490cc197fb6bb1ae22e5abbc531ddc633b6767"
+        }
     },
     "phpunit/phpunit": {
         "version": "10.5",
