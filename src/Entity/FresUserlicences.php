@@ -9,90 +9,81 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 /**
  * FresUserlicences
  *
- * @ORM\Table(name="FRes_userLicences")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  *
  */
+#[ORM\Table(name: 'FRes_userLicences')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresUserlicences
 {
     /**
      * @var integer
      *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     * 
+     *
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var integer
      *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
 
     /**
      * @var integer
      *
-     * @ORM\Column(name="accountid", type="integer", nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'accountid', type: 'integer', nullable: false)]
     private $accountid;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FResAccounts")
-     * @ORM\JoinColumn(name="accountid", referencedColumnName="id")
-     * 
-     */
+    #[ORM\JoinColumn(name: 'accountid', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \FResAccounts::class)]
     protected $user;
 
     /**
      * @var integer
-     *
-     * @ORM\Column(name="licenceid", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'licenceid', type: 'integer', nullable: false)]
     private $licenceid;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FresLicencetype")
-     * @ORM\JoinColumn(name="licenceid", referencedColumnName="id")
-     * 
-     *
-     */
+    #[ORM\JoinColumn(name: 'licenceid', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \FresLicencetype::class)]
     protected $licence;
     
     /**
      * @var boolean
      *
-     * @ORM\Column(name="validunlimited", type="boolean", nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'validunlimited', type: 'boolean', nullable: false)]
     private $validunlimited;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="validuntil", type="date", nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'validuntil', type: 'date', nullable: false)]
     private $validuntil;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="comment", type="string", length=1000, nullable=true)
-     * 
+     *
      */
+    #[ORM\Column(name: 'comment', type: 'string', length: 1000, nullable: true)]
     private $comment;
     
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="status", type="string", length=30, nullable=true)
      */
+    #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: true)]
     private $status;
 
     /**

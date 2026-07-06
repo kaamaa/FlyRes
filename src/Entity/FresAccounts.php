@@ -13,129 +13,107 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 /**
  * App\Entity\FresAccounts
- *
-  * @ORM\Table(name="FRes_accounts")
-  * @ORM\Entity
-  * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
-  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
 */
-class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface, \Serializable 
+#[ORM\Table(name: 'FRes_accounts')]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
+#[ORM\Entity(repositoryClass: \App\Repository\UserRepository::class)]
+class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface
 {
 
   /**
    * @var string $clientid
-   *
-   * @ORM\Column(name="clientid", type="integer", nullable=false)
    **/
+  #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
   private $clientid;
 
   /**
    * @var integer $id
-   *
-   * @ORM\Column(name="id", type="integer", nullable=false)
-   * @ORM\Id
-   * @ORM\GeneratedValue(strategy="IDENTITY")
    */
+  #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+  #[ORM\Id]
+  #[ORM\GeneratedValue(strategy: 'IDENTITY')]
   private $id; 
   
   /**
    * @var string $firstname
    *
-   * @ORM\Column(name="firstname", type="string", length=30, nullable=true)
-   * 
+   *
    */
+  #[ORM\Column(name: 'firstname', type: 'string', length: 30, nullable: true)]
   private $firstname;
 
   /**
    * @var string $lastname
-   *
-   * @ORM\Column(name="lastname", type="string", length=30, nullable=true)
    */
+  #[ORM\Column(name: 'lastname', type: 'string', length: 30, nullable: true)]
   private $lastname;
 
   /**
    * @var string $username
-   *
-   * @ORM\Column(name="username", type="string", length=30, nullable=false)
    */
+  #[ORM\Column(name: 'username', type: 'string', length: 30, nullable: false)]
   private $username;
 
   /**
    * @var string $password
-   *
-   * @ORM\Column(name="password", type="string", length=32, nullable=true)
    */
+  #[ORM\Column(name: 'password', type: 'string', length: 32, nullable: true)]
   private $password;
 
   /**
    * @var string $email
-   *
-   * @ORM\Column(name="email", type="string", length=50, nullable=true)
    */
+  #[ORM\Column(name: 'email', type: 'string', length: 50, nullable: true)]
   private $email;
   
-   /**
-    * 
-    * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
-    * @ORM\ManyToMany(targetEntity="FresFunction", cascade={"all"}, fetch="LAZY")
-    * @ORM\JoinTable(name="FRes_user2Functions",
-    *      joinColumns={@ORM\JoinColumn(name="userid", referencedColumnName="id")},
-    *      inverseJoinColumns={@ORM\JoinColumn(name="functionid", referencedColumnName="id")}
-    *      )
-    * 
-    *
-    */
- 
+   #[ORM\JoinTable(name: 'FRes_user2Functions')]
+  #[ORM\JoinColumn(name: 'userid', referencedColumnName: 'id')]
+  #[ORM\InverseJoinColumn(name: 'functionid', referencedColumnName: 'id')]
+  #[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
+  #[ORM\ManyToMany(targetEntity: \FresFunction::class, cascade: ['all'], fetch: 'LAZY')]
   private $function;
    
    
   /**
    * @var boolean $islocked
-   *
-   * @ORM\Column(name="islocked", type="boolean", nullable=false)
    */
+  #[ORM\Column(name: 'islocked', type: 'boolean', nullable: false)]
   private $islocked;
 
   /**
    * @var string $phoneNumberHome
-   *
-   * @ORM\Column(name="phone_number_home", type="string", length=30, nullable=true)
    */
+  #[ORM\Column(name: 'phone_number_home', type: 'string', length: 30, nullable: true)]
   private $phoneNumberHome;
 
   /**
    * @var string $phoneNumberOffice
-   *
-   * @ORM\Column(name="phone_number_office", type="string", length=30, nullable=true)
    */
+  #[ORM\Column(name: 'phone_number_office', type: 'string', length: 30, nullable: true)]
   private $phoneNumberOffice;
 
   /**
    * @var string $phoneNumberMobile
-   *
-   * @ORM\Column(name="phone_number_mobile", type="string", length=30, nullable=true)
    */
+  #[ORM\Column(name: 'phone_number_mobile', type: 'string', length: 30, nullable: true)]
   private $phoneNumberMobile;
 
   /**
    * @var string $status
-   *
-   * @ORM\Column(name="status", type="string", length=30, nullable=true)
    */
+  #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: true)]
   private $status;
 
   /**
    * @var integer $getbookingmails
-   *
-   * @ORM\Column(name="getbookingmails", type="integer", nullable=false)
    */
+  #[ORM\Column(name: 'getbookingmails', type: 'integer', nullable: false)]
   private $getbookingmails;
 
   /**
    * @var integer $getlicencemails
-   *
-   * @ORM\Column(name="getlicencemails", type="integer", nullable=false)
    */
+  #[ORM\Column(name: 'getlicencemails', type: 'integer', nullable: false)]
   private $getlicencemails;
 
   /**
@@ -143,30 +121,26 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    *
    * Ob der Nutzer an seine Buchungs-Mails einen Kalender-Termin (.ics) angehaengt
    * bekommen moechte (0 = nein/Standard, 1 = ja). Jeder entscheidet fuer sich.
-   *
-   * @ORM\Column(name="geticsattachment", type="integer", nullable=false, options={"default":0})
    */
+  #[ORM\Column(name: 'geticsattachment', type: 'integer', nullable: false, options: ['default' => 0])]
   private $geticsattachment = 0;
 
   /**
    * @var boolean $fiparallelbookings
-   *
-   * @ORM\Column(name="FiParallelBookings", type="boolean", nullable=false)
    */
+  #[ORM\Column(name: 'FiParallelBookings', type: 'boolean', nullable: false)]
   private $fiparallelbookings;
   
   /**
    * @var integer $fiallwaysavailable
-   *
-   * @ORM\Column(name="FIAllwaysAvailable", type="integer", nullable=false)
    */
+  #[ORM\Column(name: 'FIAllwaysAvailable', type: 'integer', nullable: false)]
   private $fiallwaysavailable;
   
   /**
    * @var integer $fiallwaysavailable
-   *
-   * @ORM\Column(name="FIBookableIfOnRequest", type="boolean", nullable=false)
    */
+  #[ORM\Column(name: 'FIBookableIfOnRequest', type: 'boolean', nullable: false)]
   private $fibookableifonrequest;
   
   
@@ -176,30 +150,26 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
      $this->function = new ArrayCollection();
    }
 
-   public function serialize()
+    public function __serialize(): array
     {
-        return serialize([
-            $this->clientid,
-            $this->id,
-            $this->username,
-            $this->password,
-            // Fügen Sie hier weitere Eigenschaften hinzu, die serialisiert werden sollen
-        ]);
+        return [
+            'clientid' => $this->clientid,
+            'id'       => $this->id,
+            'username' => $this->username,
+            'password' => $this->password,
+        ];
     }
 
-    public function unserialize($serialized)
+    public function __unserialize(array $data): void
     {
-        list (
-            $this->clientid,
-            $this->id,
-            $this->username,
-            $this->password,
-            // Fügen Sie hier weitere Eigenschaften hinzu, die deserialisiert werden sollen
-        ) = unserialize($serialized, ['allowed_classes' => false]);
+        $this->clientid = $data['clientid'] ?? null;
+        $this->id       = $data['id'] ?? null;
+        $this->username = $data['username'] ?? null;
+        $this->password = $data['password'] ?? null;
     }
 
-    public function eraseCredentials() 
-    { 
+    public function eraseCredentials(): void
+    {
       // Lösche temporäre oder sensible Daten 
       //$this->temporaryData = null; 
     }

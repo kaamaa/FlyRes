@@ -8,69 +8,61 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 /**
  * App\Entity\FresAircraft
  *
- * @ORM\Table(name="FRes_aircraft")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * 
+ *
  */
+#[ORM\Table(name: 'FRes_aircraft')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresAircraft
 {
     /**
      * @var string $clientid
-     *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
     
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id; 
 
     /**
      * @var string $aircraft
-     *
-     * @ORM\Column(name="aircraft", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'aircraft', type: 'string', length: 100, nullable: true)]
     private $aircraft;
 
     /**
      * @var string $kennung
-     *
-     * @ORM\Column(name="kennung", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'kennung', type: 'string', length: 100, nullable: true)]
     private $kennung;
 
     /**
      * @var string $adminids
-     *
-     * @ORM\Column(name="adminIDs", type="string", length=100, nullable=true)
      */
+    #[ORM\Column(name: 'adminIDs', type: 'string', length: 100, nullable: true)]
     private $adminids;
     
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="status", type="string", length=30, nullable=true)
      */
+    #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: true)]
     private $status;
     
     /**
      * @var string $aircrafttype
-     *
-     * @ORM\Column(name="aircrafttype", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'aircrafttype', type: 'integer', nullable: false)]
     private $aircrafttype;
     
     /**
      * @var integer $advancebooking
-     *
-     * @ORM\Column(name="advancebooking", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'advancebooking', type: 'integer', nullable: true)]
     private $advancebooking;  
 
 

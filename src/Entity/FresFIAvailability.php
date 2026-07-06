@@ -8,71 +8,55 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
  * App\Entity\FresFIAvailability
- * 
- * @ORM\Table(name="fres_fi_availability")
- * @ORM\Entity()
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
-
+#[ORM\Table(name: 'fres_fi_availability')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresFIAvailability
 {  
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var string $clientid
-     *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FResAccounts")
-     * @ORM\JoinColumn(name="flightinstructor", referencedColumnName="id")
-     * 
-     * 
-     */
+    #[ORM\JoinColumn(name: 'flightinstructor', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \FResAccounts::class)]
     private $flightinstructor;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FresFIAvailabilityStates")
-     * @ORM\JoinColumn(name="typ", referencedColumnName="id")
-     * 
-     */
+    #[ORM\JoinColumn(name: 'typ', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \FresFIAvailabilityStates::class)]
     private $typ;
     
     /**
      * @var datetime $itemstart
      *
-     * @ORM\Column(name="itemstart", type="datetime", nullable=false)
-     
      */
+    #[ORM\Column(name: 'itemstart', type: 'datetime', nullable: false)]
     private $itemstart;
 
     /**
      * @var datetime $itemstop
-     *
-     * @ORM\Column(name="itemstop", type="datetime", nullable=false)
      */
+    #[ORM\Column(name: 'itemstop', type: 'datetime', nullable: false)]
     private $itemstop;
     
 
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="Status", type="string", length=30, nullable=false)
      */
+    #[ORM\Column(name: 'Status', type: 'string', length: 30, nullable: false)]
     private $status;
 
-     /**
-     * @ORM\Column(name="comment", type="string", length=255, nullable=true)
-     */
+     #[ORM\Column(name: 'comment', type: 'string', length: 255, nullable: true)]
     private $comment;
 
     

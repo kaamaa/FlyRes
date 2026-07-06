@@ -67,7 +67,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
     }
 
     
-    public function find($id, $lockMode = null, $lockVersion = null)
+    public function find($id, $lockMode = null, $lockVersion = null): ?object
     {
         // holt den User basierend auf einer ID (clientID wird dazu nicht benötigt weil die ID eindeutig ist)
         $user = $this->entityManager->createQuery(

@@ -12,64 +12,57 @@ use App\Entity\FresAircrafttype2licences;
 
 /**
  * FresAircrafttype
- *
- * @ORM\Table(name="FRes_aircraftType")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
+#[ORM\Table(name: 'FRes_aircraftType')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresAircrafttype
 {
     /**
      * @var integer
      *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     * 
+     *
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
     
     /**
      * @var string $clientid
      *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="shortname", type="string", length=30, nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'shortname', type: 'string', length: 30, nullable: false)]
     private $shortname;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="longname", type="string", length=1000, nullable=false)
-     * 
+     *
      */
+    #[ORM\Column(name: 'longname', type: 'string', length: 1000, nullable: false)]
     private $longname;
     
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="status", type="string", length=30, nullable=true)
      */
+    #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: true)]
     private $status;
     
-    /**
-     * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
-     * @ORM\ManyToMany(targetEntity="FresLicencetype")
-     * @ORM\JoinTable(name="FRes_aircraftType2Licences",
-     *      joinColumns={@ORM\JoinColumn(name="aircrafttypeid", referencedColumnName="id")},
-     *      inverseJoinColumns={@ORM\JoinColumn(name="licenceid", referencedColumnName="id")}
-     *      )
-     * 
-     * 
-     */
+    #[ORM\JoinTable(name: 'FRes_aircraftType2Licences')]
+    #[ORM\JoinColumn(name: 'aircrafttypeid', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'licenceid', referencedColumnName: 'id')]
+    #[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
+    #[ORM\ManyToMany(targetEntity: \FresLicencetype::class)]
     private $licencetypes;
     
     

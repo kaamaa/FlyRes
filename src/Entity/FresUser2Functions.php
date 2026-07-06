@@ -9,32 +9,28 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 // insert into FRes_user2Functions (userid, functionid) select FRes_accounts.`id`, FRes_accounts.`function` from FRes_accounts
 //
 // update `FRes_user2Functions` set functionid = 4 where functionid = 2
-
 /**
  * FresUser2Functions
- *
- * @ORM\Table(name="FRes_user2Functions")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
+#[ORM\Table(name: 'FRes_user2Functions')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresUser2Functions
 {
     /**
      * @var integer
-     *
-     * @ORM\Column(name="userid", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="NONE")
      */
+    #[ORM\Column(name: 'userid', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'NONE')]
     private $userid;
 
     /**
      * @var integer
-     *
-     * @ORM\Column(name="functionid", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="NONE")
      */
+    #[ORM\Column(name: 'functionid', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'NONE')]
     private $functionid;
 
     

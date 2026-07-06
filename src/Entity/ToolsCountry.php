@@ -4,43 +4,29 @@ namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Table(name="tools_countries")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- */
+#[ORM\Table(name: 'tools_countries')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class ToolsCountry
 {
-    /**
-     * @ORM\Id()
-     * @ORM\GeneratedValue()
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private $id;
 
-    /**
-     * @ORM\Column(type="string", length=20, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $Country_Code;
 
-    /**
-     * @ORM\Column(type="string", length=200, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 200, nullable: true)]
     private $Country_Name;
 
-    /**
-     * @ORM\Column(type="string", length=20, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 20, nullable: true)]
     private $ICAO_Region;
 
-    /**
-     * @ORM\Column(type="string", length=100, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 100, nullable: true)]
     private $Usage;
 
-    /**
-     * @ORM\Column(type="string", length=40, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 40, nullable: true)]
     private $Timezone;
 
     // Getter und Setter...

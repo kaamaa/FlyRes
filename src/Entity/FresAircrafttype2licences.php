@@ -7,29 +7,26 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
  * FresAircrafttype2licences
- *
- * @ORM\Table(name="FRes_aircraftType2Licences")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
+#[ORM\Table(name: 'FRes_aircraftType2Licences')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresAircrafttype2licences
 {
     /**
      * @var integer
-     *
-     * @ORM\Column(name="aircrafttypeid", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="NONE")
      */
+    #[ORM\Column(name: 'aircrafttypeid', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'NONE')]
     private $aircrafttypeid;
 
     /**
      * @var integer
-     *
-     * @ORM\Column(name="licenceid", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="NONE")
      */
+    #[ORM\Column(name: 'licenceid', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'NONE')]
     private $licenceid;
 
 

@@ -7,34 +7,30 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
  * App\Entity\FresAirfield
- *
- * @ORM\Table(name="FRes_airfield")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
+#[ORM\Table(name: 'FRes_airfield')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresAirfield
 {
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var string $airfield
-     *
-     * @ORM\Column(name="airfield", type="string", length=150, nullable=true)
      */
+    #[ORM\Column(name: 'airfield', type: 'string', length: 150, nullable: true)]
     private $airfield;
 
     /**
      * @var string $kennung
-     *
-     * @ORM\Column(name="kennung", type="string", length=150, nullable=true)
      */
+    #[ORM\Column(name: 'kennung', type: 'string', length: 150, nullable: true)]
     private $kennung;
 
 

@@ -6,6 +6,7 @@ use App\Entity\FresAccounts;
 use App\Entity\FresClient;
 use App\Entity\FresFunction;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -23,10 +24,9 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
  *
  *   php bin/console app:create-pilot Test --client=4
  */
+#[AsCommand(name: 'app:create-pilot')]
 class CreatePilotCommand extends Command
 {
-    protected static $defaultName = 'app:create-pilot';
-
     private EntityManagerInterface $em;
     private UserPasswordHasherInterface $hasher;
 
