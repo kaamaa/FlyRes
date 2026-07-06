@@ -47,10 +47,12 @@ monolog:
             formatter: monolog.formatter.json
         # Fehler zusaetzlich als JSON in eine eigene Datei (strukturiert lesbar fuer die
         # Diagnose), unabhaengig von fingers_crossed/Fehler-Mail.
+        # level: critical -> nur echte Abstuerze/Server-Fehler; 404-Scanner-Laerm
+        # (NotFoundHttpException, von Symfony als "error" geloggt) bleibt draussen.
         apperror:
             type: rotating_file
             path: "%kernel.logs_dir%/error.log"
-            level: error
+            level: critical
             channels: ["!audit"]
             max_files: 0
             formatter: monolog.formatter.json

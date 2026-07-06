@@ -217,7 +217,7 @@
 <div class="sys-sec">Fehler (Anwendungsfehler)</div>
 <div class="sys-card">
   <div class="sys-hint" style="margin-bottom:10px;">
-    Letzte protokollierte Ausnahmen aus <span class="sys-mono">var/log/error-*.log</span> (JSON, unbegrenzte Aufbewahrung). Fehler werden zusätzlich per E-Mail gemeldet.
+    Echte Abstürze/Server-Fehler aus <span class="sys-mono">var/log/error-*.log</span> (JSON, unbegrenzte Aufbewahrung). Harmlose 404-Scans aus dem Internet werden bewusst nicht gelistet. Fehler werden zusätzlich per E-Mail gemeldet.
   </div>
   {% if errors is empty %}
     <div class="sys-hint">Keine Fehler protokolliert. 🎉</div>
