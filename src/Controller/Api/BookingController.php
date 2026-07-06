@@ -68,9 +68,10 @@ class BookingController extends ApiController
 
         $rows = Bookings::GetBookingsForGeneralView($em, $command, $clientid, $user->getId());
 
-        $aircraftId = $request->query->getInt('aircraft', 0);
-        $fiId       = $request->query->getInt('fi', 0);
-        $pilotId    = $request->query->getInt('pilot', 0);
+        // (int)-Cast statt getInt(): Symfony 8 wirft bei nicht-numerischen Filterwerten.
+        $aircraftId = (int) $request->query->get('aircraft', 0);
+        $fiId       = (int) $request->query->get('fi', 0);
+        $pilotId    = (int) $request->query->get('pilot', 0);
 
         $aircraftName = $aircraftId ? Planes::GetPlaneNameAndKennung($em, $clientid, $aircraftId) : null;
         $fiName       = $fiId ? Users::GetUserName($em, $clientid, $fiId) : null;

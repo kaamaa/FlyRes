@@ -47,8 +47,11 @@ class AvailabilityController extends ApiController
         }
         $date->setTime(0, 0, 0);
 
-        $aircraftId = $request->query->getInt('aircraft', 0);
-        $fiId       = $request->query->getInt('fi', 0);
+        // (int)-Cast statt getInt(): in Symfony 8 wirft getInt() bei nicht-numerischen
+        // Werten (z. B. aircraft=all im Buendel-Modus unten) eine BadRequestException;
+        // der Cast liefert wie frueher 0 und ueberlaesst die 'all'-Erkennung dem Code darunter.
+        $aircraftId = (int) $request->query->get('aircraft', 0);
+        $fiId       = (int) $request->query->get('fi', 0);
 
         // --- Tagesfenster (sonnenstandsbasiert, wie im Hauptprogramm) ---
         [$dsH, $dsM] = TimeFunctions::GetDayStart($date);
@@ -304,8 +307,11 @@ class AvailabilityController extends ApiController
         }
         $clientid = $user->getClientid();
 
-        $aircraftId = $request->query->getInt('aircraft', 0);
-        $fiId       = $request->query->getInt('fi', 0);
+        // (int)-Cast statt getInt(): in Symfony 8 wirft getInt() bei nicht-numerischen
+        // Werten (z. B. aircraft=all im Buendel-Modus unten) eine BadRequestException;
+        // der Cast liefert wie frueher 0 und ueberlaesst die 'all'-Erkennung dem Code darunter.
+        $aircraftId = (int) $request->query->get('aircraft', 0);
+        $fiId       = (int) $request->query->get('fi', 0);
         // Es muss mindestens ein Filter gesetzt sein: Flugzeug ODER Fluglehrer
         // (oder beides als Kombination). Ohne beides gibt es nichts anzuzeigen.
         if (!$aircraftId && !$fiId) {

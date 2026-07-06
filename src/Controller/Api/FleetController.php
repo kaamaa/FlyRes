@@ -179,7 +179,7 @@ class FleetController extends ApiController
         $clientid = $user->getClientid();
         $tzo = new \DateTimeZone('Europe/Berlin');
 
-        $aircraftId = $request->query->getInt('aircraft', 0);
+        $aircraftId = (int) $request->query->get('aircraft', 0);   // SF8: getInt() wirft bei nicht-numerisch
         if (!$aircraftId) {
             return $this->json(['error' => 'aircraft_required'], 400);
         }
