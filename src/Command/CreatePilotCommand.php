@@ -117,6 +117,11 @@ class CreatePilotCommand extends Command
         $user->setStatus(0);
         $user->setGetbookingmails(1);
         $user->setGetlicencemails(1);
+        // Pflichtfelder (NOT NULL ohne DB-Default) mit sinnvollen Standardwerten belegen.
+        $user->setIslocked(false);
+        $user->setFiparallelbookings(false);
+        $user->setFiallwaysavailable(0);
+        $user->setFibookableifonrequest(false);
         $user->setPassword($this->hasher->hashPassword($user, $pass));
         $user->getFunction()->add($pilot);
 
