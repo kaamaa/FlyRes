@@ -78,6 +78,9 @@
   "config": {
     "allow-plugins": {
       "symfony/flex": true
+    },
+    "platform": {
+      "php": "8.4.0"
     }
   },
   "extra": {

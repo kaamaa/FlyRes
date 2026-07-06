@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cc1f2e365372b9f68272bc5174829fc9",
+    "content-hash": "f970e12d4dfe6cd5dd00a8d19c927f3f",
     "packages": [
         {
             "name": "apy/datagrid-bundle",
@@ -8810,5 +8810,8 @@
         "php": "^8.1"
     },
     "platform-dev": {},
+    "platform-overrides": {
+        "php": "8.4.0"
+    },
     "plugin-api-version": "2.6.0"
 }
