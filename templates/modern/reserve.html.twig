@@ -238,9 +238,17 @@
     if(d.instructorSegments){ rows+='<div class="fr-avrow"><div class="fr-avlab">Fluglehrer<small>'+fiName+'</small></div>'+stateBar(d.instructorSegments,sMin,eMin)+'</div>'; }
     var bothLabel=(d.aircraftFree&&d.instructorFree)?'Beide frei':'Frei';
     // Kombi "Frei" + Auswahlmarker
-    var s=toMin(sNow), e=toMin(eNow), selHtml='', conflict=false;
+    var s=toMin(sNow), e=toMin(eNow), selHtml='', conflict=false, outside=false, bookingConflict=false;
     var comboBusy=busy(d.freeSlots,sMin,eMin);
-    if(s!=null&&e!=null&&e>s){ conflict=!(d.freeSlots||[]).some(function(w){return toMin(w.start)<=s&&toMin(w.end)>=e;}); selHtml='<div class="fr-avsel'+(conflict?' bad':'')+'" style="left:'+pct(s)+'%;width:'+(pct(e)-pct(s))+'%"></div>'; }
+    if(s!=null&&e!=null&&e>s){
+      outside=(s<sMin)||(e>eMin);
+      // Echten Konflikt nur fuer den Teil INNERHALB des Tagesfensters pruefen:
+      var inS=Math.max(s,sMin), inE=Math.min(e,eMin);
+      bookingConflict=(inE>inS)&&!(d.freeSlots||[]).some(function(w){return toMin(w.start)<=inS&&toMin(w.end)>=inE;});
+      conflict=bookingConflict;   // roter Marker nur bei echter Ueberschneidung
+      var pl=Math.max(0,pct(s)), pr=Math.min(100,pct(e));
+      if(pr>pl){ selHtml='<div class="fr-avsel'+(conflict?' bad':'')+'" style="left:'+pl+'%;width:'+(pr-pl)+'%"></div>'; }
+    }
     rows+='<div class="fr-avrow"><div class="fr-avlab strong">'+bothLabel+'</div><div class="fr-avbar combo">'+segs(comboBusy)+selHtml+'</div></div>';
     // Achse
     var ticks=[0,1,2,3,4].map(function(i){ return '<span>'+String(Math.round((sMin+span*i/4)/60)).padStart(2,'0')+'</span>'; }).join('');
@@ -248,7 +256,11 @@
     box.innerHTML =
       '<div class="fr-blocks">'+blkHtml+'</div>'+
       '<div class="fr-avbox">'+rows+'<div class="fr-avaxis">'+ticks+'</div></div>'+
-      (conflict?'<div class="fr-avwarn">⚠ '+sNow+'–'+eNow+' ist (teils) belegt.</div>':'');
+      (bookingConflict
+        ? '<div class="fr-avwarn">⚠ '+sNow+'–'+eNow+' ist (teils) belegt.</div>'
+        : (outside
+            ? '<div class="fr-avhint">⚠ '+sNow+'–'+eNow+' liegt (teils) außerhalb der buchbaren Tageszeit ('+d.dayStart+'–'+d.dayEnd+'). Reservieren ist trotzdem möglich.</div>'
+            : ''));
 
     box.querySelectorAll('.fr-blk').forEach(function(b){ b.addEventListener('click',function(){ st.value=this.dataset.s; et.value=this.dataset.e; if(ed.value<sd.value||!ed.value)ed.value=sd.value; render(lastData); }); });
   }

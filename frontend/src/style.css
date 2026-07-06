@@ -145,6 +145,7 @@ textarea.desc{width:100%;border:none;background:#fff;font-size:16px;padding:13px
 .av3verdict{margin:11px 16px 0;border-radius:11px;padding:9px 13px;font-size:13px;font-weight:600;}
 .av3verdict.ok{background:#e7f8ec;color:#1a7a36;}
 .av3verdict.bad{background:#ffece9;color:#c4291d;}
+.av3verdict.info{background:#fdf3e3;color:#8a5a12;}
 .tblocks{display:flex;flex-wrap:wrap;gap:8px;padding:10px 16px 0;}
 .tblk{padding:9px 14px;border-radius:16px;background:#e7f8ec;border:1.5px solid var(--ios-green);font-size:14px;font-weight:700;color:#1a7a36;cursor:pointer;}
 .tblk.sel{background:var(--ios-green);color:#fff;}

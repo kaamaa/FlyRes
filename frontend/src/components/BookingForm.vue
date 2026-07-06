@@ -139,13 +139,27 @@ const comboBusy = computed(() => (avail.value && dayBounds.value) ? segsToPct(bu
 const selMarker = computed(() => {
   if (!dayBounds.value || !startTime.value || !endTime.value) return null
   const s = toMin(startTime.value), e = toMin(endTime.value)
-  return e > s ? { left: pct(s), width: pct(e) - pct(s) } : null
-})
-const selFree = computed(() => {
-  if (!avail.value || !startTime.value || !endTime.value) return null
-  const s = toMin(startTime.value), e = toMin(endTime.value)
   if (e <= s) return null
-  return (avail.value.freeSlots || []).some((w) => toMin(w.start) <= s && toMin(w.end) >= e)
+  // auf die Balkenbreite (Tagesfenster) klammern, damit Ausserhalb-Zeiten nicht ueberlaufen
+  const left = Math.max(0, pct(s)), right = Math.min(100, pct(e))
+  return right > left ? { left, width: right - left } : null
+})
+// Liegt die Wunschzeit (teils) ausserhalb des buchbaren Tagesfensters?
+const selOutside = computed(() => {
+  if (!dayBounds.value || !startTime.value || !endTime.value) return false
+  const s = toMin(startTime.value), e = toMin(endTime.value)
+  if (e <= s) return false
+  return s < dayBounds.value.s || e > dayBounds.value.e
+})
+// Echte Ueberschneidung mit einer anderen Reservierung – NUR fuer den Teil INNERHALB
+// des Tagesfensters (ausserhalb = kein Konflikt, sondern nur ausserhalb der Zeit).
+const selBookingConflict = computed(() => {
+  if (!avail.value || !dayBounds.value || !startTime.value || !endTime.value) return false
+  const s = toMin(startTime.value), e = toMin(endTime.value)
+  if (e <= s) return false
+  const inS = Math.max(s, dayBounds.value.s), inE = Math.min(e, dayBounds.value.e)
+  if (inE <= inS) return false
+  return !(avail.value.freeSlots || []).some((w) => toMin(w.start) <= inS && toMin(w.end) >= inE)
 })
 const axisTicks = computed(() => {
   const b = dayBounds.value; if (!b) return []
@@ -447,13 +461,14 @@ defineExpose({ submit: save })
             <div class="av3lab strong">{{ availRows.length > 1 ? 'Beide frei' : 'Frei' }}</div>
             <div class="av3bar combo">
               <div v-for="(seg, i) in comboBusy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
-              <div v-if="selMarker" class="av3sel" :class="{ bad: selFree === false }" :style="{ left: selMarker.left + '%', width: selMarker.width + '%' }"></div>
+              <div v-if="selMarker" class="av3sel" :class="{ bad: selBookingConflict }" :style="{ left: selMarker.left + '%', width: selMarker.width + '%' }"></div>
             </div>
           </div>
           <div class="av3axis"><span v-for="(t, i) in axisTicks" :key="i">{{ t }}</span></div>
         </div>
-        <!-- Nur Warnung bei Konflikt; "frei" waere redundant zum ausgewaehlten Block oben. -->
-        <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+        <!-- Echter Konflikt (rot) getrennt von "ausserhalb der Tageszeit" (neutral). -->
+        <div v-if="selMarker && selBookingConflict" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+        <div v-else-if="selMarker && selOutside && avail" class="av3verdict info">⚠ {{ startTime }}–{{ endTime }} liegt (teils) außerhalb der buchbaren Tageszeit ({{ avail.dayStart }}–{{ avail.dayEnd }}). Reservieren ist trotzdem möglich.</div>
         <div v-if="fiId" class="av3legend">
           <span class="note">Fluglehrer: Vollton = direkt buchbar · gestreift = nach Absprache · grau = nicht buchbar</span>
           <span><i class="s-frei"></i>frei</span><span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span><span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span><span><i class="s-solo"></i>Solo</span><span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span><span><i class="s-nichtverfuegbar"></i>nicht verfügbar</span><span><i class="nb"></i>nicht buchbar</span>
