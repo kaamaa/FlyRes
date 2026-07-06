@@ -4,7 +4,6 @@ namespace App\Entity;
 
 use Symfony\Component\Validator\ExecutionContext;
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
@@ -22,7 +21,6 @@ class FresNote
      * @var string $clientid
      *
      * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $clientid;
     
@@ -32,7 +30,6 @@ class FresNote
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
-     * @GRID\Column(visible=false)
      */
     private $id;
     
@@ -41,7 +38,6 @@ class FresNote
      * @var datetime $changeddate
      *
      * @ORM\Column(name="changedDate", type="datetime", nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $changeddate;
 
@@ -49,7 +45,6 @@ class FresNote
      * @var integer $changedbyuserid
      *
      * @ORM\Column(name="changedByUserID", type="integer", nullable=true)
-     * @GRID\Column(visible=false)
      */
     private $changedbyuserid;
 
@@ -57,7 +52,6 @@ class FresNote
      * @var datetime $createddate
      *
      * @ORM\Column(name="createdDate", type="datetime", nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $createddate;
 
@@ -65,7 +59,6 @@ class FresNote
      * @var integer $createdbyuserid
      *
      * @ORM\Column(name="createdByUserID", type="integer", nullable=true)
-     * @GRID\Column(visible=false)
      */
     private $createdbyuserid;
 
@@ -73,8 +66,6 @@ class FresNote
      * @ORM\OneToOne(targetEntity="FResAccounts")
      * @ORM\JoinColumn(name="createdByUserID", referencedColumnName="id")
      * 
-     * @GRID\Column(field="user.firstname", title="Vorname", filterable = false)
-     * @GRID\Column(field="user.lastname", title="Nachname", filterable = false)
      */
     protected $user;
     
@@ -82,7 +73,6 @@ class FresNote
      * @var datetime $validuntil
      *
      * @ORM\Column(name="validuntil", type="datetime", nullable=false)
-     * @GRID\Column(title="Gültig bis", filterable = false, format = "d.m.Y")
      */
     private $validuntil;
 
@@ -90,7 +80,6 @@ class FresNote
      * @var text header
      *
      * @ORM\Column(name="header", type="text", nullable=true)
-     * @GRID\Column(title="Titel")
      */
     private $header;
     
@@ -98,7 +87,6 @@ class FresNote
      * @var text $description
      *
      * @ORM\Column(name="description", type="text", nullable=true)
-     * @GRID\Column(title="Beschreibung")
      */
     private $description;
 
@@ -106,7 +94,6 @@ class FresNote
      * @var string $status
      *
      * @ORM\Column(name="status", type="string", length=30, nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $status;
 

@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
@@ -21,7 +20,6 @@ class FresLicencetype
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
-     * @GRID\Column(title="ID", filterable = true)
      *
      */
     private $id;
@@ -30,7 +28,6 @@ class FresLicencetype
      * @var integer
      *
      * @ORM\Column(name="categoryid", type="integer", nullable=true)
-     * @GRID\Column(title="Kategorie", filterable = true)
      */
     private $categoryid;
 
@@ -38,7 +35,6 @@ class FresLicencetype
      * @var string
      *
      * @ORM\Column(name="categoryname", type="string", length=30, nullable=true)
-     * @GRID\Column(title="Kategoriename", filterable = true)
      */
     private $categoryname;
 
@@ -46,7 +42,6 @@ class FresLicencetype
      * @var string
      *
      * @ORM\Column(name="longname", type="string", length=1000, nullable=false)
-     * @GRID\Column(title="Bezeichnung", filterable = true)
      */
     private $longname;
     
@@ -54,7 +49,6 @@ class FresLicencetype
      * @var string
      *
      * @ORM\Column(name="description", type="string", length=3000, nullable=false)
-     * @GRID\Column(title="Beschreibung", filterable = true)
      */
     private $description;
     
@@ -62,7 +56,6 @@ class FresLicencetype
      * @var string $status
      *
      * @ORM\Column(name="status", type="string", length=30, nullable=true)
-     * @GRID\Column(title="Status", visible=false)
      */
     private $status;
     

@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Doctrine\Common\Collections\ArrayCollection;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 use App\Entity\FresAircrafttype;
@@ -27,8 +26,6 @@ class FresAircrafttype
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      * 
-     * @GRID\Column(visible=true)
-     * @GRID\Column(title="Flugzeugtypen ID", filterable = false)
      */
     private $id;
     
@@ -36,7 +33,6 @@ class FresAircrafttype
      * @var string $clientid
      *
      * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      * 
      */
     private $clientid;
@@ -46,8 +42,6 @@ class FresAircrafttype
      *
      * @ORM\Column(name="shortname", type="string", length=30, nullable=false)
      * 
-     * @GRID\Column(visible=true)
-     * @GRID\Column(title="Kurzname", filterable = false)
      */
     private $shortname;
 
@@ -55,8 +49,6 @@ class FresAircrafttype
      * @var string
      *
      * @ORM\Column(name="longname", type="string", length=1000, nullable=false)
-     * @GRID\Column(visible=true)
-     * @GRID\Column(title="Flugzeugtypenname", filterable = false)
      * 
      */
     private $longname;
@@ -65,7 +57,6 @@ class FresAircrafttype
      * @var string $status
      *
      * @ORM\Column(name="status", type="string", length=30, nullable=true)
-     * @GRID\Column(visible=false)
      */
     private $status;
     
@@ -77,7 +68,6 @@ class FresAircrafttype
      *      inverseJoinColumns={@ORM\JoinColumn(name="licenceid", referencedColumnName="id")}
      *      )
      * 
-     * //@GRID\Column(field="licencetypes.longname", title="Bezeichnung", filterable = false)
      * 
      */
     private $licencetypes;

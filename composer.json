@@ -48,8 +48,6 @@
 
     "symfony/webpack-encore-bundle": "^2.1",
     "symfony/apache-pack": "^1.0",
-
-    "apy/datagrid-bundle": "^7.0",
     "symfony/flex": "^2.8",
     "symfony/monolog-bundle": "^3.8",
     "symfony/rate-limiter": "^6.4"

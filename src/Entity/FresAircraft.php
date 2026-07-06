@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
@@ -20,7 +19,6 @@ class FresAircraft
      * @var string $clientid
      *
      * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $clientid;
     
@@ -30,7 +28,6 @@ class FresAircraft
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
-     * @GRID\Column(title="Flugzeug ID", filterable = false)
      */
     private $id; 
 
@@ -38,7 +35,6 @@ class FresAircraft
      * @var string $aircraft
      *
      * @ORM\Column(name="aircraft", type="string", length=100, nullable=true)
-     * @GRID\Column(title="Flugzeugname", filterable = false)
      */
     private $aircraft;
 
@@ -46,7 +42,6 @@ class FresAircraft
      * @var string $kennung
      *
      * @ORM\Column(name="kennung", type="string", length=100, nullable=true)
-     * @GRID\Column(title="Flugzeugkennung", filterable = false)
      */
     private $kennung;
 
@@ -54,7 +49,6 @@ class FresAircraft
      * @var string $adminids
      *
      * @ORM\Column(name="adminIDs", type="string", length=100, nullable=true)
-     * @GRID\Column(visible=false)
      */
     private $adminids;
     
@@ -62,7 +56,6 @@ class FresAircraft
      * @var string $status
      *
      * @ORM\Column(name="status", type="string", length=30, nullable=true)
-     * @GRID\Column(visible=false)
      */
     private $status;
     
@@ -70,7 +63,6 @@ class FresAircraft
      * @var string $aircrafttype
      *
      * @ORM\Column(name="aircrafttype", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $aircrafttype;
     
@@ -78,7 +70,6 @@ class FresAircraft
      * @var integer $advancebooking
      *
      * @ORM\Column(name="advancebooking", type="integer", nullable=true)
-    * @GRID\Column(title="Vorrausbuchung", filterable = false)
      */
     private $advancebooking;  
 

@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Doctrine\ORM\Mapping\Entity;
 use App\Entity\FresUser2Functions;
 use App\Entity\FresFunction;
@@ -18,7 +17,6 @@ use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
   * @ORM\Table(name="FRes_accounts")
   * @ORM\Entity
   * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
-  * @GRID\Source(groupBy={"id"})
   * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
 */
 class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface, \Serializable 
@@ -28,7 +26,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $clientid
    *
    * @ORM\Column(name="clientid", type="integer", nullable=false)
-   * @GRID\Column(visible=false)
    **/
   private $clientid;
 
@@ -38,7 +35,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @ORM\Column(name="id", type="integer", nullable=false)
    * @ORM\Id
    * @ORM\GeneratedValue(strategy="IDENTITY")
-   * @GRID\Column(title="Kunden ID")
    */
   private $id; 
   
@@ -47,7 +43,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    *
    * @ORM\Column(name="firstname", type="string", length=30, nullable=true)
    * 
-   * @GRID\Column(title="Vorname")
    */
   private $firstname;
 
@@ -55,7 +50,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $lastname
    *
    * @ORM\Column(name="lastname", type="string", length=30, nullable=true)
-   * @GRID\Column(title="Nachname")
    */
   private $lastname;
 
@@ -63,7 +57,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $username
    *
    * @ORM\Column(name="username", type="string", length=30, nullable=false)
-   * @GRID\Column(title="Nutzername")
    */
   private $username;
 
@@ -71,7 +64,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $password
    *
    * @ORM\Column(name="password", type="string", length=32, nullable=true)
-   * @GRID\Column(visible=false)
    */
   private $password;
 
@@ -79,7 +71,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $email
    *
    * @ORM\Column(name="email", type="string", length=50, nullable=true)
-   * @GRID\Column(title="Mailadresse")
    */
   private $email;
   
@@ -92,8 +83,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
     *      inverseJoinColumns={@ORM\JoinColumn(name="functionid", referencedColumnName="id")}
     *      )
     * 
-    * @GRID\Column(field="function.function:group_concat", title="Berechtigungen", filterable = false, visible=true)
-    * @GRID\Column(field="function.function", title="Berechtigungen", filter="select",  selectFrom="values", defaultOperator="like")
     *
     */
  
@@ -104,7 +93,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var boolean $islocked
    *
    * @ORM\Column(name="islocked", type="boolean", nullable=false)
-   * @GRID\Column(title="Ist der Nutzer gesperrt?")
    */
   private $islocked;
 
@@ -112,7 +100,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $phoneNumberHome
    *
    * @ORM\Column(name="phone_number_home", type="string", length=30, nullable=true)
-   * @GRID\Column(title="Telefonnummer Privat")
    */
   private $phoneNumberHome;
 
@@ -120,7 +107,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $phoneNumberOffice
    *
    * @ORM\Column(name="phone_number_office", type="string", length=30, nullable=true)
-   * @GRID\Column(title="Telefonnummer Büro")
    */
   private $phoneNumberOffice;
 
@@ -128,7 +114,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $phoneNumberMobile
    *
    * @ORM\Column(name="phone_number_mobile", type="string", length=30, nullable=true)
-   * @GRID\Column(title="Telefonnummer Mobil")
    */
   private $phoneNumberMobile;
 
@@ -136,7 +121,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var string $status
    *
    * @ORM\Column(name="status", type="string", length=30, nullable=true)
-   * @GRID\Column(visible=false)
    */
   private $status;
 
@@ -144,7 +128,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var integer $getbookingmails
    *
    * @ORM\Column(name="getbookingmails", type="integer", nullable=false)
-   * @GRID\Column(visible=false)
    */
   private $getbookingmails;
 
@@ -152,7 +135,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var integer $getlicencemails
    *
    * @ORM\Column(name="getlicencemails", type="integer", nullable=false)
-   * @GRID\Column(visible=false)
    */
   private $getlicencemails;
 
@@ -163,7 +145,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * bekommen moechte (0 = nein/Standard, 1 = ja). Jeder entscheidet fuer sich.
    *
    * @ORM\Column(name="geticsattachment", type="integer", nullable=false, options={"default":0})
-   * @GRID\Column(visible=false)
    */
   private $geticsattachment = 0;
 
@@ -171,7 +152,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var boolean $fiparallelbookings
    *
    * @ORM\Column(name="FiParallelBookings", type="boolean", nullable=false)
-   * @GRID\Column(visible=false)
    */
   private $fiparallelbookings;
   
@@ -179,7 +159,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var integer $fiallwaysavailable
    *
    * @ORM\Column(name="FIAllwaysAvailable", type="integer", nullable=false)
-   * @GRID\Column(visible=false)
    */
   private $fiallwaysavailable;
   
@@ -187,7 +166,6 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @var integer $fiallwaysavailable
    *
    * @ORM\Column(name="FIBookableIfOnRequest", type="boolean", nullable=false)
-   * @GRID\Column(visible=false)
    */
   private $fibookableifonrequest;
   

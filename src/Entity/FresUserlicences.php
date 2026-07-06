@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 
@@ -12,7 +11,6 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
  *
  * @ORM\Table(name="FRes_userLicences")
  * @ORM\Entity
- * @GRID\Source(sortable=true)
  * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  *
  */
@@ -25,7 +23,6 @@ class FresUserlicences
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      * 
-     * @GRID\Column(visible=false)
      */
     private $id;
 
@@ -34,7 +31,6 @@ class FresUserlicences
      *
      * @ORM\Column(name="clientid", type="integer", nullable=false)
      * 
-     * @GRID\Column(visible=false)
      */
     private $clientid;
 
@@ -43,7 +39,6 @@ class FresUserlicences
      *
      * @ORM\Column(name="accountid", type="integer", nullable=false)
      * 
-     * @GRID\Column(visible=false)
      */
     private $accountid;
     
@@ -51,8 +46,6 @@ class FresUserlicences
      * @ORM\OneToOne(targetEntity="FResAccounts")
      * @ORM\JoinColumn(name="accountid", referencedColumnName="id")
      * 
-     * @GRID\Column(field="user.firstname", title="Vorname", filterable = false)
-     * @GRID\Column(field="user.lastname", title="Nachname", filterable = false)
      */
     protected $user;
 
@@ -60,7 +53,6 @@ class FresUserlicences
      * @var integer
      *
      * @ORM\Column(name="licenceid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
     private $licenceid;
     
@@ -68,9 +60,6 @@ class FresUserlicences
      * @ORM\OneToOne(targetEntity="FresLicencetype")
      * @ORM\JoinColumn(name="licenceid", referencedColumnName="id")
      * 
-     * @GRID\Column(field="licence.categoryid", title="Kategorie", filterable = true, visible=false)
-     * @GRID\Column(field="licence.categoryname", title="Lizenztyp", filterable = false)
-     * @GRID\Column(field="licence.longname", title="Bezeichunung", filterable = false)
      *
      */
     protected $licence;
@@ -80,7 +69,6 @@ class FresUserlicences
      *
      * @ORM\Column(name="validunlimited", type="boolean", nullable=false)
      * 
-     * @GRID\Column(title="unbegrenzt gültig", visible = false, filterable = false)
      */
     private $validunlimited;
 
@@ -89,7 +77,6 @@ class FresUserlicences
      *
      * @ORM\Column(name="validuntil", type="date", nullable=false)
      * 
-     * @GRID\Column(title="Gültig bis", filterable = false, format = "d.m.Y")
      */
     private $validuntil;
 
@@ -98,8 +85,6 @@ class FresUserlicences
      *
      * @ORM\Column(name="comment", type="string", length=1000, nullable=true)
      * 
-     * @GRID\Column(title="Anmerkung", filterable = false)
-     * @GRID\Column(visible=false)
      */
     private $comment;
     
@@ -107,7 +92,6 @@ class FresUserlicences
      * @var string $status
      *
      * @ORM\Column(name="status", type="string", length=30, nullable=true)
-     * @GRID\Column(visible=false)
      */
     private $status;
 
