@@ -203,7 +203,9 @@ class Licenses
        ->where("a.aircrafttypeid = :aircrafttypeid")
        ->orderBy('b.categoryid', 'ASC');     
 
-    $qb->setParameters(array('aircrafttypeid' => $aircraftTypeid));
+    // ORM 3: QueryBuilder::setParameters() verlangt eine ArrayCollection; fuer einen
+    // einzelnen Parameter ist setParameter(name, value) einfacher (und ORM-2/3-kompatibel).
+    $qb->setParameter('aircrafttypeid', $aircraftTypeid);
     $query = $qb->getQuery();
     $query->setCacheable(true);
     $licencestypes = $query->getResult();
