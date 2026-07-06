@@ -6,6 +6,16 @@
  */
 header('Content-Type: text/plain; charset=utf-8');
 
+// Fehler IMMER anzeigen (prod versteckt sie sonst) + Fatals per Shutdown abfangen.
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
+register_shutdown_function(function () {
+    $e = error_get_last();
+    if ($e && in_array($e['type'], [E_ERROR, E_COMPILE_ERROR, E_CORE_ERROR, E_PARSE], true)) {
+        echo "\n>>> FATAL: " . $e['message'] . "\n    in " . $e['file'] . ':' . $e['line'] . "\n";
+    }
+});
+
 require dirname(__DIR__) . '/vendor/autoload.php';
 
 // .env laden (wie public/index.php), sonst fehlen MAILER_DSN & Co.
