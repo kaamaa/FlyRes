@@ -342,7 +342,7 @@ class Bookings
     // Alle aktiven Buchungen, die den Kalendertag beruehren – fuer ALLE Flugzeuge
     // in EINER Abfrage (gleiche Felder/Bedingungen wie die per-Flugzeug-Variante,
     // zusaetzlich aircraftid zum Gruppieren).
-    $querystring = "SELECT partial b.{id, clientid, createdbyuserid, flightpurposeid, itemstart, itemstop, description, flightinstructor, aircraftid} FROM App\Entity\FresBooking b WHERE "
+    $querystring = "SELECT b FROM App\Entity\FresBooking b WHERE "
       . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
       . "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " "
       . "ORDER BY b.aircraftid, b.itemstart";
@@ -808,7 +808,7 @@ class Bookings
     // geaenderte Abfrage ist die schlanke Spaltenauswahl ohnehin der groessere
     // Hebel (der SLC wuerde bei jeder Buchung sowieso invalidiert) – daher hier
     // bewusst kein setCacheable(). Der neue Composite-Index macht sie schnell.
-    $querystring = "SELECT partial b.{id, clientid, createdbyuserid, flightpurposeid, itemstart, itemstop, description, flightinstructor} FROM App\Entity\FresBooking b WHERE "
+    $querystring = "SELECT b FROM App\Entity\FresBooking b WHERE "
       // Buchung ueberschneidet den Zeitraum [rangeStart, rangeEnd]
       . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
       . "b.clientid = :clientID and b.aircraftid = :planeID and "

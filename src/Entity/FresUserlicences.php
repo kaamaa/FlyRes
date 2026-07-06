@@ -43,7 +43,7 @@ class FresUserlicences
     private $accountid;
     
     #[ORM\JoinColumn(name: 'accountid', referencedColumnName: 'id')]
-    #[ORM\OneToOne(targetEntity: \FResAccounts::class)]
+    #[ORM\OneToOne(targetEntity: \App\Entity\FresAccounts::class)]
     protected $user;
 
     /**

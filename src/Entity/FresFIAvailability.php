@@ -29,7 +29,7 @@ class FresFIAvailability
     private $clientid;
     
     #[ORM\JoinColumn(name: 'flightinstructor', referencedColumnName: 'id')]
-    #[ORM\OneToOne(targetEntity: \FResAccounts::class)]
+    #[ORM\OneToOne(targetEntity: \App\Entity\FresAccounts::class)]
     private $flightinstructor;
     
     #[ORM\JoinColumn(name: 'typ', referencedColumnName: 'id')]

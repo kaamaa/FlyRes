@@ -2,10 +2,6 @@ framework:
   
     secret: '%env(APP_SECRET)%'
     handle_all_throwables: true
-    # Doctrine-Annotations werden nicht mehr genutzt (Entities/Routen/Validierung
-    # laufen ueber PHP-Attribute) -> Annotation-Reader-Integration abschalten.
-    annotations:
-        enabled: false
     #csrf_protection: true
     #http_method_override: true
 

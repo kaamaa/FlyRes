@@ -1,10 +1,8 @@
 doctrine:
   orm:
-    # true, weil dieser Server per FTP (ohne Konsole/cache:warmup) deployt wird:
-    # so erzeugt Doctrine fehlende Proxy-Klassen zur Laufzeit selbst, statt mit
-    # "Failed opening required ...Proxies/__CG__...php" abzustürzen, wenn var/cache
-    # geleert wurde. Minimaler Performance-Aufwand, fuer diese App vernachlaessigbar.
-    auto_generate_proxy_classes: true
+    # Hinweis: In ORM 3 / doctrine-bundle 3 generiert Doctrine fehlende Proxy-
+    # Klassen standardmaessig zur Laufzeit (AUTOGENERATE_ALWAYS) -> die frueher
+    # noetige Option auto_generate_proxy_classes entfaellt und passt zum FTP-Deploy.
     # Second-Level-Cache: ohne region_cache_driver faellt Doctrine auf einen
     # In-Memory ArrayAdapter zurueck (nur pro Request) -> die setCacheable(true)-
     # Abfragen brachten ueber Requests hinweg NICHTS. Hier auf einen persistenten

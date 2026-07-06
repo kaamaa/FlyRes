@@ -56,7 +56,7 @@ class FresNote
     private $createdbyuserid;
 
     #[ORM\JoinColumn(name: 'createdByUserID', referencedColumnName: 'id')]
-    #[ORM\OneToOne(targetEntity: \FResAccounts::class)]
+    #[ORM\OneToOne(targetEntity: \App\Entity\FresAccounts::class)]
     protected $user;
     
     /**
