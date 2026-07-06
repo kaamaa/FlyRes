@@ -155,7 +155,18 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
    * @GRID\Column(visible=false)
    */
   private $getlicencemails;
-  
+
+  /**
+   * @var integer $geticsattachment
+   *
+   * Ob der Nutzer an seine Buchungs-Mails einen Kalender-Termin (.ics) angehaengt
+   * bekommen moechte (0 = nein/Standard, 1 = ja). Jeder entscheidet fuer sich.
+   *
+   * @ORM\Column(name="geticsattachment", type="integer", nullable=false, options={"default":0})
+   * @GRID\Column(visible=false)
+   */
+  private $geticsattachment = 0;
+
   /**
    * @var boolean $fiparallelbookings
    *
@@ -515,7 +526,25 @@ class FresAccounts implements UserInterface, PasswordAuthenticatedUserInterface,
   public function getGetlicencemails() {
     return $this->getlicencemails;
   }
-  
+
+  /**
+   * Set geticsattachment
+   *
+   * @param integer $geticsattachment
+   */
+  public function setGeticsattachment($geticsattachment) {
+    $this->geticsattachment = $geticsattachment;
+  }
+
+  /**
+   * Get geticsattachment
+   *
+   * @return integer
+   */
+  public function getGeticsattachment() {
+    return $this->geticsattachment;
+  }
+
   /**
    * Set fiparallelbookings
    *

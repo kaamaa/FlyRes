@@ -1329,6 +1329,22 @@ class Bookings
         @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Erzeugung fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
       }
     }
+
+    // Der .ics-Anhang ist pro Nutzer opt-in: nur an Nutzer haengen, die ihn in
+    // "Meine Daten" aktiviert haben (geticsattachment = 1). Fluglehrer und Schueler
+    // entscheiden dadurch unabhaengig voneinander; externe Info-Adressen bekommen keins.
+    $icsWantMails = array();
+    if ($icsBody !== null) {
+      try {
+        $rows = $em->createQuery(
+          "SELECT a.email FROM App\Entity\FresAccounts a WHERE a.clientid = :cid AND a.geticsattachment = 1 AND a.email IS NOT NULL AND a.email <> ''"
+        )->setParameter('cid', $clientId)->getScalarResult();
+        foreach ($rows as $r) { $icsWantMails[strtolower(trim((string) $r['email']))] = true; }
+      } catch (\Throwable $e) {
+        $icsBody = null;   // im Zweifel kein .ics anhaengen
+        @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Empfaengerliste fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
+      }
+    }
     $sent = 0; $fail = 0; $valid = array();
 
     //Mails versenden
@@ -1343,7 +1359,7 @@ class Bookings
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])
           ->to($mail);
-        if ($icsBody !== null) {
+        if ($icsBody !== null && isset($icsWantMails[strtolower(trim($mail))])) {
           // .ics ist optional und darf den Mailversand/die Buchung NIE abbrechen.
           try {
             $message->attach($icsBody, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);

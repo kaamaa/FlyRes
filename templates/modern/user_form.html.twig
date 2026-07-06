@@ -78,6 +78,10 @@
         <label>Lizenz-Mails</label>
         <div class="fr-ctrl"><select name="getlicencemails">{% for label, val in mailOpts %}<option value="{{ val }}" {{ val == v.getlicencemails ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select></div>
       </div>
+      <div class="fr-frow">
+        <label>Kalender-Termin (.ics)</label>
+        <div class="fr-ctrl"><select name="geticsattachment"><option value="0" {{ v.geticsattachment ? '' : 'selected' }}>nein</option><option value="1" {{ v.geticsattachment ? 'selected' : '' }}>an Reservierungs-Mails anhängen</option></select></div>
+      </div>
     </div>
   </div>
 

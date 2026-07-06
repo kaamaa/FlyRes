@@ -1418,6 +1418,7 @@ class ModernPreviewController extends AbstractController
             'phone_mobile'    => (string) $u->getPhoneNumberMobile(),
             'getbookingmails' => (int) $u->getGetbookingmails(),
             'getlicencemails' => (int) $u->getGetlicencemails(),
+            'geticsattachment' => (int) $u->getGeticsattachment(),
         ], [], null);
     }
 
@@ -1435,6 +1436,7 @@ class ModernPreviewController extends AbstractController
         $phoneM    = trim((string) $request->request->get('phone_mobile', ''));
         $bookmail  = (int) $request->request->get('getbookingmails', 0);
         $licmail   = (int) $request->request->get('getlicencemails', 0);
+        $icsatt    = (int) $request->request->get('geticsattachment', 0);
         $pass      = trim((string) $request->request->get('password', ''));
         $pass2     = trim((string) $request->request->get('password_check', ''));
 
@@ -1450,7 +1452,7 @@ class ModernPreviewController extends AbstractController
         $values = [
             'firstname' => $firstname, 'lastname' => $lastname, 'username' => (string) $u->getUsername(), 'email' => $email,
             'phone_home' => $phoneH, 'phone_office' => $phoneO, 'phone_mobile' => $phoneM,
-            'getbookingmails' => $bookmail, 'getlicencemails' => $licmail,
+            'getbookingmails' => $bookmail, 'getlicencemails' => $licmail, 'geticsattachment' => $icsatt,
         ];
         if ($errors) {
             return $this->renderMyData($values, $errors, null);
@@ -1464,6 +1466,7 @@ class ModernPreviewController extends AbstractController
         $u->setPhoneNumberMobile($phoneM);
         $u->setGetbookingmails($bookmail);
         $u->setGetlicencemails($licmail);
+        $u->setGeticsattachment($icsatt);
         if ($pass !== '') {
             $u->setPassword(Users::CreateNewPassword($loggedin_user, $hasher, $pass));
         }
@@ -2018,7 +2021,7 @@ class ModernPreviewController extends AbstractController
         $values = [
             'id' => 0, 'firstname' => '', 'lastname' => '', 'username' => '', 'email' => '',
             'phone_home' => '', 'phone_office' => '', 'phone_mobile' => '',
-            'getbookingmails' => 1, 'getlicencemails' => 1, 'islocked' => false,
+            'getbookingmails' => 1, 'getlicencemails' => 1, 'geticsattachment' => 0, 'islocked' => false,
             'roles' => [], 'isAdmin' => false, 'isFi' => false,
             'fiallwaysavailable' => 0, 'fiparallelbookings' => false, 'fibookableifonrequest' => false,
         ];
@@ -2057,6 +2060,7 @@ class ModernPreviewController extends AbstractController
         $phoneM    = trim((string) $request->request->get('phone_mobile', ''));
         $bookmail  = (int) $request->request->get('getbookingmails', 0);
         $licmail   = (int) $request->request->get('getlicencemails', 0);
+        $icsatt    = (int) $request->request->get('geticsattachment', 0);
         $islocked  = (bool) $request->request->get('islocked', false);
         $pass      = trim((string) $request->request->get('password', ''));
         $pass2     = trim((string) $request->request->get('password_check', ''));
@@ -2105,7 +2109,7 @@ class ModernPreviewController extends AbstractController
             $values = [
                 'id' => $id, 'firstname' => $firstname, 'lastname' => $lastname, 'username' => $username, 'email' => $email,
                 'phone_home' => $phoneH, 'phone_office' => $phoneO, 'phone_mobile' => $phoneM,
-                'getbookingmails' => $bookmail, 'getlicencemails' => $licmail, 'islocked' => $islocked,
+                'getbookingmails' => $bookmail, 'getlicencemails' => $licmail, 'geticsattachment' => $icsatt, 'islocked' => $islocked,
                 'roles' => $selRoles,
                 'isAdmin' => $id !== 0 ? Users::isAdmin($em, $u) : false,
                 'isFi'    => $hasFiSec || ($id !== 0 && Users::isFlightinstructor($em, $u->getId())),
@@ -2126,6 +2130,7 @@ class ModernPreviewController extends AbstractController
         $u->setPhoneNumberMobile($phoneM);
         $u->setGetbookingmails($bookmail);
         $u->setGetlicencemails($licmail);
+        $u->setGeticsattachment($icsatt);
         $u->setIslocked($islocked);
         if ($pass !== '') {
             $u->setPassword(Users::CreateNewPassword($loggedin_user, $hasher, $pass));
@@ -2211,6 +2216,7 @@ class ModernPreviewController extends AbstractController
             'phone_mobile'   => (string) $u->getPhoneNumberMobile(),
             'getbookingmails'=> (int) $u->getGetbookingmails(),
             'getlicencemails'=> (int) $u->getGetlicencemails(),
+            'geticsattachment'=> (int) $u->getGeticsattachment(),
             'islocked'       => (bool) $u->getIslocked(),
             'roles'          => $roles,
             'isAdmin'        => Users::isAdmin($em, $u),
