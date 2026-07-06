@@ -27,10 +27,14 @@ security:
             stateless: false
             provider: app_user_provider
 
-            # HINWEIS: login_throttling (Brute-Force-Bremse) wurde entfernt, weil
-            # es symfony/rate-limiter voraussetzt, das auf dem Prod-Server (aelteres
-            # vendor/) fehlt -> Container-Compile-Fehler/500. Erst wieder aktivieren,
-            # wenn rate-limiter dort installiert ist (composer require symfony/rate-limiter).
+            # Brute-Force-Bremse fuers Login. Benoetigt symfony/rate-limiter (jetzt
+            # EXPLIZIT in composer.json verankert, v6.4.42).
+            # DEPLOY-SICHERHEIT: vendor/symfony/rate-limiter/ MUSS auf dem Server liegen,
+            # sonst Container-Compile-Fehler = 500 auf allen Seiten. Vor dem Hochladen
+            # dieser Datei per /ratelimit-check.php pruefen (muss "OK" sagen).
+            login_throttling:
+                max_attempts: 5              # pro Benutzer+IP
+                interval: '15 minutes'
 
             remember_me:
                 secret:   '%kernel.secret%'
