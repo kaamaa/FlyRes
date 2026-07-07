@@ -1419,6 +1419,7 @@ class ModernPreviewController extends AbstractController
             'getbookingmails' => (int) $u->getGetbookingmails(),
             'getlicencemails' => (int) $u->getGetlicencemails(),
             'geticsattachment' => (int) $u->getGeticsattachment(),
+            'isAdmin' => Users::isAdmin($em, $u),
         ], [], null);
     }
 
@@ -1453,6 +1454,7 @@ class ModernPreviewController extends AbstractController
             'firstname' => $firstname, 'lastname' => $lastname, 'username' => (string) $u->getUsername(), 'email' => $email,
             'phone_home' => $phoneH, 'phone_office' => $phoneO, 'phone_mobile' => $phoneM,
             'getbookingmails' => $bookmail, 'getlicencemails' => $licmail, 'geticsattachment' => $icsatt,
+            'isAdmin' => Users::isAdmin($em, $u),
         ];
         if ($errors) {
             return $this->renderMyData($values, $errors, null);

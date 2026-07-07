@@ -69,14 +69,27 @@
 
   <div class="fr-formsec">Benachrichtigungen</div>
   <div class="fr-card">
-    <label class="fr-check">
-      <input type="checkbox" name="getbookingmails" value="1" {{ v.getbookingmails ? 'checked' : '' }}>
-      <span>E-Mails zu Reservierungen erhalten</span>
-    </label>
-    <label class="fr-check">
-      <input type="checkbox" name="getlicencemails" value="1" {{ v.getlicencemails ? 'checked' : '' }}>
-      <span>E-Mails zu Lizenzen erhalten</span>
-    </label>
+    <div class="fr-mailopt">
+      <label>E-Mails zu Reservierungen</label>
+      <select name="getbookingmails">
+        <option value="0" {{ v.getbookingmails == 0 ? 'selected' : '' }}>keine</option>
+        <option value="1" {{ v.getbookingmails == 1 ? 'selected' : '' }}>nur meine Buchungen</option>
+        {% if v.isAdmin %}<option value="2" {{ v.getbookingmails == 2 ? 'selected' : '' }}>alle Buchungen (als Admin)</option>{% endif %}
+      </select>
+    </div>
+    <div class="fr-mailopt">
+      <label>E-Mails zu Lizenzen</label>
+      <select name="getlicencemails">
+        <option value="0" {{ v.getlicencemails == 0 ? 'selected' : '' }}>keine</option>
+        <option value="1" {{ v.getlicencemails == 1 ? 'selected' : '' }}>nur meine Lizenzen</option>
+        {% if v.isAdmin %}<option value="2" {{ v.getlicencemails == 2 ? 'selected' : '' }}>alle Lizenzen (als Admin)</option>{% endif %}
+      </select>
+    </div>
+    <style>
+      .fr-mailopt{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+      .fr-mailopt>label{min-width:190px;font-size:14px;color:var(--fr-ink);}
+      .fr-mailopt>select{flex:1;min-width:200px;max-width:320px;padding:8px 10px;border:1px solid var(--fr-line);border-radius:8px;font-size:14px;background:#fff;}
+    </style>
     <label class="fr-check">
       <input type="checkbox" name="geticsattachment" value="1" {{ v.geticsattachment ? 'checked' : '' }}>
       <span>Kalender-Termin (.ics) an Reservierungs-Mails anhängen</span>
