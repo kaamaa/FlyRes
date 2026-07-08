@@ -1,0 +1,102 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([
+    {label:'Nutzer',        icon:'users', href: path('modern_users'),    active: true},
+    {label:'Mailverteiler', icon:'mail',  href: path('modern_maildist'), active: false}
+  ]) }}
+
+  <div class="fr-panel">
+    <div class="fr-phead">
+      <div class="fr-searchwrap" style="flex:0 1 280px;">
+        <input type="search" id="u_q" class="fr-search" placeholder="🔍 Suchen (Name, Nutzername, E-Mail, Telefon …)" autocomplete="off">
+      </div>
+      <label class="fr-fl">Anzeigen
+        <select id="u_filter">
+          <option value="alle">Alle</option>
+          <option value="fi">Fluglehrer</option>
+          <option value="admin">Admins</option>
+          <option value="locked">Gesperrt</option>
+        </select>
+      </label>
+      <button type="button" id="u_clear" hidden
+              style="border:1px solid var(--fr-line);background:#fff;border-radius:8px;padding:7px 11px;cursor:pointer;color:var(--fr-blue);font-size:13px;white-space:nowrap;">✕ Filter löschen</button>
+      <span class="fr-phspring"></span>
+      <span class="fr-fl" id="u_count"></span>
+    </div>
+
+    <div class="fr-pactions">
+      <a class="fr-btn" href="{{ path('modern_user_new') }}">{{ icon.ic('plus') }} Neuer Nutzer</a>
+    </div>
+
+    <div class="fr-pbody">
+      <div class="fr-cards" id="u_list">
+        {% for u in items %}
+          <div class="fr-acard"
+               data-s="{{ (u.name ~ ' ' ~ u.username ~ ' ' ~ u.email ~ ' ' ~ u.phone)|lower }}"
+               data-fi="{{ u.isFi ? 1 : 0 }}" data-admin="{{ u.isAdmin ? 1 : 0 }}" data-locked="{{ u.locked ? 1 : 0 }}">
+            <a class="fr-acard-main" href="{{ path('modern_user_edit', {id: u.id}) }}">
+              <span class="fr-uava">{{ u.name|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>
+              <div class="fr-acard-info">
+                <div class="fr-acard-t">{{ u.name }}{% if u.locked %} <span class="fr-ltag red">gesperrt</span>{% endif %}</div>
+                <div class="fr-acard-meta">{{ u.username }}{% if u.email %} · {{ u.email }}{% endif %}</div>
+                {% if u.roles %}<div class="fr-acard-lics">{% for r in u.roles %}<span class="fr-lic">{{ r }}</span>{% endfor %}</div>{% endif %}
+              </div>
+              <span class="fr-lchev">›</span>
+            </a>
+            <a class="fr-iconbtn" href="{{ path('modern_licences', {user: u.id}) }}" title="Lizenzen dieses Nutzers">🎓</a>
+          </div>
+        {% else %}
+          <div class="fr-empty">Keine Nutzer.</div>
+        {% endfor %}
+      </div>
+      <div class="fr-empty" id="u_none" hidden>Keine Treffer.</div>
+
+      <script>
+      (function () {
+        var q = document.getElementById('u_q'), filterSel = document.getElementById('u_filter'),
+            cards = Array.prototype.slice.call(document.querySelectorAll('#u_list .fr-acard[data-s]')),
+            countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none'),
+            clearBtn = document.getElementById('u_clear');
+        var KEY = 'fr_users_filter';
+        function apply() {
+          var term = (q.value || '').trim().toLowerCase(), filter = filterSel.value, n = 0;
+          cards.forEach(function (c) {
+            var okText = !term || c.getAttribute('data-s').indexOf(term) >= 0;
+            var okF = filter === 'alle' || c.getAttribute('data-' + filter) === '1';
+            var show = okText && okF;
+            c.style.display = show ? '' : 'none';
+            if (show) n++;
+          });
+          countEl.textContent = n + ' Nutzer';
+          noneEl.hidden = (n > 0 || cards.length === 0);
+          if (clearBtn) clearBtn.hidden = !(term || filter !== 'alle');   // nur zeigen, wenn Filter aktiv
+        }
+        // Filter merken (Sitzung) -> bleibt beim Wechsel in einen Nutzer + Zurueck erhalten,
+        // bis er geleert wird (Suche leeren + Rolle "Alle") oder der Tab geschlossen wird.
+        function save() {
+          try { sessionStorage.setItem(KEY, JSON.stringify({ q: q.value, f: filterSel.value })); } catch (e) {}
+        }
+        function restore() {
+          try {
+            var s = JSON.parse(sessionStorage.getItem(KEY) || '{}');
+            if (typeof s.q === 'string') q.value = s.q;
+            if (typeof s.f === 'string') filterSel.value = s.f;
+          } catch (e) {}
+        }
+        q.addEventListener('input', function () { save(); apply(); });
+        filterSel.addEventListener('change', function () { save(); apply(); });
+        if (clearBtn) clearBtn.addEventListener('click', function () {
+          q.value = ''; filterSel.value = 'alle'; save(); apply(); q.focus();
+        });
+        restore();
+        apply();
+      })();
+      </script>
+    </div>
+  </div>
+{% endblock %}

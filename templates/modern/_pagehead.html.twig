@@ -1,0 +1,41 @@
+{#
+   Einheitliche Karteireiter-Kopfzeile fuer alle modernen Seiten.
+
+   Verwendung in einer Seite: _pagehead.html.twig als "ph" importieren, den
+   Block "pagehead" leer ueberschreiben (entfernt die klassische Titelleiste)
+   und im content ph.tabs([...]) plus ein div.fr-panel mit .fr-phead/.fr-pbody
+   rendern. Jeder Reiter ist ein Objekt mit label und optional icon, href,
+   active (bool), badge. Ein Reiter ohne href wird als nicht-klickbarer
+   Solo-Reiter (Seitentitel) dargestellt.
+#}
+{% macro tabs(items) %}
+  {# Makros haben eine isolierte Scope – Icon-Makro hier drin importieren. #}
+  {% import 'modern/_icons.html.twig' as icon %}
+  <div class="fr-tabrow">
+    {% for t in items %}
+      {% set cls = 'fr-tab' ~ (t.active|default(false) ? ' on' : '') %}
+      {% if t.href is defined and t.href %}
+        <a class="{{ cls }}" href="{{ t.href }}">
+          {%- if t.icon is defined and t.icon %}{{ icon.ic(t.icon) }}{% endif -%}
+          <span>{{ t.label }}</span>
+          {%- if t.badge is defined and t.badge is not null %}<span class="fr-tbadge">{{ t.badge }}</span>{% endif -%}
+        </a>
+      {% else %}
+        <span class="{{ cls }}{{ t.href is defined ? '' : ' solo' }}">
+          {%- if t.icon is defined and t.icon %}{{ icon.ic(t.icon) }}{% endif -%}
+          <span>{{ t.label }}</span>
+          {%- if t.badge is defined and t.badge is not null %}<span class="fr-tbadge">{{ t.badge }}</span>{% endif -%}
+        </span>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endmacro %}
+
+{% macro open() %}<div class="fr-panel">{% endmacro %}
+{% macro close() %}</div>{% endmacro %}
+{# Panel-Kopf mit Aktionen; label optional (z.B. "Neu erstellen"). #}
+{% macro head(label) %}<div class="fr-phead">{% if label %}<span class="fr-phlabel">{{ label }}</span>{% endif %}{% endmacro %}
+{% macro spring() %}<span class="fr-phspring"></span>{% endmacro %}
+{% macro headEnd() %}</div>{% endmacro %}
+{% macro body() %}<div class="fr-pbody">{% endmacro %}
+{% macro bodyEnd() %}</div>{% endmacro %}

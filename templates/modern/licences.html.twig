@@ -1,0 +1,78 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {% set ltabs = [{label:'Meine Lizenzen', icon:'award', href: path('modern_licences'), active: (scope == 'meine' and not userName)}] %}
+  {% if is_granted('ROLE_ADMIN') %}
+    {% set ltabs = ltabs|merge([
+      {label:'Alle Mitglieder',  icon:'users', href: path('modern_licences', {scope:'alle'}),       active: (scope == 'alle')},
+      {label:'Alle abgelaufene', icon:'clock', href: path('modern_licences', {scope:'abgelaufen'}), active: (scope == 'abgelaufen')}
+    ]) %}
+  {% endif %}
+  {% if is_granted('ROLE_SYSTEM_ADMIN') %}
+    {% set ltabs = ltabs|merge([
+      {label:'Lizenztypen',        icon:'award', href: path('modern_licencetypes'),      active: false},
+      {label:'Lizenztypennutzung', icon:'chart', href: path('modern_licencetype_usage'), active: false}
+    ]) %}
+  {% endif %}
+  {{ ph.tabs(ltabs) }}
+
+  <div class="fr-panel">
+    {% if userName %}
+    <div class="fr-phead">
+      <span class="fr-chip on">🎓 {{ userName }}</span>
+      <a class="fr-btn sec" href="{{ path('modern_licences', {scope: 'alle'}) }}">‹ Alle Lizenzen</a>
+    </div>
+    {% endif %}
+    <div class="fr-pactions">
+      {% if userName %}
+        <a class="fr-btn" href="{{ path('modern_licence_new', {user: userFilter}) }}">{{ icon.ic('plus') }} Neue Lizenz</a>
+      {% else %}
+        <a class="fr-btn" href="{{ path('modern_licence_new') }}">{{ icon.ic('plus') }} Neue Lizenz</a>
+      {% endif %}
+    </div>
+    <div class="fr-pbody">
+
+      <div class="fr-kpis">
+        <div class="fr-kpi"><span class="dot green"></span><div><div class="v">{{ kpi.green }}</div><div class="k">&gt; 12 Monate gültig</div></div></div>
+        <div class="fr-kpi"><span class="dot amber"></span><div><div class="v">{{ kpi.amber }}</div><div class="k">3–12 Monate</div></div></div>
+        <div class="fr-kpi"><span class="dot red"></span><div><div class="v">{{ kpi.red }}</div><div class="k">&lt; 3 Monate / abgelaufen</div></div></div>
+        <div class="fr-kpi"><span class="dot inf"></span><div><div class="v">{{ kpi.inf }}</div><div class="k">unbegrenzt</div></div></div>
+      </div>
+
+      {% for g in groups %}
+        <div class="fr-ugrp">
+          <div class="fr-uhd">
+            <span class="av">{{ g.user|split(' ')|map(p => p|first)|join|slice(0, 2)|upper }}</span>{{ g.user }}
+            {% if g.red %}<span class="mini red">● {{ g.red }} unter 3 Monate / abgelaufen</span>
+            {% elseif g.amber %}<span class="mini amber">● {{ g.amber }} unter 12 Monate</span>{% endif %}
+          </div>
+          {% for l in g.items %}
+            <a class="fr-lcard" href="{{ path('modern_licence_edit', {id: l.id}) }}">
+              <div class="fr-lbar {{ l.state }}"></div>
+              <div class="fr-linfo">
+                <div class="fr-lname">{{ l.name }}{% if l.fullname %} <span class="full">{{ l.fullname }}</span>{% endif %}</div>
+                <div class="fr-lsub">{{ l.validity }}</div>
+                {% if l.comment %}<div class="fr-lcomment">{{ l.comment }}</div>{% endif %}
+              </div>
+              <span class="fr-ltag {{ l.state }}">{{ l.badge }}</span>
+              <span class="fr-lchev">›</span>
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="fr-empty">Keine Lizenzen{{ scope == 'abgelaufen' ? ' abgelaufen' : '' }}.</div>
+      {% endfor %}
+
+      <div class="fr-llegend">
+        <span><i class="green"></i>grün: mehr als 12 Monate gültig (oder unbegrenzt)</span>
+        <span><i class="amber"></i>gelb: 3–12 Monate gültig</span>
+        <span><i class="red"></i>rot: weniger als 3 Monate gültig oder abgelaufen</span>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

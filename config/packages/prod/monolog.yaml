@@ -5,7 +5,8 @@ monolog:
             action_level: error
             #handler: nested
             handler: deduplicated
-            #excluded_http_codes: [404, 405]
+            excluded_http_codes: [404, 405]
+            channels: ["!audit"]   # Audit laeuft ueber den eigenen audit-Handler (nicht ueber die Fehler-Mail)
         deduplicated:
             type:    deduplication
             handler: swift
@@ -35,3 +36,23 @@ monolog:
             handler: deprecation
             max_level: info
             channels: ["php"]
+        # Eigener Audit-Kanal: rotierende Tagesdatei, IMMER geschrieben (nicht hinter fingers_crossed).
+        # max_files: 0 -> Dateien werden NICHT automatisch geloescht (unbegrenzte Aufbewahrung).
+        audit:
+            type: rotating_file
+            path: "%kernel.logs_dir%/audit.log"
+            level: info
+            channels: [audit]
+            max_files: 0
+            formatter: monolog.formatter.json
+        # Fehler zusaetzlich als JSON in eine eigene Datei (strukturiert lesbar fuer die
+        # Diagnose), unabhaengig von fingers_crossed/Fehler-Mail.
+        # level: critical -> nur echte Abstuerze/Server-Fehler; 404-Scanner-Laerm
+        # (NotFoundHttpException, von Symfony als "error" geloggt) bleibt draussen.
+        apperror:
+            type: rotating_file
+            path: "%kernel.logs_dir%/error.log"
+            level: critical
+            channels: ["!audit"]
+            max_files: 0
+            formatter: monolog.formatter.json

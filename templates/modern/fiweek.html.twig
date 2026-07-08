@@ -1,0 +1,213 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+<style>
+  .fiw-top svg,.fiw-mtools svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none;}
+  /* Alle/Meine – solide Blau-Toggle */
+  .tabs{display:inline-flex;background:#eaf0f9;border:1px solid #dbe6f5;border-radius:11px;padding:4px;gap:4px;}
+  .tabs button{border:none;background:none;border-radius:8px;font:inherit;font-weight:750;font-size:13.5px;color:var(--fr-blue-d);cursor:pointer;padding:9px 16px;display:inline-flex;align-items:center;gap:8px;transition:.15s;}
+  .tabs button.on{background:linear-gradient(180deg,#3a76de,#2b60c6);color:#fff;box-shadow:0 2px 6px rgba(43,96,198,.35),inset 0 1px 0 rgba(255,255,255,.2);}
+  /* Woche/Liste – weiche Segmented-Pille */
+  .seg{display:inline-flex;background:#e6edf6;border-radius:11px;padding:4px;gap:3px;box-shadow:inset 0 1px 2px rgba(30,50,90,.05);}
+  .seg button{border:none;background:none;border-radius:8px;font:inherit;font-weight:700;font-size:13px;color:var(--fr-mut);cursor:pointer;padding:8px 13px;display:inline-flex;align-items:center;gap:7px;transition:.15s;}
+  .seg button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 2px rgba(20,40,80,.12),0 2px 6px rgba(20,40,80,.06);}
+  .fiw-top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+  .fiw-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .fiw-bar .wk{font-weight:800;color:var(--fr-blue-d);}
+  .fiw-bar .navbtn{width:32px;height:32px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;color:var(--fr-ink);font-size:16px;background:#fff;}
+  .fiw-bar .navbtn:hover{background:#f2f5f8;}
+  .fiw-bar input[type=date],.fiw-bar select{padding:7px 9px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;background:#fff;font:inherit;}
+  .fiw-bar label{font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;}
+  .chip{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:6px;line-height:1.4;white-space:nowrap;margin:1px 0;}
+  .st-frei{background:#e7f6ee;color:#1e7a44;} .st-anfrageD{background:#fdf3dd;color:#9a6c12;} .st-abw{background:#eef1f4;color:#7a8698;font-style:italic;}
+  table.mx{border-collapse:separate;border-spacing:0;width:100%;font-size:12.5px;}
+  table.mx th,table.mx td{padding:7px 8px;border-bottom:1px solid var(--fr-line);vertical-align:top;text-align:center;}
+  table.mx thead th{font-size:11px;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;}
+  table.mx thead th.we,table.mx td.we{background:#fbfcf7;}
+  table.mx .fi{text-align:left;white-space:nowrap;min-width:190px;}
+  table.mx .fi .nm{font-weight:700;font-size:13.5px;} table.mx .fi .st{color:var(--fr-mut);font-size:11px;}
+  table.mx td .empty{color:#c4ccd6;} table.mx tbody tr:hover td{background:#f5f9fd;}
+  .av{width:24px;height:24px;border-radius:50%;background:var(--fr-blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-right:8px;vertical-align:-7px;}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--fr-mut);margin-top:12px;}
+  .legend i{display:inline-block;width:13px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px;}
+  .fiw-empty{color:var(--fr-mut);padding:22px 6px;}
+  .fiw-mtools{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:16px;}
+  .fiw-mtools .lbl{font-size:10.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#9aa6b6;}
+  .fiw-mtools .group{display:inline-flex;border-radius:12px;box-shadow:0 1px 2px rgba(20,40,80,.08);overflow:hidden;}
+  .fiw-mtools .group a{border:1px solid var(--fr-line);background:#fff;font-weight:700;font-size:13.5px;color:var(--fr-ink);padding:11px 16px;display:inline-flex;align-items:center;gap:9px;text-decoration:none;transition:.15s;}
+  .fiw-mtools .group a:hover{background:#f4f7fb;}
+  .fiw-mtools .group a+a{border-left:none;}
+  .fiw-mtools .group a.pri{background:linear-gradient(180deg,#3a76de,#2b60c6);border-color:#2b60c6;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.18);}
+  .fiw-mtools .group a.pri:hover{background:linear-gradient(180deg,#3369cf,#254fa8);}
+  .fiw-mtools .spring{flex:1;}
+  .fiw-mtools .danger{border:1px solid #eccfca;background:#fff;border-radius:12px;font-weight:700;font-size:13.5px;color:#b23528;padding:11px 16px;display:inline-flex;align-items:center;gap:9px;text-decoration:none;transition:.15s;box-shadow:0 1px 2px rgba(20,40,80,.05);}
+  .fiw-mtools .danger:hover{background:#fdeeec;border-color:#e3b6af;}
+  .fiw-listhd{font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);margin:6px 0 10px;}
+  .fiw-li{display:flex;align-items:center;gap:11px;border:1px solid var(--fr-line);border-radius:10px;padding:9px 12px;margin-bottom:8px;background:#fff;}
+  .fiw-li .bar{width:5px;align-self:stretch;min-height:34px;border-radius:4px;background:#c4ccd6;}
+  .fiw-li.frei .bar{background:#2e9e5b;} .fiw-li.anfrageD .bar{background:#d79a1e;} .fiw-li.abw .bar{background:#c9453b;}
+  .fiw-li .info{flex:1;min-width:0;text-decoration:none;color:var(--fr-ink);}
+  .fiw-li .info .t{font-weight:600;font-size:13.5px;} .fiw-li .info .m{color:var(--fr-mut);font-size:12px;margin-top:2px;}
+  .fiw-li .tag{font-size:11px;font-weight:800;padding:2px 9px;border-radius:20px;white-space:nowrap;}
+  .fiw-li form{margin:0;} .fiw-li .del{border:1px solid var(--fr-line);background:#fff;border-radius:8px;width:36px;height:36px;cursor:pointer;color:#b23528;display:inline-flex;align-items:center;justify-content:center;transition:.15s;}
+  .fiw-li .del:hover{background:#fdeeec;border-color:#e3b6af;}
+  .fiw-li .del svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+</style>
+
+{% set tab0 = initialTab|default('alle') %}
+{% set view0 = initialView|default('woche') %}
+
+{# 4 kombinierte Karteireiter (Alle/Meine x Woche/Liste), Umschaltung client-seitig #}
+<div class="fr-tabrow" id="fitabs">
+  <button type="button" class="fr-tab {{ (tab0 == 'alle' and view0 == 'woche') ? 'on' : '' }}" data-t="alle" data-v="woche"><span>Alle Fluglehrer · Woche</span></button>
+  <button type="button" class="fr-tab {{ (tab0 == 'alle' and view0 == 'liste') ? 'on' : '' }}" data-t="alle" data-v="liste"><span>Alle Fluglehrer · Liste</span></button>
+  {% if isFi %}
+  <button type="button" class="fr-tab {{ (tab0 == 'meine' and view0 == 'woche') ? 'on' : '' }}" data-t="meine" data-v="woche"><span>Meine · Woche</span></button>
+  <button type="button" class="fr-tab {{ (tab0 == 'meine' and view0 == 'liste') ? 'on' : '' }}" data-t="meine" data-v="liste"><span>Meine · Liste</span></button>
+  {% endif %}
+</div>
+<div class="fr-panel">
+
+<div class="fr-phead" id="wbar" {{ view0 == 'liste' ? 'style="display:none"' : '' }}>
+  <div class="fr-fl">Woche
+    <span class="fr-pernav">
+      <a id="navPrev" href="{{ path('modern_fiweek', {week: prevWeek, tab: tab0}) }}" title="Vorige Woche">‹</a>
+      <b class="wk">{{ weekLabel }}</b>
+      <a id="navNext" href="{{ path('modern_fiweek', {week: nextWeek, tab: tab0}) }}" title="Nächste Woche">›</a>
+    </span>
+  </div>
+  <label class="fr-fl">Woche wählen
+    <input type="date" id="weekPick" value="{{ monday }}">
+  </label>
+  <label class="fr-fl">Sortieren
+    <select id="sortsel">
+      <option value="early">Frühester freier Termin</option>
+      <option value="name">Name (A–Z)</option>
+    </select>
+  </label>
+</div>
+
+  {% if isFi %}
+  <div class="fr-pactions" id="meineTools" {{ tab0 == 'meine' ? '' : 'hidden' }}>
+    <span class="fr-phlabel">Neu erstellen</span>
+    <a class="fr-btn" href="{{ path('modern_fiavail_new') }}">{{ icon.ic('plus') }} Einzelne</a>
+    <a class="fr-btn" href="{{ path('modern_fiavail_series') }}">{{ icon.ic('plus') }} Serie</a>
+    <span class="fr-pgap"></span>
+    <a class="fr-btn del" href="{{ path('modern_fiavail_bulk') }}">{{ icon.ic('trash') }} Serie löschen</a>
+  </div>
+  {% endif %}
+
+  <div class="fr-pbody">
+  {# --- Woche: Matrix --- #}
+  <div id="matrixWrap" {{ view0 == 'liste' ? 'hidden' : '' }}>
+    <div id="matrix"></div>
+    <div class="legend">
+      <span><i style="background:#2e9e5b"></i>frei / direkt buchbar</span>
+      <span><i style="background:#d79a1e"></i>auf Anfrage</span>
+      <span><i style="background:#aab4c0"></i>abwesend / nicht verfügbar</span>
+      <span><i style="background:#f4f6f9;border:1px solid #e3e8ee"></i>keine Freigabe</span>
+    </div>
+  </div>
+
+  {# --- Liste: alle kommenden Termine --- #}
+  <div id="tlist-alle" {{ (view0 == 'liste' and tab0 == 'alle') ? '' : 'hidden' }}>
+    <div class="fiw-listhd">Alle kommenden Termine</div>
+    {% for it in termine %}
+      <div class="fiw-li {{ it.st }}"><span class="bar"></span>
+        <div class="info"><div class="t">{{ it.von }} – {{ it.bis }}{% if it.fi %} · <b>{{ it.fi }}</b>{% endif %}</div>
+          {% if it.comment %}<div class="m">{{ it.comment }}</div>{% endif %}</div>
+        <span class="tag chip {{ 'st-' ~ it.st }}">{{ it.typname }}</span>
+      </div>
+    {% else %}
+      <div class="fiw-empty">Keine kommenden Termine eingetragen.</div>
+    {% endfor %}
+  </div>
+
+  {# --- Liste: meine kommenden Termine (verwalten) --- #}
+  <div id="tlist-meine" {{ (view0 == 'liste' and tab0 == 'meine') ? '' : 'hidden' }}>
+    <div class="fiw-listhd">Meine kommenden Termine</div>
+    {% set mine = termine|filter(it => it.fid == myId) %}
+    {% for it in mine %}
+      <div class="fiw-li {{ it.st }}"><span class="bar"></span>
+        <a class="info" href="{{ path('modern_fiavail_edit', {id: it.id}) }}"><div class="t">{{ it.von }} – {{ it.bis }}</div>
+          {% if it.comment %}<div class="m">{{ it.comment }}</div>{% endif %}</a>
+        <span class="tag chip {{ 'st-' ~ it.st }}">{{ it.typname }}</span>
+        <form method="post" action="{{ path('modern_fiavail_delete') }}" onsubmit="return confirm('Diesen Eintrag löschen?');">
+          <input type="hidden" name="id" value="{{ it.id }}">
+          <button type="submit" class="del" title="Löschen"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
+        </form>
+      </div>
+    {% else %}
+      <div class="fiw-empty">Du hast keine kommenden Verfügbarkeiten eingetragen.</div>
+    {% endfor %}
+  </div>
+  </div>{# fr-pbody #}
+</div>{# fr-panel #}
+
+<script>
+(function () {
+  var DATA = {{ data|json_encode|raw }};
+  var DLAB = {{ dayLabels|json_encode|raw }};
+  var MYID = {{ myId }};
+  var URL  = '{{ path('modern_fiweek') }}', PREV = '{{ prevWeek }}', NEXT = '{{ nextWeek }}';
+  var mode = 'early', tab = '{{ tab0 }}', view = '{{ view0 }}';
+
+  function esc(s){return String(s).replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+  function toMin(t){var p=t.split(':');return +p[0]*60+ +p[1];}
+  function ini(n){return n.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();}
+  function freeH(fi){var h=0;fi.days.forEach(function(d){d.forEach(function(w){if(w.st==='frei'||w.st==='anfrageD')h+=(toMin(w.e)-toMin(w.s))/60;});});return h;}
+  function early(fi){for(var i=0;i<7;i++){for(var j=0;j<fi.days[i].length;j++)if(fi.days[i][j].st==='frei')return{i:i,s:fi.days[i][j].s};}return null;}
+  function sortF(list){var a=list.slice();
+    if(mode==='name')a.sort(function(x,y){return (x.sortname||x.name).localeCompare(y.sortname||y.name);});
+    else a.sort(function(x,y){var ex=early(x),ey=early(y),vx=ex?ex.i*1440+toMin(ex.s):1e9,vy=ey?ey.i*1440+toMin(ey.s):1e9;return vx-vy;});
+    return a;}
+  function chipFor(w){
+    if(w.st==='abw'){var full=(w.s==='00:00'&&w.e==='24:00');return '<span class="chip st-abw">🏖 '+(full?'Abwesend':(w.s+'–'+w.e))+'</span>';}
+    if(w.st==='frei'&&w.s==='00:00'&&w.e==='24:00')return '<span class="chip st-frei">ganztägig</span>';
+    return '<span class="chip st-'+w.st+'">'+w.s+'–'+w.e+'</span>';
+  }
+  function matrix(list){
+    var l=sortF(list);
+    if(!l.length)return '<div class="fiw-empty">Keine Fluglehrer-Verfügbarkeit in dieser Woche.</div>';
+    var h='<table class="mx"><thead><tr><th class="fi">Fluglehrer</th>';
+    DLAB.forEach(function(d,i){var we=i>4?' we':'';h+='<th class="'+we.trim()+'">'+d.wd+'<br><small>'+d.dd+'</small></th>';});
+    h+='</tr></thead><tbody>';
+    l.forEach(function(fi){var e=early(fi);
+      h+='<tr><td class="fi"><span class="av">'+ini(fi.name)+'</span><span class="nm">'+esc(fi.name)+'</span><br><span class="st">'+freeH(fi).toFixed(0)+' h · '+(e?('ab '+DLAB[e.i].wd+' '+e.s):'—')+'</span></td>';
+      for(var i=0;i<7;i++){var d=fi.days[i],we=i>4?' we':'',cell;
+        if(!d.length)cell='<span class="empty">–</span>';
+        else cell=d.map(chipFor).join('<br>');
+        h+='<td class="'+we.trim()+'">'+cell+'</td>';}
+      h+='</tr>';});
+    return h+'</tbody></table>';}
+
+  function updateNav(){
+    document.getElementById('navPrev').href = URL+'?week='+PREV+'&tab='+tab+'&view=woche';
+    document.getElementById('navNext').href = URL+'?week='+NEXT+'&tab='+tab+'&view=woche';
+  }
+  function render(){
+    var isW = (view==='woche');
+    document.getElementById('wbar').style.display = isW ? '' : 'none';
+    document.getElementById('matrixWrap').hidden = !isW;
+    if(isW){ var list=(tab==='meine')?DATA.filter(function(f){return f.id===MYID;}):DATA; document.getElementById('matrix').innerHTML=matrix(list); }
+    document.getElementById('tlist-alle').hidden  = !( !isW && tab==='alle' );
+    document.getElementById('tlist-meine').hidden = !( !isW && tab==='meine' );
+    var mt=document.getElementById('meineTools'); if(mt){ mt.hidden=(tab!=='meine'); }
+    updateNav();
+  }
+
+  document.getElementById('sortsel').addEventListener('change', function(){ mode=this.value; render(); });
+  document.querySelectorAll('#fitabs .fr-tab').forEach(function(b){ b.addEventListener('click', function(){
+    document.querySelectorAll('#fitabs .fr-tab').forEach(function(x){x.classList.remove('on');}); b.classList.add('on');
+    tab=b.getAttribute('data-t'); view=b.getAttribute('data-v'); render();
+  });});
+  document.getElementById('weekPick').addEventListener('change', function(){
+    if(this.value){ window.location = URL+'?week='+this.value+'&tab='+tab+'&view=woche'; }
+  });
+  render();
+})();
+</script>
+{% endblock %}

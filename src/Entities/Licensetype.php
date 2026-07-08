@@ -18,12 +18,4 @@ class Licensetype
       $em->flush();
     }
   }
-  
-  public static function GetLicenseTypeObject ($em, int $id)
-  {
-    $querystring = "SELECT b FROM App\Entity\FresLicencetype b WHERE b.id = :id";
-    $query = $em->createQuery($querystring)->setParameter('id', $id);
-    $licenseType = $query->getSingleResult();
-    return $licenseType;
-  } 
 }

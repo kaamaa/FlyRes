@@ -18,16 +18,23 @@ doctrine:
         charset: utf8mb4
         default_table_options:
             collate: utf8mb4_unicode_ci
+        # Verbindung bei JEDEM Connect auf utf8mb4 (4-Byte) setzen – ersetzt die
+        # zuvor ~80 manuellen "SET NAMES UTF8"-Aufrufe in den Controllern.
+        # utf8mb4 (statt utf8/3-Byte), damit auch Emojis o. Ae. gespeichert werden
+        # koennen (Spalten sind bereits utf8mb4); utf8 ist eine Teilmenge -> kein
+        # Datenrisiko fuer bestehende Eintraege.
+        # 1002 = PDO::MYSQL_ATTR_INIT_COMMAND.
+        options:
+            1002: 'SET NAMES utf8mb4'
     orm:
         second_level_cache:
           enabled: true
-        auto_generate_proxy_classes: true
         naming_strategy: doctrine.orm.naming_strategy.underscore
         auto_mapping: true
         mappings:
             App:
                 is_bundle: false
-                type: annotation
+                type: attribute
                 dir: '%kernel.project_dir%/src/Entity'
                 prefix: 'App\Entity'
                 alias: App

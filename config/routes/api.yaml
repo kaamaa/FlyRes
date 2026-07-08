@@ -1,0 +1,101 @@
+# ---------------------------------------------------------------------------
+# JSON-API fuer die iPhone-PWA (Meilenstein M1).
+# Bewusst eigene Datei – die bestehende config/routes.yaml bleibt unangetastet.
+# Dateien aus config/routes/ werden von Symfony automatisch geladen.
+# ---------------------------------------------------------------------------
+
+api_clients:
+    path: /api/clients
+    controller: App\Controller\Api\AccountController::clients
+    methods: GET
+
+api_me:
+    path: /api/me
+    controller: App\Controller\Api\AccountController::me
+    methods: GET
+
+api_fleet:
+    path: /api/fleet
+    controller: App\Controller\Api\FleetController::month
+    methods: GET
+
+api_fleet_day:
+    path: /api/fleet/day
+    controller: App\Controller\Api\FleetController::day
+    methods: GET
+
+api_aircraft:
+    path: /api/aircraft
+    controller: App\Controller\Api\MasterDataController::aircraft
+    methods: GET
+
+api_instructors:
+    path: /api/instructors
+    controller: App\Controller\Api\MasterDataController::instructors
+    methods: GET
+
+api_pilots:
+    path: /api/pilots
+    controller: App\Controller\Api\MasterDataController::pilots
+    methods: GET
+
+api_flightpurposes:
+    path: /api/flightpurposes
+    controller: App\Controller\Api\MasterDataController::flightpurposes
+    methods: GET
+
+api_airfields:
+    path: /api/airfields
+    controller: App\Controller\Api\MasterDataController::airfields
+    methods: GET
+
+# --- M2: Reservierungen lesen ---
+api_bookings:
+    path: /api/bookings
+    controller: App\Controller\Api\BookingController::list
+    methods: GET
+
+api_booking_detail:
+    path: /api/bookings/{id}
+    controller: App\Controller\Api\BookingController::detail
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- M3: Verfuegbarkeit (freie Slots fuer Reservieren) ---
+api_availability:
+    path: /api/availability
+    controller: App\Controller\Api\AvailabilityController::availability
+    methods: GET
+
+# --- Batch-Vergleich: alle Flugzeuge/Fluglehrer an einem Tag in EINER Anfrage ---
+api_comparematrix:
+    path: /api/comparematrix
+    controller: App\Controller\Api\AvailabilityController::comparematrix
+    methods: GET
+
+# --- "Naechste freie Termine" fuer Reservieren ---
+api_nextslots:
+    path: /api/nextslots
+    controller: App\Controller\Api\AvailabilityController::nextslots
+    methods: GET
+
+# --- M4: Reservierungen schreiben ---
+api_booking_create:
+    path: /api/bookings
+    controller: App\Controller\Api\BookingController::create
+    methods: POST
+
+api_booking_update:
+    path: /api/bookings/{id}
+    controller: App\Controller\Api\BookingController::update
+    methods: [PATCH, PUT]
+    requirements:
+        id: '\d+'
+
+api_booking_delete:
+    path: /api/bookings/{id}
+    controller: App\Controller\Api\BookingController::delete
+    methods: DELETE
+    requirements:
+        id: '\d+'

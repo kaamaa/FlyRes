@@ -1,0 +1,97 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+{% set wdays = {1:'Mo', 2:'Di', 3:'Mi', 4:'Do', 5:'Fr', 6:'Sa', 7:'So'} %}
+  {{ ph.tabs([{label: 'Serie anlegen', icon: 'repeat'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="fis_form" class="fr-btn">Serie anlegen</button>
+      <a class="fr-btn" href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="fis_form" class="fr-form" action="{{ path('modern_fiavail_series_save') }}" method="post">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="fr-fihint">Lege wiederkehrende Schulungszeiten an – sie werden in einzelne Termine je gewähltem Wochentag zerlegt. Bereits belegte/überlappende Tage werden übersprungen.</div>
+
+  <div class="fr-formsec">Verfügbarkeit</div>
+  <div class="fr-card">
+    {% if isAdmin %}
+    <div class="fr-frow">
+      <label>Fluglehrer</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <select name="fi">{% for label, id in instructors %}<option value="{{ id }}" {{ id == v.fi ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select>
+      </div>
+    </div>
+    {% else %}<input type="hidden" name="fi" value="{{ v.fi }}">{% endif %}
+    <div class="fr-frow">
+      <label>Typ</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg></span>
+        <select name="typ">{% for label, id in states %}<option value="{{ id }}" {{ id == v.typ ? 'selected' : '' }}>{{ label }}</option>{% endfor %}</select>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Zeitraum &amp; Wochentage</div>
+  <div class="fr-card">
+    {% set icCal %}<span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>{% endset %}
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Von (Datum)</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="fromdate" value="{{ v.fromdate }}"><div class="fr-calpop" hidden></div></div></div>
+      <div class="fr-frow"><label>Bis (Datum)</label><div class="fr-ctrl dt fr-date">{{ icCal|raw }}<span class="fr-datedisp"></span><input type="hidden" name="todate" value="{{ v.todate }}"><div class="fr-calpop" hidden></div></div></div>
+    </div>
+    <div class="fr-frow">
+      <label>Wochentage</label>
+      <div class="fr-wdays">
+        {% for id, name in wdays %}
+          <label class="fr-wday"><input type="checkbox" name="weekdays[]" value="{{ id }}" {{ id in v.weekdays ? 'checked' : '' }}><span>{{ name }}</span></label>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="fr-hint" id="s_count"></div>
+  </div>
+
+  <div class="fr-formsec">Tageszeit (je Termin)</div>
+  <div class="fr-card">
+    {% set icClock %}<span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>{% endset %}
+    <div class="fr-f2">
+      <div class="fr-frow"><label>Von · Zeit</label><div class="fr-ctrl dt">{{ icClock|raw }}<input type="time" name="fromtime" value="{{ v.fromtime }}" step="900"></div></div>
+      <div class="fr-frow"><label>Bis · Zeit</label><div class="fr-ctrl dt">{{ icClock|raw }}<input type="time" name="totime" value="{{ v.totime }}" step="900"></div></div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Kommentar</div>
+  <div class="fr-card">
+    <div class="fr-frow col"><textarea name="comment" class="fr-area" rows="2" placeholder="Optional">{{ v.comment }}</textarea></div>
+  </div>
+
+</form>
+
+{{ include('modern/_calendarjs.html.twig') }}
+<script>
+(function () {
+  var fromI = document.querySelector('input[name="fromdate"]'), toI = document.querySelector('input[name="todate"]'),
+      out = document.getElementById('s_count');
+  function calc() {
+    var f = fromI.value, t = toI.value;
+    var days = []; document.querySelectorAll('input[name="weekdays[]"]:checked').forEach(function (c) { days.push(+c.value); });
+    if (!f || !t) { out.textContent = ''; return; }
+    if (!days.length) { out.textContent = 'Bitte mindestens einen Wochentag wählen.'; return; }
+    var d = new Date(f + 'T00:00:00'), end = new Date(t + 'T00:00:00'), n = 0, g = 0;
+    if (d > end) { out.textContent = 'Das End-Datum muss nach dem Start liegen.'; return; }
+    while (d <= end && g < 800) { var iso = ((d.getDay() + 6) % 7) + 1; if (days.indexOf(iso) >= 0) n++; d.setDate(d.getDate() + 1); g++; }
+    out.textContent = 'Ergibt ' + n + ' Termin' + (n === 1 ? '' : 'e') + '.';
+  }
+  document.querySelectorAll('.fr-date').forEach(function (w) { w.addEventListener('datechange', calc); });
+  document.querySelectorAll('input[name="weekdays[]"]').forEach(function (c) { c.addEventListener('change', calc); });
+  calc();
+})();
+</script>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
+{% endblock %}

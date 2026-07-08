@@ -6,36 +6,26 @@ use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 //use Symfony\Component\Validator\Constraints as Assert;
 //use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
-
 /**
  * App\Entity\FresFIAvailabilityStates
- *
- * @ORM\Table(name="fres_fi_availability_states")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  */
+#[ORM\Table(name: 'fres_fi_availability_states')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresFIAvailabilityStates
 {
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer")
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="AUTO")
      */
+    #[ORM\Column(name: 'id', type: 'integer')]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'AUTO')]
     private $id;
     
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\FresFIAvailability", mappedBy="typ", cascade={"persist"})
-     * @ORM\OrderBy({"id" = "DESC"})
-     */
-    
-   
-    
-    /**
      * @var integer $name
-     * @ORM\Column(name="name", type="string", length=255)
      */
+    #[ORM\Column(name: 'name', type: 'string', length: 255)]
     private $name;
 
     /**

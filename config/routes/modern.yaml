@@ -1,0 +1,357 @@
+# ---------------------------------------------------------------------------
+# Vorschau "modernes Web-Design" (Variante A). Eigene Datei, damit
+# config/routes.yaml unangetastet bleibt. Zugriff: eingeloggt (ROLE_PILOT),
+# Pruefung im Controller. Filter laufen ueber Query-Parameter
+# (?zeitraum=&umfang=&zweck=&gruppieren=&q=).
+# ---------------------------------------------------------------------------
+
+modern_dashboard:
+    path: /web
+    controller: App\Controller\ModernPreviewController::dashboard
+    methods: GET
+
+modern_help:
+    path: /web/anleitung
+    controller: App\Controller\ModernPreviewController::help
+    methods: GET
+
+modern_bookings:
+    path: /web/buchungen
+    controller: App\Controller\ModernPreviewController::bookings
+    methods: GET
+
+modern_overview:
+    path: /web/auslastung
+    controller: App\Controller\ModernPreviewController::overview
+    methods: GET
+
+modern_day:
+    path: /web/tag
+    controller: App\Controller\ModernPreviewController::day
+    methods: GET
+
+modern_fiweek:
+    path: /web/verfuegbarkeit
+    controller: App\Controller\ModernPreviewController::fiWeek
+    methods: GET
+
+modern_booking:
+    path: /web/buchung/{id}
+    controller: App\Controller\ModernPreviewController::booking
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_reserve:
+    path: /web/reservieren
+    controller: App\Controller\ModernPreviewController::reserve
+    methods: GET
+
+modern_booking_edit:
+    path: /web/buchung/{id}/bearbeiten
+    controller: App\Controller\ModernPreviewController::reserve
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_licences:
+    path: /web/lizenzen
+    controller: App\Controller\ModernPreviewController::licences
+    methods: GET
+
+modern_licence_new:
+    path: /web/lizenz/neu
+    controller: App\Controller\ModernPreviewController::licenceNew
+    methods: GET
+
+modern_licence_save:
+    path: /web/lizenz/speichern
+    controller: App\Controller\ModernPreviewController::licenceSave
+
+modern_licence_delete:
+    path: /web/lizenz/loeschen
+    controller: App\Controller\ModernPreviewController::licenceDelete
+    methods: POST
+
+modern_mydata:
+    path: /web/meine-daten
+    controller: App\Controller\ModernPreviewController::mydata
+    methods: GET
+modern_mydata_save:
+    path: /web/meine-daten/speichern
+    controller: App\Controller\ModernPreviewController::mydataSave
+    methods: POST
+
+modern_licencetypes:
+    path: /web/lizenztypen
+    controller: App\Controller\ModernPreviewController::licenceTypes
+modern_licencetype_usage:
+    path: /web/lizenztypen/nutzung
+    controller: App\Controller\ModernPreviewController::licenceTypeUsage
+modern_licencetype_new:
+    path: /web/lizenztyp/neu
+    controller: App\Controller\ModernPreviewController::licenceTypeNew
+modern_licencetype_save:
+    path: /web/lizenztyp/speichern
+    controller: App\Controller\ModernPreviewController::licenceTypeSave
+    methods: POST
+modern_licencetype_delete:
+    path: /web/lizenztyp/loeschen
+    controller: App\Controller\ModernPreviewController::licenceTypeDelete
+    methods: POST
+modern_licencetype_edit:
+    path: /web/lizenztyp/{id}
+    controller: App\Controller\ModernPreviewController::licenceTypeEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_licence_edit:
+    path: /web/lizenz/{id}
+    controller: App\Controller\ModernPreviewController::licenceEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_notes:
+    path: /web/pinnwand
+    controller: App\Controller\ModernPreviewController::notes
+    methods: GET
+
+modern_note_new:
+    path: /web/pinnwand/neu
+    controller: App\Controller\ModernPreviewController::noteNew
+    methods: GET
+
+modern_note_save:
+    path: /web/pinnwand/speichern
+    controller: App\Controller\ModernPreviewController::noteSave
+    methods: POST
+
+modern_note_delete:
+    path: /web/pinnwand/loeschen
+    controller: App\Controller\ModernPreviewController::noteDelete
+    methods: POST
+
+modern_note_edit:
+    path: /web/pinnwand/{id}
+    controller: App\Controller\ModernPreviewController::noteEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Fluglehrer-Verfügbarkeit: Formulare (ROLE_FI). Die Listen-Ansicht wurde in
+#     modern_fiweek ("Verfügbarkeit Fluglehrer") integriert. ---
+modern_fiavail_new:
+    path: /web/schulungszeit/neu
+    controller: App\Controller\ModernPreviewController::fiAvailNew
+    methods: GET
+
+modern_fiavail_save:
+    path: /web/schulungszeit/speichern
+    controller: App\Controller\ModernPreviewController::fiAvailSave
+    methods: POST
+
+modern_fiavail_delete:
+    path: /web/schulungszeit/loeschen
+    controller: App\Controller\ModernPreviewController::fiAvailDelete
+    methods: POST
+
+modern_fiavail_series:
+    path: /web/schulungszeit/serie
+    controller: App\Controller\ModernPreviewController::fiAvailSeries
+    methods: GET
+
+modern_fiavail_series_save:
+    path: /web/schulungszeit/serie-speichern
+    controller: App\Controller\ModernPreviewController::fiAvailSeriesSave
+    methods: POST
+
+modern_fiavail_bulk:
+    path: /web/schulungszeit/mehrfach
+    controller: App\Controller\ModernPreviewController::fiAvailBulk
+    methods: GET
+
+modern_fiavail_bulk_delete:
+    path: /web/schulungszeit/mehrfach-loeschen
+    controller: App\Controller\ModernPreviewController::fiAvailBulkDelete
+    methods: POST
+
+modern_fiavail_edit:
+    path: /web/schulungszeit/{id}
+    controller: App\Controller\ModernPreviewController::fiAvailEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Stammdaten: Flugzeuge & Flugzeugtypen (nur ROLE_SYSTEM_ADMIN) ---
+modern_aircraft:
+    path: /web/flugzeuge
+    controller: App\Controller\ModernPreviewController::aircraft
+    methods: GET
+
+modern_aircraft_new:
+    path: /web/flugzeug/neu
+    controller: App\Controller\ModernPreviewController::aircraftNew
+    methods: GET
+
+modern_aircraft_save:
+    path: /web/flugzeug/speichern
+    controller: App\Controller\ModernPreviewController::aircraftSave
+    methods: POST
+
+modern_aircraft_edit:
+    path: /web/flugzeug/{id}
+    controller: App\Controller\ModernPreviewController::aircraftEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+modern_actype_new:
+    path: /web/flugzeugtyp/neu
+    controller: App\Controller\ModernPreviewController::aircraftTypeNew
+    methods: GET
+
+modern_actype_save:
+    path: /web/flugzeugtyp/speichern
+    controller: App\Controller\ModernPreviewController::aircraftTypeSave
+    methods: POST
+
+modern_actype_delete:
+    path: /web/flugzeugtyp/loeschen
+    controller: App\Controller\ModernPreviewController::aircraftTypeDelete
+    methods: POST
+
+modern_actype_edit:
+    path: /web/flugzeugtyp/{id}
+    controller: App\Controller\ModernPreviewController::aircraftTypeEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Verwaltung: Nutzer (nur ROLE_SYSTEM_ADMIN) ---
+modern_users:
+    path: /web/nutzer
+    controller: App\Controller\ModernPreviewController::users
+    methods: GET
+
+modern_maildist:
+    path: /web/mailverteiler
+    controller: App\Controller\ModernPreviewController::maildist
+    methods: GET
+
+modern_user_new:
+    path: /web/nutzer/neu
+    controller: App\Controller\ModernPreviewController::userNew
+    methods: GET
+
+modern_user_save:
+    path: /web/nutzer/speichern
+    controller: App\Controller\ModernPreviewController::userSave
+    methods: POST
+
+modern_user_delete:
+    path: /web/nutzer/loeschen
+    controller: App\Controller\ModernPreviewController::userDelete
+    methods: POST
+
+modern_user_edit:
+    path: /web/nutzer/{id}
+    controller: App\Controller\ModernPreviewController::userEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- Verwaltung: Mandanten (nur ROLE_GLOBAL_ADMIN) ---
+modern_mandanten:
+    path: /web/mandanten
+    controller: App\Controller\ModernPreviewController::mandanten
+    methods: GET
+
+modern_mandant_new:
+    path: /web/mandant/neu
+    controller: App\Controller\ModernPreviewController::mandantNew
+    methods: GET
+
+modern_mandant_save:
+    path: /web/mandant/speichern
+    controller: App\Controller\ModernPreviewController::mandantSave
+    methods: POST
+
+modern_mandant_toggle:
+    path: /web/mandant/umschalten
+    controller: App\Controller\ModernPreviewController::mandantToggle
+    methods: POST
+
+modern_mandant_edit:
+    path: /web/mandant/{id}
+    controller: App\Controller\ModernPreviewController::mandantEdit
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# --- VFR-Flugplanung – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
+modern_flightplan:
+    path: /web/flight-planning
+    controller: App\Controller\FlightPlanController::plan
+    methods: [GET, POST]
+modern_flightplan_resolve:
+    path: /web/flight-planning/resolve
+    controller: App\Controller\FlightPlanController::resolve
+    methods: POST
+
+# --- Weight & Balance – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
+modern_wb:
+    path: /web/weight-balance
+    controller: App\Controller\WeightBalanceController::index
+    methods: GET
+modern_wb_calc:
+    path: /web/weight-balance/calculate
+    controller: App\Controller\WeightBalanceController::calc
+    methods: POST
+
+# --- Sonnenzeiten (Sunrise/Sunset) – fuer alle Piloten (Gruppe "Flugvorbereitung") ---
+modern_sunrise:
+    path: /web/sunrise-sunset
+    controller: App\Controller\Sunrise_SunsetController::webView
+    methods: [GET, POST]
+
+# --- System-Diagnose (nur ROLE_SYSTEM_ADMIN) ---
+modern_system:
+    path: /web/system
+    controller: App\Controller\ModernSystemController::system
+    methods: GET
+
+modern_system_phpinfo:
+    path: /web/system/phpinfo
+    controller: App\Controller\ModernSystemController::phpinfo
+    methods: GET
+
+modern_system_backup:
+    path: /web/system/backup
+    controller: App\Controller\ModernSystemController::backup
+    methods: GET
+
+modern_system_pwmigrate:
+    path: /web/system/passwoerter-migrieren
+    controller: App\Controller\ModernSystemController::passwordMigrate
+    methods: POST
+
+modern_system_liccleanup:
+    path: /web/system/lizenzen-bereinigen
+    controller: App\Controller\ModernSystemController::licencesCleanup
+    methods: POST
+
+modern_system_lictype_delete:
+    path: /web/system/lizenztypen-loeschen
+    controller: App\Controller\ModernSystemController::licenceTypeDelete
+    methods: POST
+
+# --- /mobile -> /mobile/ (PWA wird statisch aus public/mobile/ ausgeliefert) ---
+mobile_slash_redirect:
+    path: /mobile
+    controller: Symfony\Bundle\FrameworkBundle\Controller\RedirectController::urlRedirectAction
+    defaults:
+        path: /mobile/
+        permanent: true
+    methods: GET

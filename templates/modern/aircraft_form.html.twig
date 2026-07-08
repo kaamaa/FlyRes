@@ -1,0 +1,70 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label: isNew ? 'Neues Flugzeug' : 'Flugzeug bearbeiten', icon: 'plane'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="ac_form" class="fr-btn">Flugzeug speichern</button>
+      <a class="fr-btn" href="{{ path('modern_aircraft') }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="ac_form" class="fr-form" action="{{ path('modern_aircraft_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="fr-formsec">Flugzeug</div>
+  <div class="fr-card">
+    <div class="fr-f2">
+      <div class="fr-frow">
+        <label>Kennung</label>
+        <div class="fr-ctrl">
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg></span>
+          <input type="text" name="kennung" value="{{ v.kennung }}" maxlength="20" placeholder="z. B. D-EABC">
+        </div>
+      </div>
+      <div class="fr-frow">
+        <label>Name / Bezeichnung</label>
+        <div class="fr-ctrl">
+          <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+          <input type="text" name="name" value="{{ v.name }}" maxlength="100" placeholder="z. B. Cessna 172 (blau)">
+        </div>
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Flugzeugtyp</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M22 10L12 4 2 10l10 6 10-6z"/><path d="M6 12v5c0 1 3 3 6 3s6-2 6-3v-5"/></svg></span>
+        <select name="aircrafttype">
+          <option value="0">Bitte wählen…</option>
+          {% for label, id in types %}<option value="{{ id }}" {{ id == v.aircrafttype ? 'selected' : '' }}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Einstellungen</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Vorausbuchung (Tage)</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <input type="number" name="advance" value="{{ v.advance }}" min="0" max="999" placeholder="0">
+      </div>
+      <small class="fr-hint">Wie viele Tage im Voraus dieses Flugzeug gebucht werden darf (0 = ohne Begrenzung).</small>
+    </div>
+    <label class="fr-check">
+      <input type="checkbox" name="active" value="1" {{ v.active ? 'checked' : '' }}>
+      <span>Aktiv (buchbar). Deaktivierte Flugzeuge erscheinen nicht mehr in der Auswahl.</span>
+    </label>
+  </div>
+
+</form>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
+{% endblock %}

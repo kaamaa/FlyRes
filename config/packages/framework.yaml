@@ -1,6 +1,7 @@
 framework:
   
     secret: '%env(APP_SECRET)%'
+    handle_all_throwables: true
     #csrf_protection: true
     #http_method_override: true
 
@@ -20,6 +21,8 @@ framework:
       name: PHPSESSID
       cookie_samesite: lax
       cookie_path: '/'
+      cookie_secure: auto
+      handler_id: null
 
     php_errors:
         log: true
@@ -31,8 +34,9 @@ framework:
       csrf_protection: ~
       #  enabled: false
       
-    validation:      
-      enable_annotations: true
+    validation:
+      enable_attributes: true
+      email_validation_mode: html5
 
     default_locale:  "%locale%"
     # trusted_hosts:   ~

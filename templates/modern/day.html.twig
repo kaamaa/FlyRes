@@ -1,0 +1,47 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label: planeName, icon: 'plane'}]) }}
+  <div class="fr-panel">
+    <div class="fr-phead">
+      <span class="fr-pernav">
+        <a href="{{ path('modern_day', {plane: planeId, date: prev}) }}">‹</a>
+        <b>{{ label }}</b>
+        <a href="{{ path('modern_day', {plane: planeId, date: next}) }}">›</a>
+      </span>
+    </div>
+    <div class="fr-pactions">
+      <a class="fr-btn sec" href="{{ path('modern_overview') }}">{{ icon.ic('chevleft') }} Übersicht</a>
+      <span class="fr-pgap"></span>
+      <a class="fr-btn" href="{{ path('modern_reserve', {date: dateIso, plane: planeId}) }}">{{ icon.ic('plus') }} Reservieren</a>
+    </div>
+    <div class="fr-pbody">
+      <div class="fr-dayhdr"><span class="d">{{ label }}</span><span class="line"></span><span class="cnt">{{ bookings|length }}</span></div>
+
+      {% for b in bookings %}
+        {% set p = b.flightpurpose|lower %}
+        {% set pcls = 'b-default' %}
+        {% if 'chul' in p %}{% set pcls = 'b-schulung' %}{% elseif 'charter' in p %}{% set pcls = 'b-charter' %}{% elseif 'artung' in p %}{% set pcls = 'b-wartung' %}{% endif %}
+        <a class="fr-bcard" href="{{ path('modern_booking', {id: b.bookingid}) }}">
+          <div class="fr-bc-time">
+            <div class="t1">{{ b.start|split(' ')|last }}</div>
+            <div class="t2">{{ b.end|split(' ')|last }}</div>
+          </div>
+          <div class="fr-bc-bar {{ b.isflighttraining ? 'train' : '' }}"></div>
+          <div class="fr-bc-info">
+            <div class="fr-bc-who">{{ b.user }}{% if b.isflighttraining and b.flightinstructor %} · FI {{ b.flightinstructor }}{% endif %}</div>
+            <div class="fr-bc-sub">{{ b.airfield }}{% if b.description %} · {{ b.description }}{% endif %}</div>
+            <span class="fr-bc-badge {{ pcls }}">{{ b.flightpurpose }}</span>
+          </div>
+          <div class="fr-bc-chev">›</div>
+        </a>
+      {% else %}
+        <div class="fr-empty">Keine Reservierungen an diesem Tag.</div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

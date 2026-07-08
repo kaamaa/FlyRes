@@ -7,9 +7,11 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bridge\Doctrine\Security\User\UserLoaderInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\PasswordUpgraderInterface;
 use App\Entities\Users;
 
-class UserRepository extends ServiceEntityRepository implements UserLoaderInterface
+class UserRepository extends ServiceEntityRepository implements UserLoaderInterface, PasswordUpgraderInterface
 {
     // Das UserRepository wird verwendet um beim Login den Nutzer bei dem richtigen Client zu laden
     private $entityManager;
@@ -29,9 +31,22 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
     }
 
 
-    public function loadUserByIdentifier(string $username): ?FresAccounts
+    public function loadUserByIdentifier(string $identifier): ?FresAccounts
     {
-        // Der Client wurde vorher in der Klasse gespeichert
+        // Mandantenfaehiger Identifier "clientid:username" (siehe FresAccounts::getUserIdentifier).
+        // Damit laedt auch Remember-Me / der Provider exakt den richtigen Mandanten.
+        // Fallback: per setClient() gesetzter Mandant (Login-Formular), falls kein ":" enthalten.
+        $clientid = $this->client;
+        $username = $identifier;
+        if (str_contains($identifier, ':')) {
+            [$clientid, $username] = explode(':', $identifier, 2);
+        }
+
+        // Ohne Mandant keine eindeutige Identitaet -> nicht laden
+        if ($clientid === null || $clientid === '') {
+            return null;
+        }
+
         $user = $this->entityManager->createQuery(
                 'SELECT u
                 FROM App\Entity\FresAccounts u
@@ -39,7 +54,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
                 u.clientid = :client'
             )
             ->setParameter('query', $username)
-            ->setParameter('client', $this->client) // "1")
+            ->setParameter('client', $clientid)
             ->getOneOrNullResult();
         if($user)
         {
@@ -52,7 +67,7 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
     }
 
     
-    public function find($id, $lockMode = null, $lockVersion = null)
+    public function find($id, $lockMode = null, $lockVersion = null): ?object
     {
         // holt den User basierend auf einer ID (clientID wird dazu nicht benötigt weil die ID eindeutig ist)
         $user = $this->entityManager->createQuery(
@@ -65,10 +80,19 @@ class UserRepository extends ServiceEntityRepository implements UserLoaderInterf
         return $user;
     }
 
-    /** @deprecated since Symfony 5.3 */
-    public function loadUserByUsername(string $usernameOrEmail): ?User
+    /**
+     * Persistiert den vom Security-System neu berechneten Hash beim Login
+     * (Rehash-on-Login). Greift, wenn der Hasher needsRehash()=true meldet –
+     * also fuer noch nicht migrierte Legacy-MD5-Konten.
+     */
+    public function upgradePassword(PasswordAuthenticatedUserInterface $user, string $newHashedPassword): void
     {
-        return $this->loadUserByIdentifier($usernameOrEmail);
+        if (!$user instanceof FresAccounts) {
+            return;
+        }
+        $user->setPassword($newHashedPassword);
+        $this->entityManager->persist($user);
+        $this->entityManager->flush();
     }
 }
 

@@ -1,0 +1,154 @@
+{# ===========================================================================
+   Oeffentliches Layout fuer die frei zugaenglichen Flugvorbereitungs-Werkzeuge
+   (Weight & Balance, Flight Planning, Sunrise/Sunset). Keine app.user-Abhaengigkeit.
+
+   Zwei Varianten (ueber ?embed):
+     - ohne Parameter : oeffentliche Seite MIT linker Mini-Navigation (3 Tools).
+     - ?embed=1       : nackt, OHNE Menue (zum Einbetten in eine fremde Seite).
+   Die Tool-Templates waehlen dieses Layout, wenn kein Login vorliegt ODER ?embed
+   gesetzt ist (dann auch fuer eingeloggte Nutzer -> Vorschau der Embed-Variante).
+   =========================================================================== #}
+{% set embed = app.request.query.get('embed') is not null %}
+{% set route = app.request.attributes.get('_route') %}
+{% macro pic(name) %}
+{%- set p = {
+  'chart': '<line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="9"/>',
+  'plane': '<path d="M21 15.5 13.5 11V4.2a1.5 1.5 0 0 0-3 0V11L3 15.5V17l7.5-2.3V19l-2 1.4V22l3.5-1 3.5 1v-1.6L13.5 19v-4.3L21 17z"/>',
+  'clock': '<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/>'
+} -%}
+<span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">{{ p[name]|raw }}</svg></span>
+{%- endmacro %}
+{% import _self as pub %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlyRes · {% block ptitle %}Flugvorbereitung{% endblock %}</title>
+  <link href="{{ asset('images/css/modern.css') }}?v={{ 'now'|date('YmdHis') }}" rel="stylesheet">
+  <script src="{{ asset('images/js/fravail.js') }}?v={{ 'now'|date('YmdHis') }}"></script>
+  <style>
+    .fr-pubapp{display:flex;min-height:100vh;align-items:stretch;}
+    .fr-pubside{flex:0 0 216px;width:216px;background:#f7f9fb;border-right:1px solid var(--fr-line,#e3e8ee);padding:16px 12px;}
+    .fr-pubside .brand{display:flex;align-items:center;gap:7px;font-weight:800;color:var(--fr-blue-d,#1f4d73);font-size:18px;padding:4px 8px 14px;}
+    .fr-pubside .brand svg{width:22px;height:22px;}
+    .fr-pubside .sec{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:#93a3b4;padding:6px 8px;}
+    .pnav{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;color:var(--fr-ink,#1f2733);text-decoration:none;font-weight:600;font-size:13.5px;}
+    .pnav .ic svg{width:18px;height:18px;} .pnav:hover{background:#eef3f8;} .pnav.on{background:var(--fr-blue,#3b6ea5);color:#fff;}
+    .fr-pubside .plogin{display:block;margin-top:14px;padding:8px 10px;border:1px solid var(--fr-line,#d8d8d8);border-radius:8px;color:var(--fr-blue,#3b6ea5);text-decoration:none;font-weight:700;font-size:12.5px;text-align:center;}
+    .fr-pubmain{flex:1;min-width:0;padding:0 22px 50px;}
+    .fr-pub-top{display:flex;align-items:center;gap:14px;padding:16px 2px 12px;border-bottom:1px solid var(--fr-line,#e3e8ee);margin-bottom:18px;flex-wrap:wrap;}
+    .fr-pub-ttl{font-size:19px;font-weight:700;color:var(--fr-ink,#1f2733);margin:0;}
+    .fr-pub-sp{flex:1;}
+    .fr-embed{max-width:1180px;margin:0 auto;padding:14px 16px 40px;}
+    @media(max-width:760px){ .fr-pubapp{flex-direction:column;} .fr-pubside{flex:none;width:auto;border-right:none;border-bottom:1px solid var(--fr-line,#e3e8ee);display:flex;flex-wrap:wrap;gap:6px;align-items:center;} .fr-pubside .brand{padding:4px 8px;} .fr-pubside .sec{display:none;} }
+    @media print{ .fr-pubside,.fr-pub-top{display:none!important;} .fr-pubmain,.fr-embed{padding:0;} }
+  </style>
+</head>
+<body class="fr-modern">
+{# Bloecke nur EINMAL definieren, dann in beiden Varianten ausgeben. #}
+{% set _actions %}{% block topactions %}{% endblock %}{% endset %}
+{% set _content %}{% block content %}{% endblock %}{% endset %}
+{% if embed %}
+  <div class="fr-embed">
+    <div class="fr-body">{{ _content }}</div>
+  </div>
+{% else %}
+  <div class="fr-pubapp">
+    <nav class="fr-pubside">
+      <div class="brand"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15.5 13.5 11V4.2a1.5 1.5 0 0 0-3 0V11L3 15.5V17l7.5-2.3V19l-2 1.4V22l3.5-1 3.5 1v-1.6L13.5 19v-4.3L21 17z"/></svg> FlyRes</div>
+      <div class="sec">Flugvorbereitung</div>
+      <a class="pnav {{ route starts with 'modern_wb' ? 'on' : '' }}" href="{{ path('modern_wb') }}">{{ pub.pic('chart') }} Weight &amp; Balance</a>
+      <a class="pnav {{ route starts with 'modern_flightplan' ? 'on' : '' }}" href="{{ path('modern_flightplan') }}">{{ pub.pic('plane') }} Flugplanung</a>
+      <a class="pnav {{ route starts with 'modern_sunrise' ? 'on' : '' }}" href="{{ path('modern_sunrise') }}">{{ pub.pic('clock') }} Sonnenaufgang / Untergang</a>
+      <a class="plogin" href="{{ path('app_login') }}">Anmelden</a>
+    </nav>
+    <div class="fr-pubmain">
+      <div class="fr-pub-top">
+        <h1 class="fr-pub-ttl">{{ block('ptitle') }}</h1>
+        <span class="fr-pub-sp"></span>
+        <div class="fr-topactions">{{ _actions }}</div>
+      </div>
+      <div class="fr-body">{{ _content }}</div>
+    </div>
+  </div>
+{% endif %}
+
+  {# Auto-Hoehe an ein einbettendes iframe melden (robust: ResizeObserver +
+     MutationObserver + Image-Load + Intervall-Rueckfall). Misst bevorzugt den
+     Inhaltscontainer (.fr-embed / .fr-pubmain), damit kein Leerraum entsteht. #}
+  <script>
+  (function () {
+    if (window.parent === window) { return; }   // nur wenn im iframe eingebettet
+
+    var last = 0;
+    var RESERVE = 8;   // kleine Reserve gegen abschliessende Abstaende
+
+    function fallbackHeight() {
+      var b = document.body, e = document.documentElement;
+      return Math.max(
+        b ? b.scrollHeight : 0, b ? b.offsetHeight : 0,
+        e ? e.scrollHeight : 0, e ? e.offsetHeight : 0
+      );
+    }
+
+    function container() {
+      return document.querySelector('.fr-embed')
+          || document.querySelector('.fr-pubmain')
+          || document.querySelector('.inhalt');
+    }
+
+    function measure() {
+      var off = window.pageYOffset || (document.documentElement ? document.documentElement.scrollTop : 0) || 0;
+      var c = container();
+      if (c) {
+        var h = c.getBoundingClientRect().bottom + off;
+        if (h > 50) { return Math.ceil(h + RESERVE); }
+      }
+      return Math.ceil(fallbackHeight());
+    }
+
+    function send() {
+      var v = measure();
+      if (v > 0 && Math.abs(v - last) > 2) {
+        last = v;
+        window.parent.postMessage({ flyresHeight: v }, '*');
+      }
+    }
+
+    function init() {
+      send();
+      if (window.ResizeObserver) {
+        try {
+          var ro = new ResizeObserver(send);
+          ro.observe(document.documentElement);
+          if (document.body) { ro.observe(document.body); }
+          var c = container();
+          if (c) { ro.observe(c); }
+        } catch (e) {}
+      }
+      if (window.MutationObserver && document.body) {
+        try {
+          new MutationObserver(send).observe(document.body, {
+            childList: true, subtree: true, attributes: true, characterData: true
+          });
+        } catch (e) {}
+      }
+      var imgs = document.images || [];
+      for (var i = 0; i < imgs.length; i++) {
+        if (!imgs[i].complete) { imgs[i].addEventListener('load', send); }
+      }
+      setInterval(send, 1000);   // robuster Rueckfall
+    }
+
+    window.addEventListener('resize', send);
+    window.addEventListener('load', send);
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,39 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label:'Mandanten', icon:'building'}]) }}
+
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <a class="fr-btn" href="{{ path('modern_mandant_new') }}">{{ icon.ic('plus') }} Neuer Mandant</a>
+    </div>
+    <div class="fr-pbody">
+
+      <div class="fr-cards">
+        {% for c in items %}
+          <div class="fr-acard {{ c.active ? '' : 'inactive' }}">
+            <a class="fr-acard-main" href="{{ path('modern_mandant_edit', {id: c.id}) }}">
+              <div class="fr-acard-ico">🏫</div>
+              <div class="fr-acard-info">
+                <div class="fr-acard-t">{{ c.name }}{% if not c.active %} <span class="fr-ltag red">inaktiv</span>{% endif %}</div>
+                <div class="fr-acard-meta">{{ c.users }} Nutzer · {{ c.aircraft }} {{ c.aircraft == 1 ? 'Flugzeug' : 'Flugzeuge' }} · {{ c.bookings }} {{ c.bookings == 1 ? 'Reservierung' : 'Reservierungen' }} · Vorausschau {{ c.nextslots_days }} Tage</div>
+              </div>
+              <span class="fr-lchev">›</span>
+            </a>
+            <form class="fr-acard-del" method="post" action="{{ path('modern_mandant_toggle') }}">
+              <input type="hidden" name="id" value="{{ c.id }}">
+              <button type="submit" class="fr-btn ghost" title="{{ c.active ? 'Deaktivieren' : 'Aktivieren' }}">{{ c.active ? 'Deaktivieren' : 'Aktivieren' }}</button>
+            </form>
+          </div>
+        {% else %}
+          <div class="fr-empty">Keine Mandanten.</div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+{% endblock %}

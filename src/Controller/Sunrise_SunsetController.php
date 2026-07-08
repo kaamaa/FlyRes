@@ -17,8 +17,6 @@ use App\Repository\ToolsAirportRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
-use App\ViewHelper;
-use App\SessionData;
 use DateTimeZone;
 use DateTime;
 
@@ -206,203 +204,72 @@ class Sunrise_SunsetController extends AbstractController
   }
 
 
-/**
- * Generates a monthly table with sunrise, sunset, and daylight information for a specific location.
- *
- * This method creates an HTML table displaying detailed solar information for each day of a given month,
- * including sunrise and sunset times in UTC, MEZ/MESZ, and local time, along with day length and daylight saving time status.
- *
- * @param \DateTime $date The starting date for the monthly calculation
- * @param float $decimalLatitude The latitude of the location
- * @param float $decimalLongitude The longitude of the location
- * @param string $timezone The timezone identifier for the location
- * @param mixed $offsets Optional timezone offset information
- * @param string $offsetstr Optional timezone offset string
- *
- * @return string HTML table with monthly sunrise and sunset information
- */
-protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitude, $timezone, $offsets, $offsetstr) 
-{
-    // Setze die Locale-Einstellung auf Deutsch
-    setlocale(LC_TIME, 'de_DE.UTF-8');
-    
-    // Erstelle ein DateTime-Objekt vom ersten Tag des Monats
-    $date = new \DateTime($date->format('Y-m-01'));
-    // Holen des letzten Tages im Monat
-    $endOfMonth = (clone $date)->modify('last day of this month');
-
-    $offsetstr = $this->getUtcOffsetFormat($timezone);
-    
-    // Erzeugen des HTML-Tabellen-Starts
-    $html = '<style> .hp { padding-left: 5px; padding-right: 5px; } .th { text-align: center; } </style>';
-    $html .= '<table border="1">';
-    $html .= '<tr>';
-    $html .= '<th class="th"colspan="2">Datum / Date</th>';  
-    $html .= '<th class="th"colspan="2">UTC</th>';
-    $html .= '<th class="th"colspan="6">MEZ/MESZ (UTC+1(+2DT))</th>';
-    $html .= '<th class="th"colspan="3">Local ' . $offsetstr . '</th>';
-    $html .= '</tr>';
   
-    $html .= '<tr>';
-    $html .= '<td class="hp"><strong>Date</strong></td>';
-    $html .= '<td class="hp"><strong>Weekday</strong></td>';
-    $html .= '<td class="hp"><strong>Sunrise</strong></td>';
-    $html .= '<td class="hp"><strong>Sunset</strong></td>';
-    $html .= '<td class="hp"><strong>Civil Dawn</strong></td>';
-    $html .= '<td class="hp"><strong>Sunrise</strong></td>';
-    $html .= '<td class="hp"><strong>Sunset</strong></td>';
-    $html .= '<td class="hp"><strong>Civil Dusk</strong></td>';
-    $html .= '<td class="hp"><strong>Day length</strong></td>';
-    $html .= '<td class="hp"><strong>DST</strong></td>';
-    $html .= '<td class="hp"><strong>Sunrise</strong></td>';
-    $html .= '<td class="hp"><strong>Sunset</strong></td>';
-    $html .= '<td class="hp"><strong>DST</strong></td>';
-    $html .= '</tr>';
-    
-    // Schleife durch alle Tage des Monats
-    while ($date <= $endOfMonth) 
-    {
-        // Bestimmen des Wochentags
-        $weekdayEnglish = $date->format('l'); // Englisch
-        $weekdayGerman = strftime('%A', $date->getTimestamp()); // Deutsch
+  /**
+   * Liefert die Tagesdaten eines Monats als strukturiertes Array fuer die
+   * grafische Tageslicht-Darstellung: Sonnenaufgang/-untergang und buergerliche
+   * Daemmerung als Minuten des Tages in der ORTSZEIT des Flugplatzes (inkl.
+   * Sommerzeit), plus Wochenende/Heute/Polartag-Kennzeichnung.
+   *
+   * @return array<int, array<string,mixed>>
+   */
+  protected function generateMonthlyData($date, $decimalLatitude, $decimalLongitude, $timezone, string $tzMode = 'local'): array
+  {
+    $date = new \DateTime($date->format('Y-m-01'));
+    $endOfMonth = (clone $date)->modify('last day of this month');
+    $wdShort = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    $today = (new \DateTime('now'))->format('Y-m-d');
 
-        // Sonnenaufgangs- und Sonnenuntergangszeiten für UTC
-        //$zenith = 90.5; // Das ist der richtige Wert, um mit den Wetterapps vergleichbar zu sein
-        //$sunrise1 = date_sunrise($date->getTimestamp(), SUNFUNCS_RET_TIMESTAMP, $decimalLatitude, $decimalLongitude, $zenith, 0); 
-        //$sunset1 = date_sunset($date->getTimestamp(), SUNFUNCS_RET_TIMESTAMP, $decimalLatitude, $decimalLongitude, $zenith, 0);
+    $rows = [];
+    while ($date <= $endOfMonth) {
+      $info = date_sun_info($date->getTimestamp(), $decimalLatitude, $decimalLongitude);
+      $sr = $info['sunrise'];   $ss = $info['sunset'];
+      $dawn = $info['civil_twilight_begin']; $dusk = $info['civil_twilight_end'];
 
-        $sunInfo = date_sun_info($date->getTimestamp(), $decimalLatitude, $decimalLongitude);
-        $civilTwilightBegin1 = $sunInfo['civil_twilight_begin'];
-        $civilTwilightEnd1 = $sunInfo['civil_twilight_end'];
-        $sunrise1 = $sunInfo['sunrise'];
-        $sunset1 = $sunInfo['sunset'];
+      // Offset je nach gewaehlter Zeitform (beruecksichtigt Sommerzeit pro Tag).
+      if ($tzMode === 'utc') {
+        $off = 0;
+      } else {
+        $ref = clone $date;
+        $ref->setTimezone(new DateTimeZone($tzMode === 'mez' ? 'Europe/Berlin' : $timezone));
+        $off = $ref->getOffset();
+      }
+      $mod = static fn ($ts) => (int) (((($ts + $off) % 86400) + 86400) % 86400 / 60);
 
-        // MEZ / MESZ - Sommerzeit / Winterzeit
-        $MEZdst = "";
-        $MEZDate = clone $date;
-        $berlinTimezone = new DateTimeZone('Europe/Berlin'); 
-        $MEZDate->setTimezone($berlinTimezone);
-        $isDST = $MEZDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
-        if ($this->hasDst('Europe/Berlin') )
-        {  
-          if ($isDST) {
-            $MEZdst = "Summer time";
-          } else {
-            $MEZdst = "Winter time";
-          }
-        } else 
-        { 
-          $MEZdst = "N/A"; 
-        }
+      $N = (int) $date->format('N'); // 1=Mo .. 7=So
+      $row = [
+        'date'    => $date->format('d.m.'),
+        'day'     => $date->format('d'),
+        'wd'      => $wdShort[$N - 1],
+        'weekend' => $N >= 6,
+        'today'   => $date->format('Y-m-d') === $today,
+        'polar'   => null,
+      ];
 
-        // Lokale Zeit
-        $Locdst = "";
-        $LocDate = clone $date;
-        $LocTimezone = new DateTimeZone($timezone); 
-        $LocDate->setTimezone($LocTimezone);
-        $isDST = $LocDate->format('I'); // 1 für Sommerzeit, 0 für Winterzeit
-        if ($this->hasDst($timezone) )
-        {
-          if ($isDST) {
-            $Locdst = "Summer time";
-          } else {
-            $Locdst = "Winter time";
-          }
-        } else 
-        { 
-          $Locdst = "N/A"; 
-        }
-
-        if (($sunrise1 === false && $sunset1 === false) or ($sunrise1 === true && $sunset1 === true)) 
-        {
-          if ($sunrise1 === false && $sunset1 === false) 
-          { 
-            $sunriseUtc1 = 'Polar Night';
-            $sunsetUtc1 = 'Polar Night';
-            $civilTwilightBeginUtcPlus1 = 'Polar Night';
-            $sunriseUtcPlus1 = 'Polar Night';
-            $sunsetUtcPlus1 = 'Polar Night';
-            $civilTwilightEndUtcPlus1 = 'Polar Night';
-            $dayLength1 = 'Polar Night';
-            $dst = '';
-            $sunriseCustomStandard = 'Polar Night';
-            $sunsetCustomStandard = 'Polar Night';
-          }
-          if ($sunrise1 === true && $sunset1 === true) 
-          { 
-            $sunriseUtc1 = 'Polar Day';
-            $sunsetUtc1 = 'Polar Day';
-            $civilTwilightBeginUtcPlus1 = 'Polar Day';
-            $sunriseUtcPlus1 = 'Polar Day';
-            $sunsetUtcPlus1 = 'Polar Day';
-            $civilTwilightEndUtcPlus1 = 'Polar Day';
-            $dayLength1 = 'Polar Day';
-            $dst = '';
-            $sunriseCustomStandard = 'Polar Day';
-            $sunsetCustomStandard = 'Polar Day';
-          }
-        }
-        else 
-        {
-          
-          // Länge des Tages
-          $dayLength1 = gmdate('H:i', $sunset1 - $sunrise1);
-
-          // UTC 
-          $sunriseUtc1 = date('H:i', $sunrise1);
-          $sunsetUtc1 = date('H:i', $sunset1);
-          
-         
-          // MEZ / MESZ 
-          $MEZtimezoneOffset1 = $MEZDate->getOffset();
-          $sunriseUtcPlus1 = date('H:i', $sunrise1 + $MEZtimezoneOffset1);
-          $sunsetUtcPlus1 = date('H:i', $sunset1 + $MEZtimezoneOffset1);
-          $civilTwilightBeginUtcPlus1 = date('H:i', $civilTwilightBegin1 + $MEZtimezoneOffset1);
-          $civilTwilightEndUtcPlus1 = date('H:i', $civilTwilightEnd1 + $MEZtimezoneOffset1);
-
-          // Lokalzeit
-          $LocOffsetSeconds = $LocDate->getOffset();
-          $sunriseCustomStandard = date('H:i', $sunrise1 + $LocOffsetSeconds);
-          $sunsetCustomStandard = date('H:i', $sunset1 + $LocOffsetSeconds);
-
-        }
-
-        // Hintergrundfarbe für Wochenenden und das aktuelle Datum
-        $currentDate = new \DateTime('now'); 
-        if ($date->format('Y-m-d') == $currentDate->format('Y-m-d')) {
-            $backgroundColor = 'style="background-color: #ffcccb;"'; // Rot für das aktuelle Datum
-        } elseif ($date->format('N') >= 6) {
-            $backgroundColor = 'style="background-color: #f0e68c;"'; // Gelb für Wochenenden
-        } else {
-            $backgroundColor = '';
-        }
-        
-        $html .= '<tr ' . $backgroundColor . '>';
-        $html .= '<td>' . $date->format('d.m.Y') . '</td>';
-        $html .= '<td>' . $weekdayEnglish . '</td>';
-        $html .= '<td>' . $sunriseUtc1 . '</td>';
-        $html .= '<td>' . $sunsetUtc1 . '</td>';
-        $html .= '<td>' . $civilTwilightBeginUtcPlus1 . '</td>';
-        $html .= '<td>' . $sunriseUtcPlus1 . '</td>';
-        $html .= '<td>' . $sunsetUtcPlus1 . '</td>';
-        $html .= '<td>' . $civilTwilightEndUtcPlus1 . '</td>';
-        $html .= '<td>' . $dayLength1 . '</td>';
-        $html .= '<td>' . $MEZdst . '</td>';
-        $html .= '<td>' . $sunriseCustomStandard . '</td>';
-        $html .= '<td>' . $sunsetCustomStandard . '</td>';
-        $html .= '<td>' . $Locdst . '</td>';
-        $html .= '</tr>';
-          
-      // Einen Tag weitergehen
-      $date->modify('+1 day');
+      if ($sr === false && $ss === false) {
+        $row['polar'] = 'night';
+      } elseif ($sr === true && $ss === true) {
+        $row['polar'] = 'day';
+      } else {
+        $row['dawnMin'] = $mod($dawn);
+        $row['srMin']   = $mod($sr);
+        $row['ssMin']   = $mod($ss);
+        $row['duskMin'] = $mod($dusk);
+        $row['srStr']   = sprintf('%02d:%02d', intdiv($row['srMin'], 60), $row['srMin'] % 60);
+        $row['ssStr']   = sprintf('%02d:%02d', intdiv($row['ssMin'], 60), $row['ssMin'] % 60);
+        $row['lenStr']  = gmdate('H:i', (int) ($ss - $sr));
+      }
+      if ($row['today'] && $row['polar'] === null) {
+        $row['nowMin'] = $mod(time());
       }
 
-    $html .= '</tbody>';
-    $html .= '</table>';
+      $rows[] = $row;
+      $date->modify('+1 day');
+    }
 
-    return $html;
+    return $rows;
   }
-  
+
   /**
    * Handles the view action for sunrise and sunset information.
    *
@@ -413,8 +280,10 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
    * @param Request $request The HTTP request containing form data
    * @return string HTML table with sunrise and sunset information
    */
-  public function ViewAction(Request $request, EntityManagerInterface $em)
+  public function webView(Request $request, EntityManagerInterface $em)
   {
+    // Flugvorbereitungs-Werkzeug – fuer alle angemeldeten Piloten.
+    // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
     ini_set('memory_limit', '256M');
     // Setze die Standardzeitzone auf UTC 
     date_default_timezone_set('UTC');
@@ -422,21 +291,27 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
     $form = $this->createFormBuilder()->getForm();
     $form->handleRequest($request);
     $data = $request->request->all('form');
+
+    // Sonnenzeiten sind jahresunabhaengig -> aktuelles Jahr, nur der Monat wird gewaehlt.
+    $year   = (int) (new \DateTime('now'))->format('Y');
+    $tzMode = 'local';
     if (empty($data))
     {
       $country = "Germany";
       $airport = "WORMS EDFV (GERMANY)";
       $country_code = ToolsCountryRepository::GetCountryCode($em, $country);
-      $dateTime = new \DateTime('now');
+      $month = (int) (new \DateTime('now'))->format('n');
     }
     else
     {
-      $country = $data['Country_Name'];
+      $country = $data['Country_Name'] ?? 'Germany';
       $country_code = ToolsCountryRepository::GetCountryCode($em, $country);
-      $airport = $data['Airport_Name'];
-      $date = $data['SRSSDate'];
-      $dateTime = \DateTime::createFromFormat('m.Y', $date);
+      $airport = $data['Airport_Name'] ?? '';
+      $month  = max(1, min(12, (int) ($data['SRSSMonth'] ?? (new \DateTime('now'))->format('n'))));
+      $tzModeRaw = $data['TimeZone_Mode'] ?? 'local';
+      $tzMode = in_array($tzModeRaw, ['local', 'mez', 'utc'], true) ? $tzModeRaw : 'local';
     }
+    $dateTime = (new \DateTime())->setDate($year, $month, 1)->setTime(12, 0, 0);
     
     $countrylist = ToolsCountryRepository::GetAllCountriesForListbox($em);
     $airportlist = ToolsAirportRepository::GetAllAirportsForListbox($em, $country_code);
@@ -448,14 +323,19 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
       $airport = $airportchoice;
     }
     
+    $monthChoices = ['Januar' => 1, 'Februar' => 2, 'März' => 3, 'April' => 4, 'Mai' => 5, 'Juni' => 6,
+                     'Juli' => 7, 'August' => 8, 'September' => 9, 'Oktober' => 10, 'November' => 11, 'Dezember' => 12];
+    $tzChoices    = ['Ortszeit (Flugplatz)' => 'local', 'MEZ/MESZ (Deutschland)' => 'mez', 'UTC' => 'utc'];
+
     $form = $this->createFormBuilder()
-    ->add('Country_Name', ChoiceType::class, array ('choices' => $countrylist, 
-          'required' => false, 'mapped' => false, 'data' => $country))
-    ->add('Airport_Name', ChoiceType::class, array ('choices' => $airportlist, 
-          'required' => false, 'mapped' => false, 'data' => $airportchoice))
-    ->add('SRSSDate', DateTimeType::class, array('html5' => false, 'format' => Sunrise_SunsetController::DateFormat, 
-          'widget' => 'single_text', 'mapped' => false, 'data' => $dateTime))    
-              
+    ->add('Country_Name', ChoiceType::class, array ('choices' => $countrylist,
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $country))
+    ->add('Airport_Name', ChoiceType::class, array ('choices' => $airportlist,
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $airportchoice))
+    ->add('SRSSMonth', ChoiceType::class, array ('choices' => $monthChoices,
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $month))
+    ->add('TimeZone_Mode', ChoiceType::class, array ('choices' => $tzChoices,
+          'required' => false, 'placeholder' => false, 'mapped' => false, 'data' => $tzMode))
     ->getForm();
     
     if (!empty($airportlist)) 
@@ -476,17 +356,20 @@ protected function generateMonthlyTable($date, $decimalLatitude, $decimalLongitu
       $decimalLatitude = $this->convertToDecimal($firstElement->getsLat());
       $decimalLongitude = $this->convertToDecimal($firstElement->getsLong());
       $timezone = ToolsCountryRepository::GetTimeZone($em, $firstElement->getCountry());
-      $htmlTable = $this->generateMonthlyTable($dateTime, $decimalLatitude, $decimalLongitude, $timezone, $offsets, $offsetstr);
-      $title = "Sunrise and Sunset for " . $airport . " in the Month " . $dateTime->format('m.Y');
-      $title .= "</br> Latitute/Breitengrad & Longitude/Längengrad: " . $this->decimalToDMS($decimalLatitude, true) . " " . $this->decimalToDMS($decimalLongitude, false);
+      $days = $this->generateMonthlyData($dateTime, $decimalLatitude, $decimalLongitude, $timezone, $tzMode);
+      $title = $airport . ' · ' . $dateTime->format('m.Y');
+      $tzLabel = $tzMode === 'utc' ? 'UTC' : ($tzMode === 'mez' ? 'MEZ/MESZ (Deutschland)' : 'Ortszeit ' . $timezone);
+      $subtitle = 'Breite/Länge ' . $this->decimalToDMS($decimalLatitude, true) . ' ' . $this->decimalToDMS($decimalLongitude, false)
+                . ' · Zeiten in ' . $tzLabel;
     }
     else
     {
-      $htmlTable = "";
-      $title = "No Airports available";
+      $days = [];
+      $title = 'Keine Flugplätze verfügbar';
+      $subtitle = '';
     }
-    return $this->render('sunrise_sunset/view.html.twig', [ 
-      'form' => $form->createView(), 'htmlTable' => $htmlTable, 'title' => $title
+    return $this->render('modern/sunrise.html.twig', [
+      'form' => $form->createView(), 'days' => $days, 'title' => $title, 'subtitle' => $subtitle
     ]);
   }
 }

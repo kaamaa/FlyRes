@@ -1,0 +1,403 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+<style>
+  .sys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;}
+  .sys-card{background:#fff;border:1px solid var(--fr-line);border-radius:12px;padding:14px 16px;}
+  .sys-card h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--fr-mut);display:flex;align-items:center;gap:8px;}
+  .sys-kv{width:100%;border-collapse:collapse;font-size:13px;}
+  .sys-kv td{padding:5px 0;border-bottom:1px solid var(--fr-bg);vertical-align:top;}
+  .sys-kv td:first-child{color:var(--fr-mut);width:46%;}
+  .sys-kv td:last-child{color:var(--fr-ink);font-weight:600;text-align:right;}
+  .sys-kv tr:last-child td{border-bottom:none;}
+  .sys-badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:20px;}
+  .sys-badge.ok{background:#e7f7ee;color:var(--fr-green);}
+  .sys-badge.warn{background:#fdf2e3;color:var(--fr-amber);}
+  .sys-badge.bad{background:#fbe9e9;color:var(--fr-red);}
+  .sys-hint{font-size:12px;color:var(--fr-mut);margin-top:8px;line-height:1.5;}
+  .sys-sec{margin:22px 0 10px;font-size:15px;font-weight:700;color:var(--fr-ink);}
+  .sys-chips{display:flex;flex-wrap:wrap;gap:6px;}
+  .sys-chip{font-size:11.5px;font-weight:600;padding:3px 9px;border-radius:7px;background:var(--fr-bg);border:1px solid var(--fr-line);color:var(--fr-ink);}
+  .sys-chip.miss{background:#fbe9e9;border-color:#f3cccc;color:var(--fr-red);}
+  .sys-table{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border:1px solid var(--fr-line);border-radius:12px;overflow:hidden;}
+  .sys-table th,.sys-table td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--fr-bg);}
+  .sys-table th{background:var(--fr-bg);color:var(--fr-mut);font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  .sys-table td.num{text-align:right;font-variant-numeric:tabular-nums;}
+  .sys-table tr:last-child td{border-bottom:none;}
+  .sys-frame{width:100%;height:75vh;border:1px solid var(--fr-line);border-radius:12px;background:#fff;}
+  .sys-mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;}
+  details.sys-det summary{cursor:pointer;font-weight:700;color:var(--fr-blue);padding:6px 0;}
+  /* Lizenztypen-Uebersicht */
+  .lt-list{display:flex;flex-direction:column;gap:1px;background:var(--fr-line);border:1px solid var(--fr-line);border-radius:12px;overflow:hidden;}
+  .lt-row{display:grid;grid-template-columns:minmax(160px,1.3fr) 2fr auto;gap:14px;align-items:center;background:#fff;padding:11px 14px;}
+  .lt-row.lt-unused{background:#fafbfc;}
+  .lt-name{font-weight:700;color:var(--fr-ink);font-size:13.5px;}
+  .lt-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;padding:1px 6px;border-radius:5px;margin-left:7px;}
+  .lt-badge.off{background:#eef1f5;color:var(--fr-mut);}
+  .lt-stats{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12px;color:var(--fr-mut);}
+  .lt-stats b{color:var(--fr-ink);font-variant-numeric:tabular-nums;}
+  .lt-status{justify-self:end;font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+  .lt-status.on{background:#e7f7ee;color:var(--fr-green);}
+  .lt-status.idle{background:#fdf2e3;color:var(--fr-amber);}
+  .lt-status.none{background:#eef1f5;color:var(--fr-mut);}
+  @media(max-width:640px){.lt-row{grid-template-columns:1fr;gap:6px;}.lt-status{justify-self:start;}}
+  /* Audit-Protokoll */
+  .aud-tbl{width:100%;border-collapse:collapse;font-size:12.5px;background:#fff;border:1px solid var(--fr-line);border-radius:12px;overflow:hidden;}
+  .aud-tbl th,.aud-tbl td{padding:7px 10px;text-align:left;border-bottom:1px solid var(--fr-bg);vertical-align:top;white-space:nowrap;}
+  .aud-tbl th{background:var(--fr-bg);color:var(--fr-mut);font-size:11px;text-transform:uppercase;letter-spacing:.03em;}
+  .aud-tbl tr:last-child td{border-bottom:none;}
+  .aud-tbl td.det{white-space:normal;color:var(--fr-mut);font-size:11.5px;}
+  .aud-tbl .mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--fr-ink);}
+  .aud-ev{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;background:#eef1f5;color:var(--fr-ink);}
+  .aud-ev.warn{background:#fdf2e3;color:var(--fr-amber);}
+  .aud-ev.bad{background:#fbe9e9;color:var(--fr-red);}
+  .aud-ev.ok{background:#e7f7ee;color:var(--fr-green);}
+</style>
+
+{{ ph.tabs([
+  {label:'System',      icon:'diag',     href: path('modern_system', {tab:'system'}),  active: tab == 'system'},
+  {label:'Datenbank',   icon:'building', href: path('modern_system', {tab:'db'}),      active: tab == 'db'},
+  {label:'Audit',       icon:'list',     href: path('modern_system', {tab:'audit'}),   active: tab == 'audit'},
+  {label:'Fehler',      icon:'diag',     href: path('modern_system', {tab:'error'}),   active: tab == 'error'},
+  {label:'Mail',        icon:'mail',     href: path('modern_system', {tab:'mail'}),    active: tab == 'mail'},
+  {label:'Lizenztypen', icon:'award',    href: path('modern_system', {tab:'lictype'}), active: tab == 'lictype'},
+  {label:'phpinfo',     icon:'chart',    href: path('modern_system', {tab:'phpinfo'}), active: tab == 'phpinfo'}
+]) }}
+<div class="fr-panel"><div class="fr-pbody">
+
+{% if tab == 'system' %}
+{# ---------- Caching-Status (die Kernfrage) ---------- #}
+<div class="sys-sec">Caching</div>
+<div class="sys-grid">
+
+  {# OPcache #}
+  <div class="sys-card">
+    <h3>OPcache
+      {% if opcache.loaded and opcache.enabled %}<span class="sys-badge ok">aktiv</span>
+      {% elseif opcache.loaded %}<span class="sys-badge warn">geladen, aus</span>
+      {% else %}<span class="sys-badge bad">fehlt</span>{% endif %}
+    </h3>
+    {% if opcache.loaded and opcache.api is defined and not opcache.api %}
+      <div class="sys-hint">OPcache ist geladen{{ opcache.enabled ? ' und aktiv' : '' }}. Die Status-API
+        (<span class="sys-mono">opcache_get_status</span>) ist vom Hoster per <span class="sys-mono">disable_functions</span>
+        gesperrt – die Detailwerte sind daher nicht auslesbar.</div>
+    {% elseif opcache.loaded and opcache.nostatus is defined %}
+      <div class="sys-hint">OPcache ist geladen, liefert hier aber keinen Status (evtl. restrict_api).</div>
+    {% elseif opcache.loaded and opcache.enabled %}
+      <table class="sys-kv">
+        <tr><td>Trefferquote</td><td>{{ opcache.hitrate }}</td></tr>
+        <tr><td>Speicher belegt</td><td>{{ opcache.used }}</td></tr>
+        <tr><td>Speicher frei</td><td>{{ opcache.free }}</td></tr>
+        <tr><td>verschwendet</td><td>{{ opcache.wasted }}</td></tr>
+        <tr><td>Skripte im Cache</td><td>{{ opcache.scripts }}{% if opcache.maxscripts %} / {{ opcache.maxscripts }}{% endif %}</td></tr>
+        {% if opcache.jit is not null %}<tr><td>JIT</td><td>{{ opcache.jit ? 'an' : 'aus' }}</td></tr>{% endif %}
+      </table>
+    {% else %}
+      <div class="sys-hint">OPcache beschleunigt PHP-Code (keine DB-Daten). Sollte aktiv sein.</div>
+    {% endif %}
+  </div>
+
+  {# APCu #}
+  <div class="sys-card">
+    <h3>APCu
+      {% if apcu.enabled %}<span class="sys-badge ok">aktiv</span>
+      {% elseif apcu.loaded %}<span class="sys-badge warn">geladen, aus</span>
+      {% else %}<span class="sys-badge bad">nicht installiert</span>{% endif %}
+    </h3>
+    {% if apcu.enabled %}
+      <table class="sys-kv">
+        {% if apcu.total is defined %}<tr><td>Speicher gesamt</td><td>{{ apcu.total }}</td></tr>{% endif %}
+        {% if apcu.used is defined %}<tr><td>belegt</td><td>{{ apcu.used }}</td></tr>{% endif %}
+        {% if apcu.free is defined %}<tr><td>frei</td><td>{{ apcu.free }}</td></tr>{% endif %}
+        {% if apcu.entries is defined %}<tr><td>Einträge</td><td>{{ apcu.entries }}</td></tr>{% endif %}
+        {% if apcu.hits is defined %}<tr><td>Hits / Misses</td><td>{{ apcu.hits }} / {{ apcu.misses }}</td></tr>{% endif %}
+      </table>
+    {% else %}
+      <div class="sys-hint">
+        APCu bietet geteilten In-Memory-Cache (schneller als Filesystem). Auf dem Server prüfen mit
+        <span class="sys-mono">php -m | grep apcu</span> und ggf. installieren/aktivieren.
+      </div>
+    {% endif %}
+  </div>
+
+  {# Doctrine #}
+  <div class="sys-card">
+    <h3>Doctrine Second-Level-Cache
+      {% if doctrine.slc_enabled and doctrine.slc_persistent %}<span class="sys-badge ok">persistent</span>
+      {% elseif doctrine.slc_enabled %}<span class="sys-badge warn">nur pro Request</span>
+      {% else %}<span class="sys-badge bad">aus</span>{% endif %}
+    </h3>
+    <table class="sys-kv">
+      <tr><td>SLC aktiviert</td><td>{{ doctrine.slc_enabled ? 'ja' : 'nein' }}</td></tr>
+      <tr><td>SLC-Region-Treiber</td><td class="sys-mono">{{ doctrine.slc_region ?? '–' }}</td></tr>
+      <tr><td>Metadata-Cache</td><td class="sys-mono">{{ doctrine.metadata ?? '–' }}</td></tr>
+      <tr><td>Query-Cache</td><td class="sys-mono">{{ doctrine.query ?? '–' }}</td></tr>
+      <tr><td>Result-Cache</td><td class="sys-mono">{{ doctrine.result ?? '–' }}</td></tr>
+    </table>
+    {% if doctrine.slc_enabled and not doctrine.slc_persistent %}
+      <div class="sys-hint">
+        Region-Treiber ist ein <b>ArrayAdapter</b> (nur innerhalb eines Requests) – greift hier nicht über Requests
+        hinweg. In <b>prod</b> ist ein persistenter Pool konfiguriert; diese Anzeige spiegelt die aktuelle Umgebung
+        (<b>{{ php.env }}</b>) wider.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}{# Ende System-Tab: Caching #}
+
+{# ---------- Lizenztypen-Übersicht ---------- #}
+{% if tab == 'lictype' and lictype is not null %}
+<div class="sys-sec">Lizenztypen-Übersicht</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:12px;">
+    Alle <b>{{ lictype.total }}</b> Lizenztypen und wie oft sie genutzt werden{% if lictype.unused > 0 %} – davon <b>{{ lictype.unused }}</b> nie genutzt{% endif %}.
+    Anlegen, bearbeiten und löschen kannst du Lizenztypen unter <b>Lizenzen → Lizenztypen</b>.
+  </div>
+  {% if lictype.types is empty %}
+    <div class="sys-hint">Keine Lizenztypen vorhanden.</div>
+  {% else %}
+  <div class="lt-list">
+    {% for t in lictype.types %}
+    <div class="lt-row{% if t.neverUsed %} lt-unused{% endif %}">
+      <div class="lt-name">{{ t.name }}{% if t.deaktiviert %}<span class="lt-badge off">deaktiviert</span>{% endif %}</div>
+      <div class="lt-stats">
+        <span><b>{{ t.aktiv }}</b> aktive Inhaber</span>
+        <span><b>{{ t.geloescht }}</b> frühere/gelöschte</span>
+        <span>von <b>{{ t.req }}</b> Flugzeugtyp{{ t.req == 1 ? '' : 'en' }} verlangt</span>
+      </div>
+      <div class="lt-status {{ t.aktiv > 0 ? 'on' : (t.neverUsed ? 'none' : 'idle') }}">{{ t.status }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------- Audit-Protokoll ---------- #}
+{% if tab == 'audit' and audit is not null %}
+<div class="sys-sec">Audit-Protokoll</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Letzte sicherheitsrelevante Ereignisse (Login, Buchungen, Löschungen, Zugriffe) aus dem eigenen
+    <span class="sys-mono">audit</span>-Kanal (<span class="sys-mono">var/log/audit-*.log</span>, unbegrenzte Aufbewahrung).
+  </div>
+  {% if audit is empty %}
+    <div class="sys-hint">Noch keine Ereignisse protokolliert.</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table class="aud-tbl">
+      <thead><tr><th>Zeit</th><th>Ereignis</th><th>Akteur</th><th>Mandant</th><th>IP</th><th>Details</th></tr></thead>
+      <tbody>
+        {% for a in audit %}
+          {% set cls = 'aud-ev' %}
+          {% if a.event in ['login.failure', 'access.denied'] %}{% set cls = 'aud-ev bad' %}
+          {% elseif 'delete' in a.event or a.event in ['booking.cancel', 'backup.download'] %}{% set cls = 'aud-ev warn' %}
+          {% elseif a.event == 'login.success' %}{% set cls = 'aud-ev ok' %}{% endif %}
+          <tr>
+            <td class="mono">{{ a.time }}</td>
+            <td><span class="{{ cls }}">{{ a.event }}</span></td>
+            <td>{{ a.actor ?: '—' }}</td>
+            <td>{{ a.clientid ?: '—' }}</td>
+            <td class="mono">{{ a.ip ?: '—' }}</td>
+            <td class="det">{% for k, v in a.details %}<b>{{ k }}</b>&nbsp;{{ v is same as(true) ? 'ja' : (v is same as(false) ? 'nein' : v) }}{% if not loop.last %} · {% endif %}{% else %}—{% endfor %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------- Fehler (Anwendungsfehler) ---------- #}
+{% if tab == 'error' %}
+<div class="sys-sec">Fehler (Anwendungsfehler)</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Echte Abstürze/Server-Fehler aus <span class="sys-mono">var/log/error-*.log</span> (JSON, unbegrenzte Aufbewahrung). Harmlose 404-Scans aus dem Internet werden bewusst nicht gelistet. Fehler werden zusätzlich per E-Mail gemeldet.
+  </div>
+  {% if errors is empty %}
+    <div class="sys-hint">Keine Fehler protokolliert. 🎉</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table class="aud-tbl">
+      <thead><tr><th>Zeit</th><th>Level</th><th>Kanal</th><th>Meldung</th></tr></thead>
+      <tbody>
+        {% for e in errors %}
+        <tr>
+          <td class="mono">{{ e.time }}</td>
+          <td><span class="aud-ev {{ e.level in ['CRITICAL', 'ALERT', 'EMERGENCY'] ? 'bad' : 'warn' }}">{{ e.level }}</span></td>
+          <td class="mono">{{ e.channel }}</td>
+          <td class="det">{{ e.message }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------- Mail-Versand ---------- #}
+{% if tab == 'mail' %}
+<div class="sys-sec">Mail-Versand</div>
+<div class="sys-card">
+  <div class="sys-hint" style="margin-bottom:10px;">
+    Letzte Mail-Ereignisse aus <span class="sys-mono">var/log/mailerror.log</span> (Buchungs-/Lizenz-Mails: Empfänger, gesendet/Fehler).
+  </div>
+  {% if maillog is empty %}
+    <div class="sys-hint">Keine Mail-Ereignisse protokolliert.</div>
+  {% else %}
+  <div style="overflow-x:auto;">
+    <table class="aud-tbl">
+      <thead><tr><th>Zeit</th><th>Ereignis</th></tr></thead>
+      <tbody>
+        {% for m in maillog %}
+        <tr>
+          <td class="mono">{{ m.time }}</td>
+          <td class="det"{% if m.fail %} style="color:var(--fr-red);font-weight:600;"{% endif %}>{{ m.text }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------- Datenbank-Backup ---------- #}
+{% if tab == 'db' %}
+<div class="sys-sec">Datenbank-Backup</div>
+<div class="sys-card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+  <div>
+    <div style="font-weight:700;color:var(--fr-ink);">Vollständiges SQL-Backup herunterladen</div>
+    <div class="sys-hint">Struktur + Daten <b>aller</b> Tabellen als <span class="sys-mono">.sql</span> (wie phpMyAdmin-Export, direkt wieder importierbar). Enthält sämtliche Daten inkl. Zugangsdaten – bitte sicher aufbewahren.</div>
+  </div>
+  <a class="fr-btn" href="{{ path('modern_system_backup') }}" style="white-space:nowrap;">⬇ Backup herunterladen</a>
+</div>
+{% endif %}
+
+{% if tab == 'db' %}
+{# ---------- Datenbank ---------- #}
+<div class="sys-sec">Datenbank</div>
+{% if db.error %}
+  <div class="sys-card" style="border-color:#f3cccc;background:#fbe9e9;">
+    <h3 style="color:var(--fr-red);">Fehler beim Auslesen</h3>
+    <div class="sys-mono">{{ db.error }}</div>
+  </div>
+{% else %}
+  <div class="sys-grid" style="margin-bottom:14px;">
+    <div class="sys-card">
+      <h3>Verbindung</h3>
+      <table class="sys-kv">
+        <tr><td>Datenbank</td><td>{{ db.name }}</td></tr>
+        <tr><td>Server-Version</td><td>{{ db.version }}</td></tr>
+        <tr><td>Treiber</td><td class="sys-mono">{{ db.driver }}</td></tr>
+        {% if db.host %}<tr><td>Host</td><td>{{ db.host }}</td></tr>{% endif %}
+        {% if db.charset %}<tr><td>Charset</td><td>{{ db.charset }}</td></tr>{% endif %}
+        <tr><td>Tabellen</td><td>{{ db.tableCount }}</td></tr>
+        <tr><td>Gesamtgröße</td><td>{{ db.totalSize }}</td></tr>
+      </table>
+    </div>
+    {% if db.bookingIndexes %}
+    <div class="sys-card">
+      <h3>Indizes · {{ db.bookingTable }}</h3>
+      <table class="sys-kv">
+        {% for ix in db.bookingIndexes %}
+          <tr><td class="sys-mono">{{ ix.name }}{% if ix.unique %} <span class="sys-badge ok" style="padding:1px 6px;">unique</span>{% endif %}</td><td class="sys-mono" style="text-align:right;">{{ ix.columns }}</td></tr>
+        {% endfor %}
+      </table>
+      <div class="sys-hint">Heiße Buchungstabelle – relevant für die Übersichts-Performance.</div>
+    </div>
+    {% endif %}
+  </div>
+
+  <table class="sys-table">
+    <thead><tr><th>Tabelle</th><th>Engine</th><th style="text-align:right;">Zeilen</th><th style="text-align:right;">Daten</th><th style="text-align:right;">Index</th><th style="text-align:right;">Größe</th><th>Collation</th></tr></thead>
+    <tbody>
+      {% for t in db.tables %}
+        <tr>
+          <td class="sys-mono">{{ t.name }}</td>
+          <td>{% if t.engine == 'MyISAM' %}<span class="sys-badge warn" style="padding:1px 7px;">{{ t.engine }}</span>{% else %}{{ t.engine }}{% endif %}</td>
+          <td class="num">{{ t.rows|number_format(0, ',', '.') }}</td>
+          <td class="num">{{ t.data }}</td>
+          <td class="num">{{ t.index }}</td>
+          <td class="num"><b>{{ t.size }}</b></td>
+          <td class="sys-mono" style="color:var(--fr-mut);">{{ t.collation }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="sys-hint">
+    <b>MyISAM</b>-Tabellen (gelb) kennen kein Row-Locking und keine Transaktionen – bei gleichzeitigen
+    Schreibzugriffen sperrt MyISAM die ganze Tabelle. Für die viel beschriebene <span class="sys-mono">FRes_booking</span>
+    wäre <b>InnoDB</b> robuster (Row-Locking, absturzsicher).
+  </div>
+{% endif %}
+{% endif %}{# Ende Datenbank-Tab #}
+
+{% if tab == 'system' %}
+{# ---------- PHP ---------- #}
+<div class="sys-sec">PHP &amp; Umgebung</div>
+<div class="sys-grid">
+  <div class="sys-card">
+    <h3>Laufzeit</h3>
+    <table class="sys-kv">
+      <tr><td>PHP-Version</td><td>{{ php.version }}</td></tr>
+      <tr><td>SAPI</td><td>{{ php.sapi }}</td></tr>
+      <tr><td>Betriebssystem</td><td>{{ php.os }}</td></tr>
+      <tr><td>Symfony</td><td>{{ php.symfony }}</td></tr>
+      <tr><td>Environment</td><td>{{ php.env }}{% if php.env == 'prod' %} <span class="sys-badge ok" style="padding:1px 6px;">prod</span>{% else %} <span class="sys-badge warn" style="padding:1px 6px;">{{ php.env }}</span>{% endif %}</td></tr>
+      <tr><td>Debug</td><td>{{ php.debug }}</td></tr>
+      <tr><td>Zeitzone</td><td>{{ php.timezone }}</td></tr>
+      <tr><td>Server-Zeit</td><td>{{ php.servertime }}</td></tr>
+    </table>
+  </div>
+  <div class="sys-card">
+    <h3>Limits</h3>
+    <table class="sys-kv">
+      <tr><td>memory_limit</td><td>{{ php.memory_limit }}</td></tr>
+      <tr><td>max_execution_time</td><td>{{ php.max_exec }}</td></tr>
+      <tr><td>upload_max_filesize</td><td>{{ php.upload_max }}</td></tr>
+      <tr><td>post_max_size</td><td>{{ php.post_max }}</td></tr>
+      <tr><td>display_errors</td><td>{{ php.display_errors }}</td></tr>
+    </table>
+  </div>
+  <div class="sys-card">
+    <h3>Erweiterungen (relevant)</h3>
+    <div class="sys-chips">
+      {% for e in php.ext_present %}<span class="sys-chip">{{ e }}</span>{% endfor %}
+      {% for e in php.ext_missing %}<span class="sys-chip miss">{{ e }} ✗</span>{% endfor %}
+    </div>
+    <div class="sys-hint">{{ php.ext_all|length }} Erweiterungen insgesamt geladen.</div>
+  </div>
+</div>
+
+{# ---------- Deprecations (klein) ---------- #}
+<div class="sys-sec">Deprecations</div>
+<div class="sys-card">
+  {% if deprecations is empty %}
+    <div class="sys-hint">Keine Deprecations protokolliert (oder Datei nicht vorhanden).</div>
+  {% else %}
+    <div class="sys-hint" style="margin-bottom:8px;">Letzte {{ deprecations|length }} Meldungen aus <span class="sys-mono">{{ php.env }}.deprecations.log</span> – relevant vor PHP-/Symfony-Updates.</div>
+    <div style="max-height:260px;overflow:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.6;color:var(--fr-mut);">
+      {% for d in deprecations %}<div style="border-bottom:1px solid var(--fr-bg);padding:2px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="{{ d }}">{{ d }}</div>{% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endif %}{# Ende System-Tab: PHP #}
+
+{# ---------- phpinfo() (legt Server-Secrets offen) ---------- #}
+{% if tab == 'phpinfo' %}
+<div class="sys-sec">phpinfo()</div>
+<details class="sys-det" open>
+  <summary>Vollständige phpinfo()-Ausgabe anzeigen/ausblenden</summary>
+  <iframe class="sys-frame" src="{{ path('modern_system_phpinfo') }}" title="phpinfo"></iframe>
+</details>
+{% endif %}
+</div>{# fr-pbody #}
+</div>{# fr-panel #}
+{% endblock %}

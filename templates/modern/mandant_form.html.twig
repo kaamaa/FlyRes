@@ -1,0 +1,51 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label: isNew ? 'Neuer Mandant' : 'Mandant bearbeiten', icon: 'building'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="mnd_form" class="fr-btn">Mandant speichern</button>
+      <a class="fr-btn" href="{{ path('modern_mandanten') }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="mnd_form" class="fr-form" action="{{ path('modern_mandant_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>
+  {% endif %}
+
+  <div class="fr-formsec">Flugschule</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Name der Flugschule</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V10l7-5 7 5v11M9 21v-6h6v6"/></svg></span>
+        <input type="text" name="name" value="{{ v.name }}" maxlength="150" placeholder="z. B. Flugschule Worms">
+      </div>
+    </div>
+    <label class="fr-check">
+      <input type="checkbox" name="active" value="1" {{ v.active ? 'checked' : '' }}>
+      <span>Aktiv. Inaktive Mandanten sind gesperrt.</span>
+    </label>
+  </div>
+
+  <div class="fr-formsec">Reservieren</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Vorausschau „Nächste freie Termine" (Tage)</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></span>
+        <input type="number" name="nextslots_days" value="{{ v.nextslots_days }}" min="1" max="120">
+      </div>
+      <div style="font-size:11.5px;color:var(--fr-mut);">Wie viele Tage die Terminsuche im Reservieren vorausschaut (1–120, Standard 14).</div>
+    </div>
+  </div>
+
+</form>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
+{% endblock %}

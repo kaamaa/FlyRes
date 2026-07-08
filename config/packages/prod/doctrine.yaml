@@ -1,6 +1,18 @@
 doctrine:
   orm:
-    auto_generate_proxy_classes: false
+    # Hinweis: In ORM 3 / doctrine-bundle 3 generiert Doctrine fehlende Proxy-
+    # Klassen standardmaessig zur Laufzeit (AUTOGENERATE_ALWAYS) -> die frueher
+    # noetige Option auto_generate_proxy_classes entfaellt und passt zum FTP-Deploy.
+    # Second-Level-Cache: ohne region_cache_driver faellt Doctrine auf einen
+    # In-Memory ArrayAdapter zurueck (nur pro Request) -> die setCacheable(true)-
+    # Abfragen brachten ueber Requests hinweg NICHTS. Hier auf einen persistenten
+    # Pool legen, damit der SLC tatsaechlich greift. Doctrine invalidiert die
+    # Regionen automatisch bei persist/flush (NONSTRICT_READ_WRITE auf den Entities).
+    second_level_cache:
+      enabled: true
+      region_cache_driver:
+        type: pool
+        pool: doctrine.second_level_cache_pool
     metadata_cache_driver:
       type: pool
       pool: doctrine.system_cache_pool
@@ -18,3 +30,5 @@ framework:
                 adapter: cache.app
             doctrine.system_cache_pool:
                 adapter: cache.system
+            doctrine.second_level_cache_pool:
+                adapter: cache.app

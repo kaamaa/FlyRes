@@ -2,13 +2,10 @@
 
 namespace App\Entities;
 
-use Symfony\Component\Form\FormError;
 use Symfony\Component\Security\Core\Exception\AuthenticationException;
 //use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use App\Security\User\WebserviceUser;
 use App\Entities\Clients;
-use App\ViewHelper;
 use App\Logging;
 
 class Users
@@ -63,46 +60,6 @@ class Users
     return FALSE;
   }
   
-  public static function UserWantsToReceiveMailsForMailtypeByID($em, $clientid, $userid, $mailtype)
-  {
-    $user = Users::GetUserObject($em, $clientid, $userid);
-    if ($user)
-    {  
-      return Users::UserWantsToReceiveMailsForMailtype($user, $mailtype);
-    }
-    else return FALSE;
-  }
-  
-  public static function IsPasswordOK (&$form, $pass1, $pass2, $pass_old)
-  {
-    // Passwort überprüfen
-    $haserrors = FALSE;
-    
-    $pass1 = trim($pass1);
-    $pass2 = trim($pass2);
-    $pass_old = trim($pass_old);
-    
-    if (isset($pass1) && strlen($pass1) > 0)
-    {  
-      // Das Passwort wurde editiert
-      if ($pass1 != $pass2) {
-        $form->addError(new FormError('Die Passwörter sind nicht identisch'));
-        $haserrors = TRUE;
-      }  
-
-      if ($pass1 == $pass2 && $pass_old != $pass1)
-      { 
-        // Das Passwort wurde geändert
-        if (strlen($pass1) < 5) {
-          $form->addError(new FormError('Das Passwort muss mindestens 5 Zeichen lang sein'));
-          $haserrors = TRUE;
-        }  
-      }
-    }  
-    
-    return $haserrors;  
-  }
-  
   public static function CreateNewPassword ($user, UserPasswordHasherInterface $passwordEncoder, $pass)
   {
     if (isset($pass))
@@ -120,6 +77,9 @@ class Users
     if ($user)
     {
       Bookings::DeleteAllBookingsForAUser($em, $clientid, $id);
+      // Lizenzen des Nutzers ebenfalls soft-loeschen (sonst bleiben aktive
+      // Lizenzen an einem geloeschten Account haengen -> Karteileichen).
+      Licenses::DeleteAllLicencesForAUser($em, $clientid, $id);
       $user->setStatus('geloescht');
       // Wenn der Nutzer gelöscht wird muss der Username zur Anmedlung für neue Nutzer wieder freigegben werden
       // Daher wird er umbenannt in 'geloescht_' . $datum . '_' . $username;
@@ -266,32 +226,6 @@ class Users
     return TRUE;
   }
   
-  public static function GetAllUsersForListboxByMailadress ($em, $clientid, $mails)
-  {
-    $userlist = array();
-    $arr_emailinfoi = explode ("," , $mails );
-    if (count($arr_emailinfoi) >0)
-    {
-    
-      $querystring = "SELECT b FROM App\Entity\FresAccounts b WHERE b.clientid = :clientID and b.status <> 'geloescht' ORDER BY b.lastname ASC";
-      $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid));
-      $query->setCacheable(true);
-      $users = $query->getResult();
-
-      foreach ($users as $user) 
-      {
-        for ( $y = 0 ; $y < count($arr_emailinfoi) ; $y++ )
-        {
-          if (trim($arr_emailinfoi[$y]) != '' && trim($arr_emailinfoi[$y]) == trim($user->getEmail())) 
-          {
-            $userlist[] = (string) $user->getId();
-          }
-        }  
-      }
-    }
-    return $userlist;
-  }
-  
   public static function GetAllMailsadressesByUserlist ($em, $userlist, $clientid)
   {
     // Diese Funktion formatiert die Nutzerauswahl in eine EmailAdressliste um, die dann gespeichert wird
@@ -314,40 +248,31 @@ class Users
     //echo 'Mailadresses: ' . $mailadresses . '<br>';
     return $mailadresses;
   }
-  
-  public static function GetAllValidMailsadresses ($em, $clientid, $separator)
+
+  /**
+   * Reverse zu GetAllMailsadressesByUserlist: aus einer gespeicherten Adressliste
+   * (kommagetrennt) die zugehoerigen Nutzer-IDs des Mandanten ermitteln – zum
+   * Vorbefuellen der Mitglieder-Auswahl beim Bearbeiten einer Buchung.
+   */
+  public static function GetUserlistByMailadresses ($em, $mailadresses, $clientid)
   {
-    // Diese Funktion erzeugt eine Liste aller gültigen Mailadressen aus der Datenbank
-    $mailadresses = '';
-
-    $querystring = "SELECT b FROM App\Entity\FresAccounts b WHERE b.clientid = :clientID and b.status <> 'geloescht'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid));
-    $query->setCacheable(true);
-    $users = $query->getResult();
-
-    foreach ($users as $user) 
+    $ids = array();
+    $addr = array_filter(array_map('trim', explode(',', (string) $mailadresses)));
+    if ($addr)
     {
-      // gesperrte oder gelöschte Nutzer werden nicht mit aufgenommen
-      if (!Users::isLocked($user) && !Users::isDeleted($user))
-      {  
-        $mail = trim($user->getEmail());
-        if (Users::IsMailListValid($mail) && $mail != '') $mailadresses .= $mail . $separator;
-      }  
+      $addrLower = array_map('strtolower', $addr);
+      $users = $em->createQuery(
+        "SELECT b FROM App\Entity\FresAccounts b WHERE b.clientid = :cid AND b.status <> 'geloescht'"
+      )->setParameter('cid', $clientid)->getResult();
+      foreach ($users as $user)
+      {
+        $mail = strtolower(trim((string) $user->getEmail()));
+        if ($mail !== '' && in_array($mail, $addrLower, true)) $ids[] = (int) $user->getId();
+      }
     }
-    return $mailadresses;
+    return $ids;
   }
-  
-  public static function GetUserNameForAlphabeticOrder ($em, $clientid, $id)
-  {
-    if (!empty($id))
-    {  
-      $user = $em->getRepository('App\Entity\FresAccounts')->findOneBy(array('clientid' => $clientid, 'id' => $id));
-      if ($user) return  $user->getlastname() . ', ' . $user->getfirstname();
-        else return "Nutzer nicht gefunden";
-    }
-    else return '';
-  }
-  
+
   public static function GetAllUsersForListbox ($em, $clientid)
   {
     $userlist = array();
@@ -419,7 +344,25 @@ class Users
     }
     return $userlist;
   }
-  
+
+  /**
+   * Liefert die ID des Platzhalter-Fluglehrers (z. B. "Fluglehrer offen" /
+   * frueher "Fluglehrer zuweisen") fuer den Mandanten (oder 0). Merkmal:
+   * aktiver Fluglehrer (function 1), fuer JEDEN immer verfuegbar
+   * (fiallwaysavailable = 1) und Nachname beginnt mit "Fluglehrer" – das
+   * ueberlebt eine Umbenennung des Suffixes. Eine Buchung mit diesem
+   * Fluglehrer = "Fluglehrer noch offen".
+   */
+  public static function GetAssignInstructorId ($em, $clientid)
+  {
+    $r = $em->createQuery(
+      "SELECT a.id FROM App\Entity\FresAccounts a INNER JOIN a.function f "
+      . "WHERE f.id = 1 AND a.clientid = :cid AND a.status <> 'geloescht' "
+      . "AND a.fiallwaysavailable = 1 AND a.lastname LIKE 'Fluglehrer%'"
+    )->setParameter('cid', $clientid)->getResult();
+    return $r ? (int) $r[0]['id'] : 0;
+  }
+
   // Hier muss nochmals die Mandantenfähigkeit geklärt werden
   public static function GetUserObject ($em, $clientid, $id)
   {
@@ -506,20 +449,5 @@ class Users
       else return FALSE;
   }
   
-  
-  public static function GetuserByClientName_Username ($em, $clientname, $username)
-  {
-    // Start Autologin
-    $user = Users::GetUserObjectByName($em, $username, Clients::GetClientIdByName ($em, $clientname));
-    if ($user)
-    {  
-      //Todo - brauchen wir den Check auch woanders
-      if (!Users::isDeleted($user) && !Users::isLocked($user))
-      {
-        return $user;
-      }
-    }
-    return FALSE;
-  }
   
 }

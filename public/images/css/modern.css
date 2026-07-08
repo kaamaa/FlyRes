@@ -1,0 +1,654 @@
+/* ===========================================================================
+   FlyRes – modernes Web-Design (Variante A, Sidebar).
+   Eigene Datei + eigene "fr-"-Klassen, damit nichts mit Bootstrap/flyres.css
+   kollidiert. Wird nur von den modern/-Templates geladen (Vorschau-Scheibe).
+   =========================================================================== */
+:root{
+  --fr-blue:#1f6fb2; --fr-blue-d:#155189; --fr-blue-l:#eaf2fa;
+  --fr-ink:#1d2733; --fr-mut:#6b7888; --fr-line:#e4e8ee; --fr-bg:#f5f7fa;
+  --fr-green:#1f9d57; --fr-amber:#c9821a; --fr-red:#d23b3b;
+}
+.fr-modern *{box-sizing:border-box;}
+body.fr-modern{margin:0;background:var(--fr-bg);
+  font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--fr-ink);}
+.fr-modern a{text-decoration:none;color:inherit;}
+
+.fr-app{display:grid;grid-template-columns:218px 1fr;min-height:100vh;}
+
+/* ---- Sidebar ---- */
+.fr-side{background:#13212f;padding:14px 12px;}
+.fr-brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:17px;color:#fff;margin:4px 6px 14px;}
+.fr-navsec{color:#7f93a8;font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin:14px 8px 5px;display:flex;align-items:center;gap:6px;}
+.fr-soon{background:#24384a;color:#9fb0c0;font-size:9px;padding:1px 6px;border-radius:10px;letter-spacing:0;}
+.fr-side .fr-nav .fr-soon{margin-left:auto;}
+.fr-side .fr-navnew{background:var(--fr-blue);color:#fff;font-weight:700;margin-bottom:4px;}
+.fr-side .fr-navnew:hover{background:var(--fr-blue-d);color:#fff;}
+.fr-side .fr-navnew .ic{font-weight:800;}
+.fr-side .fr-nav{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;color:#c4d0dc;font-size:13px;font-weight:500;cursor:pointer;}
+.fr-side .fr-nav:hover{background:#1d3142;color:#fff;}
+/* Aktive Seite: eigenes, dezenteres Highlight (dunkles Panel + blauer Akzent),
+   damit es sich klar vom vollblauen "Reservieren"-Button (fr-navnew) abhebt. */
+.fr-side .fr-nav.on{background:#21394e;color:#fff;font-weight:700;box-shadow:inset 3px 0 0 #4a9fe0;}
+.fr-side .fr-nav.on:hover{background:#21394e;}
+.fr-side .fr-nav.muted{color:#6a7c8d;cursor:default;}
+.fr-side .fr-nav.muted:hover{background:none;color:#6a7c8d;}
+.fr-side .fr-nav .ic{width:18px;height:18px;flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;color:#8499ad;}
+.fr-side .fr-nav .ic svg{width:18px;height:18px;}
+.fr-side .fr-nav:hover .ic{color:#fff;}
+.fr-side .fr-nav.on .ic{color:#4a9fe0;}
+.fr-brand svg{width:20px;height:20px;}
+.fr-usr{display:flex;align-items:center;gap:9px;margin-top:16px;padding:9px 8px;border-top:1px solid #24384a;color:#aebccb;font-size:12.5px;}
+.fr-usr .ava{width:28px;height:28px;border-radius:50%;background:var(--fr-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex:0 0 auto;}
+
+/* ---- Main ---- */
+.fr-main{display:flex;flex-direction:column;min-width:0;}
+.fr-top{display:flex;align-items:center;gap:12px;padding:13px 22px;border-bottom:1px solid #d7e6f4;background:var(--fr-blue-l);}
+.fr-ptitle{font-size:16px;font-weight:700;margin:0;color:var(--fr-blue-d);}
+.fr-topactions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.fr-body{padding:20px 22px;}
+
+/* ---- Buttons / Chips ---- */
+.fr-btn{background:var(--fr-blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.fr-btn:hover{background:var(--fr-blue-d);color:#fff;}
+.fr-topactions .fr-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:12.5px;font-weight:600;background:#fff;border:1px solid var(--fr-line);color:#475;cursor:pointer;}
+.fr-topactions .fr-chip.on{background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
+
+/* ---- Filterleiste ---- */
+.fr-toolbar{display:flex;flex-direction:column;gap:11px;margin-bottom:16px;}
+.fr-trow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.fr-seg{display:inline-flex;background:#eef1f5;border-radius:9px;padding:3px;gap:2px;}
+.fr-segbtn{font-size:12.5px;font-weight:600;color:#566;padding:6px 13px;border-radius:7px;display:inline-flex;align-items:center;gap:5px;}
+.fr-segbtn.on{background:#fff;color:var(--fr-ink);box-shadow:0 1px 2px rgba(0,0,0,.12);}
+.fr-segbtn.off{color:#9aa3ad;cursor:not-allowed;}
+.fr-segbtn.off i{font-style:normal;font-size:9px;background:#dfe3e9;color:#7a828c;border-radius:8px;padding:1px 5px;}
+.fr-searchwrap{flex:1;min-width:200px;}
+.fr-search{width:100%;border:1px solid var(--fr-line);border-radius:9px;padding:8px 12px;font-size:13px;font-family:inherit;background:#fff;}
+.fr-search:focus{outline:none;border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+/* Filter-Feld (Ebene 2, Variante A): gestapeltes Uppercase-Label ueber dem Feld */
+.fr-fl{display:inline-flex;flex-direction:column;align-items:flex-start;gap:4px;font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--fr-blue-d);}
+.fr-fl select,.fr-fl input,.fr-fl .fr-field{font-family:inherit;font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fr-ink);height:38px;border:1px solid #c9d3e0;border-radius:9px;padding:0 10px;background:#fff;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+.fr-fl input{cursor:text;}
+.fr-fl select:focus,.fr-fl input:focus{outline:none;border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+.fr-fl select:disabled{opacity:.5;cursor:not-allowed;}
+/* Suche/Buttons in der Filterzeile auf Feldhoehe (Variante A) */
+.fr-phead .fr-search{height:38px;padding:0 12px;border-color:#c9d3e0;}
+.fr-phead .fr-btn{height:38px;}
+.fr-phead .fr-clear{align-self:flex-end;padding-bottom:10px;}
+/* Navigation & Datum als Filter-Feld (Variante A) */
+.fr-phead .fr-ctrl.dt{height:38px;}
+.fr-fl .fr-pernav{border:1px solid #c9d3e0;border-radius:9px;height:38px;padding:0 5px;gap:4px;}
+.fr-fl .fr-pernav a{border:none;width:28px;height:28px;}
+.fr-fl .fr-scale{padding-bottom:0;}
+.fr-phead .fr-scale{align-self:flex-end;padding-bottom:11px;}
+/* Feld-Inhalt (Datum/Zeitraum) NICHT das Uppercase-Blau-Label erben – einheitliche Feld-Schrift */
+.fr-fl .fr-ctrl,.fr-fl .fr-datedisp,.fr-fl .fr-pernav b{font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--fr-ink);}
+.fr-umfang{display:inline-flex;border:1px solid var(--fr-line);border-radius:9px;overflow:hidden;}
+.fr-umfang label{font-size:12.5px;font-weight:600;color:#566;padding:8px 13px;cursor:pointer;}
+.fr-umfang label.on{background:var(--fr-blue);color:#fff;}
+.fr-umfang input{display:none;}
+.fr-applybtn{background:var(--fr-blue);color:#fff;border:none;border-radius:8px;padding:8px 14px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit;}
+.fr-applybtn:hover{background:var(--fr-blue-d);}
+.fr-clear{font-size:12px;color:var(--fr-blue);font-weight:600;margin-left:auto;cursor:pointer;}
+
+/* ---- Buchungsliste ---- */
+.fr-daygrp{margin-bottom:14px;}
+.fr-dayhd{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;color:var(--fr-blue-d);background:var(--fr-blue-l);padding:7px 12px;border-radius:8px;margin-top:6px;}
+.fr-acrow{font-weight:700;font-size:12px;color:#445;padding:9px 4px 4px 6px;}
+.fr-bkform{margin:0;}
+.fr-bk{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--fr-line);border-radius:10px;margin:6px 0;background:#fff;cursor:pointer;font-family:inherit;}
+.fr-bk:hover{border-color:#cdd9e6;background:#fafcff;}
+.fr-bk .fr-tm{font-weight:700;font-size:13px;color:var(--fr-ink);min-width:104px;flex:0 0 auto;}
+.fr-bk .fr-who{flex:1;min-width:0;}
+.fr-bk .fr-who b{font-size:13px;}
+.fr-bk .fr-who small{color:var(--fr-mut);display:block;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-pill{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;flex:0 0 auto;}
+.fr-pill.charter{background:#eef4ff;color:#2b6cb0;}
+.fr-pill.schul{background:#eafaf0;color:var(--fr-green);}
+.fr-pill.wart{background:#fdf0e6;color:var(--fr-amber);}
+.fr-empty{color:var(--fr-mut);padding:30px;text-align:center;background:#fff;border:1px solid var(--fr-line);border-radius:12px;}
+
+/* ---- Auslastungs-Matrix (Monat / 14 Tage) ---- */
+.fr-ansicht{display:inline-flex;background:#eef1f5;border-radius:9px;padding:3px;gap:2px;}
+.fr-ansicht a{font-size:12.5px;font-weight:600;color:#566;padding:6px 13px;border-radius:7px;}
+.fr-ansicht a.on{background:#fff;color:var(--fr-ink);box-shadow:0 1px 2px rgba(0,0,0,.12);}
+.fr-pernav{display:inline-flex;align-items:center;gap:7px;}
+.fr-pernav a{width:28px;height:28px;border:1px solid var(--fr-line);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:#556;}
+.fr-pernav a:hover{background:var(--fr-blue-l);border-color:var(--fr-blue);}
+.fr-pernav b{font-size:13.5px;min-width:104px;text-align:center;}
+/* Legende: durchgehender Verlaufsbalken (Stil aus dem mobilen FleetView) */
+.fr-scale{display:inline-flex;align-items:center;gap:8px;font-size:11px;color:var(--fr-mut);font-weight:600;}
+.fr-scale .fr-scalebar{width:140px;height:10px;border-radius:6px;display:inline-block;
+  background:linear-gradient(90deg,#eef1fb,#dfe4f8,#bcc6f0,#8e9ce6,#5f70d8,#3a3fae);}
+
+/* Scroll-Flaeche ist die Karte (weiss, runde Ecken, Schatten) – wie .fleetwrap mobil */
+.fr-ovwrap{background:#fff;border-radius:18px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:6px 10px 10px;}
+.fr-matrix{border-collapse:separate;border-spacing:2px 0;}   /* eng; 0 vertikal -> durchgehende Wochenend-Baender */
+.fr-matrix th.fr-corner{text-align:left;font-size:11px;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.4px;padding:0 8px;}
+.fr-matrix th.fr-day{width:22px;font-size:10.5px;font-weight:600;color:var(--fr-mut);padding:6px 0 6px;text-align:center;border-radius:8px 8px 0 0;}
+.fr-matrix th.fr-day .wd{display:block;font-size:8.5px;font-weight:700;opacity:.7;margin-bottom:2px;}
+/* Tag-Nummer im Kreis; "heute" = blau gefuellt (Stil mobil) */
+.fr-matrix th.fr-day .dn{width:20px;height:20px;margin:0 auto;display:flex;align-items:center;justify-content:center;border-radius:50%;}
+.fr-matrix th.fr-day .dn.today{background:var(--fr-blue);color:#fff;font-weight:800;}
+.fr-matrix th.fr-day.sat{background:#eef4fc;color:#2f5a86;font-weight:800;}
+.fr-matrix th.fr-day.sun{background:#fbeeee;color:#9c4a4a;font-weight:800;}
+.fr-matrix td{padding:0;}
+.fr-matrix td.sat{background:#eef4fc;}
+.fr-matrix td.sun{background:#fbeeee;}
+.fr-matrix td.fr-ac{white-space:nowrap;padding:2px 12px 2px 4px;line-height:1.12;vertical-align:middle;}
+.fr-matrix td.fr-ac .dot{width:8px;height:8px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:7px;flex:0 0 auto;}
+.fr-matrix td.fr-ac .lbl{display:inline-block;vertical-align:middle;}
+.fr-matrix td.fr-ac b{display:block;font-size:12px;font-weight:800;letter-spacing:-.2px;}
+.fr-matrix td.fr-ac small{display:block;color:var(--fr-mut);font-size:10.5px;}
+/* Zellen: dichte Heatmap (Variante 1) – kompakte abgerundete Quadrate + Innenkontur */
+.fr-cell{width:20px;height:20px;border-radius:5px;border:none;padding:0;cursor:pointer;display:block;margin:2px auto;background:#eef1fb;box-shadow:inset 0 0 0 1px rgba(40,50,90,.05);}
+.fr-cell.today{outline:2px solid rgba(58,63,174,.6);outline-offset:-2px;}
+.fr-cell:hover{outline:2px solid var(--fr-ink);outline-offset:0;}
+
+/* Auslastungsfarben (feiner Indigo-Verlauf, 6 Stufen) */
+.occ-leer{background:#eef1fb;}
+.occ-wenig{background:#dfe4f8;}
+.occ-mittel{background:#bcc6f0;}
+.occ-voll{background:#8e9ce6;}
+.occ-sehrvoll{background:#5f70d8;}
+.occ-ausgebucht{background:#3a3fae;}
+
+/* ---- Tagesansicht (Karten im Mobil-Stil) ---- */
+/* Sekundaer-Buttons appweit auf den soliden blauen Stil vereinheitlicht
+   (wie "Reservierung speichern"); nur danger bleibt rot als Warnung. */
+.fr-btn.ghost{background:var(--fr-blue);color:#fff;border:none;}
+.fr-btn.ghost:hover{background:var(--fr-blue-d);color:#fff;}
+.fr-btn.danger{background:#fff;color:var(--fr-red);border:1px solid #f1c8c8;}
+.fr-dayhdr{display:flex;align-items:center;gap:12px;margin:4px 0 12px;}
+.fr-dayhdr .d{font-weight:700;font-size:14px;}
+.fr-dayhdr .line{flex:1;height:1px;background:var(--fr-line);}
+.fr-dayhdr .cnt{background:var(--fr-blue-l);color:var(--fr-blue);font-weight:700;font-size:12px;border-radius:20px;padding:2px 10px;}
+.fr-bcard{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--fr-line);border-radius:12px;padding:11px 13px;margin-bottom:9px;}
+.fr-bcard:hover{border-color:#cdd9e6;background:#fafcff;}
+.fr-bc-time{text-align:right;min-width:54px;flex:0 0 auto;}
+.fr-bc-time .t1{font-weight:700;font-size:14px;}
+.fr-bc-time .t2{font-size:12px;color:var(--fr-mut);}
+.fr-bc-bar{width:4px;align-self:stretch;border-radius:2px;background:#0a84ff;min-height:38px;flex:0 0 auto;}
+.fr-bc-bar.train{background:#ff9500;}
+.fr-bc-info{flex:1;min-width:0;}
+.fr-bc-who{font-weight:700;font-size:13.5px;}
+.fr-bc-sub{font-size:12px;color:var(--fr-mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-bc-badge{display:inline-block;margin-top:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;}
+.b-charter{background:#eef4ff;color:#2b6cb0;}
+.b-schulung{background:#fff3e0;color:#c9821a;}
+.b-wartung{background:#fdeaea;color:#d23b3b;}
+.b-default{background:#eef1f4;color:#566;}
+.fr-bc-chev{color:#c7c7cc;font-size:20px;font-weight:600;flex:0 0 auto;}
+
+/* ---- Buchungsdetail ---- */
+.fr-detail{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:680px;}
+.fr-kv{background:#fff;border:1px solid var(--fr-line);border-radius:10px;padding:10px 13px;}
+.fr-kv.full{grid-column:1/3;}
+.fr-kv .k{display:block;font-size:11px;color:var(--fr-mut);font-weight:600;text-transform:uppercase;letter-spacing:.4px;}
+.fr-kv .v{display:block;font-size:14.5px;font-weight:600;margin-top:3px;}
+.fr-detmeta{margin-top:14px;font-size:11.5px;color:var(--fr-mut);max-width:680px;}
+
+/* ---- Reservieren-Formular ---- */
+.fr-form{max-width:680px;}
+.fr-formsec{font-size:13px;font-weight:700;color:var(--fr-blue-d);margin:18px 0 8px;display:flex;align-items:center;gap:8px;}
+.fr-formsec:first-child{margin-top:0;}
+.fr-tagweb{font-size:9.5px;font-weight:700;background:#fff3e0;color:#c9821a;border-radius:10px;padding:2px 8px;}
+.fr-card{background:#fff;border:1px solid var(--fr-line);border-radius:12px;padding:14px;}
+.fr-frow{display:flex;flex-direction:column;gap:5px;margin-bottom:13px;}
+.fr-frow:last-child{margin-bottom:0;}
+.fr-frow label{font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;}
+/* B-Stil: kompaktes Feld (38px) mit Icon links */
+.fr-ctrl{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--fr-line);border-radius:9px;padding:0 11px;height:38px;}
+.fr-ctrl:focus-within{border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+.fr-ctrl .ic{color:var(--fr-blue);flex:0 0 auto;display:inline-flex;}
+.fr-ctrl .ic svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.fr-ctrl select,.fr-ctrl input{border:none;outline:none;background:none;font-family:inherit;font-size:14px;width:100%;color:var(--fr-ink);padding:0;height:100%;}
+/* Datum/Zeit-Felder: höher + großer, gut klickbarer Picker-Auslöser */
+.fr-ctrl.dt{height:50px;cursor:pointer;}
+.fr-ctrl.dt input{font-size:16px;font-weight:600;cursor:pointer;}
+.fr-ctrl.dt input::-webkit-calendar-picker-indicator{transform:scale(1.6);transform-origin:right center;margin-right:4px;opacity:.6;cursor:pointer;}
+.fr-ctrl.dt input::-webkit-calendar-picker-indicator:hover{opacity:1;}
+.fr-ctrl.dt .ic svg{width:19px;height:19px;}
+
+/* Zeit-Combobox (eigenes Dropdown) */
+.fr-combo{position:relative;}
+.fr-comboar{border:none;background:none;color:#6b7888;font-size:15px;cursor:pointer;padding:0 2px;flex:0 0 auto;}
+.fr-combolist{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:30;background:#fff;border:1px solid var(--fr-line);border-radius:9px;box-shadow:0 12px 30px rgba(0,0,0,.18);max-height:230px;overflow-y:auto;padding:5px;}
+.fr-comboitem{padding:8px 11px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;}
+.fr-comboitem:hover,.fr-comboitem.sel{background:var(--fr-blue-l);color:var(--fr-blue-d);}
+
+/* Eigener Kalender-Picker */
+.fr-date{position:relative;}
+.fr-datedisp{flex:1;font-size:16px;font-weight:600;color:var(--fr-ink);}
+.fr-calpop{position:absolute;top:calc(100% + 6px);left:0;z-index:40;background:#fff;border:1px solid var(--fr-line);border-radius:12px;box-shadow:0 16px 38px rgba(0,0,0,.2);padding:12px;width:288px;cursor:default;}
+.fr-calpop .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;}
+.fr-calpop .cal-head b{font-size:14.5px;font-weight:700;}
+.fr-calpop .cal-head button{border:1px solid var(--fr-line);background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;color:#556;font-size:16px;font-family:inherit;}
+.fr-calpop .cal-head button:hover{background:var(--fr-blue-l);border-color:var(--fr-blue);}
+.fr-calpop .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.fr-calpop .cal-wd{text-align:center;font-size:10.5px;font-weight:700;color:var(--fr-mut);padding:3px 0;}
+.fr-calpop .cal-day{border:none;background:none;font-family:inherit;font-size:13.5px;font-weight:600;color:var(--fr-ink);height:36px;border-radius:8px;cursor:pointer;}
+.fr-calpop .cal-day:hover{background:var(--fr-blue-l);}
+.fr-calpop .cal-day.out{color:#c2c7d0;font-weight:500;}
+.fr-calpop .cal-day.out:hover{background:#f3f6fa;}
+.fr-calpop .cal-day.today{color:var(--fr-blue);font-weight:800;}
+.fr-calpop .cal-day.sel{background:var(--fr-blue);color:#fff;}
+/* Mehrzeilig (Textarea, Mehrfachauswahl): höheres Feld ohne Icon */
+.fr-box{background:#fff;border:1px solid var(--fr-line);border-radius:9px;}
+.fr-box:focus-within{border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+.fr-box textarea,.fr-box select{border:none;outline:none;background:none;font-family:inherit;font-size:14px;width:100%;color:var(--fr-ink);padding:9px 11px;}
+.fr-box select[multiple]{padding:4px;}
+.fr-f2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.fr-hint{font-size:11px;color:var(--fr-mut);font-weight:400;}
+.fr-purposes{display:flex;gap:8px;flex-wrap:wrap;}
+.fr-pp{display:inline-flex;align-items:center;background:#fff;border:1px solid var(--fr-line);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer;}
+.fr-pp input{display:none;}
+.fr-pp:has(input:checked){background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
+.fr-formfoot{display:flex;align-items:center;gap:12px;margin-top:18px;}
+/* Abbrechen sitzt direkt neben Speichern (kein Auto-Abstand nach rechts) */
+.fr-btn:disabled{opacity:.5;cursor:not-allowed;}
+.fr-msg{margin-top:16px;border-radius:10px;padding:11px 14px;font-size:13px;font-weight:600;max-width:680px;}
+.fr-msg.err{background:#fdeaea;color:#c0392b;border:1px solid #f1c8c8;}
+.fr-msg.ok{background:#eafaf0;color:#1f9d57;border:1px solid #bfe6cd;}
+
+/* ---- Verfügbarkeit (wie Mobil-Frontend) ---- */
+.fr-avhint{color:var(--fr-mut);font-size:13px;}
+.fr-blocks{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.fr-blk{font-family:inherit;font-size:13px;font-weight:600;color:var(--fr-blue-d);background:#eef4ff;border:1px solid #cfe0f0;border-radius:9px;padding:8px 13px;cursor:pointer;}
+.fr-blk:hover{background:#e2eefb;}
+.fr-blk.on{background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
+.fr-avbox{display:flex;flex-direction:column;gap:7px;}
+.fr-avrow{display:flex;align-items:center;gap:10px;}
+.fr-avlab{flex:0 0 104px;min-width:0;overflow:hidden;font-size:12px;font-weight:600;color:#445;line-height:1.2;}
+.fr-avlab.strong{font-weight:800;color:var(--fr-ink);}
+.fr-avlab small{display:block;max-width:100%;font-weight:400;color:var(--fr-mut);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-avbar{position:relative;flex:1;height:18px;border-radius:6px;background:#34c759;overflow:hidden;}
+.fr-avbar.combo{height:24px;}
+.fr-avseg{position:absolute;top:0;height:100%;background:#eceef2;}
+.fr-avsel{position:absolute;top:0;height:100%;border:2px solid var(--fr-blue);border-radius:5px;background:rgba(10,132,255,.12);box-sizing:border-box;}
+.fr-avsel.bad{border-color:var(--fr-red);background:rgba(210,59,59,.14);}
+.fr-avaxis{display:flex;justify-content:space-between;font-size:10px;color:#aeb4bd;margin-left:114px;margin-top:1px;}
+.fr-avwarn{margin-top:10px;font-size:12.5px;font-weight:600;color:var(--fr-red);}
+
+/* Fluglehrer-Zustände im Verfügbarkeitsbalken */
+.fr-avbar.nb{background:#d4d8de;}            /* nicht buchbar */
+.fr-avseg.s-frei{background:#34c759;}
+.fr-avseg.s-anfrageD{background:#ff9f0a;}
+.fr-avseg.s-anfrageA{background:repeating-linear-gradient(45deg,#ff9f0a,#ff9f0a 5px,#ffd89a 5px,#ffd89a 10px);}
+.fr-avseg.s-solo{background:#1bb6bd;}
+.fr-avseg.s-ausgebucht{background:repeating-linear-gradient(45deg,#9aa3ad,#9aa3ad 5px,#cfd4da 5px,#cfd4da 10px);}  /* grundsätzlich verfügbar, aber ausgebucht */
+.fr-avseg.s-nichtverfuegbar{background:#FA5858;}  /* Fluglehrer hat sich als nicht verfügbar eingetragen */
+.fr-avlegend{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:8px 2px 0;font-size:11.5px;color:#566;font-weight:600;}
+.fr-avlegend .fr-avlg-note{flex-basis:100%;color:var(--fr-mut);font-weight:500;}
+.fr-avlegend span{display:inline-flex;align-items:center;gap:5px;}
+.fr-avlegend i{width:16px;height:12px;border-radius:3px;display:inline-block;}
+.fr-avlegend i.s-frei{background:#34c759;}
+.fr-avlegend i.s-anfrageD{background:#ff9f0a;}
+.fr-avlegend i.s-anfrageA{background:repeating-linear-gradient(45deg,#ff9f0a,#ff9f0a 4px,#ffd89a 4px,#ffd89a 8px);}
+.fr-avlegend i.s-solo{background:#1bb6bd;}
+.fr-avlegend i.s-ausgebucht{background:repeating-linear-gradient(45deg,#9aa3ad,#9aa3ad 4px,#cfd4da 4px,#cfd4da 8px);}
+.fr-avlegend i.s-nichtverfuegbar{background:#FA5858;}
+.fr-avlegend i.nb{background:#d4d8de;}
+
+/* Vergleich andere Flugzeuge / Fluglehrer */
+.fr-cmptoggle{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:680px;background:#fff;color:var(--fr-blue-d);font-weight:700;font-size:13px;border:1px solid var(--fr-line);border-radius:11px;padding:11px 14px;margin-top:12px;cursor:pointer;font-family:inherit;}
+.fr-cmptoggle:hover{background:#fafcff;border-color:#cdd9e6;}
+.fr-cmptoggle.open{border-radius:11px 11px 0 0;border-bottom:none;}
+.fr-cmptoggle .ar{flex:0 0 auto;}   /* Optik kommt vom einheitlichen .fr-chev */
+.fr-cmppanel{max-width:680px;background:#fff;border:1px solid var(--fr-line);border-top:none;border-radius:0 0 12px 12px;padding:13px 14px;}
+.fr-cmppanel .fr-avrow{margin-bottom:6px;}
+.fr-cmppanel .cmpsel{background:#eef4ff;border-radius:8px;padding:4px 6px;margin:0 -6px 6px;}
+.fr-cmppanel .cmpsel .fr-avlab{color:var(--fr-blue-d);font-weight:800;}
+
+/* Schmaler Viewport (z. B. enger iframe): Sidebar nach oben klappen */
+@media (max-width:720px){
+  .fr-app{grid-template-columns:1fr;}
+  .fr-side{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:10px;}
+  .fr-navsec,.fr-usr{display:none;}
+  .fr-brand{margin:0 10px 0 4px;}
+  .fr-nav{padding:6px 10px;}
+}
+
+/* ---- Lizenzen ---- */
+.fr-kpis{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.fr-kpi{flex:1;min-width:150px;background:#fff;border:1px solid var(--fr-line);border-radius:11px;padding:11px 14px;display:flex;align-items:center;gap:11px;}
+.fr-kpi .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto;}
+.fr-kpi .dot.ok{background:var(--fr-green);}.fr-kpi .dot.warn{background:var(--fr-amber);}.fr-kpi .dot.bad{background:var(--fr-red);}.fr-kpi .dot.inf{background:#9aa3ad;}
+.fr-kpi .v{font-size:20px;font-weight:800;}
+.fr-kpi .k{font-size:11.5px;color:var(--fr-mut);font-weight:600;}
+.fr-ugrp{margin-bottom:14px;}
+.fr-uhd{display:flex;align-items:center;gap:9px;font-weight:700;font-size:13px;color:var(--fr-blue-d);background:var(--fr-blue-l);padding:8px 12px;border-radius:8px;}
+.fr-uhd .av{width:24px;height:24px;border-radius:50%;background:var(--fr-blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex:0 0 auto;}
+.fr-uhd .mini{margin-left:auto;font-size:11px;font-weight:600;}
+.fr-uhd .mini.warn{color:var(--fr-amber);}.fr-uhd .mini.bad{color:var(--fr-red);}
+.fr-lcard{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--fr-line);border-radius:10px;margin:6px 0;background:#fff;}
+.fr-lcard:hover{border-color:#cdd9e6;background:#fafcff;}
+.fr-lbar{width:4px;align-self:stretch;border-radius:2px;min-height:36px;flex:0 0 auto;}
+.fr-lbar.ok{background:var(--fr-green);}.fr-lbar.warn{background:var(--fr-amber);}.fr-lbar.bad{background:var(--fr-red);}.fr-lbar.inf{background:#9aa3ad;}
+.fr-linfo{flex:1;min-width:0;}
+.fr-lname{font-weight:700;font-size:13.5px;}
+.fr-lsub{font-size:12px;color:var(--fr-mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-ltag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;flex:0 0 auto;}
+.fr-ltag.ok{background:#eafaf0;color:var(--fr-green);}.fr-ltag.warn{background:#fdf4e6;color:var(--fr-amber);}.fr-ltag.bad{background:#fdeaea;color:var(--fr-red);}.fr-ltag.inf{background:#eef1f4;color:#566;}
+.fr-lchev{color:#c7c7cc;font-size:20px;font-weight:600;flex:0 0 auto;}
+
+/* Lizenz-Status: Farben wie im alten Formular */
+.fr-kpi .dot.green,.fr-lbar.green,.fr-lbar.inf,.fr-kpi .dot.inf{background:#01DF3A;}
+.fr-kpi .dot.amber,.fr-lbar.amber{background:#FFBF00;}
+.fr-kpi .dot.red,.fr-lbar.red{background:#FA5858;}
+.fr-ltag.green,.fr-ltag.inf{background:#e3fbe8;color:#159b30;}
+.fr-ltag.amber{background:#fff6d9;color:#9a7600;}
+.fr-ltag.red{background:#fde7e7;color:#d62b2b;}
+.fr-uhd .mini.amber{color:#9a7600;}
+.fr-uhd .mini.red{color:#d62b2b;}
+/* mehr Infos je Lizenz */
+.fr-lname .full{font-weight:500;color:var(--fr-mut);font-size:12px;}
+.fr-lcomment{font-size:11.5px;color:#7a828c;margin-top:2px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-llegend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;font-size:11.5px;color:#667;}
+.fr-llegend span{display:inline-flex;align-items:center;gap:6px;}
+.fr-llegend i{width:14px;height:11px;border-radius:3px;display:inline-block;}
+.fr-llegend i.green{background:#01DF3A;}.fr-llegend i.amber{background:#FFBF00;}.fr-llegend i.red{background:#FA5858;}
+
+/* --- Lizenz-Formular (Neu/Bearbeiten) --- */
+.fr-ctrl.ro{background:#f4f6f9;cursor:default;}
+.fr-rotext{font-size:14px;color:var(--fr-ink);font-weight:600;}
+.fr-typedesc{margin-top:10px;font-size:12.5px;line-height:1.5;color:var(--fr-mut);background:#f4f6f9;border-radius:8px;padding:9px 11px;}
+.fr-frow.col{margin-bottom:0;}
+.fr-area{width:100%;border:1px solid var(--fr-line);border-radius:9px;padding:9px 11px;font-family:inherit;font-size:14px;color:var(--fr-ink);resize:vertical;background:#fff;box-sizing:border-box;}
+.fr-area:focus{outline:none;border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+.fr-check{display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.45;color:var(--fr-ink);cursor:pointer;font-weight:600;}
+.fr-check input{width:18px;height:18px;flex:0 0 auto;margin-top:1px;accent-color:var(--fr-blue);cursor:pointer;}
+.fr-check + .fr-frow{margin-top:13px;}
+
+/* --- Pinnwand (Notes) --- */
+.fr-notes{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start;}
+.fr-note{position:relative;background:#fffdf5;border:1px solid #efe7cf;border-radius:12px;padding:16px 16px 12px;
+  box-shadow:0 3px 10px rgba(0,0,0,.06);}
+.fr-note-pin{position:absolute;top:-7px;left:50%;width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle at 35% 30%,#ff8a8a,#e23b3b);box-shadow:0 2px 4px rgba(0,0,0,.25);transform:translateX(-50%);}
+.fr-note-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.fr-note-hd h3{margin:0;font-size:15.5px;font-weight:800;color:var(--fr-ink);line-height:1.25;}
+.fr-note-exp{flex:0 0 auto;font-size:10.5px;font-weight:700;color:#7a8aa0;background:#eef2f7;border-radius:20px;padding:3px 9px;white-space:nowrap;}
+.fr-note-exp.soon{color:#9c4a00;background:#ffe9cf;}
+.fr-note-body{font-size:13.5px;line-height:1.55;color:#37434f;white-space:normal;word-break:break-word;}
+.fr-note-ft{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:13px;
+  padding-top:10px;border-top:1px solid #efe7cf;}
+.fr-note-meta{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--fr-mut);font-weight:600;min-width:0;}
+.fr-note-meta .av{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--fr-blue);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;}
+.fr-note-act{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;}
+.fr-note-act form{margin:0;}
+.fr-iconbtn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:8px;
+  border:1px solid var(--fr-line);background:#fff;color:#566;font-size:14px;cursor:pointer;text-decoration:none;}
+.fr-iconbtn:hover{background:var(--fr-blue-l);border-color:var(--fr-blue);}
+.fr-iconbtn.del:hover{background:#fdeaea;border-color:#e2a0a0;color:#c0392b;}
+
+/* --- Stammdaten: Flugzeuge & Flugzeugtypen --- */
+.fr-cards{display:flex;flex-direction:column;gap:10px;max-width:760px;}
+.fr-acard{display:flex;align-items:stretch;gap:8px;}
+.fr-acard-main{flex:1;display:flex;align-items:center;gap:13px;background:#fff;border:1px solid var(--fr-line);
+  border-radius:12px;padding:12px 14px;cursor:pointer;min-width:0;}
+.fr-acard-main:hover{border-color:#cdd9e6;background:#fafcff;}
+.fr-acard-main.solo{width:100%;}
+.fr-acard-main.inactive{opacity:.6;}
+.fr-acard-ico{flex:0 0 auto;width:42px;height:42px;border-radius:10px;background:var(--fr-blue-l);color:var(--fr-blue);
+  display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;}
+.fr-acard-ico.ty{font-size:12px;letter-spacing:.5px;}
+.fr-acard-info{flex:1;min-width:0;}
+.fr-acard-t{font-size:14.5px;font-weight:800;color:var(--fr-ink);}
+.fr-acard-sub{font-weight:600;color:var(--fr-mut);font-size:12.5px;margin-left:4px;}
+.fr-acard-meta{font-size:12px;color:var(--fr-mut);margin-top:2px;}
+.fr-acard-lics{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px;}
+.fr-acard-muted{font-size:12px;color:var(--fr-mut);font-style:italic;}
+.fr-lic{font-size:10.5px;font-weight:700;background:#eef4ff;color:#2b6cb0;border-radius:20px;padding:2px 9px;}
+.fr-acard-del{margin:0;display:flex;align-items:center;}
+.fr-acard-del .fr-btn{min-width:128px;justify-content:center;}
+.fr-checklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px 18px;}
+.fr-checklist .fr-check{font-weight:600;font-size:13px;}
+
+/* --- Nutzerverwaltung --- */
+.fr-uava{flex:0 0 auto;width:42px;height:42px;border-radius:50%;background:var(--fr-blue);color:#fff;
+  display:inline-flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;}
+.fr-acard > .fr-iconbtn{align-self:center;}
+
+/* --- Persönliches Dashboard (Mockup) --- */
+.fr-mocktag{font-size:11px;font-weight:700;color:#9c6a00;background:#fff4dc;border:1px solid #f0d79a;border-radius:20px;padding:4px 11px;}
+.fr-dash-hd{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px;}
+.fr-dash-hi{display:flex;align-items:center;gap:13px;}
+.fr-dash-av{width:48px;height:48px;border-radius:50%;background:var(--fr-blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;flex:0 0 auto;}
+.fr-dash-hi h2{margin:0;font-size:21px;font-weight:800;letter-spacing:-.4px;}
+.fr-dash-hi .sub{font-size:13px;color:var(--fr-mut);font-weight:600;margin-top:2px;}
+.fr-dash-quick{display:flex;gap:9px;flex-wrap:wrap;}
+
+.fr-dash-warn{display:flex;align-items:center;gap:14px;border-radius:12px;padding:14px 16px;margin-bottom:18px;}
+.fr-dash-warn .ic{font-size:24px;flex:0 0 auto;}
+.fr-dash-warn .t{flex:1;min-width:0;}
+.fr-dash-warn .t b{font-size:15px;}
+.fr-dash-warn .t div{font-size:13px;margin-top:2px;}
+.fr-dash-warn.red{background:#fdeaea;border:1px solid #f1c8c8;color:#a3322b;}
+.fr-dash-warn.amber{background:#fff6e3;border:1px solid #f0d79a;color:#8a5a00;}
+
+.fr-dash-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:16px;align-items:start;}
+/* Club-Kennzahlen: zwei Spalten (Hero+Chart | Werteliste). min-width:0 laesst die
+   Spalten schrumpfen (sonst laeuft die rechte Liste bei schmalem Fenster aus dem
+   Rahmen); unter 900px untereinander. */
+.fr-kz-grid{display:grid;grid-template-columns:1.25fr 1fr;gap:22px;align-items:start;}
+.fr-kz-grid>*{min-width:0;overflow:hidden;}
+/* 2 Spalten (Chart | Datenblatt) nur bei viel Platz – sonst laeuft der Chart in
+   die rechte Spalte. Darunter untereinander (beide volle Breite, gut lesbar). */
+@media (max-width:1400px){.fr-kz-grid{grid-template-columns:1fr;gap:16px;}}
+.fr-dash-card{background:#fff;border:1px solid var(--fr-line);border-radius:14px;padding:14px 15px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.fr-dash-ch{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;}
+.fr-dash-ch h3{margin:0;font-size:14.5px;font-weight:800;color:var(--fr-ink);}
+.fr-dash-ch a{font-size:12px;font-weight:700;color:var(--fr-blue);}
+.fr-dash-card .fr-bk:first-of-type,.fr-dash-card .fr-lcard:first-of-type{margin-top:0;}
+
+.fr-roletag{font-size:10px;font-weight:800;border-radius:20px;padding:2px 9px;letter-spacing:.2px;text-transform:uppercase;}
+.fr-roletag.fi{background:#e6f7f1;color:#1f8a66;}
+.fr-roletag.admin{background:#eef2ff;color:#3a4db0;}
+
+.fr-dash-ampel{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;font-weight:700;color:#445;margin-bottom:12px;}
+.fr-dash-ampel i{width:11px;height:11px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:-1px;}
+.fr-dash-ampel i.green{background:#01DF3A;}.fr-dash-ampel i.amber{background:#FFBF00;}.fr-dash-ampel i.red{background:#FA5858;}
+
+.fr-dash-note{padding:9px 0;border-bottom:1px solid var(--fr-line);}
+.fr-dash-note:last-child{border-bottom:none;}
+.fr-dash-note b{font-size:13.5px;}
+.fr-dash-note p{margin:3px 0;font-size:12.5px;color:#46525e;line-height:1.45;}
+.fr-dash-note small{font-size:11px;color:var(--fr-mut);font-weight:600;}
+
+.fr-dash-adminsec{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:800;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.5px;margin:22px 0 12px;}
+.fr-stat-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;}
+.fr-stat{background:var(--fr-blue-l);border-radius:10px;padding:11px 12px;}
+.fr-stat .v{font-size:22px;font-weight:800;color:var(--fr-blue-d);line-height:1;}
+.fr-stat .k{font-size:11px;font-weight:600;color:#5a6b7a;margin-top:4px;}
+.fr-stat.warn{background:#fdeaea;}
+.fr-stat.warn .v{color:#c0392b;}
+.fr-dash-empty{color:var(--fr-mut);font-size:13px;padding:14px 4px;}
+.fr-dash-empty a{color:var(--fr-blue);font-weight:700;}
+
+/* --- Anleitung --- */
+.fr-help{max-width:780px;}
+.fr-help-intro{font-size:13.5px;color:var(--fr-mut);margin:0 0 16px;}
+.fr-help-sec{background:#fff;border:1px solid var(--fr-line);border-radius:14px;padding:15px 18px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,.04);}
+.fr-help-sec.fi{border-left:3px solid #1f8a66;}
+.fr-help-sec.admin{border-left:3px solid #3a4db0;}
+.fr-help-sec h3{margin:0 0 9px;font-size:15.5px;font-weight:800;color:var(--fr-ink);display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+.fr-help-ic{font-size:16px;}
+.fr-help-sec p{margin:0 0 8px;font-size:13.5px;line-height:1.6;color:#37434f;}
+.fr-help-sec ul,.fr-help-sec ol{margin:6px 0 0;padding-left:20px;}
+.fr-help-sec li{font-size:13.5px;line-height:1.65;color:#37434f;margin-bottom:5px;}
+.fr-help-sec h3 .fr-roletag{margin-left:auto;}
+.fr-roletag.all{background:#eef2f7;color:#5a6b7a;}
+.fr-help-foot{font-size:12.5px;color:var(--fr-mut);margin-top:8px;}
+
+/* --- Login-Seite (eigenständig) --- */
+body.fr-login{display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:linear-gradient(160deg,#13212f 0%,#1d3550 55%,#22557e 100%);padding:20px;}
+.fr-login-wrap{width:100%;max-width:380px;}
+.fr-login-card{background:#fff;border-radius:18px;padding:28px 26px 26px;box-shadow:0 18px 50px rgba(0,0,0,.35);}
+.fr-login-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:24px;color:var(--fr-ink);letter-spacing:-.4px;}
+.fr-login-brand span{color:var(--fr-blue);}
+.fr-login-sub{color:var(--fr-mut);font-size:13px;font-weight:600;margin:4px 0 18px;}
+.fr-login-form label{display:block;font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin:13px 0 5px;}
+.fr-login-form select,.fr-login-form input[type=text],.fr-login-form input[type=password]{
+  width:100%;border:1px solid var(--fr-line);border-radius:9px;padding:10px 12px;font-family:inherit;font-size:15px;
+  color:var(--fr-ink);background:#fff;box-sizing:border-box;}
+.fr-login-form select:focus,.fr-login-form input:focus{outline:none;border-color:var(--fr-blue);box-shadow:0 0 0 3px var(--fr-blue-l);}
+.fr-login-remember{display:flex !important;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--fr-ink);
+  text-transform:none;letter-spacing:0;margin:15px 0 18px;cursor:pointer;}
+.fr-login-remember input{width:17px;height:17px;accent-color:var(--fr-blue);}
+.fr-login-form .fr-btn{width:100%;justify-content:center;padding:11px;font-size:15px;}
+.fr-login-foot{text-align:center;color:#aebccb;font-size:12px;margin-top:16px;}
+.fr-login .fr-msg{margin:0 0 4px;max-width:none;}
+
+/* --- Abmelden-Button in der Sidebar --- */
+.fr-usr .fr-logout{margin-left:auto;flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:inline-flex;
+  align-items:center;justify-content:center;color:#9fb0c0;font-size:16px;background:#1d3142;}
+.fr-usr .fr-logout:hover{background:#2a435a;color:#fff;}
+.fr-usr .fr-logout .ic{display:inline-flex;align-items:center;justify-content:center;}
+.fr-usr .fr-logout .ic svg{width:17px;height:17px;}
+.fr-navsep{height:1px;background:#24384a;margin:14px 8px 6px;}
+
+/* --- Fluglehrer: Schulungszeiten --- */
+.fr-fihint{font-size:13px;line-height:1.5;color:#37434f;background:var(--fr-blue-l);border-radius:10px;padding:11px 14px;margin-bottom:14px;max-width:760px;}
+.fr-fibar{flex:0 0 auto;width:5px;align-self:stretch;min-height:34px;border-radius:3px;}
+.fr-fibar.green{background:#01DF3A;}
+.fr-fibar.amber{background:#FFBF00;}
+.fr-fibar.red{background:#FA5858;}
+
+/* --- Wochentag-Auswahl (Serie / Mehrfach-Löschen) --- */
+.fr-wdays{display:flex;flex-wrap:wrap;gap:7px;}
+.fr-wday input{position:absolute;opacity:0;width:0;height:0;}
+.fr-wday span{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:8px 10px;
+  border:1px solid var(--fr-line);border-radius:8px;font-size:13px;font-weight:700;color:#566;cursor:pointer;background:#fff;}
+.fr-wday input:checked + span{background:var(--fr-blue);color:#fff;border-color:var(--fr-blue);}
+.fr-wday input:focus-visible + span{box-shadow:0 0 0 3px var(--fr-blue-l);}
+
+/* --- Fluglehrer-Verfügbarkeitsmatrix (unter der Flotten-Matrix, deckungsgleich) --- */
+.fr-fisect .fr-sectrow td{border-top:2px solid #d4dbe4;padding-top:7px;}
+.fr-matrix td.fr-sectlbl{font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;white-space:nowrap;padding-top:9px;}
+.fr-ficell{width:20px;height:20px;border-radius:5px;display:block;margin:2px auto;background:#eef1f5;}
+.fr-ficell.green{background:#2fcf63;}
+.fr-ficell.amber{background:#ffb220;}
+.fr-ficell.amberdash{background:repeating-linear-gradient(45deg,#ffb220,#ffb220 4px,#ffe2a0 4px,#ffe2a0 8px);}
+.fr-ficell.red{background:#FA5858;}
+.fr-ficell.today{outline:2px solid rgba(31,111,178,.7);outline-offset:-2px;}
+.fr-filegend{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:12px;font-size:12px;color:var(--fr-mut);font-weight:600;}
+.fr-filegend i{width:14px;height:14px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:5px;}
+.fr-filegend i.green{background:#2fcf63;}
+.fr-filegend i.amber{background:#ffb220;}
+.fr-filegend i.amberdash{background:repeating-linear-gradient(45deg,#ffb220,#ffb220 3px,#ffe2a0 3px,#ffe2a0 6px);}
+.fr-filegend i.red{background:#FA5858;}
+.fr-filegend-note{color:#8a98a8;font-weight:500;}
+
+/* Erste Spalte fix -> Flotten- und Fluglehrer-Matrix bleiben deckungsgleich */
+.fr-matrix th.fr-corner,.fr-matrix td.fr-ac{width:140px;max-width:140px;}
+.fr-matrix td.fr-ac .lbl{display:inline-block;max-width:108px;overflow:hidden;vertical-align:middle;}
+.fr-matrix td.fr-ac .lbl b,.fr-matrix td.fr-ac .lbl small{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* Ausklappbares Fluglehrer-Panel (eigene runde Karte unter der Flotten-Matrix) */
+/* Scroll-Container + Karte: die Karte wird max-content (nur so breit wie die
+   Tagesspalten). Lange Texte (Legende/Hinweis) dürfen die Breite NICHT aufblähen
+   -> sie bekommen .fr-secnowrap (width:0;min-width:100%) und brechen auf Kartenbreite um. */
+.fr-ovscroll{max-width:100%;overflow-x:auto;}
+.fr-ovcard{width:max-content;background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:12px 12px 14px;}
+.fr-ovcard .fr-matrix{margin:9px 2px 2px;}
+.fr-secnowrap{width:0;min-width:100%;box-sizing:border-box;}
+
+/* Blaue Section-Balken (Flugzeuge / Fluglehrer) – in allen Sichten */
+.fr-sechdr{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--fr-blue);color:#fff;
+  font-weight:800;font-size:13.5px;padding:10px 15px;border-radius:9px;margin:0;}
+.fr-sechdr .t{display:inline-flex;align-items:center;gap:7px;min-width:0;}
+button.fr-sechdr{width:100%;border:none;font-family:inherit;cursor:pointer;}
+button.fr-sechdr:hover{background:var(--fr-blue-d);}
+.fr-sechdr.fr-sectoggle{margin-top:13px;}
+/* Reiner Pfeil als Ausklapp-Indikator: ◀ = zu, ▼ = offen */
+.fr-sechdr .ar{flex:0 0 auto;font-size:16px;line-height:1;color:#fff;}
+
+.fr-secbody{margin-top:4px;}
+
+/* --- Tagesansicht (Stunden) auf der Übersichtsseite --- */
+.fr-daypanel{margin-top:0;background:#fff;border-radius:16px;box-shadow:0 6px 20px rgba(0,0,0,.07);padding:14px 16px 16px;max-width:900px;}
+.fr-dayhdr2{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.fr-dayhdr2 .t{font-size:15px;font-weight:800;color:var(--fr-ink);}
+.fr-dayhdr2 .fr-date{flex:0 0 auto;min-width:210px;}
+.fr-daypanel .fr-avbox{margin-top:9px;}
+
+/* Tagesansicht: Labels im Matrix-Format (Farbpunkt + fette Kennung/Name + Typ) */
+.fr-avlab.named{flex:0 0 150px;display:flex;align-items:center;gap:8px;overflow:hidden;}
+.fr-avlab.named .dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;}
+.fr-avlab.named .lbl{min-width:0;overflow:hidden;}
+.fr-avlab.named .lbl b{display:block;font-size:12.5px;font-weight:800;letter-spacing:-.2px;color:var(--fr-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fr-avlab.named .lbl small{display:block;color:var(--fr-mut);font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* Eigener, sofort erscheinender Tooltip (ersetzt den langsamen nativen title) */
+.fr-tip{position:fixed;z-index:1000;background:#1d2733;color:#fff;font-size:11.5px;line-height:1.45;
+  padding:6px 9px;border-radius:7px;white-space:pre-line;pointer-events:none;max-width:300px;
+  box-shadow:0 4px 14px rgba(0,0,0,.28);opacity:0;transition:opacity .07s;}
+
+/* ---- Reservieren: "Naechste freie Termine" (einheitliche Sektion + Karten) ---- */
+.fr-slotsec{cursor:pointer;}
+.fr-slotsec .fr-slotsub{font-weight:500;color:var(--fr-mut);font-size:12px;}
+.fr-slotsec .ar{margin-left:auto;}
+
+/* ---- Einheitlicher Aufklapp-Chevron (runder Button, dreht beim Oeffnen) ---- */
+.fr-chev{flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:var(--fr-blue-l);color:var(--fr-blue-d);display:inline-flex;align-items:center;justify-content:center;}
+.fr-chev svg{width:17px;height:17px;transition:transform .15s;}
+.fr-chev.closed svg{transform:rotate(-90deg);}
+.fr-scards{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.fr-scard{display:flex;flex-direction:column;gap:3px;border:1px solid var(--fr-line);border-radius:11px;padding:10px 12px;background:#fff;cursor:pointer;font-family:inherit;text-align:left;}
+.fr-scard:hover{border-color:var(--fr-blue);box-shadow:0 2px 10px rgba(31,111,178,.16);}
+.fr-scard .d{font-size:12px;color:var(--fr-mut);font-weight:600;}
+.fr-scard .tm{font-size:15px;font-weight:800;color:var(--fr-ink);}
+.fr-scard .len{font-size:11.5px;color:var(--fr-green);font-weight:700;}
+/* Fluglehrer nur "auf Anfrage" verfuegbar -> oranger Akzent (App-Konvention) */
+.fr-scard-anf{border-color:#f0d2a0;background:#fff9f0;}
+.fr-scard-anf:hover{border-color:#e08a1e;box-shadow:0 2px 10px rgba(224,138,30,.18);}
+.fr-scard-anf .len{color:#c9781a;}
+/* "nach Absprache" -> nicht direkt buchbar: gedaempft + gestrichelter Rahmen */
+.fr-scard-abs{border-color:#d9c2a0;border-style:dashed;background:#faf6ef;}
+.fr-scard-abs:hover{border-color:#b88a3a;box-shadow:0 2px 10px rgba(184,138,58,.16);}
+.fr-scard-abs .len{color:#9c7b3c;}
+.fr-slotmorewrap{text-align:center;margin-top:12px;}
+.fr-slotmore{background:#fff;color:var(--fr-blue);border:1px solid #cfe0f1;border-radius:9px;padding:8px 16px;font-weight:600;font-size:13px;cursor:pointer;font-family:inherit;}
+.fr-slotmore:hover{background:var(--fr-blue-l);border-color:var(--fr-blue);}
+.fr-slotmore:disabled{opacity:.6;cursor:default;}
+
+/* ===========================================================================
+   Einheitliche Karteireiter-Kopfzeile (pagehead) – siehe _pagehead.html.twig
+   =========================================================================== */
+.fr-ic{width:16px;height:16px;flex:none;vertical-align:-2px;}
+.fr-tabrow{display:flex;gap:7px;padding-left:6px;position:relative;z-index:2;align-items:flex-end;flex-wrap:wrap;}
+.fr-tab{display:inline-flex;align-items:center;gap:7px;background:#e6ecf5;border:1.5px solid #c2cfe0;border-bottom:none;border-radius:12px 12px 0 0;padding:9px 15px;font-family:inherit;font-weight:700;font-size:13.5px;color:#5f6b80;text-decoration:none;cursor:pointer;position:relative;top:1.5px;box-shadow:0 -1px 2px rgba(25,50,95,.04);transition:background .12s,color .12s;}
+.fr-tab .fr-ic{width:15px;height:15px;}
+.fr-tab:hover{background:#eef2f9;color:var(--fr-ink);}
+.fr-tab.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 -3px 8px rgba(25,50,95,.07);}
+.fr-tab.on::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;background:#fff;}
+/* Solo-Reiter (einzige Karte = Seitentitel): immer aktiv/weiss, nicht klickbar */
+.fr-tab.solo{background:#fff;color:var(--fr-blue-d);cursor:default;box-shadow:0 -3px 8px rgba(25,50,95,.07);}
+.fr-tab.solo::after{content:"";position:absolute;left:0;right:0;bottom:-1.5px;height:3px;background:#fff;}
+.fr-tbadge{font-size:11px;font-weight:800;background:#d5deec;color:#6b7688;border-radius:20px;padding:1px 8px;}
+.fr-tab.on .fr-tbadge{background:var(--fr-blue-l);color:var(--fr-blue-d);}
+.fr-panel{background:#fff;border:1.5px solid #c2cfe0;border-radius:0 13px 13px 13px;box-shadow:0 4px 12px rgba(25,50,95,.05);position:relative;z-index:1;}
+.fr-phead{display:flex;align-items:flex-end;gap:11px;padding:11px 14px;border-bottom:1px solid var(--fr-line);flex-wrap:wrap;}
+.fr-phead:empty{display:none;}
+.fr-phlabel{font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--fr-mut);}
+.fr-phspring{flex:1;}
+.fr-pbody{padding:14px;}
+/* Sekundaerer Kontur-Button fuer die Kopfzeile (echtes Weiss mit Rahmen) */
+.fr-btn.sec{background:#fff;color:var(--fr-ink);border:1px solid #c9d3e0;}
+.fr-btn.sec:hover{background:var(--fr-blue-l);color:var(--fr-blue-d);border-color:#c9d3e0;}
+/* Zeile 2 unter den Reitern: Aktionsleiste – linksbuendig, dezent hinterlegt.
+   Buttons einheitlich .fr-btn (Pinnwand-Blau). Destruktives via .fr-pgap absetzen. */
+.fr-pactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:11px 14px;border-bottom:1px solid var(--fr-line);background:#f7f9fc;}
+.fr-pactions:empty{display:none;}
+.fr-pgap{width:18px;flex:none;}
+/* Buttons immer weiss – schlaegt ".fr-modern a{color:inherit}" (sonst schwarz, erst weiss bei :hover) */
+a.fr-btn, button.fr-btn{color:#fff;}
+a.fr-btn.sec{color:var(--fr-ink);} a.fr-btn.danger{color:var(--fr-red);}
+/* Destruktive Aktion: gleiches Blau, aber roter Rand (Warnhinweis) – ohne Groessenaenderung via inset-Shadow */
+.fr-btn.del{box-shadow:inset 0 0 0 2px var(--fr-red);}
+/* Seiten mit eigener Karte (Uebersichten) sitzen im Panel -> Doppelrahmen weg */
+.fr-pbody > .fr-daypanel{box-shadow:none;border-radius:0;padding:0;max-width:none;background:transparent;}
+.fr-pbody .fr-ovcard{box-shadow:none;border-radius:0;background:transparent;padding:0;}

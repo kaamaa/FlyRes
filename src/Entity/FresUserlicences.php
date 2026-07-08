@@ -3,112 +3,87 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 
 /**
  * FresUserlicences
  *
- * @ORM\Table(name="FRes_userLicences")
- * @ORM\Entity
- * @GRID\Source(sortable=true)
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  *
  */
+#[ORM\Table(name: 'FRes_userLicences')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresUserlicences
 {
     /**
      * @var integer
      *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     * 
-     * @GRID\Column(visible=false)
+     *
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var integer
      *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * 
-     * @GRID\Column(visible=false)
+     *
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
 
     /**
      * @var integer
      *
-     * @ORM\Column(name="accountid", type="integer", nullable=false)
-     * 
-     * @GRID\Column(visible=false)
+     *
      */
+    #[ORM\Column(name: 'accountid', type: 'integer', nullable: false)]
     private $accountid;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FResAccounts")
-     * @ORM\JoinColumn(name="accountid", referencedColumnName="id")
-     * 
-     * @GRID\Column(field="user.firstname", title="Vorname", filterable = false)
-     * @GRID\Column(field="user.lastname", title="Nachname", filterable = false)
-     */
+    #[ORM\JoinColumn(name: 'accountid', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \App\Entity\FresAccounts::class)]
     protected $user;
 
     /**
      * @var integer
-     *
-     * @ORM\Column(name="licenceid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'licenceid', type: 'integer', nullable: false)]
     private $licenceid;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FresLicencetype")
-     * @ORM\JoinColumn(name="licenceid", referencedColumnName="id")
-     * 
-     * @GRID\Column(field="licence.categoryid", title="Kategorie", filterable = true, visible=false)
-     * @GRID\Column(field="licence.categoryname", title="Lizenztyp", filterable = false)
-     * @GRID\Column(field="licence.longname", title="Bezeichunung", filterable = false)
-     *
-     */
+    #[ORM\JoinColumn(name: 'licenceid', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \FresLicencetype::class)]
     protected $licence;
     
     /**
      * @var boolean
      *
-     * @ORM\Column(name="validunlimited", type="boolean", nullable=false)
-     * 
-     * @GRID\Column(title="unbegrenzt gültig", visible = false, filterable = false)
+     *
      */
+    #[ORM\Column(name: 'validunlimited', type: 'boolean', nullable: false)]
     private $validunlimited;
 
     /**
      * @var \DateTime
      *
-     * @ORM\Column(name="validuntil", type="date", nullable=false)
-     * 
-     * @GRID\Column(title="Gültig bis", filterable = false, format = "d.m.Y")
+     *
      */
+    #[ORM\Column(name: 'validuntil', type: 'date', nullable: false)]
     private $validuntil;
 
     /**
      * @var string
      *
-     * @ORM\Column(name="comment", type="string", length=1000, nullable=true)
-     * 
-     * @GRID\Column(title="Anmerkung", filterable = false)
-     * @GRID\Column(visible=false)
+     *
      */
+    #[ORM\Column(name: 'comment', type: 'string', length: 1000, nullable: true)]
     private $comment;
     
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="status", type="string", length=30, nullable=true)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: true)]
     private $status;
 
     /**

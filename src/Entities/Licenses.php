@@ -4,10 +4,28 @@ namespace App\Entities;
 
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
-use App\Controller\LicenceController;
 
 class Licenses
 {
+  // Sentinel fuer "unbegrenzt gueltig": in der DB steht statt NULL das Datum
+  // 01.01.0000 (damit gefiltert werden kann). Verlagert aus LicenceController,
+  // da von Web-Frontend + Mailversand geteilt genutzt.
+  const VAILD_UNTIL_NULL   = '01.01.0000';
+  const VAILD_UNTIL_NULL_1 = '00.00.0000';
+
+  public static function ChangeValidUntil_NotNull()
+  {
+    return \DateTime::createFromFormat('d.m.Y', self::VAILD_UNTIL_NULL);
+  }
+
+  public static function ChangeValidUntil_Null($validuntil)
+  {
+    if ($validuntil == null) return null;
+    $string = date_format($validuntil, 'd.m.Y');
+    if ($string == self::VAILD_UNTIL_NULL || $string == self::VAILD_UNTIL_NULL_1) return null;
+    return $validuntil;
+  }
+
   public static function GetUserLicenceObject ($em, $clientid, $id)
   {
     $querystring = "SELECT b FROM App\Entity\FresUserlicences b WHERE b.clientid = :clientID and b.id = :Id and b.status <> 'geloescht'";
@@ -33,10 +51,23 @@ class Licenses
     {
       $licence->setStatus('geloescht');
       if ($licence->getValidunlimited() == true)
-        $licence->setValiduntil (LicenceController::ChangeValidUntil_NotNull());
+        $licence->setValiduntil (self::ChangeValidUntil_NotNull());
       $em->persist($licence);
       $em->flush();
     }
+  }
+
+  // Alle Lizenzen eines Nutzers soft-loeschen (Status 'geloescht'). Wird beim
+  // Loeschen des Piloten aufgerufen, damit keine aktiven Lizenzen an einem
+  // geloeschten Account haengen bleiben. Bulk-UPDATE analog
+  // Bookings::DeleteAllBookingsForAUser – bereits geloeschte bleiben unberuehrt.
+  public static function DeleteAllLicencesForAUser ($em, $clientid, $accountid)
+  {
+    $querystring = "UPDATE App\Entity\FresUserlicences a SET a.status = 'geloescht' "
+                 . "WHERE a.clientid = :clientID and a.accountid = :accountID "
+                 . "and (a.status <> 'geloescht' or a.status IS NULL)";
+    $query = $em->createQuery($querystring)->setParameters(array('clientID' => $clientid, 'accountID' => $accountid));
+    $query->execute();
   }
   
   public static function PPL_Required_but_CR_Invalid ($em, $accountID, $aircraftTypeid, $reservationdate)
@@ -154,14 +185,12 @@ class Licenses
     $aircrafttype = $em->getRepository('App\Entity\FresAircrafttype')->findOneBy(array('clientid' => $clientid, 'id' => $id));
     if ($aircrafttype)
     {
-      //$aircrafttype->setStatus('geloescht');
-      //$em->persist($aircrafttype);
-      $em->remove($aircrafttype);
+      // Soft-Delete (rueckgaengig machbar): Status setzen statt physisch loeschen.
+      // Die Lizenz-Zuordnungen (FresAircrafttype2licences) bleiben bewusst erhalten,
+      // damit ein Wiederherstellen den Typ samt seinen Anforderungen zurueckbringt.
+      $aircrafttype->setStatus('geloescht');
+      $em->persist($aircrafttype);
       $em->flush();
-      
-      $querystring = "DELETE App\Entity\FresAircrafttype2licences a WHERE a.aircrafttypeid = :ID";
-      $query = $em->createQuery($querystring)->setParameters(array('ID' => $id));
-      $query->execute();
     }
   }
   
@@ -174,7 +203,9 @@ class Licenses
        ->where("a.aircrafttypeid = :aircrafttypeid")
        ->orderBy('b.categoryid', 'ASC');     
 
-    $qb->setParameters(array('aircrafttypeid' => $aircraftTypeid));
+    // ORM 3: QueryBuilder::setParameters() verlangt eine ArrayCollection; fuer einen
+    // einzelnen Parameter ist setParameter(name, value) einfacher (und ORM-2/3-kompatibel).
+    $qb->setParameter('aircrafttypeid', $aircraftTypeid);
     $query = $qb->getQuery();
     $query->setCacheable(true);
     $licencestypes = $query->getResult();
@@ -209,21 +240,6 @@ class Licenses
     if($licences) return TRUE;
       else return FALSE;
   }  
-  
-  public static function GetAllLicenceTypes ($em)
-  {
-    $licenseTypeList = array ();
-    $querystring = "SELECT b FROM App\Entity\FresLicencetype b order by b.categoryid asc, b.longname desc";
-    $query = $em->createQuery($querystring);
-    $query->setCacheable(true);
-    $licencesTypes = $query->getResult();
-    if ($licencesTypes) {
-      foreach ($licencesTypes as $licencesType) {
-        $licenseTypeList[$licencesType->getCategoryname() . ' ' . $licencesType->getLongname()] = $licencesType->getId();
-      }
-    }
-    return $licenseTypeList;
-  } 
   
   public static function AircraftTypeRequestLicences ($em, $aircrafttype)
   {
@@ -268,9 +284,9 @@ class Licenses
   public static function SendLicenceInfoMail($em, $user, $twig, $newlicence, $oldlicence, $mailer, $parameter)
   {
     if ($newlicence != null)
-      $newlicence->setValiduntil(LicenceController::ChangeValidUntil_Null($newlicence->getValiduntil()));
+      $newlicence->setValiduntil(self::ChangeValidUntil_Null($newlicence->getValiduntil()));
     if ($oldlicence != null)
-      $oldlicence->setValiduntil(LicenceController::ChangeValidUntil_Null($oldlicence->getValiduntil()));
+      $oldlicence->setValiduntil(self::ChangeValidUntil_Null($oldlicence->getValiduntil()));
     
     $clientId = '';
     
@@ -319,19 +335,19 @@ class Licenses
     $mails = array_merge($adminMails, array ($inform_sender_mail));
     // Doppelte Array-Einträge löschen
     $mails = array_unique($mails);
-    
+
     //Mails versenden
     foreach ($mails as $mail) {
       if (Users::IsMailAdressValid($mail))
       {
         $message = (new Email())
-          //->setContentType("text/html")    
+          //->setContentType("text/html")
           ->subject($type . ' ' . $parameter['program_version'])
           ->html($twig->render('emails/licencemail.html.twig', $data))
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])
           ->to($mail);
-        
+
         $mailer->send($message);
       }
     }

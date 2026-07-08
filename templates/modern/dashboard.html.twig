@@ -1,0 +1,236 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label:'Dashboard', icon:'home'}]) }}
+  <div class="fr-panel"><div class="fr-pbody">
+
+  {# ---- Begrüßung + Schnellaktionen ---- #}
+  <div class="fr-dash-hd">
+    <div class="fr-dash-hi">
+      <span class="fr-dash-av">{{ (app.user.firstname|default('')|first) ~ (app.user.lastname|default('')|first) }}</span>
+      <div>
+        <h2>Hallo {{ vorname|default('') }}</h2>
+        <div class="sub">{{ heute }}</div>
+      </div>
+    </div>
+  </div>
+
+  {# ---- Lizenz-Warn-Banner ---- #}
+  {% if warn %}
+  <div class="fr-dash-warn red">
+    <span class="ic">⚠️</span>
+    <div class="t">
+      <b>{{ warn.name }} {{ warn.expired ? 'ist abgelaufen' : 'läuft bald ab' }}</b>
+      <div>
+        {%- if warn.expired %}Abgelaufen am {{ warn.date }} – bitte umgehend erneuern.
+        {%- else %}Nur noch <b>{{ warn.days }} {{ warn.days == 1 ? 'Tag' : 'Tage' }}</b> gültig – bis {{ warn.date }}. Bitte rechtzeitig verlängern.{% endif -%}
+      </div>
+    </div>
+    <a class="fr-btn" href="{{ path('modern_licences') }}">Meine Lizenzen</a>
+  </div>
+  {% endif %}
+
+  {# ---- Offene Buchungen ohne echten Fluglehrer (MVP 2) ---- #}
+  {% if openFi %}
+  <div class="fr-dash-warn" style="background:linear-gradient(180deg,#fff9ef,#fff4e2);border-color:#f0d59a;color:#7a4f08;">
+    <span class="ic">⚠️</span>
+    <div class="t">
+      <b>{{ openFi|length }} {{ openFi|length == 1 ? 'Reservierung wartet' : 'Reservierungen warten' }} noch auf einen Fluglehrer</b>
+      <div style="color:#8a5d0e;">
+        {%- for b in openFi|slice(0,2) %}{{ b.tag }} · {{ b.zeit }} · {{ b.flugzeug }}{{ not loop.last ? '  ·  ' : '' }}{% endfor -%}
+        {%- if openFi|length > 2 %} …{% endif %} – hier fehlt noch ein Fluglehrer. Kümmere dich am besten frühzeitig darum – wir unterstützen dich gern bei der Suche.
+      </div>
+    </div>
+    <a class="fr-btn" href="{{ path('modern_booking', {id: openFi[0].id}) }}" style="background:#c9781a;border-color:#c9781a;">Fluglehrer suchen</a>
+  </div>
+  {% endif %}
+
+  {# ---- Hauptraster ---- #}
+  <div class="fr-dash-grid">
+
+    {# Meine nächsten Buchungen #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Meine nächsten Buchungen</h3><a href="{{ path('modern_bookings', {umfang: 'meine'}) }}">alle ›</a></div>
+      {% for b in myBookings %}
+        <a class="fr-bk" href="{{ path('modern_booking', {id: b.id}) }}">
+          <div class="fr-tm">{{ b.tag }}<br>{{ b.zeit }}</div>
+          <div class="fr-who"><b>{{ b.flugzeug }}</b><small>{{ b.purpose }}{% if b.fi %} · FI: {{ b.fi }}{% endif %}{% if b.desc %} · {{ b.desc }}{% endif %}</small></div>
+          <span class="fr-pill {{ b.kind }}">{{ b.purpose }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine anstehenden Buchungen. <a href="{{ path('modern_reserve') }}">Jetzt reservieren ›</a></div>
+      {% endfor %}
+    </section>
+
+    {# Meine Lizenzen #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Meine Lizenzen</h3><a href="{{ path('modern_licences') }}">alle ›</a></div>
+      <div class="fr-dash-ampel">
+        <span><i class="green"></i>{{ kpi.green + kpi.inf }} gültig</span>
+        <span><i class="amber"></i>{{ kpi.amber }} unter 12 Mon.</span>
+        <span><i class="red"></i>{{ kpi.red }} läuft bald ab</span>
+      </div>
+      {% for l in myLicences %}
+        <a class="fr-lcard" href="{{ path('modern_licences') }}">
+          <div class="fr-lbar {{ l.state }}"></div>
+          <div class="fr-linfo"><div class="fr-lname">{{ l.name }}{% if l.full %} <span class="full">{{ l.full }}</span>{% endif %}</div><div class="fr-lsub">{{ l.validity }}</div></div>
+          <span class="fr-ltag {{ l.state }}">{{ l.badge }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine Lizenzen hinterlegt.</div>
+      {% endfor %}
+    </section>
+
+    {# Meine Schulungstermine (nur Fluglehrer) #}
+    {% if isFi %}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Meine Schulungstermine</h3><span class="fr-roletag fi">Fluglehrer</span></div>
+      {% for b in fiBookings %}
+        <a class="fr-bk" href="{{ path('modern_booking', {id: b.id}) }}">
+          <div class="fr-tm">{{ b.tag }}<br>{{ b.zeit }}</div>
+          <div class="fr-who"><b>{{ b.flugzeug }}</b><small>Schüler: {{ b.pilot }}{% if b.desc %} · {{ b.desc }}{% endif %}</small></div>
+          <span class="fr-pill {{ b.kind }}">{{ b.purpose }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine anstehenden Schulungstermine.</div>
+      {% endfor %}
+    </section>
+    {% endif %}
+
+    {# Pinnwand #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>📌 Pinnwand</h3><a href="{{ path('modern_notes') }}">alle ›</a></div>
+      {% for n in notes %}
+        <div class="fr-dash-note"><b>{{ n.header }}</b><p>{{ n.text|note_text }}</p><small>{{ n.author }}{% if n.validuntil %} · bis {{ n.validuntil }}{% endif %}</small></div>
+      {% else %}
+        <div class="fr-dash-empty">Keine aktuellen Aushänge.</div>
+      {% endfor %}
+    </section>
+
+  </div>
+
+  {# ---- Administration (nur Admins) ---- #}
+  {% if isAdmin %}
+  <div class="fr-dash-adminsec">Administration <span class="fr-roletag admin">Admin</span></div>
+  <div class="fr-dash-grid">
+
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Ablaufende Lizenzen (alle Nutzer)</h3><a href="{{ path('modern_licences', {scope: 'abgelaufen'}) }}">alle ›</a></div>
+      {% for l in adminLic %}
+        <a class="fr-lcard" href="{{ path('modern_licences', {scope: 'abgelaufen'}) }}">
+          <div class="fr-lbar red"></div>
+          <div class="fr-linfo"><div class="fr-lname">{{ l.user }} <span class="full">· {{ l.name }}</span></div><div class="fr-lsub">{{ l.validity }}</div></div>
+          <span class="fr-ltag red">{{ l.badge }}</span>
+        </a>
+      {% else %}
+        <div class="fr-dash-empty">Keine ablaufenden Lizenzen. 👍</div>
+      {% endfor %}
+    </section>
+
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch"><h3>Club-Kennzahlen</h3></div>
+      {% set grph = 'font-size:11px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.5px;margin:0 0 6px;padding-bottom:4px;border-bottom:1px solid var(--fr-line);' %}
+      {% set kv = 'display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:5px 0;border-bottom:1px dashed var(--fr-line);' %}
+      {% set lab = 'color:var(--fr-mut);' %}
+
+      <div class="fr-kz-grid">
+        {# --- linke Spalte: Hero-Kennzahlen + 12-Monats-Verlauf --- #}
+        <div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div style="background:linear-gradient(135deg,var(--fr-blue) 0%,var(--fr-blue-d) 100%);color:#fff;border-radius:13px;padding:15px 16px;">
+              <div style="font-size:28px;font-weight:800;line-height:1;">{{ stats.hoursYear }} h{% if stats.yearTrendPct is not null %}
+                <span style="font-size:14px;font-weight:700;color:{{ stats.yearTrendPct >= 0 ? '#a9edc4' : '#ffd39c' }};">{{ stats.yearTrendPct >= 0 ? '▲' : '▼' }} {{ stats.yearTrendPct|abs }}%</span>{% endif %}</div>
+              <div style="font-size:12px;opacity:.85;margin-top:6px;">Flugstunden {{ stats.yearLabel }} (bis heute){% if stats.yearTrendPct is not null %} · ggü. {{ stats.yearPrevLabel }}{% endif %}</div>
+            </div>
+            <div style="background:#fff;border:1px solid var(--fr-line);border-radius:13px;padding:15px 16px;">
+              <div style="font-size:28px;font-weight:800;line-height:1;color:var(--fr-blue-d);">{{ stats.hoursMonth }} h{% if stats.trendPct is not null %}
+                <span style="font-size:14px;font-weight:700;color:{{ stats.trendPct >= 0 ? 'var(--fr-green)' : 'var(--fr-amber)' }};">{{ stats.trendPct >= 0 ? '▲' : '▼' }} {{ stats.trendPct|abs }}%</span>{% endif %}</div>
+              <div style="font-size:12px;color:var(--fr-mut);margin-top:6px;">Flugstunden {{ stats.monthLabel }}{% if stats.trendPct is not null %} · ggü. {{ stats.monthPrevLabel }}{% endif %}</div>
+            </div>
+          </div>
+
+          {% if stats.monthly is defined and stats.monthly is not empty %}
+          <div style="margin-top:16px;">
+            <div style="{{ grph }}">Flugstunden – letzte 12 Monate</div>
+            <div style="display:flex;align-items:flex-end;gap:6px;height:104px;">
+              {% for m in stats.monthly %}
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end;" title="{{ m.label }}: {{ m.h }} h">
+                  <div style="font-size:9.5px;color:var(--fr-mut);">{{ m.h }}</div>
+                  <div style="width:100%;background:var(--fr-blue);border-radius:3px 3px 0 0;height:{{ (m.h / stats.monthlyMax * 80)|round }}px;min-height:2px;"></div>
+                  <div style="font-size:10px;color:var(--fr-mut);">{{ m.label }}</div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+        </div>
+
+        {# --- rechte Spalte: kompakte Werteliste (Datenblatt) --- #}
+        <div>
+          <div style="{{ grph }}">Betrieb</div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Buchungen heute</span><span style="font-weight:800;">{{ stats.bookToday }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Buchungen diese Woche</span><span style="font-weight:800;">{{ stats.bookWeek }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Buchungsdauer</span><span style="font-weight:800;">{{ stats.avgDuration|number_format(1, ',', '.') }} h</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Vorlaufzeit</span><span style="font-weight:800;">{{ stats.leadDays }} Tage</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Wochenend-Anteil</span><span style="font-weight:800;">{{ stats.weekendPct }} %</span></div>
+          <div style="{{ kv }}border-bottom:none;"><span style="{{ lab }}">Stornoquote</span><span style="font-weight:800;">{{ stats.stornoPct }} %</span></div>
+
+          <div style="{{ grph }}margin-top:14px;">Mitglieder &amp; Schulung</div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Mitglieder gesamt</span><span style="font-weight:800;">{{ stats.users }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">aktiv (12 Mon.)</span><span style="font-weight:800;">{{ stats.activeMembers }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">inaktiv</span><span style="font-weight:800;{{ stats.inactiveMembers > 0 ? 'color:var(--fr-amber);' : '' }}">{{ stats.inactiveMembers }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Stunden/Mitglied</span><span style="font-weight:800;">{{ stats.hoursPerMember|number_format(1, ',', '.') }} h</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">aktive Flugschüler</span><span style="font-weight:800;">{{ stats.activeStudents }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Schulungsanteil</span><span style="font-weight:800;">{{ stats.schulPct }} %</span></div>
+          <div style="{{ kv }}border-bottom:none;"><span style="{{ lab }}">Solo-Anteil (Schulung)</span><span style="font-weight:800;">{{ stats.soloPct }} %</span></div>
+
+          <div style="{{ grph }}margin-top:14px;">Flotte &amp; Sicherheit</div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Flugzeuge</span><span style="font-weight:800;">{{ stats.aircraft }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Ø Auslastung Flotte</span><span style="font-weight:800;">{{ stats.fleetUtil }} %</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">abgelaufene Lizenzen</span><span style="font-weight:800;{{ stats.expiredLic > 0 ? 'color:var(--fr-amber);' : '' }}">{{ stats.expiredLic }}</span></div>
+          <div style="{{ kv }}"><span style="{{ lab }}">Lizenzen gültig</span><span style="font-weight:800;{{ stats.licValidPct < 90 ? 'color:var(--fr-amber);' : '' }}">{{ stats.licValidPct }} %</span></div>
+          <div style="{{ kv }}border-bottom:none;"><span style="{{ lab }}">gesperrte Konten</span><span style="font-weight:800;{{ stats.locked > 0 ? 'color:var(--fr-amber);' : '' }}">{{ stats.locked }}</span></div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:18px;margin-top:20px;">
+        {% if stats.topPlanes is not empty %}
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">Top-Flugzeuge {{ stats.yearLabel }} (Stunden · Auslastung)</div>
+          {% for p in stats.topPlanes %}
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;{{ not loop.last ? 'border-bottom:1px solid var(--fr-line);' : '' }}">
+              <span>{{ loop.index }}. {{ p.name }}</span><span style="font-weight:700;white-space:nowrap;">{{ p.hours }} h · {{ p.util }} %</span>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if stats.topPilots is not empty %}
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">Top-Piloten / Flugschüler {{ stats.yearLabel }} (nach Stunden)</div>
+          {% for p in stats.topPilots %}
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;{{ not loop.last ? 'border-bottom:1px solid var(--fr-line);' : '' }}">
+              <span>{{ loop.index }}. {{ p.name }}</span><span style="font-weight:700;white-space:nowrap;">{{ p.hours }} h</span>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if stats.topFi is not empty %}
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:var(--fr-mut);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px;">Top-Fluglehrer {{ stats.yearLabel }} (Schulungsstunden)</div>
+          {% for p in stats.topFi %}
+            <div style="display:flex;justify-content:space-between;gap:10px;font-size:13px;padding:4px 0;{{ not loop.last ? 'border-bottom:1px solid var(--fr-line);' : '' }}">
+              <span>{{ loop.index }}. {{ p.name }}</span><span style="font-weight:700;white-space:nowrap;">{{ p.hours }} h</span>
+            </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+  </div>
+  {% endif %}
+  </div>{# fr-pbody #}</div>{# fr-panel #}
+{% endblock %}

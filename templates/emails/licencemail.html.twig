@@ -1,95 +1,71 @@
-<style type="text/css">
-  td { padding-right: 25px; }
-</style>
+{# E-Mail-sicheres HTML im "Brief"-Stil (Variante D2), analog zur Reservierungs-Mail:
+   keine Farbflaechen, nur Typografie -> hell/dunkel-fest. #}
+{% import _self as m %}
 
-<font style="color: blue">
-  <b>{{type}}:</b>
-</font>
-<br>
-<br>
-<table>
+{% macro row(label, val, oldval) %}
   <tr>
-    <td>
-      <b>Berechtigung für:</b>
-    </td>
-    <td>
-      {{primary_Username}} 
-    </td>
-    <td>
-      {% if secondary_Username is defined and secondary_Username != primary_Username %} (bisher: {{secondary_Username}}) {% endif %}
-    </td>
-  </tr>  
-  <tr>
-    <td>
-      <b>geändert von:</b>
-    </td>
-    <td>
-      {{primary_ChangedBy}} 
-    </td>
-    <td>
-      {% if secondary_ChangedBy is defined and secondary_ChangedBy != primary_ChangedBy %} (bisher: {{secondary_ChangedBy}}) {% endif %}
-    </td>
-  </tr>  
-  <tr>
-    <td>
-      <b>geändert am:</b>
-    </td>
-    <td>
-      {{primary_ChangedAt}}
-    </td>
-    <td>
-      {% if secondary_ChangedAt is defined and secondary_ChangedAt != primary_ChangedAt %} (bisher: {{secondary_ChangedAt}}) {% endif %} 
+    <td style="padding:9px 0;border-bottom:1px solid #e6ebf1;color:#6b7888;font-size:15px;vertical-align:top;width:42%;">{{ label }}</td>
+    <td style="padding:9px 0;border-bottom:1px solid #e6ebf1;color:#1d2733;font-size:15px;font-weight:bold;vertical-align:top;">
+      {{ val|default('—') }}
+      {%- if oldval is not empty and oldval != val %}
+        <span style="color:#b7791f;font-weight:bold;font-size:11px;text-transform:uppercase;">&nbsp;geändert</span>
+        <span style="color:#9aa4b0;text-decoration:line-through;font-weight:normal;font-size:12px;">{{ oldval }}</span>
+      {%- endif %}
     </td>
   </tr>
-  <tr>
-    <td>
-      <b>Berechtigung:</b>
-    </td>
-    <td>
-      {{primary_Licence}}
-    <td>
-      {% if secondary_Licence is defined and secondary_Licence != primary_Licence %} (bisher: {{secondary_Licence}}) {% endif %}
-    <td>
-    </td>
-  </tr>  
-  
-  <tr>
-    <td>
-      <b>Unbegrenzt gültig:</b>
-    </td>
-    <td>
-      {{primary_Unlimited}}
-    </td>
-    <td>
-      {% if secondary_Unlimited is defined and secondary_Unlimited != primary_Unlimited %} (bisher: {{secondary_Unlimited}}) {% endif %}
-    </td>
-  </tr>
- <tr>
-    <td>
-      <b>Gültig bis:</b>
-    </td>
-    <td>
-      {% if 'Ja' in primary_Unlimited %} <s> {% endif %}
-         {{primary_ValidUntil}}
-      {% if 'Ja' in primary_Unlimited %} </s> {% endif %}
-    </td>
-    <td>
-      {% if 'Ja' in primary_Unlimited %} <s> {% endif %}
-        {% if secondary_ValidUntil is defined and secondary_ValidUntil != primary_ValidUntil %} (bisher: {{secondary_ValidUntil}}) {% endif %}
-      {% if 'Ja' in primary_Unlimited %} </s> {% endif %}  
-    </td>
-  </tr>
- 
-  <tr>
-    <td>
-      <b>Kommentar:</b>
-    </td>
-    <td>
-      {{primary_description}}
-    </td>
-    <td>
-      {% if secondary_description is defined and secondary_description != primary_description %} (bisher: {{secondary_description}}) {% endif %} 
-    </td>
-  </tr>
-  
+{% endmacro %}
+
+{% set tl = type|lower %}
+{% set statuscolor = ('lösch' in tl or 'geloescht' in tl or 'stornier' in tl) ? '#c9453b'
+                  : (('änder' in tl or 'geänder' in tl or 'aktualis' in tl) ? '#b7791f' : '#2e7d46') %}
+{% set status = (statuscolor == '#c9453b') ? 'Gelöscht' : ((statuscolor == '#b7791f') ? 'Geändert' : 'Neu') %}
+{% set subline = (statuscolor == '#c9453b') ? 'Diese Berechtigung wurde gelöscht.'
+              : ((statuscolor == '#b7791f') ? 'Diese Berechtigung wurde geändert – geänderte Werte sind markiert.'
+              : 'Diese Berechtigung wurde neu angelegt.') %}
+{% set unlimited = 'Ja' in (primary_Unlimited|default('')) %}
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;">
+ <tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+   <tr><td style="padding:26px 26px 24px;">
+
+     <div style="font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#1f6fb2;">Flugschule Worms</div>
+     <div style="border-top:3px solid #1f6fb2;width:56px;font-size:0;line-height:0;margin:9px 0 18px;">&nbsp;</div>
+
+     <div style="font-size:20px;font-weight:bold;color:#1d2733;">{{ type }}</div>
+     <div style="font-size:13px;color:#6b7888;padding:4px 0 18px;"><span style="color:{{ statuscolor }};font-weight:bold;">&#9679; {{ status }}</span> &middot; {{ subline }}</div>
+
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+       {{ m.row('Berechtigung für', primary_Username, secondary_Username|default('')) }}
+       {{ m.row('Berechtigung', primary_Licence, secondary_Licence|default('')) }}
+       {{ m.row('Unbegrenzt gültig', primary_Unlimited, secondary_Unlimited|default('')) }}
+       <tr>
+         <td style="padding:9px 0;border-bottom:1px solid #e6ebf1;color:#6b7888;font-size:15px;vertical-align:top;width:42%;">Gültig bis</td>
+         <td style="padding:9px 0;border-bottom:1px solid #e6ebf1;color:#1d2733;font-size:15px;font-weight:bold;vertical-align:top;">
+           {% if unlimited %}
+             <span style="color:#6b7888;font-weight:normal;text-decoration:line-through;">{{ primary_ValidUntil|default('—') }}</span>
+             <span style="color:#6b7888;font-weight:normal;">&nbsp;(unbegrenzt gültig)</span>
+           {% else %}
+             {{ primary_ValidUntil|default('—') }}
+             {%- if secondary_ValidUntil is defined and secondary_ValidUntil != primary_ValidUntil %}
+               <span style="color:#b7791f;font-weight:bold;font-size:11px;text-transform:uppercase;">&nbsp;geändert</span>
+               <span style="color:#9aa4b0;text-decoration:line-through;font-weight:normal;font-size:12px;">{{ secondary_ValidUntil }}</span>
+             {%- endif %}
+           {% endif %}
+         </td>
+       </tr>
+       {{ m.row('Kommentar', primary_description, secondary_description|default('')) }}
+       {{ m.row('Geändert von', primary_ChangedBy, secondary_ChangedBy|default('')) }}
+       {{ m.row('Geändert am', primary_ChangedAt, secondary_ChangedAt|default('')) }}
+     </table>
+
+     <div style="margin-top:22px;padding-top:16px;border-top:1px solid #e6ebf1;color:#6b7888;font-size:12px;line-height:1.7;">
+       <b style="color:#1d2733;">Aero-Service-Worms GmbH</b> &middot; Am Flugplatz 3 &middot; 67547 Worms<br>
+       Tel. +49&nbsp;6241&nbsp;207333 &middot; info@flugschule-worms.de &middot; www.flugschule-worms.de<br>
+       <span style="color:#9aa4b0;">Automatische Nachricht aus dem Reservierungssystem – bitte nicht direkt antworten.</span>
+     </div>
+
+   </td></tr>
+  </table>
+ </td></tr>
 </table>

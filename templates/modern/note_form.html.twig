@@ -1,0 +1,159 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+<style>
+  .fr-wys{border:1px solid var(--fr-line,#d8d8d8);border-radius:9px;overflow:hidden;background:#fff;}
+  .fr-wtb{display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;border-bottom:1px solid var(--fr-line,#e3e8ee);background:#f8fafc;}
+  .fr-wtb button{border:1px solid transparent;background:none;border-radius:6px;padding:5px 9px;font:inherit;font-size:14px;line-height:1;cursor:pointer;color:var(--fr-ink,#1f2733);min-width:30px;}
+  .fr-wtb button:hover{background:#e9eff5;}
+  .fr-wtb .sep{width:1px;background:var(--fr-line,#e3e8ee);margin:2px 4px;}
+  .fr-wtb b{font-weight:800;} .fr-wtb i{font-style:italic;} .fr-wtb u{text-decoration:underline;}
+  .fr-editor{min-height:150px;padding:12px 14px;font-size:14px;line-height:1.55;outline:none;}
+  .fr-editor:empty:before{content:attr(data-ph);color:var(--fr-mut,#7a8698);}
+  .fr-editor h3,.fr-editor h4,.fr-editor h5{font-size:14px;margin:8px 0 4px;color:var(--fr-blue-d,#1f4d73);}
+  .fr-editor ul,.fr-editor ol{margin:6px 0;padding-left:20px;} .fr-editor li{margin:2px 0;}
+  .fr-editor a{color:var(--fr-blue,#3b6ea5);} .fr-editor mark{background:#fff3bf;padding:0 2px;border-radius:2px;}
+</style>
+
+  {{ ph.tabs([{label: isNew ? 'Neuer Pinnwandeintrag' : 'Pinnwandeintrag bearbeiten', icon: 'pin'}]) }}
+  <div class="fr-panel">
+    <div class="fr-pactions">
+      <button type="submit" form="note_form" class="fr-btn">Eintrag speichern</button>
+      <a class="fr-btn" href="{{ path('modern_notes') }}">Abbrechen</a>
+    </div>
+    <div class="fr-pbody">
+<form id="note_form" class="fr-form" action="{{ path('modern_note_save') }}" method="post">
+  <input type="hidden" name="id" value="{{ v.id }}">
+
+  {% if errors %}
+    <div class="fr-msg err">
+      {% for e in errors %}<div>{{ e }}</div>{% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="fr-formsec">Eintrag</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Titel</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></span>
+        <input type="text" name="header" value="{{ v.header }}" maxlength="255" placeholder="Überschrift …">
+      </div>
+    </div>
+    <div class="fr-frow col">
+      <label>Text</label>
+      <div class="fr-wys">
+        <div class="fr-wtb" id="n_tb">
+          <button type="button" data-cmd="bold" title="Fett"><b>F</b></button>
+          <button type="button" data-cmd="italic" title="Kursiv"><i>K</i></button>
+          <button type="button" data-cmd="underline" title="Unterstrichen"><u>U</u></button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="foreColor" data-val="#1f2733" title="Schwarz" style="color:#1f2733"><b>A</b></button>
+          <button type="button" data-cmd="foreColor" data-val="#c9453b" title="Rot" style="color:#c9453b"><b>A</b></button>
+          <button type="button" data-cmd="foreColor" data-val="#3b6ea5" title="Blau" style="color:#3b6ea5"><b>A</b></button>
+          <button type="button" data-cmd="foreColor" data-val="#2e9e5b" title="Grün" style="color:#2e9e5b"><b>A</b></button>
+          <button type="button" data-cmd="hilite" data-val="#fff3bf" title="Markieren" style="background:#fff3bf">🖍</button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="insertUnorderedList" title="Aufzählung"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></button>
+          <button type="button" data-cmd="insertOrderedList" title="Nummerierung"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg></button>
+          <button type="button" data-cmd="heading" title="Überschrift ein/aus">H</button>
+          <span class="sep"></span>
+          <button type="button" data-cmd="createLink" title="Link einfügen">🔗</button>
+          <button type="button" data-cmd="unlink" title="Link entfernen"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18.84 12.25l1.72-1.71a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M5.17 11.75l-1.72 1.71a5 5 0 0 0 7.07 7.07l1.72-1.71"/><line x1="8" y1="2" x2="8" y2="5"/><line x1="2" y1="8" x2="5" y2="8"/><line x1="16" y1="19" x2="16" y2="22"/><line x1="19" y1="16" x2="22" y2="16"/></svg></button>
+          <button type="button" data-cmd="removeFormat" title="Formatierung entfernen (Fett/Kursiv/Farbe)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3"/><path d="M5 20h6"/><path d="M13 4 8 20"/><path d="m15 15 5 5" stroke="#c9453b"/><path d="m20 15-5 5" stroke="#c9453b"/></svg></button>
+        </div>
+        <div class="fr-editor" id="n_editor" contenteditable="true" data-ph="Nachricht für die Pinnwand …">{{ v.description|note_html }}</div>
+      </div>
+      <input type="hidden" name="description" id="n_desc">
+    </div>
+  </div>
+
+  <div class="fr-formsec">Gültigkeit</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Gültig bis</label>
+      <div class="fr-ctrl dt fr-date">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+        <span class="fr-datedisp"></span>
+        <input type="hidden" name="validuntil" id="n_vu" value="{{ v.validuntil }}">
+        <div class="fr-calpop" hidden></div>
+      </div>
+    </div>
+    <div class="fr-hint">
+      {% if isSysAdmin %}Als System-Admin ohne Begrenzung wählbar.{% else %}Maximal einen Monat in der Zukunft.{% endif %}
+    </div>
+  </div>
+
+</form>
+
+<script>
+(function () {
+  var SERVER_TODAY = '{{ today }}';
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function setupDate(wrap) {
+    var inp = wrap.querySelector('input[type=hidden]'), disp = wrap.querySelector('.fr-datedisp'), pop = wrap.querySelector('.fr-calpop');
+    var WD = ['So','Mo','Di','Mi','Do','Fr','Sa'], MON = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'], view = {};
+    function fmt(iso) { if (!iso) return 'Bitte wählen…'; var p = iso.split('-'); return WD[new Date(+p[0],+p[1]-1,+p[2]).getDay()] + ' ' + p[2] + '.' + p[1] + '.' + p[0]; }
+    function refresh() { disp.textContent = fmt(inp.value); }
+    function build() {
+      var first = new Date(view.y, view.m-1, 1), lead = (first.getDay()+6)%7, dim = new Date(view.y, view.m, 0).getDate();
+      var cells = Math.ceil((lead+dim)/7)*7, start = new Date(view.y, view.m-1, 1-lead);
+      var h = '<div class="cal-head"><button type="button" data-nav="-1">‹</button><b>' + MON[view.m-1] + ' ' + view.y + '</b><button type="button" data-nav="1">›</button></div><div class="cal-grid">';
+      ['Mo','Di','Mi','Do','Fr','Sa','So'].forEach(function (w) { h += '<span class="cal-wd">' + w + '</span>'; });
+      for (var i = 0; i < cells; i++) {
+        var dt = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+        var iso = dt.getFullYear() + '-' + pad2(dt.getMonth()+1) + '-' + pad2(dt.getDate());
+        var c = 'cal-day' + ((dt.getMonth()+1 !== view.m || dt.getFullYear() !== view.y) ? ' out' : '');
+        if (iso === inp.value) c += ' sel'; if (iso === SERVER_TODAY) c += ' today';
+        h += '<button type="button" class="' + c + '" data-iso="' + iso + '">' + dt.getDate() + '</button>';
+      }
+      pop.innerHTML = h + '</div>';
+    }
+    function open() { var p = (inp.value || SERVER_TODAY).split('-'); view = {y:+p[0], m:+p[1]}; build(); pop.hidden = false; }
+    function close() { pop.hidden = true; }
+    wrap.addEventListener('click', function (e) { if (e.target.closest('.fr-calpop')) return; pop.hidden ? open() : close(); });
+    pop.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var nav = e.target.closest('[data-nav]'); if (nav) { view.m += +nav.dataset.nav; if (view.m<1){view.m=12;view.y--;} if (view.m>12){view.m=1;view.y++;} build(); return; }
+      var day = e.target.closest('[data-iso]'); if (day) { inp.value = day.dataset.iso; refresh(); close(); }
+    });
+    document.addEventListener('click', function (e) { if (!wrap.contains(e.target)) close(); });
+    refresh();
+  }
+  document.querySelectorAll('.fr-date').forEach(setupDate);
+})();
+
+// --- WYSIWYG-Editor (Pinnwand-Text) ---
+(function () {
+  var ed = document.getElementById('n_editor'), hid = document.getElementById('n_desc'), tb = document.getElementById('n_tb');
+  if (!ed || !hid || !tb) { return; }
+  try { document.execCommand('styleWithCSS', false, true); } catch (e) {}
+  function exec(cmd, val) { ed.focus(); document.execCommand(cmd, false, val || null); }
+  tb.addEventListener('mousedown', function (e) {
+    var b = e.target.closest('button'); if (!b) { return; }
+    e.preventDefault();                                   // Auswahl im Editor behalten
+    var cmd = b.getAttribute('data-cmd'), val = b.getAttribute('data-val');
+    if (cmd === 'heading') {                               // Überschrift umschalten (an/aus)
+      var cur = (document.queryCommandValue('formatBlock') || '').toLowerCase();
+      exec('formatBlock', /^h[1-6]$/.test(cur) ? 'p' : 'h5');
+      return;
+    }
+    if (cmd === 'hilite') { exec('hiliteColor', val || '#fff3bf'); return; }
+    if (cmd === 'createLink') { var u = window.prompt('Link-Adresse (https://…):', 'https://'); if (u) { exec('createLink', u); } return; }
+    if (cmd === 'formatBlock') { exec('formatBlock', val); return; }
+    exec(cmd, val);
+  });
+  // Beim Absenden das HTML in das versteckte Feld schreiben (leerer Editor -> leer).
+  ed.closest('form').addEventListener('submit', function () {
+    var html = ed.innerHTML.trim();
+    if (html === '<br>' || html === '<div><br></div>') { html = ''; }
+    hid.value = html;
+  });
+})();
+</script>
+    </div>{# fr-pbody #}
+  </div>{# fr-panel #}
+{% endblock %}

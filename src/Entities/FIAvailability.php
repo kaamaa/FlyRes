@@ -253,74 +253,23 @@ class FIAvailability
     return $result;  
   }
   
-  public static function GetAvailabilityForOneDayAsObjects ($em, \DateTime $day, $clientid)
+  /**
+   * Alle Fluglehrer-Verfuegbarkeiten, die in den Zeitraum [from, to) fallen
+   * (typ 1 = verfuegbar, typ 2 = auf Anfrage; ohne geloeschte/stornierte).
+   * Optional auf einen Fluglehrer eingeschraenkt. Fuer die Wochen-Matrix.
+   */
+  public static function GetAvailabilitiesForRange ($em, $clientid, \DateTime $from, \DateTime $to, $fid = 0)
   {
-    $int_day = (int) date_format($day, 'd');
-    $int_month = (int) date_format($day, 'm');
-    $int_year = (int) date_format($day, 'Y');
-    
-    $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 ,$int_month ,$int_day, $int_year));
-    $day_end = date('Y-m-d H:i:s', mktime ( 0,0,0 ,$int_month ,$int_day+1, $int_year));
-    
-    $querystring = "SELECT b FROM App\Entity\FresFIAvailability b WHERE ";
-    //Buchungen finden: Buchung startet vor und endet nach dem Tag der angezeigt werden soll 
-    $querystring .= "((b.itemstart <= :day_start and b.itemstop >= :day_end) or "; 
-    //Buchungen finden: Buchung startet an oder und endet genau an dem Tag der angezeigt werden soll 
-    $querystring .= "(b.itemstart >= :day_start and b.itemstart <= :day_end) or (b.itemstop >= :day_start and b.itemstop <= :day_end)) and "; 
-    $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> '" . FIAvailability::const_geloescht . "' ORDER BY b.itemstart";
-    $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 
-                                                                 'day_end' => $day_end, 
-                                                                 'clientID' =>  $clientid));
-    $query->setCacheable(true);
-    return $query->getResult();  
+    $q = "SELECT b FROM App\Entity\FresFIAvailability b WHERE "
+       . "b.clientid = :cid and (b.typ = 1 or b.typ = 2 or b.typ = 3) and "
+       . "b.status <> 'storniert' and b.status <> '" . FIAvailability::const_geloescht . "' and "
+       . "b.itemstart < :to and b.itemstop > :from";
+    $params = array('cid' => $clientid, 'from' => $from->format('Y-m-d H:i:s'), 'to' => $to->format('Y-m-d H:i:s'));
+    if ($fid) { $q .= " and b.flightinstructor = :fid"; $params['fid'] = $fid; }
+    $q .= " ORDER BY b.flightinstructor, b.itemstart";
+    return $em->createQuery($q)->setParameters($params)->getResult();
   }
-  
-  public static function GetAvailabilityForOneDayAndFIAsObjectsWithWidth ($em, $fi, $clientid, $y, $m, $d)
-  {
-    // Übersicht über alle Fluglehrer und ihre Verfügbarkeit ab einem bestimmten Startdatum
-    // Die Liste aller Verfügbarkeiten wird als Objektliste zurück gegeben
-      
-    $filist = Users::GetAllFlightinstructorsAsObject($em, $clientid);
-    $daystart = new \DateTime();
-    $daystart->setDate($y, $m, $d);
-    $availabilitylist = FIAvailability::GetAvailabilityForOneDayAsObjects($em, $daystart, $clientid);
-    
-    foreach ($availabilitylist as $availability)
-    {
-      $di = $availability->getItemstart()->diff($availability->getItemstop());
-      $width = floor(($di->d * 24 * 60 + $di->h * 60 + $di->i) / 30);
-    
-      // Der Klasse wird dynamisch ein neues Element "width" hinzugefügt
-      $availability->width = $width;
-    }
 
-    $viewList = array('day' => $daystart, 
-                      'fis' => $filist, 
-                      'availabilities' => $availabilitylist);
-    
-    return $viewList;
-
-    /*        
-    $di = $start->diff($end);
-    $rowspan = floor(($di->d * 24 * 60 + $di->h * 60 + $di->i) / 30);
-    $time = date_format($start, 'H : i');
-    $bookingList[] = array('bookingid' => $booking->getid(), 
-                           'time' => $time,
-                           'rowspan' => $rowspan, 
-                           'start' => date_format($booking->getItemstart(), 'd.m.Y H:i'),
-                           'end' => date_format($booking->getItemstop(), 'd.m.Y H:i'),
-                           'userid' => $booking->getCreatedbyuserid(),
-                           'user' => Users::GetUserName($em, $booking->getClientid(), $booking->getCreatedbyuserid()),
-                           'flightpurpose' => FlightPurposes::GetFlightpurpose($em, $booking->getflightpurposeid()), 
-                           'isflighttraining' => $isFlightTraining,
-                           'flightinstructor' => $flightinstructor,
-                           'airfield' => Airfields::GetAirfield($em, $booking->getAirfieldid()),
-                           'description' => $booking->getdescription()); 
-     * 
-     */     
-
-  }
-  
   public static function GetAllAvailabilityStates ($em)
   {
     $availabilitystateList = array ();

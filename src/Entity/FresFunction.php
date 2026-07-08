@@ -8,41 +8,37 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 /**
  * App\Entity\FresFunction
  *
- * @ORM\Table(name="FRes_function")
- * @ORM\Entity
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * 
+ *
  */
+#[ORM\Table(name: 'FRes_function')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresFunction
 {
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var string $function
-     *
-     * @ORM\Column(name="function", type="string", length=100, nullable=false)
      */
+    #[ORM\Column(name: 'function', type: 'string', length: 100, nullable: false)]
     private $function;
     
     /**
      * @var integer $priority
-     *
-     * @ORM\Column(name="priority", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'priority', type: 'integer', nullable: true)]
     private $priority;
     
     /**
      * @var string $role
-     *
-     * @ORM\Column(name="role", type="string", length=100, nullable=false)
      */
+    #[ORM\Column(name: 'role', type: 'string', length: 100, nullable: false)]
     private $role;
 
     /**

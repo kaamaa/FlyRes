@@ -1,0 +1,95 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{# Karteireiter-Kopf statt klassischer Titelleiste #}
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([
+    {label:'Meine',    icon:'user',  href: path('modern_bookings', {umfang:'meine'}),    active: umfang == 'meine'},
+    {label:'Alle',     icon:'list',  href: path('modern_bookings', {umfang:'alle'}),     active: umfang == 'alle'},
+    {label:'Historie', icon:'clock', href: path('modern_bookings', {umfang:'historie'}), active: umfang == 'historie'}
+  ]) }}
+
+  <div class="fr-panel">
+
+    {# Zeile 1: Suche + Filter (aktiven Reiter/Umfang als Hidden-Feld erhalten) #}
+    <form method="get" action="{{ path('modern_bookings') }}" class="fr-phead">
+      <input type="hidden" name="umfang" value="{{ umfang }}">
+      <div class="fr-searchwrap" style="flex:0 1 280px;">
+        <input type="search" name="q" value="{{ q }}" class="fr-search"
+               placeholder="🔍 Suchen (Pilot, Flugzeug, Beschreibung, Fluglehrer …)">
+      </div>
+      <label class="fr-fl">Zeitraum
+        <select name="zeitraum" onchange="this.form.submit()" {{ umfang == 'historie' ? 'disabled' : '' }}>
+          {% set zopts = {'date':'Alle','today':'Heute','tomorrow':'Morgen','thisweek':'Diese Woche','weekafter':'Nächste Woche','thisweekend':'Dieses Wochenende','nextweekend':'Nächstes Wochenende','thismonth':'Dieser Monat'} %}
+          {% for v, l in zopts %}<option value="{{ v }}" {{ zeitraum == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fr-fl">Zweck
+        <select name="zweck" onchange="this.form.submit()">
+          {% set wopts = {'alle':'Alle','charter':'Charter','schulung':'Schulung','wartung':'Wartung'} %}
+          {% for v, l in wopts %}<option value="{{ v }}" {{ zweck == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="fr-fl">Gruppieren
+        <select name="gruppieren" onchange="this.form.submit()">
+          {% set gopts = {'datum':'Datum','flugzeug':'Flugzeug','fluglehrer':'Fluglehrer','nutzer':'Nutzer'} %}
+          {% for v, l in gopts %}<option value="{{ v }}" {{ gruppieren == v ? 'selected' : '' }}>{{ l }}</option>{% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="fr-btn">Suchen</button>
+      <a class="fr-clear" href="{{ path('modern_bookings', {umfang: umfang}) }}">Zurücksetzen</a>
+    </form>
+
+    {# Zeile 2: Aktionen #}
+    <div class="fr-pactions">
+      <a class="fr-btn" href="{{ path('modern_reserve') }}">{{ icon.ic('plus') }} Neue Reservierung</a>
+    </div>
+
+    <div class="fr-pbody">
+      {% set g = gruppieren|default('datum') %}
+      {% set group1 = '__none__' %}
+      {% set group2 = '__none__' %}
+      {% for b in bookings %}
+        {% set k1 = g == 'flugzeug' ? b.flugzeug : (g == 'fluglehrer' ? (b.flightinstructor ?: 'Ohne Fluglehrer') : (g == 'nutzer' ? b.user : b.date)) %}
+        {% set k2 = g == 'datum' ? b.flugzeug : b.date %}
+
+        {% if group1 != k1 %}
+          {% set group1 = k1 %}
+          {% set group2 = '__none__' %}
+          <div class="fr-dayhd">{{ g == 'datum' ? '📅' : (g == 'flugzeug' ? '🛩️' : (g == 'fluglehrer' ? '🧑‍✈️' : '👤')) }} {{ k1 }}</div>
+        {% endif %}
+        {% if group2 != k2 %}
+          {% set group2 = k2 %}
+          <div class="fr-acrow">{{ k2 }}</div>
+        {% endif %}
+
+        {% set p = b.flightpurpose|lower %}
+        {% set pcls = 'charter' %}
+        {% if 'chul' in p %}{% set pcls = 'schul' %}{% elseif 'artung' in p %}{% set pcls = 'wart' %}{% endif %}
+        {# MVP 2: Schulung mit Platzhalter "Fluglehrer zuweisen" = Fluglehrer noch offen #}
+        {% set fiOpen = b.isflighttraining and 'fluglehrer' in (b.flightinstructor|default('')|lower) %}
+
+        <a class="fr-bk" href="{{ path('modern_booking', {id: b.bookingid}) }}">
+          <span class="fr-tm">{{ b.start }}–{{ b.end }}</span>
+          <span class="fr-who">
+            <b>{{ g == 'nutzer' ? (b.flugzeug) : b.user }}</b>
+            <small>
+              {%- if g != 'flugzeug' and g != 'nutzer' %}{{ b.flugzeug }} · {% endif -%}
+              {{- b.flightpurpose -}}
+              {%- if fiOpen and g != 'fluglehrer' %} · <b style="color:#c9781a">⚠ Fluglehrer offen</b>
+              {%- elseif b.isflighttraining and b.flightinstructor and g != 'fluglehrer' %} · FI: {{ b.flightinstructor }}{% endif -%}
+              {%- if b.description %} · {{ b.description }}{% endif -%}
+            </small>
+          </span>
+          {% if fiOpen %}<span class="fr-pill" style="background:#fdeccd;color:#c9781a;font-weight:800;">⚠ offen</span>{% endif %}
+          <span class="fr-pill {{ pcls }}">{{ b.flightpurpose }}</span>
+        </a>
+      {% else %}
+        <div class="fr-empty">Keine Buchungen für diese Filter.</div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

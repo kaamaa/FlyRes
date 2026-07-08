@@ -8,127 +8,110 @@ use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
  * App\Entity\FresBooking
- * 
- * @ORM\Entity()
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  *
- * @ORM\Table(name="FRes_booking")
- * @ORM\Entity
+ *
  */
+#[ORM\Table(name: 'FRes_booking')]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
+#[ORM\Entity]
 class FresBooking
 {  
     /**
      * @var string $clientid
-     *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
-    
+
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var datetime $changeddate
-     *
-     * @ORM\Column(name="changedDate", type="datetime", nullable=false)
      */
+    #[ORM\Column(name: 'changedDate', type: 'datetime', nullable: false)]
     private $changeddate;
 
     /**
      * @var integer $changedbyuserid
-     *
-     * @ORM\Column(name="changedByUserID", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'changedByUserID', type: 'integer', nullable: true)]
     private $changedbyuserid;
 
     /**
      * @var datetime $createddate
-     *
-     * @ORM\Column(name="createdDate", type="datetime", nullable=false)
      */
+    #[ORM\Column(name: 'createdDate', type: 'datetime', nullable: false)]
     private $createddate;
 
     /**
      * @var integer $createdbyuserid
-     *
-     * @ORM\Column(name="createdByUserID", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'createdByUserID', type: 'integer', nullable: true)]
     private $createdbyuserid;
 
     /**
      * @var integer $aircraftid
-     *
-     * @ORM\Column(name="aircraftID", type="integer", nullable=false)
      */
+    #[ORM\Column(name: 'aircraftID', type: 'integer', nullable: false)]
     private $aircraftid;
 
     /**
      * @var integer $airfieldid
-     *
-     * @ORM\Column(name="airfieldID", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'airfieldID', type: 'integer', nullable: true)]
     private $airfieldid;
 
     /**
      * @var integer $flightpurposeid
-     *
-     * @ORM\Column(name="flightPurposeID", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'flightPurposeID', type: 'integer', nullable: true)]
     private $flightpurposeid;
 
     /**
      * @var datetime $itemstart
-     *
-     * @ORM\Column(name="itemstart", type="datetime", nullable=false)
      */
+    #[ORM\Column(name: 'itemstart', type: 'datetime', nullable: false)]
     private $itemstart;
 
     /**
      * @var datetime $itemstop
-     *
-     * @ORM\Column(name="itemstop", type="datetime", nullable=false)
      */
+    #[ORM\Column(name: 'itemstop', type: 'datetime', nullable: false)]
     private $itemstop;
 
     /**
      * @var text $description
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     private $description;
 
     /**
      * @var text $emailinfoi
-     *
-     * @ORM\Column(name="emailinfoi", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'emailinfoi', type: 'text', nullable: true)]
     private $emailinfoi;
 
     /**
      * @var text $emailinfoe
-     *
-     * @ORM\Column(name="emailinfoe", type="text", nullable=true)
      */
+    #[ORM\Column(name: 'emailinfoe', type: 'text', nullable: true)]
     private $emailinfoe;
 
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="status", type="string", length=30, nullable=false)
      */
+    #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: false)]
     private $status;
 
     /**
      * @var integer $flightinstructor
-     *
-     * @ORM\Column(name="flightinstructor", type="integer", nullable=true)
      */
+    #[ORM\Column(name: 'flightinstructor', type: 'integer', nullable: true)]
     private $flightinstructor;
 
     /**
@@ -150,7 +133,7 @@ class FresBooking
     {
         return $this->clientid;
     }
-    
+
     /**
      * Get id
      *
@@ -440,7 +423,7 @@ class FresBooking
     {
         return $this->flightinstructor;
     }
-    
+
     /*
     // Diese Funktion wird wegen eines Softwarebugs in Symfony nicht verwendet
     public function isCorrect()

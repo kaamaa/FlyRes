@@ -1,0 +1,152 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label:'Anleitung', icon:'help'}]) }}
+  <div class="fr-panel"><div class="fr-pbody">
+  <div class="fr-help">
+
+    <p class="fr-help-intro">
+      Kurzanleitung zur Bedienung von FlyRes. Es werden nur die Bereiche gezeigt, die zu deinen Berechtigungen passen.
+    </p>
+
+    {# ---------- Für alle ---------- #}
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">🏠</span> Dashboard &amp; Einstieg <span class="fr-roletag all">alle</span></h3>
+      <p>Nach der Anmeldung landest du auf deinem persönlichen Dashboard. Es zeigt deine nächsten Buchungen, den Status deiner Lizenzen und die aktuelle Pinnwand.</p>
+      <ul>
+        <li>Eine <b>rote Warnung oben</b> erscheint, wenn eine deiner Lizenzen abgelaufen ist oder bald abläuft – bitte zuerst beachten.</li>
+        <li>Über die Seitenleiste links erreichst du alle Bereiche; der aktuelle Punkt ist hervorgehoben.</li>
+        <li>Unter <b>Meine Daten</b> änderst du deine persönlichen Angaben – Passwort, E-Mail und Telefonnummer.</li>
+      </ul>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">✅</span> Voraussetzungen zum Reservieren <span class="fr-roletag all">alle</span></h3>
+      <p>Damit du reservieren kannst, müssen drei Dinge erfüllt sein:</p>
+      <ul>
+        <li><b>Zugang:</b> Nutzername und Passwort erhältst du von der Flugschule – wende dich dazu an deinen Ansprechpartner.</li>
+        <li><b>Flugschüler:</b> Die Daten zum <b>Medical</b> müssen hinterlegt sein. Damit sind Reservierungen vom Typ <b>„Schulung"</b> und <b>„Schulung Solo"</b> möglich.</li>
+        <li><b>Piloten:</b> Zusätzlich müssen <b>Lizenz</b>, der letzte <b>Checkflug zur Lizenzverlängerung</b> (Class Rating bei PPL bzw. Übungsflug bei UL) und der letzte <b>ASW-Checkflug</b> für das jeweilige Flugzeugmuster eingetragen sein.</li>
+      </ul>
+      <p>Nur wenn die passenden Daten <b>gültig hinterlegt</b> sind, lässt das System eine Reservierung zu – sonst erscheint eine Fehlermeldung. Deine Daten trägst du unter <b>Lizenzen</b> ein (siehe unten).</p>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">＋</span> Reservieren <span class="fr-roletag all">alle</span></h3>
+      <ol>
+        <li><b>Flugzeug</b> wählen, bei Bedarf einen <b>Fluglehrer</b> dazu.</li>
+        <li><b>Datum &amp; Uhrzeit</b> über den Kalender bzw. das Zeit-Dropdown (30-Min-Schritte, freie Eingabe möglich) festlegen.</li>
+        <li>Die <b>Verfügbarkeit</b> wird live angezeigt – freie Blöcke, andere Flugzeuge und Fluglehrer lassen sich direkt vergleichen.</li>
+        <li><b>Flugzweck</b> und <b>Flugplatz</b> angeben, optional Beschreibung und Benachrichtigungen.</li>
+        <li>Beim <b>Speichern</b> werden Konflikte, Verfügbarkeit und gültige Lizenzen automatisch geprüft.</li>
+      </ol>
+      <ul>
+        <li>Findet sich <b>kein freier Fluglehrer</b>, trotzdem reservieren und als Fluglehrer <b>„Fluglehrer zuweisen"</b> wählen – die Flugschule kümmert sich dann um einen Lehrer.</li>
+        <li>Unten in der Maske siehst du eine <b>Tagesübersicht</b> der freien Flugzeuge und Fluglehrer zum gewählten Startdatum; sie aktualisiert sich, wenn du Datum/Uhrzeit änderst.</li>
+        <li>Du kannst eine Buchung <b>für einen anderen Piloten</b> eintragen – dieser wird dann <b>Eigentümer</b> der Buchung und hat als Einziger Zugriff darauf.</li>
+      </ul>
+      <p><b>Fair bleiben:</b> Reserviere nur, wenn du wirklich fliegen willst. Geht es nicht (Wetter, Befinden), tritt den Flug nicht an – aber <b>lösche die Reservierung so früh wie möglich</b>, damit andere zum Zug kommen (schlechtes Wetter reicht z. B. manchen noch für Platzrunden).</p>
+      <p><b>Vorausbuchung:</b> Manche Flugzeuge sind nur eine bestimmte Zahl Tage im Voraus buchbar. Der jeweils neue Buchungstag wird <b>am Vorabend um 20:00 Uhr</b> komplett freigegeben – dann ist der ganze Tag für alle gleichzeitig buchbar, unabhängig von der Flugzeit. Fluglehrer sind davon ausgenommen.</p>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">📋</span> Buchungen ansehen &amp; ändern <span class="fr-roletag all">alle</span></h3>
+      <ul>
+        <li>Unter <b>Alle / Meine Buchungen</b> kannst du nach Zeitraum, Zweck und Stichwort filtern.</li>
+        <li>Eine Buchung öffnen → <b>Bearbeiten</b> oder <b>Stornieren</b> (nur eigene bzw. dir als Fluglehrer zugewiesene).</li>
+        <li>Buchungen, deren Ende <b>mehr als eine Woche</b> zurückliegt, können nicht mehr bearbeitet werden.</li>
+      </ul>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">📅</span> E-Mail &amp; Kalender-Termine <span class="fr-roletag all">alle</span></h3>
+      <p>Zu jeder Reservierung verschickt das System eine E-Mail (neu, geändert, storniert). Unter <b>Meine Daten → Benachrichtigungen</b> stellst du ein, ob du diese Mails bekommst.</p>
+      <ul>
+        <li><b>Neu:</b> Du kannst dir jetzt zu jeder Reservierung einen <b>Kalender-Termin (.ics)</b> mitschicken lassen. Aktiviere dazu unter <b>Meine Daten</b> die Option <b>„Kalender-Termin (.ics) an Reservierungs-Mails anhängen"</b>.</li>
+        <li>Der Termin liegt dann jeder Reservierungs-Mail bei und lässt sich mit einem Klick in deinen Kalender (iPhone, Outlook, Google …) übernehmen.</li>
+        <li>Er <b>wandert automatisch mit</b>: bei einer Änderung aktualisiert sich derselbe Eintrag, bei einer Stornierung verschwindet er wieder – von Hand nachpflegen musst du nichts.</li>
+        <li>Im Termin stehen <b>Pilot</b> und – falls gebucht – <b>Fluglehrer</b>.</li>
+      </ul>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">🎓</span> Lizenzen <span class="fr-roletag all">alle</span></h3>
+      <p>Unter <b>Lizenzen</b> siehst du deine Lizenzen mit Ampel-Farbe (grün = lange gültig, gelb = unter 12 Monaten, rot = bald ablaufend/abgelaufen). Über <b>Neue Lizenz</b> trägst du je nach Bedarf <b>Medical</b>, <b>Lizenz</b>, <b>Class Rating</b> (PPL) bzw. <b>Übungsflug</b> (UL) und den <b>ASW-Checkflug</b> je Flugzeugtyp ein und pflegst die Gültigkeit. Deine Lizenz-Ampel erscheint auch im Dashboard.</p>
+      <p><b>Wichtig:</b> Das System prüft <b>nicht</b> die 90-Tage-Regel und <b>nicht</b> die Mindestflugstunden der letzten 12 bzw. 24 Monate – das stellst du eigenständig sicher.</p>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">📌</span> Pinnwand &amp; <span class="fr-help-ic">📊</span> Wochenübersicht <span class="fr-roletag all">alle</span></h3>
+      <ul>
+        <li><b>Pinnwand:</b> Aushänge lesen und selbst erstellen (standardmäßig bis zu einem Monat gültig). Der Text lässt sich jetzt <b>formatieren</b> – über die Symbolleiste: Fett, Kursiv, Unterstrichen, Textfarbe, Markieren, Aufzählung/Nummerierung, Überschrift und Links. Die Überschriften-Taste <b>H</b> ist ein Umschalter (nochmal klicken = wieder normaler Absatz).</li>
+        <li><b>Wochenübersicht:</b> Flottenauslastung auf einen Blick – umschaltbar zwischen 14 Tagen und Monat.</li>
+      </ul>
+    </section>
+
+    <section class="fr-help-sec">
+      <h3><span class="fr-help-ic">🧭</span> Flugvorbereitung <span class="fr-roletag all">alle</span></h3>
+      <p>In der Menügruppe <b>Flugvorbereitung</b> gibt es drei Werkzeuge:</p>
+      <ul>
+        <li><b>Weight &amp; Balance:</b> Flugzeugmuster wählen und die Beladung (Sitze, Gepäck, Kraftstoff …) eingeben – du erhältst Start-/Landemasse, Schwerpunkt und ein Diagramm, ob du innerhalb der zulässigen Grenzen liegst. Umschaltbar zwischen <b>metrisch und imperial</b>, Ausdruck als PDF. <b>Wichtig:</b> Leermasse/-arm für das konkrete Flugzeug anpassen; im Zweifel gilt das AFM/Wägeblatt (Prototyp, Nutzung auf eigene Gefahr).</li>
+        <li><b>Flugplanung:</b> VFR-Flugplanung über Wegpunkte (ICAO oder Klarname). Aus Wind, TAS und Verbrauch berechnet das Tool je Teilstrecke Kurs, Steuerkurs, Grundgeschwindigkeit, Zeit und Sprit samt Summen. Ausdruck als PDF. Navigationsdaten sind nicht tagesaktuell – vor dem Flug mit den offiziellen Unterlagen prüfen.</li>
+        <li><b>Sonnenaufgang / Untergang:</b> Sonnenauf- und -untergang samt Dämmerung für Flugplatz und Monat, mit Tageslicht-Diagramm; Zeitzone wählbar.</li>
+      </ul>
+      <p>Diese drei Werkzeuge sind bewusst auch <b>ohne Login öffentlich</b> erreichbar (z. B. zur Einbindung auf der Vereins-Homepage).</p>
+    </section>
+
+    {# ---------- Fluglehrer ---------- #}
+    {% if isFi %}
+    <section class="fr-help-sec fi">
+      <h3><span class="fr-help-ic">👨‍🏫</span> Für Fluglehrer <span class="fr-roletag fi">Fluglehrer</span></h3>
+      <ul>
+        <li>Dein Dashboard zeigt zusätzlich <b>deine anstehenden Schulungstermine</b> (Flüge, in denen du als Fluglehrer zugewiesen bist).</li>
+        <li>Unter <b>Schulungszeiten</b> gibst du frei, wann du für Schulungen zur Verfügung stehst – einzeln oder für <b>ganze Zeitbereiche und Serien</b> (z. B. „jeden Dienstag 17–20 Uhr über mehrere Wochen"). Freigaben lassen sich ebenso <b>gebündelt wieder stornieren</b>.</li>
+        <li>Ebenso trägst du <b>Urlaube oder sonstige Abwesenheiten</b> ein – sie werden den Flugschülern angezeigt, damit sie dich in dieser Zeit nicht einplanen.</li>
+        <li>Je Freigabe wählst du, ob du <b>direkt buchbar</b> oder nur <b>auf Anfrage</b> bist. Bei „auf Anfrage" stehst du grundsätzlich zur Verfügung – eine <b>Abstimmung mit dem Schüler ist aber erforderlich</b>.</li>
+        <li>In <b>Meine Daten</b> steuerst du zwei Feinheiten: über <b>„Buchbar auf Anfrage"</b>, ob Schüler dich bei „auf Anfrage" direkt buchen dürfen oder dich vorher ansprechen müssen; und über <b>„immer verfügbar für"</b>, wer dich auch <b>ohne</b> Freigabe an einem Tag zuordnen darf – <i>niemand</i>, <i>nur du selbst</i> oder <i>Administratoren</i> (die Option <i>jeder</i> ist nicht zu empfehlen). Dort werden auch Parallel-Buchungen zu Solo-Schulungen eingestellt.</li>
+        <li>Buchungen, in denen du als Fluglehrer zugewiesen bist, darfst du <b>bearbeiten und stornieren</b> (auch wenn sie ein anderer angelegt hat).</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ---------- Administrator ---------- #}
+    {% if isAdmin %}
+    <section class="fr-help-sec admin">
+      <h3><span class="fr-help-ic">🛡️</span> Für Administratoren <span class="fr-roletag admin">Admin</span></h3>
+      <ul>
+        <li>Du siehst im Dashboard die <b>club-weit ablaufenden Lizenzen</b> und <b>Kennzahlen</b>.</li>
+        <li>Unter Lizenzen kannst du <b>alle Nutzer</b> einsehen, abgelaufene filtern und <b>neue Lizenzen für andere</b> anlegen.</li>
+        <li>Du darfst <b>Buchungen aller Nutzer</b> bearbeiten und stornieren.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ---------- System-Administrator ---------- #}
+    {% if isSysAdmin %}
+    <section class="fr-help-sec admin">
+      <h3><span class="fr-help-ic">⚙️</span> Für System-Administratoren <span class="fr-roletag admin">System-Admin</span></h3>
+      <ul>
+        <li><b>Nutzer:</b> anlegen, bearbeiten, sperren und Berechtigungen vergeben (nur unterhalb der eigenen Stufe). Über das 🎓-Symbol springst du direkt zu den Lizenzen eines Nutzers.</li>
+        <li><b>Flugzeuge &amp; Flugzeugtypen:</b> anlegen und pflegen, inklusive der je Typ erforderlichen Lizenzen. Flugzeuge werden über den Status <b>„inaktiv"</b> aus der Auswahl genommen – die zugehörigen <b>Buchungen bleiben erhalten</b> (weiter einsehbar und z. B. auf andere Flugzeuge umbuchbar); beim Reaktivieren ist alles wieder da. Hier stellst du auch die <b>Vorausbuchungszeit je Flugzeug</b> ein (Tage; 0 = unbegrenzt).</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    {# ---------- Global-Administrator ---------- #}
+    {% if isGlobalAdmin %}
+    <section class="fr-help-sec admin">
+      <h3><span class="fr-help-ic">🏫</span> Für Global-Administratoren <span class="fr-roletag admin">Global-Admin</span></h3>
+      <ul>
+        <li><b>Mandanten</b> – Flugschulen – anlegen, bearbeiten und aktivieren/deaktivieren. Ebenfalls hier: <b>Lizenztypen</b> pflegen.</li>
+        <li>Die Statistik je Mandant zeigt Nutzer-, Flugzeug- und Reservierungszahlen.</li>
+      </ul>
+    </section>
+    {% endif %}
+
+    <p class="fr-help-foot">Fragen oder etwas unklar? Wende dich an einen Administrator deiner Flugschule.</p>
+  </div>
+  </div>{# fr-pbody #}</div>{# fr-panel #}
+{% endblock %}

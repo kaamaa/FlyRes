@@ -36,6 +36,13 @@ class BookingGap
 
 class Bookings
 {
+  // Zentrale Filter fuer "aktive" Buchungen (nicht storniert/geloescht).
+  // ACTIVE_STATUS_DQL nutzt den Alias 'b' (Doctrine-DQL), ACTIVE_STATUS_SQL
+  // die Roh-SQL-Variante ohne Alias. Ersetzt zuvor kopierte Literale.
+  public const ACTIVE_STATUS_DQL   = "b.status <> 'storniert' AND b.status <> 'flugzeug_geloescht' AND b.status <> 'user_geloescht'";
+  public const ACTIVE_STATUS_DQL_A = "a.status <> 'storniert' AND a.status <> 'flugzeug_geloescht' AND a.status <> 'user_geloescht'";
+  public const ACTIVE_STATUS_SQL   = "status <> 'storniert' AND status <> 'flugzeug_geloescht' AND status <> 'user_geloescht'";
+
   public static $em;
   private $params;
   
@@ -133,9 +140,12 @@ class Bookings
           if ($booking === reset($bookings))
           {
             // FIRST ELEMENT
-            // Beginnt das Element auch am Tagesbeginn oder davor, oder muss eine freie
-            // Lücke vorne eingefügt werden
-            if (!Bookings::IsInbound($booking, $mindate, $maxdate))
+            // Vordere Luecke nur, wenn die (erste) Buchung NACH Tagesbeginn startet.
+            // Eine mehrtaegige Buchung beginnt an einem Vortag (<= $mindate) und darf
+            // hier KEINE Luecke erzeugen. (Frueher via IsInbound geprueft – das schlug
+            // bei ganztaegig ueberspannenden Buchungen fehl und erzeugte eine
+            // Scheinluecke mit den Roh-Zeiten des anderen Tages.)
+            if ($booking->getItemstart() > $mindate)
             {
               $e = new BookingGap();
               $e->setStart($mindate);
@@ -156,9 +166,9 @@ class Bookings
           if ($booking === $bookings[count($bookings)-1])
           {
             // LAST ELEMENT
-            // Endet das Element auch am Tagesende oder danach, oder muss eine freie
-            // Lücke am Ende eingefügt werden
-            if (!Bookings::IsOutbound($booking, $mindate, $maxdate))
+            // Hintere Luecke nur, wenn die (letzte) Buchung VOR Tagesende endet.
+            // Endet sie an einem Folgetag (>= $maxdate), gibt es danach keine Luecke.
+            if ($booking->getItemstop() < $maxdate)
             {
               $e = new BookingGap();
               $e->setStart($booking->getItemstop());
@@ -225,113 +235,162 @@ class Bookings
         // die Buchung liegt am rechten Rand (am Ende), daher die Verfügbarkeit kürzen
         $availabilities[$index]->setItemstop($bstart);  
         return;
-    }   
+    }
   }
- 
-  public static function GetAllAvailableFIsForADate ($em, $clientid, $date)
+
+  // Reduziert die Verfuegbarkeiten (in-place) um alle Buchungszeiten. Ausgelagert,
+  // da dasselbe doppelte foreach-Muster in mehreren FI-Funktionen genutzt wird.
+  protected static function ReduceAvailabilitiesByBookings(array &$availabilities, $bookings): void
   {
-    // Ermittelt für das Reservierungsfenster alle verfügbaren Fluglehrer und ihrer Verfügbarkeit für den Tag
-    date_default_timezone_set('Europe/Berlin');
-    $int_day = (int) $date->format('d');
-    $int_month = (int) $date->format('m');
-    $int_year = (int) $date->format('Y');
-    $message = '';
-    
-    // Zunächst alle Fluglehrer für den Mandanten ermitteln
-    $FIs = Users::GetAllFlightinstructorsAsObject($em, $clientid);
-    if ($FIs) {
-      // Über alle Fluglehrer iterieren
-      foreach ($FIs as $FI) 
+    foreach ($bookings as $booking)
+    {
+      $avs = $availabilities;
+      foreach ($avs as $index => $av)
       {
-        if ($FI)  
-        {
-            // Ist der Fluglehrer verfügbar
-            $availabilities = FIAvailability::GetAvailabilityForOneDayAndFiAsObjects ($em, $date, $FI->getId(), $clientid);
-            $bookings = Bookings::GetBookingsForOneDayAndFIAsObjects ($em, $int_day, $int_month, $int_year, $FI->getId(), $clientid);
-           
-            foreach ($bookings as $booking) 
-            {
-                $avs = $availabilities;
-                foreach ($avs as $index=>$av) 
-                {
-                    Bookings::AdjustAvailabilitiesAccordingToBooking($availabilities, $booking, $index, $av);    
-                }
-            }   
-            
-            if (!empty($availabilities))
-            {
-                $message = $message . "<b>" .$FI->getfirstname() . ' ' . $FI->getlastname() . '</b> ';
-                foreach($availabilities as $av) 
-                {
-                  if ($av->getTyp()->getID() == 2) 
-                  { 
-                    $message = $message . "<span style='color:orange'>"; 
-                  } 
-                  else 
-                  { 
-                    $message = $message . "<span>"; 
-                  }
-                  $message = $message . $av->getItemstart()->format('G:i-') . $av->getItemstop()->format('G:i ');
-                  $message = $message . "</span>"; 
-                }
-                $message = $message . "<br>";
-            }
-        }
+        self::AdjustAvailabilitiesAccordingToBooking($availabilities, $booking, $index, $av);
       }
     }
-    return $message;
   }
-  
-  
-  
-  public static function GetAllAvailablePlanesForADate ($em, $clientid, $date)
+
+  /**
+   * "Naechste freie Termine": freie Verfuegbarkeitsfenster EINES Fluglehrers an
+   * einem Tag (Verfuegbarkeit typ 1/2 minus seine Buchungen).
+   *
+   * Jedes Fenster traegt zusaetzlich seinen Verfuegbarkeits-Typ:
+   * 1 = "verfuegbar/frei", 2 = "auf Anfrage".
+   *
+   * @return array<int, array{0:int,1:int,2:int}>  [[startMin,endMin,typ], ...]
+   */
+  public static function GetFIFreeWindowsForOneDay($em, $clientid, $fiId, \DateTime $date)
   {
-    // Ermittelt für das Reservierungsfenster alle verfügbaren Flugzeuge und ihrer Verfügbarkeit für den Tag
-    date_default_timezone_set('Europe/Berlin');
-    
-    $int_day = (int) $date->format('d');
-    $int_month = (int) $date->format('m');
-    $int_year = (int) $date->format('Y');
-    
-    $mindate = clone $date;
-    $srary = TimeFunctions::GetDayStart($date);
-    $mindate->setTime ( $srary[0] , $srary[1]);
-    
-    $maxdate = clone $date;
-    $srary = TimeFunctions::GetDayEnd($date);
-    $maxdate->setTime ( $srary[0] , $srary[1]);
-    
-    // Zunächst alle Flugzeuge für den Mandanten ermitteln
-    $planes = Planes::GetAllPlanesAsObject($em, $clientid);
-    if ($planes) {
-      $message = '';
-      // Über alle Flugzeuge iterieren
-      foreach ($planes as $plane) 
-      {
-        // Alle Buchungen für das Flugzeug und den Tag ermitteln
-        $bookings = Bookings::GetBookingsForOneDayAsObjects ($em, $int_day, $int_month, $int_year, $clientid, $plane->getId());
-        $bookinggaps = Bookings::GetBookingGaps($bookings, $mindate, $maxdate);
-        
-        // Jetzt den Anzeigestring zusammenbauen
-        if (count($bookinggaps) > 0 && $plane)
-        {
-          // Flugzeugname ausgeben
-          $message = $message . "<b>" .$plane->getKennung() . '</b> ';
-          foreach($bookinggaps as $bookinggap) 
-          {
-            // Lücken anfügen
-            $message = $message . $bookinggap->getStart()->format('G:i-') . $bookinggap->getEnd()->format('G:i ');
-          }
-          // Zeilenumbruch für HTML-Textarea
-          //$message = $message . "\r\n";
-          $message = $message . "<br>";
-        }
-        
+    $int_day = (int) $date->format('d'); $int_month = (int) $date->format('m'); $int_year = (int) $date->format('Y');
+
+    $availabilities = FIAvailability::GetAvailabilityForOneDayAndFiAsObjects($em, $date, $fiId, $clientid);
+    $bookings       = self::GetBookingsForOneDayAndFIAsObjects($em, $int_day, $int_month, $int_year, $fiId, $clientid);
+
+    // Verfuegbarkeit um die Buchungen reduzieren
+    self::ReduceAvailabilitiesByBookings($availabilities, $bookings);
+
+    $out = [];
+    foreach ($availabilities as $av) {
+      $s = (int) $av->getItemstart()->format('G') * 60 + (int) $av->getItemstart()->format('i');
+      $e = (int) $av->getItemstop()->format('G')   * 60 + (int) $av->getItemstop()->format('i');
+      if ($e > $s) {
+        $typ = $av->getTyp() ? (int) $av->getTyp()->getId() : 1;   // 1=frei, 2=auf Anfrage
+        $out[] = [$s, $e, $typ];
       }
     }
-    return $message;
+
+    return $out;
   }
-  
+
+
+
+  /**
+   * "Naechste freie Termine": liefert die freien Luecken EINES Flugzeugs ueber
+   * einen Zeitraum mit EINER Bereichsabfrage. Tagesfenster sonnenstandsbasiert.
+   *
+   * @return array<string, array<int, array{0:int,1:int}>> ['Y-m-d' => [[startMin,endMin], ...]]
+   */
+  public static function GetFreeGapsForPlaneInRange($em, $clientid, $planeId, \DateTime $fromDate, \DateTime $toDate)
+  {
+    date_default_timezone_set('Europe/Berlin');
+
+    $cur = clone $fromDate; $cur->setTime(0, 0, 0);
+    $end = clone $toDate;   $end->setTime(0, 0, 0);
+
+    // Alle Buchungen des Flugzeugs fuer den ganzen Zeitraum in EINER Abfrage.
+    $all = self::GetBookingsForPlaneInRangeAsObjects(
+      $em, $cur->format('Y-m-d H:i:s'), $end->format('Y-m-d H:i:s'), $clientid, $planeId
+    );
+
+    $out = [];
+    while ($cur < $end) {
+      $iy = (int) $cur->format('Y'); $im = (int) $cur->format('m'); $id = (int) $cur->format('d');
+      $dayBookings = self::FilterBookingsForDay($all, $id, $im, $iy);   // reine PHP-Filterung, keine DB
+
+      $mindate = clone $cur; $sr = TimeFunctions::GetDayStart($cur); $mindate->setTime($sr[0], $sr[1]);
+      $maxdate = clone $cur; $sr = TimeFunctions::GetDayEnd($cur);   $maxdate->setTime($sr[0], $sr[1]);
+
+      $list = [];
+      foreach (self::GetBookingGaps($dayBookings, $mindate, $maxdate) as $g) {
+        $s = (int) $g->getStart()->format('G') * 60 + (int) $g->getStart()->format('i');
+        $e = (int) $g->getEnd()->format('G')   * 60 + (int) $g->getEnd()->format('i');
+        if ($e > $s) { $list[] = [$s, $e]; }
+      }
+      $out[$cur->format('Y-m-d')] = $list;
+      $cur->modify('+1 day');
+    }
+
+    return $out;
+  }
+
+  /**
+   * Freie Luecken ALLER Flugzeuge fuer EINEN Tag – in EINER DB-Abfrage.
+   * Beschleunigt die Tagesansicht, die sonst pro Flugzeug einen eigenen
+   * Request + Query feuert (N Requests). Nutzt dieselbe reine PHP-Lueckenlogik
+   * (FilterBookingsForDay + GetBookingGaps) wie GetFreeGapsForPlaneInRange, damit
+   * die Ergebnisse identisch sind. Rueckgabe: [planeId => [[startMin,endMin], …]].
+   */
+  public static function GetFreeGapsForAllPlanesOnDay($em, $clientid, \DateTime $date, array $planeIds)
+  {
+    date_default_timezone_set('Europe/Berlin');
+
+    $dayFrom = clone $date; $dayFrom->setTime(0, 0, 0);
+    $dayTo   = (clone $dayFrom)->modify('+1 day');
+
+    // Alle aktiven Buchungen, die den Kalendertag beruehren – fuer ALLE Flugzeuge
+    // in EINER Abfrage (gleiche Felder/Bedingungen wie die per-Flugzeug-Variante,
+    // zusaetzlich aircraftid zum Gruppieren).
+    $querystring = "SELECT b FROM App\Entity\FresBooking b WHERE "
+      . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
+      . "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " "
+      . "ORDER BY b.aircraftid, b.itemstart";
+    $all = $em->createQuery($querystring)->setParameters(array(
+      'range_start' => $dayFrom->format('Y-m-d H:i:s'),
+      'range_end'   => $dayTo->format('Y-m-d H:i:s'),
+      'clientID'    => $clientid,
+    ))->getResult();
+
+    // Nach Flugzeug gruppieren (Startzeit-Reihenfolge bleibt erhalten).
+    $byPlane = array();
+    foreach ($all as $b) { $byPlane[(int) $b->getAircraftid()][] = $b; }
+
+    $iy = (int) $date->format('Y'); $im = (int) $date->format('m'); $id = (int) $date->format('d');
+    $mindate = clone $date; $sr = TimeFunctions::GetDayStart($date); $mindate->setTime($sr[0], $sr[1]);
+    $maxdate = clone $date; $sr = TimeFunctions::GetDayEnd($date);   $maxdate->setTime($sr[0], $sr[1]);
+
+    $out = array();
+    foreach ($planeIds as $pid) {
+      $pid = (int) $pid;
+      $dayBookings = self::FilterBookingsForDay($byPlane[$pid] ?? array(), $id, $im, $iy);
+      $list = array();
+      foreach (self::GetBookingGaps($dayBookings, $mindate, $maxdate) as $g) {
+        $s = (int) $g->getStart()->format('G') * 60 + (int) $g->getStart()->format('i');
+        $e = (int) $g->getEnd()->format('G')   * 60 + (int) $g->getEnd()->format('i');
+        if ($e > $s) { $list[] = array($s, $e); }
+      }
+      $out[$pid] = $list;
+    }
+
+    return $out;
+  }
+
+  /**
+   * Buchungen der Vergangenheit duerfen nur begrenzt nachbearbeitet werden:
+   * Liegt das Ende (Itemstop) mehr als eine Woche zurueck, ist Bearbeiten
+   * gesperrt. (Storno/Loeschen bleibt von dieser Regel unberuehrt.)
+   */
+  public static function IsBookingDateEditable ($booking)
+  {
+    if (!$booking) return FALSE;
+    $stop = $booking->getItemstop();
+    if (!$stop) return FALSE;
+    $limit = new \DateTime('now');
+    $limit->modify('-1 week');
+    return $stop >= $limit;
+  }
+
   public static function IsAllowedtoChangeBooking ($em, $user, $booking)
   {
     if ($user)
@@ -364,7 +423,7 @@ class Bookings
     $querystring .= "(:booking_start > b.itemstart and :booking_start < b.itemstop) or (:booking_end > b.itemstart and :booking_end < b.itemstop)) and"; 
     
     //Sonstige Parameter prüfen
-    $querystring .= " b.aircraftid = :planeID and b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and b.id <> :bookingID";
+    $querystring .= " b.aircraftid = :planeID and b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " and b.id <> :bookingID";
     $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 
                                                                  'booking_end' => $newBooking->getItemstop(),
                                                                  'planeID' => $newBooking->getAircraftid(), 
@@ -400,7 +459,7 @@ class Bookings
       //Buchungen finden: Buchung endet in der Zeit, in der geflogen werden soll 
       $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
       
-      $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
+      $querystring .= "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " and ";
       $querystring .= "b.createdbyuserid = :flightinstructor and b.id <> :bookingID";
       
       $query = $em->createQuery($querystring)->setParameters(array('booking_start' => $newBooking->getItemstart(), 'booking_end' => $newBooking->getItemstop(),
@@ -454,7 +513,7 @@ class Bookings
     //Buchungen finden: Buchung endet in der Zeit, in der geflogen werden soll 
     $querystring .= "(:booking_end > b.itemstart and :booking_end <= b.itemstop)) and "; 
     
-    $querystring .= "b.clientid = :clientID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and ";
+    $querystring .= "b.clientid = :clientID and " . self::ACTIVE_STATUS_DQL . " and ";
     $querystring .= "b.flightinstructor = :flightinstructor and b.id <> :bookingID";
     // Solo-Flüge von Flugschülern werden parallel nicht zugelassen, daher die folgende Zeile auskommentieren
 
@@ -487,30 +546,19 @@ class Bookings
   }
   
   public static function _cmpStartDate($m, $n) {
-    // Sortieren nach Datum und Flugzeug
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-    
-    if ($date_m == $date_n) {
-        // gleicher Tag, daher zuerst nach Flugzeug und dann nach Datum sortieren
-        
-        if ($m->getAircraftid() == $n->getAircraftid())
-        {
-          // Flugzeuge sind identisch
-          return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-        }
-        else
-        {
-          // Flugzeuge sind nicht identisch
-          return ($m->getAircraftid() < $n->getAircraftid()) ? -1 : 1;
-        }
-    }
-    return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
+    // Rein chronologisch: nach Start (Datum + Uhrzeit) aufsteigend. Innerhalb
+    // eines Tages entscheidet damit die Uhrzeit (nicht mehr das Flugzeug). Nur
+    // bei exakt gleichem Start als stabiler Tie-Break die AircraftID.
+    $am = $m->getItemstart();
+    $an = $n->getItemstart();
+    if ($am != $an) return ($am < $an) ? -1 : 1;
+    return (string) $m->getAircraftid() <=> (string) $n->getAircraftid();
   }
 
   public static function _cmpStartDateDesc($m, $n): int
   {
-      // Sortieren nach Datum DESC, Uhrzeit ASC und Flugzeug ASC
+      // Tag DESC (neueste zuerst), INNERHALB des Tages aber rein nach Uhrzeit ASC.
+      // AircraftID nur noch als Tie-Break bei exakt gleichem Start.
       $am = $m->getItemstart(); // DateTimeInterface
       $an = $n->getItemstart();
 
@@ -518,80 +566,11 @@ class Bookings
       $byDay = $an->format('Ymd') <=> $am->format('Ymd');
       if ($byDay !== 0) return $byDay;
 
-      // 2) AircraftID ASC
-      $byAircraft = (string)$m->getAircraftid() <=> (string)$n->getAircraftid();
-      if ($byAircraft !== 0) return $byAircraft;
+      // 2) Uhrzeit ASC
+      if ($am != $an) return $am <=> $an;
 
-      return $am <=> $an; // Uhrzeit ASC
-  }
-  
-  public static function _cmpAircraft($m, $n) {
-    // Sortieren nach Flugzeug und Datum
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-    
-    if ($m->getAircraftid() == $n->getAircraftid()) 
-    {
-      // Flugzeuge sind identisch
-      if ($date_m == $date_n) 
-      {
-        // Es ist auch der gleiche Tag
-        return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-      }
-      else
-      {  
-        // Tage sind nicht identisch
-        return ($date_m < $date_n) ? -1 : 1;
-      }  
-      
-    }
-    return ($m->getAircraftid() < $n->getAircraftid()) ? -1 : 1;
-  }
-  
-  public static function _cmpFlightinstructor($m, $n) {
-    // Sortieren nach Fluglehrer und Datum
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-    
-    if ($m->getFlightinstructor() == $n->getFlightinstructor()) 
-    {
-      // Fluglehrer sind identisch
-      if ($date_m == $date_n) 
-      {
-        // Es ist auch der gleiche Tag
-        return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-      }
-      else
-      {  
-        // Tage sind nicht identisch
-        return ($date_m < $date_n) ? -1 : 1;
-      }  
-      
-    }
-    return ($m->getFlightinstructor() < $n->getFlightinstructor()) ? -1 : 1;
-  }
-  
-  public static function _cmpUser($m, $n) {
-    // Sortieren nach Flugzeug und Datum
-    $date_m = date_format($m->getItemstart(), 'Y.m.d');
-    $date_n = date_format($n->getItemstart(), 'Y.m.d');
-           
-    if (strcasecmp(Users::GetUserNameForAlphabeticOrder(self::$em, $m->getClientID(), $m->getCreatedbyuserid()), Users::GetUserNameForAlphabeticOrder(self::$em, $n->getClientID(), $n->getCreatedbyuserid())) == 0) 
-    {
-      // Nutzer sind identisch
-      if ($date_m == $date_n) 
-      {
-        // Es ist auch der gleiche Tag
-        return ($m->getItemstart() < $n->getItemstart()) ? -1 : 1;
-      }
-      else
-      {  
-        // Tage sind nicht identisch
-        return ($date_m < $date_n) ? -1 : 1;
-      }  
-      
-    }
-    return (strcasecmp(Users::GetUserNameForAlphabeticOrder(self::$em, $m->getClientID(), $m->getCreatedbyuserid()), Users::GetUserNameForAlphabeticOrder(self::$em, $n->getClientID(), $n->getCreatedbyuserid())) < 0) ? -1 : 1;
+      // 3) Tie-Break: AircraftID ASC
+      return (string) $m->getAircraftid() <=> (string) $n->getAircraftid();
   }
   
   public static function GetBookingsForGeneralView ($em, $command, $clientid, $userID = null)
@@ -601,17 +580,19 @@ class Bookings
     
     switch ($command) {
       case 'date':
-      case 'fi':
-      case 'planes':
-      case 'users':
-      case 'training':  
-      case 'own':  
+      case 'training':
+      case 'own':
+      case 'own_fi':       // wie 'own', aber inkl. Buchungen, bei denen man Fluglehrer ist (PWA)
         $day_start_ux = mktime ( 0,0,0 , date("m"), date("j"), date("Y"));
         $day_end_ux = mktime ( 23,59,59 , 01, 01, 9999);
         break;
-      case 'own_history':  
+      case 'own_history':
         $day_start_ux = mktime ( 0,0,0 , 01, 01, 1980);
         $day_end_ux = mktime ( 23,59,59 , 01, 01, 9999);
+        break;
+      case 'own_fi_history':   // PWA "Vergangene": eigene + FI-Buchungen, aber nur vor heute
+        $day_start_ux = mktime ( 0,0,0 , 01, 01, 1980);
+        $day_end_ux = mktime ( 0,0,0 , date("m"), date("j"), date("Y")) - 1;  // gestern 23:59:59
         break;
       case 'today':
         $day_start_ux = mktime ( 0,0,0 , date("m"), date("j"), date("Y"));
@@ -637,6 +618,10 @@ class Bookings
         $day_start_ux = mktime ( 0,0,0 , date("m",strtotime("sunday +1 week -1 day")),date("j",strtotime("sunday +1 week -1 day")),date("Y",strtotime("sunday +1 week -1 day")));
         $day_end_ux = mktime ( 23,59,59 , date("m",strtotime("sunday +1 week")),date("j",strtotime("sunday +1 week")),date("Y",strtotime("sunday +1 week")));
         break;
+      case 'thismonth':
+        $day_start_ux = mktime ( 0,0,0 , date("m"), 1, date("Y"));
+        $day_end_ux = mktime ( 23,59,59 , date("m"), date("t"), date("Y"));  // t = letzter Tag des Monats
+        break;
 
       default:
         die;
@@ -652,11 +637,17 @@ class Bookings
     // Buchung beginnt vor Start und Buchung endet nach Ende
     $querystring .= "(b.itemstart < :day_start and b.itemstop > :day_end))"; 
     
-    $querystring .= "and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' and b.clientid = :clientID "; 
-    if ($command == 'training' or $command == 'fi') $querystring .= "and (b.flightpurposeid = 2 or b.flightpurposeid = 5 or b.flightinstructor IS NOT NULL) "; 
-    if ($command == 'own' or $command == 'own_history') 
+    $querystring .= "and " . self::ACTIVE_STATUS_DQL . " and b.clientid = :clientID "; 
+    if ($command == 'training') $querystring .= "and (b.flightpurposeid = 2 or b.flightpurposeid = 5 or b.flightinstructor IS NOT NULL) ";
+    if ($command == 'own' or $command == 'own_history')
     {
-      $querystring .= " and b.createdbyuserid = :userid "; 
+      $querystring .= " and b.createdbyuserid = :userid ";
+      $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 'day_end' => $day_end, 'clientID' =>  $clientid, 'userid' => $userID));
+    }
+    elseif ($command == 'own_fi' or $command == 'own_fi_history')
+    {
+      // PWA "Meine Flüge": eigene Buchungen UND solche, in denen man als Fluglehrer zugewiesen ist
+      $querystring .= " and (b.createdbyuserid = :userid or b.flightinstructor = :userid) ";
       $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 'day_end' => $day_end, 'clientID' =>  $clientid, 'userid' => $userID));
     }
       else  $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 'day_end' => $day_end, 'clientID' =>  $clientid));
@@ -724,22 +715,13 @@ class Bookings
      
       // Array sortieren
       switch ($command) {
-        case 'planes':
-          usort($bookings, 'self::_cmpAircraft');
-          break; 
-        case 'fi':
-          usort($bookings, 'self::_cmpFlightinstructor');
-          break; 
-        case 'users':
-          self::$em = $em;
-          usort($bookings, 'self::_cmpUser');
-          break; 
         case 'own_history':
+        case 'own_fi_history':
           usort($bookings, 'self::_cmpStartDateDesc');
-          break;    
+          break;
         default:
           usort($bookings, 'self::_cmpStartDate');
-          break;  
+          break;
       }
       
       // Daten zusammenstellen
@@ -783,9 +765,7 @@ class Bookings
     $querystring .= "((b.itemstart <= :day_start and b.itemstop >= :day_end) or "; 
     //Buchungen finden: Buchung startet an oder und endet genau an dem Tag der angezeigt werden soll 
     $querystring .= "(b.itemstart >= :day_start and b.itemstart <= :day_end) or (b.itemstop >= :day_start and b.itemstop <= :day_end)) and "; 
-    $querystring .= "b.clientid = :clientID and (b.flightinstructor = :fiID or b.createdbyuserid = :fiID) and b.status <> 'storniert' and ";
-    $querystring .= "b.status <> 'flugzeug_geloescht' and ";
-    $querystring .= "b.status <> 'user_geloescht' and b.flightpurposeid <> :soloID ORDER BY b.itemstart";
+    $querystring .= "b.clientid = :clientID and (b.flightinstructor = :fiID or b.createdbyuserid = :fiID) and " . self::ACTIVE_STATUS_DQL . " and b.flightpurposeid <> :soloID ORDER BY b.itemstart";
     $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 
                                                                  'day_end' => $day_end, 
                                                                  'fiID' => $fiid, 
@@ -805,16 +785,65 @@ class Bookings
     $querystring .= "((b.itemstart <= :day_start and b.itemstop >= :day_end) or "; 
     //Buchungen finden: Buchung startet an oder und endet genau an dem Tag der angezeigt werden soll 
     $querystring .= "(b.itemstart >= :day_start and b.itemstart <= :day_end) or (b.itemstop >= :day_start and b.itemstop <= :day_end)) and "; 
-    $querystring .= "b.clientid = :clientID and b.aircraftid = :planeID and b.status <> 'storniert' and b.status <> 'flugzeug_geloescht' and b.status <> 'user_geloescht' ORDER BY b.itemstart";
+    $querystring .= "b.clientid = :clientID and b.aircraftid = :planeID and " . self::ACTIVE_STATUS_DQL . " ORDER BY b.itemstart";
     $query = $em->createQuery($querystring)->setParameters(array('day_start' => $day_start, 
                                                                  'day_end' => $day_end, 
                                                                  'planeID' => $planeId, 
                                                                  'clientID' =>  $clientid));
     $query->setCacheable(true);
     return $query->getResult();
-    
+
   }
-  
+
+  // Holt ALLE Buchungen eines Flugzeugs fuer den gesamten Zeitraum in EINER Abfrage.
+  // Ersetzt in der Uebersicht die bisherigen (Flugzeuge x Tage) Einzelabfragen:
+  // statt z.B. 30 Tage x N Flugzeuge gibt es jetzt nur noch N Abfragen.
+  protected static function GetBookingsForPlaneInRangeAsObjects ($em, $rangeStartStr, $rangeEndStr, $clientid, $planeId)
+  {
+    // Nur die fuer die Uebersicht benoetigten Felder laden (Partial-Hydration).
+    // Spart die grossen mediumtext-Spalten emailinfoi/emailinfoe, die hier nie
+    // gebraucht werden – deutlich weniger I/O pro Buchung.
+    // Hinweis: Partial-Entities sind NICHT mit dem Second-Level-Cache
+    // kombinierbar (Doctrine: FeatureNotImplemented). Fuer diese heisse, oft
+    // geaenderte Abfrage ist die schlanke Spaltenauswahl ohnehin der groessere
+    // Hebel (der SLC wuerde bei jeder Buchung sowieso invalidiert) – daher hier
+    // bewusst kein setCacheable(). Der neue Composite-Index macht sie schnell.
+    $querystring = "SELECT b FROM App\Entity\FresBooking b WHERE "
+      // Buchung ueberschneidet den Zeitraum [rangeStart, rangeEnd]
+      . "b.itemstop >= :range_start and b.itemstart <= :range_end and "
+      . "b.clientid = :clientID and b.aircraftid = :planeID and "
+      . "" . self::ACTIVE_STATUS_DQL . " "
+      . "ORDER BY b.itemstart";
+    $query = $em->createQuery($querystring)->setParameters(array('range_start' => $rangeStartStr,
+                                                                 'range_end'   => $rangeEndStr,
+                                                                 'planeID'     => $planeId,
+                                                                 'clientID'    => $clientid));
+    return $query->getResult();
+  }
+
+  // Filtert aus einer vorab geladenen Buchungsliste die Buchungen heraus, die den
+  // angegebenen Tag ueberschneiden. Identische Logik wie GetBookingsForOneDayAsObjects,
+  // nur in PHP statt per SQL (vermeidet die Abfrage pro Tag).
+  protected static function FilterBookingsForDay ($bookings, $int_day, $int_month, $int_year)
+  {
+    $day_start = mktime(0, 0, 0, $int_month, $int_day,     $int_year);
+    $day_end   = mktime(0, 0, 0, $int_month, $int_day + 1, $int_year);
+    $result = array();
+    foreach ($bookings as $b)
+    {
+      $bs = $b->getItemstart()->getTimestamp();
+      $be = $b->getItemstop()->getTimestamp();
+      // Buchung startet vor und endet nach dem Tag ODER startet bzw. endet am Tag
+      if (($bs <= $day_start && $be >= $day_end)
+        || ($bs >= $day_start && $bs <= $day_end)
+        || ($be >= $day_start && $be <= $day_end))
+      {
+        $result[] = $b;
+      }
+    }
+    return $result;
+  }
+
   protected static function GetDayRange($booking, $int_year, $int_month, $day, $sHour, $sMinute, $eHour, $eMinute)
   {
     // ermittelt den Start und das Ende des Tages basierend auf einer Buchung und auf angegeben Start- und Endparametern
@@ -839,14 +868,42 @@ class Bookings
   public static function GetBookingsForAllPlanes ($em, $startdate, $int_duration, $clientid)
   {
     setlocale(LC_TIME, 'de_DE@euro', 'de_DE', 'deu_deu');
-    
+
     $planes = $em->getRepository('App\Entity\FresAircraft')->findBy(array('clientid' => $clientid));
     if ($planes) 
     {
+      // Zeitraum der Uebersicht einmal bestimmen (00:00 Starttag bis 00:00 nach dem letzten Tag)
+      $rangeStart = clone $startdate;
+      $rangeStart->setTime(0, 0, 0);
+      $rangeEnd = clone $rangeStart;
+      $rangeEnd->modify('+' . $int_duration . ' days');
+      $rangeStartStr = $rangeStart->format('Y-m-d H:i:s');
+      $rangeEndStr   = $rangeEnd->format('Y-m-d H:i:s');
+
+      // In-Request-Caches: dieselben Nutzer/Flugarten tauchen im ganzen Raster
+      // (Flugzeuge x Tage x Buchungen) vielfach auf -> jeweils nur EINMAL
+      // nachschlagen statt pro Buchung erneut die DB zu fragen.
+      $userNameCache = [];
+      $purposeCache  = [];
+      $schulungCache = [];
+      $getName = function ($uid) use (&$userNameCache, $em, $clientid) {
+        $key = (int) $uid;
+        if (!array_key_exists($key, $userNameCache)) {
+          $userNameCache[$key] = Users::GetUserName($em, $clientid, $uid);
+        }
+        return $userNameCache[$key];
+      };
+
+      // Wochentags-Kurzform fuer die Spanne mehrtaegiger Buchungen (Mo..So)
+      $wdShort = TimeFunctions::WEEKDAYS_SHORT;   // 1-indexiert (1=Mo)
+
       foreach ($planes as $plane)
       {
+        // Alle Buchungen dieses Flugzeugs fuer den gesamten Zeitraum in EINER Abfrage holen
+        $planeBookings = self::GetBookingsForPlaneInRangeAsObjects ($em, $rangeStartStr, $rangeEndStr, $clientid, $plane->getId());
+
         $current_date = clone $startdate;
-        for ($i = 1; $i <= $int_duration; $i++) 
+        for ($i = 1; $i <= $int_duration; $i++)
         {
           $time = $current_date->getTimestamp();
           $int_month = (int) date("n",$time);
@@ -854,7 +911,9 @@ class Bookings
           $int_day = (int) date("j",$time);
           
           $tooltip = "";
-          $bookings = self::GetBookingsForOneDayAsObjects ($em, $int_day, $int_month, $int_year, $clientid, $plane->getId());
+          $bookingsInfo = [];   // strukturiert (Zeit/Kennung/Kunde) fuer kompakte Tooltips
+          // Aus der vorab geladenen Buchungsliste die Buchungen dieses Tages herausfiltern (keine DB-Abfrage mehr pro Tag)
+          $bookings = self::FilterBookingsForDay ($planeBookings, $int_day, $int_month, $int_year);
           //$color = 'frei';
           // In dieser Variable soll die Buchungszeit für einen Tag aufsummiert werden, die für die Fargebung genutzt wird
           $buchungsdauerProTag = 0;
@@ -915,12 +974,17 @@ class Bookings
               $start = $ds_de[0];
               $stop = $ds_de[1];
                  
-              // Fluglehrer mit zur Schulungsart aufnehmen
-              $flightpurpose = FlightPurposes::GetFlightpurpose($em, $booking->getflightpurposeid());
-              $isFlightTraining = FlightPurposes::IsSchulung($booking->getflightpurposeid());
+              // Fluglehrer mit zur Schulungsart aufnehmen (Flugart gecacht)
+              $pid = $booking->getflightpurposeid();
+              if (!array_key_exists($pid, $purposeCache)) {
+                $purposeCache[$pid]  = FlightPurposes::GetFlightpurpose($em, $pid);
+                $schulungCache[$pid] = FlightPurposes::IsSchulung($pid);
+              }
+              $flightpurpose    = $purposeCache[$pid];
+              $isFlightTraining = $schulungCache[$pid];
               if ($isFlightTraining)
               {
-                $flightpurpose = $flightpurpose . " / " . Users::GetUserName($em, $booking->getClientid(), $booking->getFlightinstructor());
+                $flightpurpose = $flightpurpose . " / " . $getName($booking->getFlightinstructor());
               }
               
               $timestr = "";
@@ -936,10 +1000,26 @@ class Bookings
                 $timestr = date_format($start, 'H:i') . "-" . date_format($stop, 'H:i');
               }
               
+              $bookerName = $getName($booking->getCreatedbyuserid());
               $tooltip .= $timestr
-                       . " " . Users::GetUserName($em, $clientid, $booking->getCreatedbyuserid()) 
+                       . " " . $bookerName
                        . " (" . $flightpurpose . ") "
                        . $booking->getdescription() . "<br>";
+
+              // Kompakte Variante – Name wiederverwenden. Bei MEHRTAEGIGEN Buchungen
+              // die volle Spanne mit Datum zeigen (sonst stuende auf jedem Tag nur die
+              // Start-/End-Uhrzeit, was wie eine kurze Tagesbuchung aussaehe).
+              if ($start->format('Y-m-d') != $stop->format('Y-m-d')) {
+                $timeInfo = $wdShort[(int) $start->format('N')] . ' ' . date_format($start, 'd.m. H:i')
+                          . ' → ' . $wdShort[(int) $stop->format('N')] . ' ' . date_format($stop, 'd.m. H:i');
+              } else {
+                $timeInfo = date_format($start, 'H:i') . '-' . date_format($stop, 'H:i');
+              }
+              $bookingsInfo[] = [
+                'time'    => $timeInfo,
+                'kennung' => $plane->getKennung(),
+                'user'    => $bookerName,
+              ];
             }
           }
           $day = date('d-m-Y', mktime ( 0,0,0 ,$int_month ,$int_day, $int_year));
@@ -979,7 +1059,7 @@ class Bookings
             case 10: $color = 'ausgebucht'; break;
           }
              
-          $bookingList[] = array('plane' => $plane->getId(), 'day' => $int_day, 'bookingdate' => $day, 'color' => $color, 'tooltip' => $tooltip);
+          $bookingList[] = array('plane' => $plane->getId(), 'day' => $int_day, 'bookingdate' => $day, 'color' => $color, 'tooltip' => $tooltip, 'bookings' => $bookingsInfo);
           $current_date->modify('+1 day');
         }
       }
@@ -1035,44 +1115,6 @@ class Bookings
     return $bookingList;
   }
   
-  public static function GetBookingTimes ($int_day, $int_month, $int_year)
-  {
-    for ($i = 360; $i <= 1230; $i += 30) 
-    {
-      $item_start = date('H : i', mktime (0,$i,0 ,$int_month, $int_day, $int_year));
-      $bookingTimes[] = array('time' => $item_start, 'Y-m-d H:i');
-    }
-    return $bookingTimes;
-  }
-  
-  public static function CountAllBookingsForAPlane ($em, $clientid, $planeID)
-  {
-    $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 , date("m"), date("j"), date("Y")));
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart < :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'planeID' => $planeID, 'day_start' => $day_start));
-    $past = $query->getSingleScalarResult();
-    
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID and a.itemstart >= :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'planeID' => $planeID, 'day_start' => $day_start));
-    $future = $query->getSingleScalarResult();
-    
-    return array ('past' => $past, 'future' => $future);
-  }
-  
-  public static function CountAllBookingsForAUser ($em, $clientid, $userID)
-  {
-    $day_start = date('Y-m-d H:i:s', mktime ( 0,0,0 , date("m"), date("j"), date("Y")));
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart < :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'userid' => $userID, 'day_start' => $day_start));
-    $past = $query->getSingleScalarResult();
-    
-    $querystring = "SELECT COUNT(a.id) FROM App\Entity\FresBooking a WHERE a.clientid = :clientID and a.createdbyuserid = :userid and a.itemstart >= :day_start and a.status <> 'storniert' and a.status <> 'flugzeug_geloescht' and a.status <> 'user_geloescht'";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' =>  $clientid, 'userid' => $userID, 'day_start' => $day_start));
-    $future = $query->getSingleScalarResult();
-    
-    return array ('past' => $past, 'future' => $future);
-  }
-  
   public static function DeleteBooking ($em, $clientid, $id)
   {
     $booking = $em->getRepository('App\Entity\FresBooking')->findOneBy(array('clientid' => $clientid, 'id' => $id));
@@ -1082,18 +1124,6 @@ class Bookings
       $em->persist($booking);
       $em->flush();
     }
-  }
-  
-  public static function DeleteAllBookingsForAPlane ($em, $clientid, $planeID)
-  {
-    /*
-    $querystring = "DELETE App\Entity\FresBooking a WHERE a.clientid = :clientID and a.aircraftid = :planeID";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' => $clientid, 'planeID' => $planeID));
-    $query->execute();
-    */
-    $querystring = "UPDATE App\Entity\FresBooking a SET a.status = 'flugzeug_geloescht' WHERE a.clientid = :clientID and a.aircraftid = :planeID";
-    $query = $em->createQuery($querystring)->setParameters(array('clientID' => $clientid, 'planeID' => $planeID));
-    $query->execute();
   }
   
   public static function DeleteAllBookingsForAUser ($em, $clientid, $userID)
@@ -1157,7 +1187,9 @@ class Bookings
                             $prefix . 'description' => $booking->getDescription(),
                             $prefix . 'EmailInfoIntern' => $emailInfoIntern,
                             $prefix . 'EmailInfoExtern' => $emailInfoExtern,
-                            $prefix . 'modify' => $modify);
+                            $prefix . 'modify' => $modify,
+                            // Bearbeiten zusaetzlich datumsabhaengig (Ende max. 1 Woche her)
+                            $prefix . 'editable' => $modify && Bookings::IsBookingDateEditable($booking));
     }    
     return $bookingList;
   }
@@ -1214,12 +1246,14 @@ class Bookings
     // Alle Administratoren informieren
     $adminMails = Users::GetAllAdminMailaddresses($em, $clientId, Users::const_Buchungsmail);
     
-    // Alle internen Mailadresseen ermitteln
-    if (isset($datanew['primary_' . 'EmailInfoIntern']) && trim($datanew['primary_' . 'EmailInfoIntern'], ' ,')) 
-      $mailIntern = explode(",", trim($datanew['primary_' . 'EmailInfoIntern'], ' ,'));
-    // Alle externen Mailadressen ermitteln
-    if (isset($datanew['primary_' . 'EmailInfoExtern']) && trim($datanew['primary_' . 'EmailInfoExtern'], ' ,')) 
-      $mailExtern = explode(",", trim($datanew['primary_' . 'EmailInfoExtern'], ' ,'));
+    // Alle internen/externen Mailadressen aus $data lesen (= zusammengefuehrt).
+    // Beim Storno ist $datanew leer, die Buchungsdaten stehen unter 'primary_' in
+    // $dataold und damit in $data -> so bekommen die "Info an"-Empfaenger auch
+    // die Stornierungs-Mail (frueher wurde nur $datanew geprueft = leer).
+    if (isset($data['primary_' . 'EmailInfoIntern']) && trim($data['primary_' . 'EmailInfoIntern'], ' ,'))
+      $mailIntern = explode(",", trim($data['primary_' . 'EmailInfoIntern'], ' ,'));
+    if (isset($data['primary_' . 'EmailInfoExtern']) && trim($data['primary_' . 'EmailInfoExtern'], ' ,'))
+      $mailExtern = explode(",", trim($data['primary_' . 'EmailInfoExtern'], ' ,'));
     
     // alten und neuen Nutzer informieren
     if ($newbooking) $mailNewOwner = Users::GetUserMailaddress($em, $newbooking->getClientid(), $newbooking->getCreatedbyuserid(), Users::const_Buchungsmail);
@@ -1233,6 +1267,10 @@ class Bookings
     if ($oldbooking && $oldbooking->getFlightinstructor() != NULL) $mailOldFI = Users::GetUserMailaddress($em, $oldbooking->getClientid(), $oldbooking->getFlightinstructor(), Users::const_Buchungsmail);
       else $mailOldFI = '';    
     
+    // Herkunft der Mail (Web- vs. Mobile-Frontend) fuer den Betreff.
+    $source      = $parameter['source'] ?? 'web';
+    $sourceLabel = ($source === 'mobile') ? 'Mobile' : 'Web';
+
     // Mail-Arrays zusammenführen
     $mails = array_merge($adminMails, $mailIntern);
     $mails = array_merge($mails, $mailExtern);
@@ -1245,25 +1283,159 @@ class Bookings
     $mails = array_merge($mails, array($mailOldFI));
     // Doppelte Array-Einträge löschen
     $mails = array_unique($mails);
-    
+
+    // --- Kalender-Termin (.ics) vorbereiten: gleiche UID pro Buchung -> Aenderungen
+    //     aktualisieren denselben Termin; Storno (METHOD:CANCEL) entfernt ihn. ---
+    // Schalter: .ics-Kalenderanhang AN. Zum Abschalten auf false setzen.
+    $icsEnabled = true;
+    $refBooking = $newbooking ?: $oldbooking;
+    $icsMethod  = $newbooking ? 'REQUEST' : 'CANCEL';   // neu/Aenderung -> REQUEST, Storno -> CANCEL
+    $icsCancel  = !$newbooking;
+    $icsStart   = $refBooking ? $refBooking->getItemstart() : null;
+    $icsEnd     = $refBooking ? $refBooking->getItemstop()  : null;
+    $attachIcs  = $icsEnabled && $refBooking && $icsStart instanceof \DateTime && $icsEnd instanceof \DateTime;
+    if ($attachIcs) {
+      // SEQUENCE muss je Aenderung steigen; Storno erfolgt nach der letzten Aenderung -> now.
+      $icsSeq = $icsCancel
+        ? time()
+        : ($refBooking->getChangeddate() instanceof \DateTime ? $refBooking->getChangeddate()->getTimestamp() : time());
+      $icsUid = 'booking-' . $refBooking->getId() . '@flugschule-worms.de';
+      $icsSummary = trim(((string) ($data['primary_flugzeug'] ?? '')) . ' · ' . ((string) ($data['primary_flightpurpose'] ?? '')), " ·");
+      $icsLoc  = (string) ($data['primary_airfield'] ?? '');
+      $descParts = array();
+      if (trim((string) ($data['primary_ReservedForUser'] ?? '')) !== '')   { $descParts[] = 'Pilot: ' . $data['primary_ReservedForUser']; }
+      if (trim((string) ($data['primary_flightinstructor'] ?? '')) !== '')   { $descParts[] = 'Fluglehrer: ' . $data['primary_flightinstructor']; }
+      if (trim((string) ($data['primary_description'] ?? '')) !== '')        { $descParts[] = (string) $data['primary_description']; }
+      $icsDesc = implode("\n", $descParts);
+      $icsOrganizer = (string) ($parameter['mail_from'] ?? 'info@flugschule-worms.de');
+      // Benannte Teilnehmer: Pilot (Ersteller) + Fluglehrer (falls gebucht).
+      // Organizer bleibt die Schule (= Absender), damit Kalender-Updates ueberall greifen.
+      $icsPilotMail = trim((string) ($newbooking ? $mailNewOwner : $mailOldOwner));
+      $icsFiMail    = trim((string) ($newbooking ? $mailNewFI : $mailOldFI));
+      $icsAttendees = array();
+      if ($icsPilotMail !== '') { $icsAttendees[] = array('name' => (string) ($data['primary_ReservedForUser'] ?? ''), 'mail' => $icsPilotMail); }
+      if ($icsFiMail !== '')    { $icsAttendees[] = array('name' => (string) ($data['primary_flightinstructor'] ?? ''), 'mail' => $icsFiMail); }
+    }
+
+    // Diagnose-/Fehler-Log an fester Stelle (immer auffindbar).
+    $mailLog = dirname(__DIR__, 2) . '/var/log/mailerror.log';
+
+    // .ics EINMAL bauen (fuer alle Empfaenger identisch); Fehler nie fatal.
+    $icsBody = null;
+    if ($attachIcs) {
+      try {
+        $icsBody = self::buildBookingIcs($icsStart, $icsEnd, $icsUid, $icsSeq, $icsMethod, $icsCancel, $icsSummary, $icsLoc, $icsDesc, $icsOrganizer, $icsAttendees);
+      } catch (\Throwable $e) {
+        @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Erzeugung fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
+      }
+    }
+
+    // Der .ics-Anhang ist pro Nutzer opt-in: nur an Nutzer haengen, die ihn in
+    // "Meine Daten" aktiviert haben (geticsattachment = 1). Fluglehrer und Schueler
+    // entscheiden dadurch unabhaengig voneinander; externe Info-Adressen bekommen keins.
+    $icsWantMails = array();
+    if ($icsBody !== null) {
+      try {
+        $rows = $em->createQuery(
+          "SELECT a.email FROM App\Entity\FresAccounts a WHERE a.clientid = :cid AND a.geticsattachment = 1 AND a.email IS NOT NULL AND a.email <> ''"
+        )->setParameter('cid', $clientId)->getScalarResult();
+        foreach ($rows as $r) { $icsWantMails[strtolower(trim((string) $r['email']))] = true; }
+      } catch (\Throwable $e) {
+        $icsBody = null;   // im Zweifel kein .ics anhaengen
+        @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Empfaengerliste fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
+      }
+    }
+    $sent = 0; $fail = 0; $valid = array();
+
     //Mails versenden
-    foreach ($mails as $mail) 
+    foreach ($mails as $mail)
     {
       if (Users::IsMailAdressValid($mail))
       {
-        $message = (new Email()) 
-          ->subject($type . ' ' . $parameter['program_version'])
+        $valid[] = $mail;
+        $message = (new Email())
+          ->subject($type . ' · ' . $parameter['program_version'] . ' · ' . $sourceLabel)
           ->html($twig->render('emails/bookingmail.html.twig', $data))
           ->replyTo(new Address($sender_mail, $sender_name))
           ->from($parameter['mail_from'])
           ->to($mail);
+        if ($icsBody !== null && isset($icsWantMails[strtolower(trim($mail))])) {
+          // .ics ist optional und darf den Mailversand/die Buchung NIE abbrechen.
+          try {
+            $message->attach($icsBody, 'termin.ics', 'text/calendar; charset=utf-8; method=' . $icsMethod);
+          } catch (\Throwable $e) {
+            @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  .ics-Anhang fehlgeschlagen: ' . $e->getMessage() . "\n", FILE_APPEND);
+          }
+        }
         try {
          $mailer->send($message);
+         $sent++;
         }
-        catch (\Exception $e) {
-          // 09.09.22 - hier muss noch etwas codiert werden
+        catch (\Throwable $e) {
+          // Fehler nicht mehr verschlucken; Schleife laeuft weiter, damit ein
+          // schlechter Empfaenger die uebrigen nicht blockiert.
+          $fail++;
+          $line = date('Y-m-d H:i:s') . '  Buchungsmail (' . $type . ') an "' . $mail
+                . '" fehlgeschlagen: ' . $e->getMessage() . "\n";
+          error_log('FlyRes: ' . $line);
+          @file_put_contents($mailLog, $line, FILE_APPEND);
         }
       }
     }
+
+    // Diagnose: JEDES Mail-Ereignis protokollieren (Empfaengerzahl + Ergebnis),
+    // damit man sieht, ob ueberhaupt gueltige Empfaenger ermittelt wurden und ob
+    // der Versand durchlief. (Kann nach der Fehlersuche wieder entfernt werden.)
+    @file_put_contents($mailLog, date('Y-m-d H:i:s') . '  ' . $type . ': '
+      . count($valid) . ' Empfaenger [' . implode(', ', $valid) . '], '
+      . $sent . ' gesendet, ' . $fail . ' Fehler' . "\n", FILE_APPEND);
+  }
+
+  /**
+   * Baut einen iCalendar-Termin (VEVENT) fuer eine Reservierung. Gleiche UID pro
+   * Buchung + steigende SEQUENCE -> das Kalenderprogramm aktualisiert denselben
+   * Eintrag; METHOD:CANCEL + STATUS:CANCELLED entfernt ihn. Zeiten in UTC.
+   */
+  private static function buildBookingIcs(\DateTime $start, \DateTime $end, string $uid, int $seq, string $method, bool $cancelled, string $summary, string $location, string $description, string $organizerMail, array $attendees): string
+  {
+    $esc = static function (string $s): string {
+      return str_replace(array("\\", ";", ",", "\r\n", "\n", "\r"), array("\\\\", "\\;", "\\,", "\\n", "\\n", "\\n"), $s);
+    };
+    $utc = new \DateTimeZone('UTC');
+    $fmt = static function (\DateTime $d) use ($utc): string { $c = clone $d; $c->setTimezone($utc); return $c->format('Ymd\THis\Z'); };
+    $now = (new \DateTime('now'))->setTimezone($utc)->format('Ymd\THis\Z');
+
+    $lines = array(
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Flugschule Worms//FlyRes//DE',
+      'CALSCALE:GREGORIAN',
+      'METHOD:' . $method,
+      'BEGIN:VEVENT',
+      'UID:' . $uid,
+      'SEQUENCE:' . $seq,
+      'DTSTAMP:' . $now,
+      'DTSTART:' . $fmt($start),
+      'DTEND:' . $fmt($end),
+      'SUMMARY:' . $esc($summary !== '' ? $summary : 'Reservierung'),
+      'LOCATION:' . $esc($location),
+      'DESCRIPTION:' . $esc($description),
+      'ORGANIZER;CN=Flugschule Worms:mailto:' . $organizerMail,
+    );
+    // Benannte Teilnehmer (Pilot, Fluglehrer) – nur mit gueltiger Mailadresse.
+    foreach ($attendees as $att) {
+      $amail = trim((string) ($att['mail'] ?? ''));
+      if ($amail === '' || strpos($amail, '@') === false) { continue; }
+      $cn = trim((string) ($att['name'] ?? ''));
+      $lines[] = 'ATTENDEE;CN=' . $esc($cn !== '' ? $cn : $amail)
+        . ';ROLE=REQ-PARTICIPANT;PARTSTAT=' . ($cancelled ? 'DECLINED' : 'ACCEPTED')
+        . ';RSVP=FALSE:mailto:' . $amail;
+    }
+    $lines[] = 'STATUS:' . ($cancelled ? 'CANCELLED' : 'CONFIRMED');
+    $lines[] = 'TRANSP:OPAQUE';
+    $lines[] = 'END:VEVENT';
+    $lines[] = 'END:VCALENDAR';
+
+    return implode("\r\n", $lines) . "\r\n";
   }
 }

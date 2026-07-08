@@ -4,60 +4,60 @@
   "type": "project",
   "description": "The \"Symfony Standard Edition\" distribution",
   "require": {
-    "php": "^8.1",
-    "symfony/framework-bundle": "^6.4",
-    "symfony/console": "^6.4",
-    "symfony/dependency-injection": "^6.4",
-    "symfony/yaml": "^6.4",
-    "symfony/form": "^6.4.6",
-    "symfony/validator": "^6.4",
-    "symfony/translation": "^6.4",
-    "symfony/twig-bundle": "^6.4",
+    "php": ">=8.4",
+    "symfony/framework-bundle": "^8.1",
+    "symfony/console": "^8.1",
+    "symfony/dependency-injection": "^8.1",
+    "symfony/yaml": "^8.1",
+    "symfony/form": "^8.1",
+    "symfony/validator": "^8.1",
+    "symfony/translation": "^8.1",
+    "symfony/twig-bundle": "^8.1",
     "twig/twig": "^3.8",
     "twig/extra-bundle": "^3.8",
-    "symfony/asset": "^6.4",
-    "symfony/security-bundle": "^6.4",
-    "symfony/security-csrf": "^6.4",
-    "symfony/security-http": "^6.4",
-    "symfony/security-core": "^6.4",
-    "symfony/routing": "^6.4",
-    "symfony/http-foundation": "^6.4",
-    "symfony/http-kernel": "^6.4",
-    "symfony/event-dispatcher": "^6.4",
-    "symfony/filesystem": "^6.4",
-    "symfony/finder": "^6.4",
-    "symfony/cache": "^6.4",
-    "symfony/config": "^6.4",
-    "symfony/dotenv": "^6.4",
-    "symfony/error-handler": "^6.4",
-    "symfony/mailer": "^6.4",
-    "symfony/mime": "^6.4",
-    "symfony/options-resolver": "^6.4",
-    "symfony/password-hasher": "^6.4",
-    "symfony/property-access": "^6.4",
-    "symfony/property-info": "^6.4",
-    "symfony/stopwatch": "^6.4",
-    "symfony/string": "^6.4",
-    "symfony/var-dumper": "^6.4",
-    "symfony/var-exporter": "^6.4",
+    "symfony/asset": "^8.1",
+    "symfony/security-bundle": "^8.1",
+    "symfony/security-csrf": "^8.1",
+    "symfony/security-http": "^8.1",
+    "symfony/security-core": "^8.1",
+    "symfony/routing": "^8.1",
+    "symfony/http-foundation": "^8.1",
+    "symfony/http-kernel": "^8.1",
+    "symfony/event-dispatcher": "^8.1",
+    "symfony/filesystem": "^8.1",
+    "symfony/finder": "^8.1",
+    "symfony/cache": "^8.1",
+    "symfony/config": "^8.1",
+    "symfony/dotenv": "^8.1",
+    "symfony/error-handler": "^8.1",
+    "symfony/mailer": "^8.1",
+    "symfony/mime": "^8.1",
+    "symfony/options-resolver": "^8.1",
+    "symfony/password-hasher": "^8.1",
+    "symfony/property-access": "^8.1",
+    "symfony/property-info": "^8.1",
+    "symfony/stopwatch": "^8.1",
+    "symfony/string": "^8.1",
+    "symfony/var-dumper": "^8.1",
+    "symfony/var-exporter": "^8.1",
 
-    "doctrine/orm": "^2.16",
-    "doctrine/dbal": "^3.6",
-    "doctrine/doctrine-bundle": "^2.14",
+    "doctrine/orm": "^3.0",
+    "doctrine/dbal": "^4.0",
+    "doctrine/doctrine-bundle": "^3.0",
     "doctrine/annotations": "^1.14 || ^2.0",
 
     "symfony/webpack-encore-bundle": "^2.1",
     "symfony/apache-pack": "^1.0",
-
-    "apy/datagrid-bundle": "^7.0",
     "symfony/flex": "^2.8",
-    "symfony/monolog-bundle": "^3.8"
+    "symfony/monolog-bundle": "^4.0",
+    "symfony/rate-limiter": "^8.1"
   },
   "require-dev": {
-    "symfony/phpunit-bridge": "^6.4",
-    "symfony/web-profiler-bundle": "^6.4",
+    "symfony/phpunit-bridge": "^8.1",
+    "symfony/web-profiler-bundle": "^8.1",
     "symfony/maker-bundle": "^1.60",
-    "phpunit/phpunit": "^10.5"
+    "phpunit/phpunit": "^10.5",
+    "rector/rector": "^2.5"
   },
   "conflict": {
     "symfony/symfony": "*"
@@ -77,11 +77,14 @@
   "config": {
     "allow-plugins": {
       "symfony/flex": true
+    },
+    "platform": {
+      "php": "8.4.1"
     }
   },
   "extra": {
     "symfony": {
-      "require": "^6.4"
+      "require": "^8.1"
     }
   }
 }

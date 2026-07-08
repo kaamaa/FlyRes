@@ -4,15 +4,16 @@ namespace App\Command;
 
 use Doctrine\DBAL\ConnectionException;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\HttpClient\HttpClient;
 
+#[AsCommand(name: 'app:update-airport-timezones')]
 class UpdateAirportTimeZonesCommand extends Command
 {
-    protected static $defaultName = 'app:update-airport-timezones';
     private $entityManager;
     private $username = 'kaamaa'; // GeoNames Benutzername
 
@@ -23,7 +24,7 @@ class UpdateAirportTimeZonesCommand extends Command
         $this->entityManager = $entityManager;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setDescription('Aktualisiert die Zeitzonen der Flughäfen in den USA')

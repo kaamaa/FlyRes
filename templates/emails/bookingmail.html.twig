@@ -1,122 +1,68 @@
-<style type="text/css">
-  td { padding-right: 25px; }
-</style>
+{# E-Mail-sicheres HTML im "Brief"-Stil (Variante D2): KEINE Farbflaechen/Kaesten,
+   nur Typografie + Textfarben -> passt sich Hell/Dunkel des Mail-Programms an und
+   kippt im Dark Mode nicht. Tabellen + Inline-Styles (Outlook/Gmail/Apple-fest). #}
+{% import _self as m %}
 
-<font style="color: blue">
-  <b>{{type}}:</b>
-</font>
-<br>
-<br>
-<table>
+{% macro row(label, val, oldval) %}
   <tr>
-    <td>
-      <b>Reservierung für:</b>
-    </td>
-    <td>
-      {{primary_ReservedForUser}} 
-    </td>
-    <td>
-      {% if secondary_ReservedForUser is defined and secondary_ReservedForUser != primary_ReservedForUser %} (bisher: {{secondary_ReservedForUser}}) {% endif %}
-    </td>
-  </tr>  
-  <tr>
-    <td>
-      <b>Beginn:</b>
-    </td>
-    <td>
-      {{primary_start}}
-    <td>
-      {% if secondary_start is defined and secondary_start != primary_start %} (bisher: {{secondary_start}}) {% endif %}
-    <td>
-    </td>
-  </tr>  
-  <tr>
-    <td>
-      <b>Ende:</b>
-    </td>
-    <td>
-      {{primary_end}}
-    </td>
-    <td>
-      {% if secondary_end is defined and secondary_end != primary_end %} (bisher: {{secondary_end}}) {% endif %}
+    <td style="padding:9px 0;border-bottom:1px solid #e6ebf1;color:#6b7888;font-size:15px;vertical-align:top;width:42%;">{{ label }}</td>
+    <td style="padding:9px 0;border-bottom:1px solid #e6ebf1;color:#1d2733;font-size:15px;font-weight:bold;vertical-align:top;">
+      {{ val|default('—') }}
+      {%- if oldval is not empty and oldval != val %}
+        <span style="color:#b7791f;font-weight:bold;font-size:11px;text-transform:uppercase;">&nbsp;geändert</span>
+        <span style="color:#9aa4b0;text-decoration:line-through;font-weight:normal;font-size:12px;">{{ oldval }}</span>
+      {%- endif %}
     </td>
   </tr>
-  <tr>
-    <td>
-      <b>Flugzeug:</b>
-    </td>
-    <td>
-      {{primary_flugzeug}}
-    </td>
-    <td>
-      {% if secondary_flugzeug is defined and secondary_flugzeug != primary_flugzeug %} (bisher: {{secondary_flugzeug}}) {% endif %}
-    </td>
-  </tr>
-  
-  {% if primary_flightinstructor is defined and primary_flightinstructor != '' %}
-    <tr>
-      <td>
-        <b>Fluglehrer:</b>
-      </td>
-      <td>
-        {{primary_flightinstructor}}
-      </td>
-      <td>
-        {% if secondary_flightinstructor is defined and secondary_flightinstructor != primary_flightinstructor %} (bisher: {{secondary_flightinstructor}}) {% endif %}
-      </td>
-    </tr>
-  {% endif %}
-    
-  <tr>
-    <td>
-      <b>Zielflugplatz:</b>
-    </td>
-    <td>
-      {{primary_airfield}}
-    </td>
-    <td>
-      {% if secondary_airfield is defined and secondary_airfield != primary_airfield %} (bisher: {{secondary_airfield}}) {% endif %} 
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <b>Flugzweck:</b>
-    </td>
-    <td>
-      {{primary_flightpurpose}}
-    </td>
-    <td>
-      {% if secondary_flightpurpose is defined and secondary_flightpurpose != primary_flightpurpose %} (bisher: {{secondary_flightpurpose}}) {% endif %}
-    </td>
-  </tr>
+{% endmacro %}
+
+{% set tl = type|lower %}
+{% set statuscolor = ('stornier' in tl or 'lösch' in tl or 'geloescht' in tl) ? '#c9453b'
+                  : (('änder' in tl or 'geänder' in tl or 'aktualis' in tl) ? '#b7791f' : '#2e7d46') %}
+{% set status = (statuscolor == '#c9453b') ? 'Storniert' : ((statuscolor == '#b7791f') ? 'Geändert' : 'Neu') %}
+{% set subline = (statuscolor == '#c9453b') ? 'Diese Reservierung wurde storniert.'
+              : ((statuscolor == '#b7791f') ? 'Diese Reservierung wurde geändert – geänderte Werte sind markiert.'
+              : 'Diese Reservierung wurde neu angelegt.') %}
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;">
+ <tr><td align="center">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
+   <tr><td style="padding:26px 26px 24px;">
+
+     <div style="font-size:12px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:#1f6fb2;">Flugschule Worms</div>
+     <div style="border-top:3px solid #1f6fb2;width:56px;font-size:0;line-height:0;margin:9px 0 18px;">&nbsp;</div>
+
+     <div style="font-size:20px;font-weight:bold;color:#1d2733;">{{ type }}</div>
+     <div style="font-size:13px;color:#6b7888;padding:4px 0 18px;"><span style="color:{{ statuscolor }};font-weight:bold;">&#9679; {{ status }}</span> &middot; {{ subline }}</div>
+
+     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+       {{ m.row('Reserviert für', primary_ReservedForUser, secondary_ReservedForUser|default('')) }}
+       {{ m.row('Beginn', primary_start, secondary_start|default('')) }}
+       {{ m.row('Ende', primary_end, secondary_end|default('')) }}
+       {{ m.row('Flugzeug', primary_flugzeug, secondary_flugzeug|default('')) }}
+       {% if primary_flightinstructor is defined and primary_flightinstructor != '' %}
+         {{ m.row('Fluglehrer', primary_flightinstructor, secondary_flightinstructor|default('')) }}
+       {% endif %}
+       {{ m.row('Zielflugplatz', primary_airfield, secondary_airfield|default('')) }}
+       {{ m.row('Flugzweck', primary_flightpurpose, secondary_flightpurpose|default('')) }}
+       {{ m.row('Beschreibung', primary_description, secondary_description|default('')) }}
+     </table>
+
+     {% if (primary_EmailInfoIntern|default('')) is not empty or (primary_EmailInfoExtern|default('')) is not empty %}
+     <div style="margin-top:16px;font-size:12px;color:#6b7888;line-height:1.6;">
+       <b style="color:#1d2733;">Informiert wurde(n):</b><br>
+       Intern: {{ primary_EmailInfoIntern|default('—') }}<br>
+       Extern: {{ primary_EmailInfoExtern|default('—') }}
+     </div>
+     {% endif %}
+
+     <div style="margin-top:22px;padding-top:16px;border-top:1px solid #e6ebf1;color:#6b7888;font-size:12px;line-height:1.7;">
+       <b style="color:#1d2733;">Aero-Service-Worms GmbH</b> &middot; Am Flugplatz 3 &middot; 67547 Worms<br>
+       Tel. +49&nbsp;6241&nbsp;207333 &middot; info@flugschule-worms.de &middot; www.flugschule-worms.de<br>
+       <span style="color:#9aa4b0;">Automatische Nachricht aus dem Reservierungssystem – bitte nicht direkt antworten.</span>
+     </div>
+
+   </td></tr>
+  </table>
+ </td></tr>
 </table>
-<br>
-<b>Beschreibung:</b> 
-<br>
-{{primary_description}}
-<br>
-{% if secondary_description is defined and secondary_description != primary_description %} (bisher: {{secondary_description}}) {% endif %}
-<br>
-<br>
-<b>Informiert wurde(n):</b>
-<br>
-Intern:&nbsp;{{primary_EmailInfoIntern}}
-<br>
-{% if secondary_EmailInfoIntern is defined and secondary_EmailInfoIntern != primary_EmailInfoIntern %} (bisher:&nbsp;{{secondary_EmailInfoIntern}}) {% endif %}
-<br>
-Extern:&nbsp;{{primary_EmailInfoExtern}}
-<br>
-{% if secondary_EmailInfoExtern is defined and secondary_EmailInfoExtern != primary_EmailInfoExtern %} (bisher:&nbsp;{{secondary_EmailInfoExtern}}) {% endif %}
-<br>
-{#
-<br>
-Viele Grüße<br>
-<br>
-Aero-Service-Worms GmbH<br>
-Am Flugplatz 3<br>
-67547 Worms<br>
-<br>
-Telefon +49-6241-207333<br>
-Email: info@flugschule-worms.de<br>
-www.flugschule-worms.de<br>
-#}

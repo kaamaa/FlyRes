@@ -4,88 +4,59 @@ namespace App\Entity;
 
 use Symfony\Component\Validator\ExecutionContext;
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
  * App\Entity\FresFIAvailability
- * 
- * @ORM\Table(name="fres_fi_availability")
- * @ORM\Entity()
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
- * @GRID\Source(sortable=true) groupBy={"status"})
  */
-
+#[ORM\Table(name: 'fres_fi_availability')]
+#[ORM\Entity]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
 class FresFIAvailability
 {  
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
 
     /**
      * @var string $clientid
-     *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FResAccounts")
-     * @ORM\JoinColumn(name="flightinstructor", referencedColumnName="id")
-     * 
-     * @GRID\Column(field="flightinstructor.id", title="Id", filterable = false, visible=false)
-     * @GRID\Column(field="flightinstructor.firstname", title="Vorname", filterable = true, filter="select", visible=true)
-     * @GRID\Column(field="flightinstructor.lastname", title="Nachname", filterable = true, filter="select", visible=true)
-     * 
-     */
+    #[ORM\JoinColumn(name: 'flightinstructor', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \App\Entity\FresAccounts::class)]
     private $flightinstructor;
     
-    /**
-     * @ORM\OneToOne(targetEntity="FresFIAvailabilityStates")
-     * @ORM\JoinColumn(name="typ", referencedColumnName="id")
-     * 
-     * @GRID\Column(field="typ.id", title="TypID", filterable = false, visible=false)
-     * @GRID\Column(field="typ.name", title="Typ", filterable = false, visible=true)
-     */
+    #[ORM\JoinColumn(name: 'typ', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \FresFIAvailabilityStates::class)]
     private $typ;
     
     /**
      * @var datetime $itemstart
      *
-     * @ORM\Column(name="itemstart", type="datetime", nullable=false)
-     * @GRID\Column(title="Start", type="datetime", filterable = false, format = "l d.m.Y G:i")
-     
      */
+    #[ORM\Column(name: 'itemstart', type: 'datetime', nullable: false)]
     private $itemstart;
 
     /**
      * @var datetime $itemstop
-     *
-     * @ORM\Column(name="itemstop", type="datetime", nullable=false)
-     * @GRID\Column(title="Ende", type="datetime", filterable = false, format = "l d.m.Y G:i")
      */
+    #[ORM\Column(name: 'itemstop', type: 'datetime', nullable: false)]
     private $itemstop;
     
 
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="Status", type="string", length=30, nullable=false)
-     * @GRID\Column(visible=false, filterable = false)
      */
+    #[ORM\Column(name: 'Status', type: 'string', length: 30, nullable: false)]
     private $status;
 
-     /**
-     * @ORM\Column(name="comment", type="string", length=255, nullable=true)
-     * @GRID\Column(title="Kommentar", visible=true, filterable = false)
-     */
+     #[ORM\Column(name: 'comment', type: 'string', length: 255, nullable: true)]
     private $comment;
 
     

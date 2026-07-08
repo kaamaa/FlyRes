@@ -1,0 +1,115 @@
+{% extends 'modern/layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+
+{% block pagehead %}{% endblock %}
+
+{% block content %}
+  {{ ph.tabs([{label:'Meine Daten', icon:'user'}]) }}
+  <div class="fr-panel">
+  <div class="fr-pactions">
+    <button type="submit" form="mydata_form" class="fr-btn">Speichern</button>
+    <a class="fr-btn" href="javascript:history.back()">Abbrechen</a>
+  </div>
+  <div class="fr-pbody">
+<form id="mydata_form" class="fr-form" action="{{ path('modern_mydata_save') }}" method="post">
+
+  {% if ok %}<div class="fr-msg ok">{{ ok }}</div>{% endif %}
+  {% if errors %}<div class="fr-msg err">{% for e in errors %}<div>{{ e }}</div>{% endfor %}</div>{% endif %}
+
+  <div class="fr-formsec">Name</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Vorname</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <input type="text" name="firstname" value="{{ v.firstname }}" maxlength="30">
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Nachname</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg></span>
+        <input type="text" name="lastname" value="{{ v.lastname }}" maxlength="30">
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Nutzername</label>
+      <div class="fr-ctrl" style="opacity:.6;">
+        <span class="ic"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 21a9 9 0 0 1 18 0"/></svg></span>
+        <input type="text" value="{{ v.username }}" readonly>
+      </div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Kontakt</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>E-Mail</label>
+      <div class="fr-ctrl">
+        <span class="ic"><svg viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 6l10 7 10-7"/></svg></span>
+        <input type="email" name="email" value="{{ v.email }}" maxlength="180">
+      </div>
+    </div>
+    <div class="fr-frow">
+      <label>Telefon (privat)</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 2 .7 2.9a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.2-1.2a2 2 0 0 1 2.1-.5c.9.3 1.9.6 2.9.7a2 2 0 0 1 1.7 2z"/></svg></span>
+        <input type="text" name="phone_home" value="{{ v.phone_home }}" maxlength="60"></div>
+    </div>
+    <div class="fr-frow">
+      <label>Telefon (mobil)</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></span>
+        <input type="text" name="phone_mobile" value="{{ v.phone_mobile }}" maxlength="60"></div>
+    </div>
+    <div class="fr-frow">
+      <label>Telefon (Büro)</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 21h18M5 21V7l7-4 7 4v14"/></svg></span>
+        <input type="text" name="phone_office" value="{{ v.phone_office }}" maxlength="60"></div>
+    </div>
+  </div>
+
+  <div class="fr-formsec">Benachrichtigungen</div>
+  <div class="fr-card">
+    <div class="fr-mailopt">
+      <label>E-Mails zu Reservierungen</label>
+      <select name="getbookingmails">
+        <option value="0" {{ v.getbookingmails == 0 ? 'selected' : '' }}>keine</option>
+        <option value="1" {{ v.getbookingmails == 1 ? 'selected' : '' }}>nur meine Buchungen</option>
+        {% if v.isAdmin %}<option value="2" {{ v.getbookingmails == 2 ? 'selected' : '' }}>alle Buchungen (als Admin)</option>{% endif %}
+      </select>
+    </div>
+    <div class="fr-mailopt">
+      <label>E-Mails zu Lizenzen</label>
+      <select name="getlicencemails">
+        <option value="0" {{ v.getlicencemails == 0 ? 'selected' : '' }}>keine</option>
+        <option value="1" {{ v.getlicencemails == 1 ? 'selected' : '' }}>nur meine Lizenzen</option>
+        {% if v.isAdmin %}<option value="2" {{ v.getlicencemails == 2 ? 'selected' : '' }}>alle Lizenzen (als Admin)</option>{% endif %}
+      </select>
+    </div>
+    <style>
+      .fr-mailopt{display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+      .fr-mailopt>label{min-width:190px;font-size:14px;color:var(--fr-ink);}
+      .fr-mailopt>select{flex:1;min-width:200px;max-width:320px;padding:8px 10px;border:1px solid var(--fr-line);border-radius:8px;font-size:14px;background:#fff;}
+    </style>
+    <label class="fr-check">
+      <input type="checkbox" name="geticsattachment" value="1" {{ v.geticsattachment ? 'checked' : '' }}>
+      <span>Kalender-Termin (.ics) an Reservierungs-Mails anhängen</span>
+    </label>
+  </div>
+
+  <div class="fr-formsec">Passwort ändern</div>
+  <div class="fr-card">
+    <div class="fr-frow">
+      <label>Neues Passwort</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+        <input type="password" name="password" autocomplete="new-password" placeholder="leer lassen = unverändert"></div>
+    </div>
+    <div class="fr-frow">
+      <label>Wiederholen</label>
+      <div class="fr-ctrl"><span class="ic"><svg viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+        <input type="password" name="password_check" autocomplete="new-password"></div>
+    </div>
+  </div>
+
+</form>
+  </div>{# fr-pbody #}</div>{# fr-panel #}
+{% endblock %}

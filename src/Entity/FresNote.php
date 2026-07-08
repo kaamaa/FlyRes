@@ -4,110 +4,83 @@ namespace App\Entity;
 
 use Symfony\Component\Validator\ExecutionContext;
 use Doctrine\ORM\Mapping as ORM;
-use APY\DataGridBundle\Grid\Mapping as GRID;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Cache;
 
 /**
  * App\Entity\FresBooking
- * 
- * @ORM\Entity()
- * @ORM\Cache(usage="NONSTRICT_READ_WRITE")
  *
- * @ORM\Table(name="FRes_note")
- * @ORM\Entity
+ *
  */
+#[ORM\Table(name: 'FRes_note')]
+#[ORM\Cache(usage: 'NONSTRICT_READ_WRITE')]
+#[ORM\Entity]
 class FresNote
 {  
     /**
      * @var string $clientid
-     *
-     * @ORM\Column(name="clientid", type="integer", nullable=false)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'clientid', type: 'integer', nullable: false)]
     private $clientid;
     
     /**
      * @var integer $id
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     private $id;
     
 
     /**
      * @var datetime $changeddate
-     *
-     * @ORM\Column(name="changedDate", type="datetime", nullable=false)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'changedDate', type: 'datetime', nullable: false)]
     private $changeddate;
 
     /**
      * @var integer $changedbyuserid
-     *
-     * @ORM\Column(name="changedByUserID", type="integer", nullable=true)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'changedByUserID', type: 'integer', nullable: true)]
     private $changedbyuserid;
 
     /**
      * @var datetime $createddate
-     *
-     * @ORM\Column(name="createdDate", type="datetime", nullable=false)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'createdDate', type: 'datetime', nullable: false)]
     private $createddate;
 
     /**
      * @var integer $createdbyuserid
-     *
-     * @ORM\Column(name="createdByUserID", type="integer", nullable=true)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'createdByUserID', type: 'integer', nullable: true)]
     private $createdbyuserid;
 
-    /**
-     * @ORM\OneToOne(targetEntity="FResAccounts")
-     * @ORM\JoinColumn(name="createdByUserID", referencedColumnName="id")
-     * 
-     * @GRID\Column(field="user.firstname", title="Vorname", filterable = false)
-     * @GRID\Column(field="user.lastname", title="Nachname", filterable = false)
-     */
+    #[ORM\JoinColumn(name: 'createdByUserID', referencedColumnName: 'id')]
+    #[ORM\OneToOne(targetEntity: \App\Entity\FresAccounts::class)]
     protected $user;
     
     /**
      * @var datetime $validuntil
-     *
-     * @ORM\Column(name="validuntil", type="datetime", nullable=false)
-     * @GRID\Column(title="Gültig bis", filterable = false, format = "d.m.Y")
      */
+    #[ORM\Column(name: 'validuntil', type: 'datetime', nullable: false)]
     private $validuntil;
 
     /**
      * @var text header
-     *
-     * @ORM\Column(name="header", type="text", nullable=true)
-     * @GRID\Column(title="Titel")
      */
+    #[ORM\Column(name: 'header', type: 'text', nullable: true)]
     private $header;
     
     /**
      * @var text $description
-     *
-     * @ORM\Column(name="description", type="text", nullable=true)
-     * @GRID\Column(title="Beschreibung")
      */
+    #[ORM\Column(name: 'description', type: 'text', nullable: true)]
     private $description;
 
     /**
      * @var string $status
-     *
-     * @ORM\Column(name="status", type="string", length=30, nullable=false)
-     * @GRID\Column(visible=false)
      */
+    #[ORM\Column(name: 'status', type: 'string', length: 30, nullable: false)]
     private $status;
 
     /**

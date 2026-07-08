@@ -1,0 +1,226 @@
+{% extends (app.user and app.request.query.get('embed') is null) ? 'modern/layout.html.twig' : 'modern/public_layout.html.twig' %}
+{% import 'modern/_pagehead.html.twig' as ph %}
+{% import 'modern/_icons.html.twig' as icon %}
+
+{% block ptitle %}Weight &amp; Balance{% endblock %}
+{% block pagehead %}{% endblock %}
+
+{% block topactions %}
+  <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF / drucken</button>
+{% endblock %}
+
+{% block content %}
+{% set fr_full = app.user and app.request.query.get('embed') is null %}
+{% if fr_full %}
+  {{ ph.tabs([{label:'Weight & Balance', icon:'chart'}]) }}
+  <div class="fr-panel">
+{% endif %}
+<style>
+  .wb-top{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:14px;}
+  .wb-top.fr-phead{margin-bottom:0;}
+  .wb-top label{display:block;font-size:10.5px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
+  .wb-top select,.wb-top input{height:38px;padding:0 10px;border:1px solid #c9d3e0;border-radius:9px;font:inherit;font-size:13px;background:#fff;}
+  .wb-top select{min-width:220px;} .wb-top input{width:92px;}
+  .seg{display:inline-flex;align-items:center;height:38px;padding:3px;gap:2px;background:#eef2f6;border-radius:9px;}
+  .seg button{border:none;background:none;height:32px;padding:0 12px;border-radius:7px;font:inherit;font-weight:700;color:var(--fr-mut);cursor:pointer;}
+  .seg button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+  .wb-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start;}
+  .wb-card{background:#fff;border:1px solid var(--fr-line,#e5e5e5);border-radius:12px;padding:14px 16px;}
+  table.wb{border-collapse:collapse;width:100%;font-size:13px;}
+  table.wb th,table.wb td{padding:8px 9px;border-bottom:1px solid var(--fr-line);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}
+  table.wb th{font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--fr-mut);}
+  table.wb td.l,table.wb th.l{text-align:left;} table.wb td.l small{color:var(--fr-mut);}
+  table.wb input{width:84px;padding:6px 8px;border:1px solid var(--fr-line);border-radius:7px;font:inherit;text-align:right;}
+  table.wb input.over{border-color:var(--fr-red,#c9453b);background:#fdf1ef;}
+  table.wb tr.sum td{font-weight:800;border-top:2px solid var(--fr-line);background:#f6f9fc;}
+  .wb-kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+  .wb-kpi .k{flex:1;min-width:110px;background:#fff;border:1px solid var(--fr-line);border-radius:12px;padding:11px 13px;}
+  .wb-kpi .k.hero{background:linear-gradient(135deg,var(--fr-blue),var(--fr-blue-d));color:#fff;border:none;}
+  .wb-kpi .v{font-size:23px;font-weight:800;line-height:1;} .wb-kpi .t{font-size:11px;color:var(--fr-mut);margin-top:5px;}
+  .wb-kpi .k.hero .t{color:#e6eef6;}
+  .verdict{display:inline-flex;align-items:center;gap:8px;font-weight:800;padding:8px 14px;border-radius:10px;font-size:15px;margin-bottom:12px;}
+  .verdict.ok{background:#eaf7ef;color:var(--fr-green);} .verdict.bad{background:#fbeeec;color:var(--fr-red,#c9453b);}
+  .wb-warn{list-style:none;margin:10px 0 0;padding:0;} .wb-warn li{color:var(--fr-red,#c9453b);font-size:12.5px;padding:2px 0;}
+  .wb-note{font-size:11.5px;color:var(--fr-mut);margin-top:12px;border-top:1px dashed var(--fr-line);padding-top:8px;}
+  .wb-src{font-size:11px;color:var(--fr-mut);margin-top:6px;}
+  /* CG-Diagramm: Text nicht markierbar (Kopierschutz). */
+  #wb-env, #wb-env svg, #wb-env text{-webkit-user-select:none;-moz-user-select:none;user-select:none;}
+  /* Druck-Kopf nur beim Drucken sichtbar */
+  .wb-phead{display:none;font-size:13px;font-weight:700;color:var(--fr-ink);margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--fr-blue);}
+  .wb-phead small{font-weight:600;color:var(--fr-mut);}
+  @page{size:A4;margin:12mm;}
+  @media print{
+    .fr-side,.fr-top,.fr-tabrow,.fr-pactions,.wb-top,#wb-empty{display:none!important;}
+    .fr-app,.fr-main{display:block!important;} .fr-body{padding:0!important;}
+    .fr-panel{border:none!important;box-shadow:none!important;border-radius:0!important;}
+    .fr-pbody{padding:0!important;}
+    .wb-phead{display:block!important;}
+    /* Robust: kein Grid im Druck (Grid+Pagebreak druckt in Safari leer) -> gestapelte Bloecke */
+    #wb-body{display:block!important;font-size:11px;}
+    .wb-grid{display:block!important;}
+    .wb-grid > div{width:auto!important;margin-bottom:10px;}
+    .wb-card{border:1px solid #bbb;padding:8px 11px;}
+    table.wb{font-size:10.5px;} table.wb th,table.wb td{padding:4px 7px;}
+    table.wb input{border:none;background:transparent;width:auto;padding:0;text-align:right;font-weight:700;}
+    .wb-kpi{gap:8px;margin-bottom:8px;} .wb-kpi .k{padding:7px 11px;min-width:90px;}
+    .wb-kpi .v{font-size:18px;} .wb-kpi .t{font-size:10px;margin-top:3px;}
+    .wb-kpi .k.hero{background:var(--fr-blue)!important;}
+    .verdict{font-size:13px;padding:6px 12px;margin-bottom:8px;}
+    #wb-env svg{max-width:100%;height:auto;max-height:92mm;}
+    .wb-warn li{font-size:11px;padding:1px 0;}
+    .wb-note{font-size:9px;margin-top:8px;padding-top:6px;} .wb-src{font-size:9px;}
+    .wb-kpi .k.hero,.verdict.ok,.verdict.bad{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  }
+  @media (max-width:900px){ .wb-grid{grid-template-columns:1fr;} }
+</style>
+
+<div class="wb-top{% if fr_full %} fr-phead{% endif %}">
+  <div>
+    <label>Flugzeugmuster ({{ aircraft|length }})</label>
+    <select id="wb-ac">
+      <option value="">— Muster wählen —</option>
+      {% for a in aircraft %}<option value="{{ a.id }}">{{ a.label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div><label>Leermasse (<span id="u-em">kg</span>)</label><input type="number" id="wb-em" step="0.1"></div>
+  <div><label>Leerarm (<span id="u-ea">m</span>)</label><input type="number" id="wb-ea" step="0.001"></div>
+  <div><label>Trip-Fuel (<span id="u-trip">l</span>)</label><input type="number" id="wb-trip" step="1" value="0"></div>
+  <div>
+    <label>Einheiten</label>
+    <span class="seg" id="wb-units"><button type="button" data-u="metric" class="on">metrisch</button><button type="button" data-u="imperial">imperial</button></span>
+  </div>
+</div>
+{% if fr_full %}
+  <div class="fr-pactions"><button type="button" class="fr-btn" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
+  <div class="fr-pbody">
+{% endif %}
+
+<div id="wb-body" style="display:none">
+  <div class="wb-phead" id="wb-phead"></div>
+  <div class="wb-grid">
+    <div class="wb-card">
+      <table class="wb" id="wb-load"></table>
+      <div class="wb-src" id="wb-src"></div>
+    </div>
+    <div>
+      <div class="wb-kpi" id="wb-kpi"></div>
+      <div id="wb-verdict"></div>
+      <div class="wb-card" style="padding:10px"><div id="wb-env"></div></div>
+      <ul class="wb-warn" id="wb-warn"></ul>
+    </div>
+  </div>
+  <div class="wb-note"><b>Achtung:</b> Prototyp. Für den Betrieb das verifizierte AFM/Wägeblatt des konkreten Flugzeugs verwenden – Leermasse/-arm oben anpassen. Benutzung auf eigene Gefahr.</div>
+</div>
+<div id="wb-empty" class="wb-note">Bitte oben ein Flugzeugmuster wählen.</div>
+
+<script>
+(function () {
+  var CALC_URL = '{{ path('modern_wb_calc') }}';
+  var acSel = document.getElementById('wb-ac');
+  var emEl = document.getElementById('wb-em'), eaEl = document.getElementById('wb-ea'), tripEl = document.getElementById('wb-trip');
+  var unitSys = 'metric', timer = null;
+  var C = { kgPerLb: 0.45359237, lbPerKg: 2.20462262, mPerIn: 0.0254, inPerM: 39.3700787, lPerGal: 3.785411784, galPerL: 0.264172 };
+
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function n1(x) { return (Math.round(x * 10) / 10).toLocaleString('de-DE'); }
+
+  function toMetric(v, kind, sys) { if (sys !== 'imperial') return v; return kind === 'mass' ? v * C.kgPerLb : kind === 'arm' ? v * C.mPerIn : kind === 'vol' ? v * C.lPerGal : v; }
+  function fromMetric(m, kind, sys) { if (sys !== 'imperial') return m; return kind === 'mass' ? m * C.lbPerKg : kind === 'arm' ? m * C.inPerM : kind === 'vol' ? m * C.galPerL : m; }
+  function convField(el, kind, oldS, newS) { var v = parseFloat(el.value); if (isNaN(v)) return; var m = toMetric(v, kind, oldS); var nv = fromMetric(m, kind, newS); var dec = kind === 'arm' ? (newS === 'imperial' ? 1 : 3) : 1; el.value = (Math.round(nv * Math.pow(10, dec)) / Math.pow(10, dec)); }
+
+  async function post(withLoad) {
+    var b = new URLSearchParams();
+    b.append('id', acSel.value); b.append('units', unitSys);
+    b.append('emptyMass', emEl.value); b.append('emptyArm', eaEl.value); b.append('tripFuel', tripEl.value);
+    if (withLoad) { document.querySelectorAll('#wb-load input.st').forEach(function (el) { b.append('load[' + el.getAttribute('data-id') + ']', el.value || '0'); }); }
+    var res = await fetch(CALC_URL, { method: 'POST', body: b, credentials: 'same-origin' });
+    return res.ok ? res.json() : null;
+  }
+
+  function buildTable(stations) {
+    var h = '<tr><th class="l">Station</th><th>Eingabe</th><th>Masse</th></tr>';
+    for (var i = 0; i < stations.length; i++) {
+      var s = stations[i];
+      h += '<tr><td class="l"><b>' + esc(s.label) + '</b><small class="mx-' + i + '"></small></td>' +
+           '<td><input class="st" type="number" step="0.1" min="0" data-id="' + esc(s.id) + '" data-kind="' + esc(s.kind) + '" value="0"> <span class="u-' + i + '"></span></td>' +
+           '<td class="m-' + i + '"></td></tr>';
+    }
+    h += '<tr class="sum"><td class="l">Start (Take-off)</td><td></td><td id="wb-tom"></td></tr>';
+    document.getElementById('wb-load').innerHTML = h;
+    document.querySelectorAll('#wb-load input.st').forEach(function (el) { el.addEventListener('input', schedule); });
+  }
+
+  function render(r) {
+    document.getElementById('u-em').textContent = r.units.mass;
+    document.getElementById('u-ea').textContent = r.units.arm;
+    document.getElementById('u-trip').textContent = r.units.vol;
+
+    var inputs = document.querySelectorAll('#wb-load input.st');
+    for (var i = 0; i < r.stations.length; i++) {
+      var s = r.stations[i];
+      var mc = document.querySelector('#wb-load .m-' + i); if (mc) mc.textContent = n1(s.mass) + ' ' + r.units.mass;
+      var uc = document.querySelector('#wb-load .u-' + i); if (uc) uc.textContent = s.unit;
+      var xc = document.querySelector('#wb-load .mx-' + i); if (xc) xc.innerHTML = s.max != null ? ('<br>max ' + n1(s.max) + ' ' + s.unit) : '';
+      if (inputs[i]) inputs[i].classList.toggle('over', !!s.over);
+    }
+    var tom = document.getElementById('wb-tom'); if (tom) tom.textContent = n1(r.to.mass) + ' ' + r.units.mass;
+
+    document.getElementById('wb-kpi').innerHTML =
+      '<div class="k hero"><div class="v">' + n1(r.to.mass) + ' ' + r.units.mass + '</div><div class="t">Startmasse · MTOM ' + n1(r.mtom) + '</div></div>' +
+      '<div class="k"><div class="v">' + n1(r.to.cg) + ' ' + r.units.cg + '</div><div class="t">Schwerpunkt Start</div></div>' +
+      '<div class="k"><div class="v">' + n1(r.ldg.mass) + ' ' + r.units.mass + '</div><div class="t">Landemasse</div></div>';
+    document.getElementById('wb-verdict').innerHTML = '<div class="verdict ' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? '✓ Innerhalb der Grenzen' : '✕ Grenzen verletzt') + '</div>';
+    document.getElementById('wb-warn').innerHTML = (r.warnings || []).map(function (w) { return '<li>⚠ ' + esc(w) + '</li>'; }).join('');
+    document.getElementById('wb-env').innerHTML = r.svg || '';
+
+    var acOpt = acSel.options[acSel.selectedIndex];
+    document.getElementById('wb-phead').innerHTML = 'Weight &amp; Balance · ' + esc(acOpt ? acOpt.text : '') +
+      ' <small>· Leermasse ' + esc(emEl.value || '0') + ' ' + r.units.mass +
+      ' · Leerarm ' + esc(eaEl.value || '0') + ' ' + r.units.arm +
+      ' · Trip-Fuel ' + esc(tripEl.value || '0') + ' ' + r.units.vol +
+      ' · Stand ' + new Date().toLocaleDateString('de-DE') + '</small>';
+  }
+
+  function schedule() { clearTimeout(timer); timer = setTimeout(function () { post(true).then(function (r) { if (r) render(r); }); }, 200); }
+
+  async function selectType() {
+    if (!acSel.value) { document.getElementById('wb-body').style.display = 'none'; document.getElementById('wb-empty').style.display = ''; return; }
+    var r = await post(false);
+    if (!r || r.error) return;
+    if (r.defaults) {
+      emEl.value = r.defaults.emptyMass != null ? r.defaults.emptyMass : '';
+      eaEl.value = r.defaults.emptyArm != null ? r.defaults.emptyArm : '';
+      if (r.defaults.tripFuel != null) { tripEl.value = r.defaults.tripFuel; }
+    }
+    document.getElementById('wb-src').textContent = r.source ? ('Quelle: ' + r.source) : '';
+    buildTable(r.stations);
+    // Sinnvolle Start-Beladung in die Stationsfelder setzen.
+    if (r.defaults && r.defaults.load) {
+      document.querySelectorAll('#wb-load input.st').forEach(function (el) {
+        var id = el.getAttribute('data-id');
+        if (r.defaults.load[id] != null) { el.value = r.defaults.load[id]; }
+      });
+    }
+    document.getElementById('wb-empty').style.display = 'none';
+    document.getElementById('wb-body').style.display = '';
+    post(true).then(function (r2) { if (r2) render(r2); });
+  }
+
+  function setUnits(newS) {
+    if (newS === unitSys) return;
+    // Feldwerte physikalisch erhalten: alte -> neue Einheit umrechnen.
+    convField(emEl, 'mass', unitSys, newS); convField(eaEl, 'arm', unitSys, newS); convField(tripEl, 'vol', unitSys, newS);
+    document.querySelectorAll('#wb-load input.st').forEach(function (el) { convField(el, el.getAttribute('data-kind'), unitSys, newS); });
+    unitSys = newS;
+    document.querySelectorAll('#wb-units button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-u') === newS); });
+    eaEl.step = (newS === 'imperial') ? '0.1' : '0.001';
+    if (acSel.value) { post(true).then(function (r) { if (r) render(r); }); }
+  }
+
+  acSel.addEventListener('change', selectType);
+  [emEl, eaEl, tripEl].forEach(function (el) { el.addEventListener('input', schedule); });
+  document.querySelectorAll('#wb-units button').forEach(function (b) { b.addEventListener('click', function () { setUnits(b.getAttribute('data-u')); }); });
+})();
+</script>
+{% if fr_full %}</div>{# fr-pbody #}</div>{# fr-panel #}{% endif %}
+{% endblock %}
