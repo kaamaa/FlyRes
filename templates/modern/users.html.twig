@@ -23,6 +23,8 @@
           <option value="locked">Gesperrt</option>
         </select>
       </label>
+      <button type="button" id="u_clear" hidden
+              style="border:1px solid var(--fr-line);background:#fff;border-radius:8px;padding:7px 11px;cursor:pointer;color:var(--fr-blue);font-size:13px;white-space:nowrap;">✕ Filter löschen</button>
       <span class="fr-phspring"></span>
       <span class="fr-fl" id="u_count"></span>
     </div>
@@ -58,7 +60,8 @@
       (function () {
         var q = document.getElementById('u_q'), filterSel = document.getElementById('u_filter'),
             cards = Array.prototype.slice.call(document.querySelectorAll('#u_list .fr-acard[data-s]')),
-            countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none');
+            countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none'),
+            clearBtn = document.getElementById('u_clear');
         var KEY = 'fr_users_filter';
         function apply() {
           var term = (q.value || '').trim().toLowerCase(), filter = filterSel.value, n = 0;
@@ -71,6 +74,7 @@
           });
           countEl.textContent = n + ' Nutzer';
           noneEl.hidden = (n > 0 || cards.length === 0);
+          if (clearBtn) clearBtn.hidden = !(term || filter !== 'alle');   // nur zeigen, wenn Filter aktiv
         }
         // Filter merken (Sitzung) -> bleibt beim Wechsel in einen Nutzer + Zurueck erhalten,
         // bis er geleert wird (Suche leeren + Rolle "Alle") oder der Tab geschlossen wird.
@@ -86,6 +90,9 @@
         }
         q.addEventListener('input', function () { save(); apply(); });
         filterSel.addEventListener('change', function () { save(); apply(); });
+        if (clearBtn) clearBtn.addEventListener('click', function () {
+          q.value = ''; filterSel.value = 'alle'; save(); apply(); q.focus();
+        });
         restore();
         apply();
       })();
