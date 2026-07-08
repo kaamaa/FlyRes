@@ -59,6 +59,7 @@
         var q = document.getElementById('u_q'), filterSel = document.getElementById('u_filter'),
             cards = Array.prototype.slice.call(document.querySelectorAll('#u_list .fr-acard[data-s]')),
             countEl = document.getElementById('u_count'), noneEl = document.getElementById('u_none');
+        var KEY = 'fr_users_filter';
         function apply() {
           var term = (q.value || '').trim().toLowerCase(), filter = filterSel.value, n = 0;
           cards.forEach(function (c) {
@@ -71,8 +72,21 @@
           countEl.textContent = n + ' Nutzer';
           noneEl.hidden = (n > 0 || cards.length === 0);
         }
-        q.addEventListener('input', apply);
-        filterSel.addEventListener('change', apply);
+        // Filter merken (Sitzung) -> bleibt beim Wechsel in einen Nutzer + Zurueck erhalten,
+        // bis er geleert wird (Suche leeren + Rolle "Alle") oder der Tab geschlossen wird.
+        function save() {
+          try { sessionStorage.setItem(KEY, JSON.stringify({ q: q.value, f: filterSel.value })); } catch (e) {}
+        }
+        function restore() {
+          try {
+            var s = JSON.parse(sessionStorage.getItem(KEY) || '{}');
+            if (typeof s.q === 'string') q.value = s.q;
+            if (typeof s.f === 'string') filterSel.value = s.f;
+          } catch (e) {}
+        }
+        q.addEventListener('input', function () { save(); apply(); });
+        filterSel.addEventListener('change', function () { save(); apply(); });
+        restore();
         apply();
       })();
       </script>
