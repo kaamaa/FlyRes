@@ -39,6 +39,13 @@ DELETE /api/tokens/current        →  Token serverseitig invalidieren
 
 Tokens haben keine Ablaufzeit (Mobile-Standard). Widerruf erfolgt explizit per `DELETE`.
 
+**Serverseitige Neuprüfung bei jedem Request:** Ein gültiges Token wird bei
+**jedem** Request erneut geprüft. Ist der Nutzer inzwischen gesperrt oder
+gelöscht oder sein Mandant deaktiviert, antwortet der Server mit
+`401 { "error": "account_locked" }` — unabhängig davon, ob die Token-Zeile
+schon aufgeräumt wurde. Clients behandeln das wie jeden anderen `401`: Token
+lokal verwerfen und Login-Screen zeigen.
+
 **Fehler-Konventionen:**
 - Fehler-Body: `{ "error": "<machine_readable_code>" }`
 - Validierungsfehler (422): `{ "errors": [ "Fehlertext 1", "Fehlertext 2" ] }` (Texte sind menschenlesbar, deutsch)
@@ -58,8 +65,12 @@ Liefert einen Bearer-Token im Klartext. Der Klartext-Token wird **nur einmal** z
 |---|---|---|---|
 | `username` | string | ja | Anmeldename |
 | `password` | string | ja | Passwort im Klartext |
-| `client` | string | nein | Mandantenname (z. B. `"ASW"`); Default = Mandant `1` |
+| `client` | string | nein | Mandantenname (z. B. `"ASW"`). **Fehlt das Feld, wird stillschweigend Mandant `1` angenommen.** Ein unbekannter Name wird zu keinem Mandanten aufgelöst → Login scheitert mit `401 invalid_credentials` (kein eigener Fehlercode, um Mandanten-Existenz nicht zu leaken). |
 | `device_name` | string | nein | Beschriftung zur späteren Identifikation (z. B. `"iPhone von Oliver"`), max. 100 Zeichen |
+
+> **Mandant/Default:** Solange kein `client` gesendet wird, landen alle Logins auf Mandant `1`. Multi-Mandanten-Clients sollten den Namen daher immer explizit mitschicken. Nutzer eines **deaktivierten** Mandanten (`FRes_client.active=0`) erhalten kein Token (`403 account_locked`).
+>
+> **Token-Limit:** Pro Nutzer werden die **10 zuletzt erstellten** Tokens behalten; ältere werden bei jedem Login automatisch entfernt.
 
 **Beispiel-Request:**
 ```json
@@ -94,8 +105,8 @@ Liefert einen Bearer-Token im Klartext. Der Klartext-Token wird **nur einmal** z
 | Status | `error` | Bedeutung |
 |---|---|---|
 | 400 | `missing_credentials` | Username oder Passwort leer |
-| 401 | `invalid_credentials` | Falsche Zugangsdaten |
-| 403 | `account_locked` | User gelöscht oder gesperrt |
+| 401 | `invalid_credentials` | Falsche Zugangsdaten (auch bei unbekanntem `client`) |
+| 403 | `account_locked` | User gelöscht/gesperrt oder Mandant deaktiviert |
 | 403 | `account_not_allowed` | Andere Sicherheits-Vorprüfung fehlgeschlagen |
 | 429 | `rate_limited` | Mehr als 5 Versuche pro Minute von dieser IP |
 
