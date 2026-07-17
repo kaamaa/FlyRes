@@ -27,6 +27,7 @@ const airfieldId = ref(props.initial?.airfieldId || 0)
 const description = ref(props.initial?.description || '')
 
 const errors = ref([])
+const fiAck = ref(false) // MVP 1: Bestaetigung bei Platzhalter "Fluglehrer zuweisen"
 const busy = ref(false)
 const autoPick = ref(!props.bookingId) // neue Buchung (auch vorbefüllt): ersten freien Block automatisch vorwählen
 
@@ -123,6 +124,9 @@ function stateSegsToPct(segments) {
 
 const aircraftLabel = computed(() => { const a = props.md.aircraft.find((x) => x.id === aircraftId.value); return a ? a.callsign : '' })
 const fiLabel = computed(() => { const i = props.md.instructors.find((x) => x.id === fiId.value); return i ? i.name : '' })
+// MVP 1: ist der gewaehlte Fluglehrer der Platzhalter "Fluglehrer zuweisen"?
+const fiIsAssign = computed(() => { const i = props.md.instructors.find((x) => x.id === fiId.value); return !!(i && i.isAssign) })
+watch(fiId, () => { if (!fiIsAssign.value) fiAck.value = false })
 
 const availRows = computed(() => {
   if (!avail.value || !dayBounds.value) return []
@@ -135,13 +139,27 @@ const comboBusy = computed(() => (avail.value && dayBounds.value) ? segsToPct(bu
 const selMarker = computed(() => {
   if (!dayBounds.value || !startTime.value || !endTime.value) return null
   const s = toMin(startTime.value), e = toMin(endTime.value)
-  return e > s ? { left: pct(s), width: pct(e) - pct(s) } : null
-})
-const selFree = computed(() => {
-  if (!avail.value || !startTime.value || !endTime.value) return null
-  const s = toMin(startTime.value), e = toMin(endTime.value)
   if (e <= s) return null
-  return (avail.value.freeSlots || []).some((w) => toMin(w.start) <= s && toMin(w.end) >= e)
+  // auf die Balkenbreite (Tagesfenster) klammern, damit Ausserhalb-Zeiten nicht ueberlaufen
+  const left = Math.max(0, pct(s)), right = Math.min(100, pct(e))
+  return right > left ? { left, width: right - left } : null
+})
+// Liegt die Wunschzeit (teils) ausserhalb des buchbaren Tagesfensters?
+const selOutside = computed(() => {
+  if (!dayBounds.value || !startTime.value || !endTime.value) return false
+  const s = toMin(startTime.value), e = toMin(endTime.value)
+  if (e <= s) return false
+  return s < dayBounds.value.s || e > dayBounds.value.e
+})
+// Echte Ueberschneidung mit einer anderen Reservierung – NUR fuer den Teil INNERHALB
+// des Tagesfensters (ausserhalb = kein Konflikt, sondern nur ausserhalb der Zeit).
+const selBookingConflict = computed(() => {
+  if (!avail.value || !dayBounds.value || !startTime.value || !endTime.value) return false
+  const s = toMin(startTime.value), e = toMin(endTime.value)
+  if (e <= s) return false
+  const inS = Math.max(s, dayBounds.value.s), inE = Math.min(e, dayBounds.value.e)
+  if (inE <= inS) return false
+  return !(avail.value.freeSlots || []).some((w) => toMin(w.start) <= inS && toMin(w.end) >= inE)
 })
 const axisTicks = computed(() => {
   const b = dayBounds.value; if (!b) return []
@@ -206,17 +224,17 @@ const cmpAc = ref([])
 const cmpFiLoading = ref(false)
 const cmpAcLoading = ref(false)
 
+// EIN Batch-Request (/api/comparematrix) statt N Einzelabfragen – wie im Web.
 async function loadCmpFi() {
   if (!avail.value || !dayBounds.value) return
-  const b = dayBounds.value
   const list = props.md.instructors || []
   cmpFiLoading.value = true
   try {
-    const res = await Promise.all(list.map((i) =>
-      api.availability({ date: startDate.value, aircraft: 0, fi: i.id }).catch(() => null)))
-    const rows = list.map((i, idx) => ({
+    const r = await api.comparematrix('fi', startDate.value).catch(() => null)
+    const byId = {}; ((r && r.rows) || []).forEach((x) => { byId[x.id] = x })
+    const rows = list.map((i) => ({
       id: i.id, name: i.name,
-      states: res[idx]?.instructorSegments ? stateSegsToPct(res[idx].instructorSegments) : [],
+      states: byId[i.id]?.segments ? stateSegsToPct(byId[i.id].segments) : [],
       selected: i.id === fiId.value,
     }))
     const sel = rows.find((r) => r.selected)
@@ -232,11 +250,11 @@ async function loadCmpAc() {
   const list = props.md.aircraft || []
   cmpAcLoading.value = true
   try {
-    const res = await Promise.all(list.map((a) =>
-      api.availability({ date: startDate.value, aircraft: a.id, fi: 0 }).catch(() => null)))
-    const rows = list.map((a, idx) => ({
+    const r = await api.comparematrix('ac', startDate.value).catch(() => null)
+    const byId = {}; ((r && r.rows) || []).forEach((x) => { byId[x.id] = x })
+    const rows = list.map((a) => ({
       id: a.id, name: a.callsign,
-      busy: res[idx]?.aircraftFree ? segsToPct(busyIntervals(res[idx].aircraftFree, b.s, b.e)) : [],
+      busy: byId[a.id]?.free ? segsToPct(busyIntervals(byId[a.id].free, b.s, b.e)) : [],
       selected: a.id === aircraftId.value,
     }))
     const sel = rows.find((r) => r.selected)
@@ -255,11 +273,64 @@ watch(avail, () => {
   if (showCmpAc.value) loadCmpAc()
 })
 
+// ===== Nächste freie Termine (nextslots – identisch zum Web-Frontend) =====
+// Flugzeug ODER Fluglehrer ODER beides -> passende freie Fenster der naechsten
+// Tage. Klick auf eine Karte uebernimmt Datum + Uhrzeit. "Weitere anzeigen"
+// blaettert per Cursor. Zustaende: frei / auf Anfrage / nach Absprache.
+const slotsOpen = ref(true)
+const slots = ref([])
+const slotsDays = ref(14)
+const slotsMore = ref(false)
+const slotCursor = ref('')
+const slotsLoading = ref(false)
+let slotReq = 0
+const WANT = 8
+
+const slotMode = computed(() => {
+  const a = aircraftId.value, f = fiId.value
+  if (a && f) return '· Flugzeug & Fluglehrer'
+  if (a) return '· nur Flugzeug'
+  if (f) return '· nur Fluglehrer'
+  return ''
+})
+
+async function fetchSlots(more) {
+  const a = aircraftId.value || 0, f = fiId.value || 0
+  if (!a && !f) { slots.value = []; slotCursor.value = ''; slotsMore.value = false; return }
+  if (!slotsOpen.value) return
+  const my = ++slotReq
+  if (!more) { slots.value = []; slotCursor.value = ''; slotsLoading.value = true }
+  try {
+    const r = await api.nextslots(a, f, more ? slotCursor.value : '')
+    if (my !== slotReq) return
+    const list = (r && r.slots) || []
+    if (r && r.days) slotsDays.value = r.days
+    slots.value = more ? slots.value.concat(list) : list
+    slotsMore.value = list.length >= WANT
+    if (list.length) { const last = list[list.length - 1]; slotCursor.value = last.date + ' ' + last.start }
+  } catch {
+    if (my === slotReq && !more) slots.value = []
+  } finally {
+    if (my === slotReq) slotsLoading.value = false
+  }
+}
+watch([aircraftId, fiId], () => fetchSlots(false), { immediate: true })
+
+function toggleSlots() { slotsOpen.value = !slotsOpen.value; if (slotsOpen.value) fetchSlots(false) }
+function pickSlot(s) {
+  startDate.value = s.date; endDate.value = s.date
+  startTime.value = s.start; endTime.value = s.end
+  autoPick.value = false
+}
+function slotKindLabel(k) { return k === 'anfrage' ? 'auf Anfrage' : (k === 'absprache' ? 'nach Absprache' : 'frei') }
+function slotDur(min, kind) { return (Math.round(min / 6) / 10).toString().replace('.', ',') + ' Std ' + slotKindLabel(kind) }
+
 // ---- Speichern ----
 async function save() {
   if (busy.value) return
   errors.value = []
   if (!startTime.value || !endTime.value) { errors.value = ['Bitte Start- und Endzeit wählen']; return }
+  if (fiIsAssign.value && !fiAck.value) { errors.value = ['Fluglehrer zuweisen: Bitte bestätige, dass du dich selbst um einen Fluglehrer kümmerst.']; return }
   busy.value = true
   const body = {
     aircraftId: aircraftId.value,
@@ -311,7 +382,38 @@ defineExpose({ submit: save })
           <option v-for="i in md.instructors" :key="i.id" :value="i.id">{{ i.name }}</option>
         </select>
       </div>
+      <!-- MVP 1: Pflicht-Hinweis bei Platzhalter "Fluglehrer zuweisen" -->
+      <div v-if="fiIsAssign" class="fiwarn">
+        <div class="fw-hd"><span class="fw-ic">⚠️</span>
+          <div><b>Jetzt noch einen Fluglehrer finden.</b>
+            <p>„Fluglehrer offen" ist erst mal nur ein Platzhalter, damit du reservieren kannst. Für den Flug braucht es noch einen echten Fluglehrer – dabei helfen wir dir gern. Sieh unter „Verfügbarkeit Fluglehrer", wer Zeit hat.</p></div>
+        </div>
+        <label class="fw-chk"><input type="checkbox" v-model="fiAck"> Ich kümmere mich um einen Fluglehrer – und frage nach, wenn ich Hilfe brauche.</label>
+      </div>
     </div>
+
+    <!-- Nächste freie Termine (identisch zum Web-Frontend) -->
+    <template v-if="aircraftId || fiId">
+      <div class="slotsec" :class="{ open: slotsOpen }" @click="toggleSlots">
+        <span class="st">Nächste freie Termine <small>(nächste {{ slotsDays }} Tage)</small></span>
+        <span class="sub">{{ slotMode }}</span>
+        <span class="ar">{{ slotsOpen ? '▾' : '▸' }}</span>
+      </div>
+      <div v-if="slotsOpen" class="slotpanel">
+        <div v-if="slotsLoading" class="muted" style="margin:2px 0;">freie Termine werden gesucht…</div>
+        <template v-else>
+          <div v-if="!slots.length" class="muted" style="margin:2px 0;">In den nächsten {{ slotsDays }} Tagen kein freier Block gefunden.</div>
+          <div v-else class="slotcards">
+            <button v-for="(s, i) in slots" :key="i" type="button" class="slotcard" :class="'k-' + s.kind" @click="pickSlot(s)">
+              <span class="d">{{ dayShort(s.date) }}</span>
+              <span class="tm">{{ s.start }}–{{ s.end }}</span>
+              <span class="len">{{ slotDur(s.minutes, s.kind) }}</span>
+            </button>
+          </div>
+          <button v-if="slotsMore" type="button" class="slotmore" @click.stop="fetchSlots(true)">Weitere anzeigen</button>
+        </template>
+      </div>
+    </template>
 
     <!-- Zeitraum: 2 Zeilen – Datum & Uhrzeit als getrennte Felder -->
     <div class="ftitle"><Icon name="clock" /> Zeitraum</div>
@@ -359,13 +461,14 @@ defineExpose({ submit: save })
             <div class="av3lab strong">{{ availRows.length > 1 ? 'Beide frei' : 'Frei' }}</div>
             <div class="av3bar combo">
               <div v-for="(seg, i) in comboBusy" :key="i" class="av3seg" :style="{ left: seg.left + '%', width: seg.width + '%' }"></div>
-              <div v-if="selMarker" class="av3sel" :class="{ bad: selFree === false }" :style="{ left: selMarker.left + '%', width: selMarker.width + '%' }"></div>
+              <div v-if="selMarker" class="av3sel" :class="{ bad: selBookingConflict }" :style="{ left: selMarker.left + '%', width: selMarker.width + '%' }"></div>
             </div>
           </div>
           <div class="av3axis"><span v-for="(t, i) in axisTicks" :key="i">{{ t }}</span></div>
         </div>
-        <!-- Nur Warnung bei Konflikt; "frei" waere redundant zum ausgewaehlten Block oben. -->
-        <div v-if="selMarker && selFree === false" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+        <!-- Echter Konflikt (rot) getrennt von "ausserhalb der Tageszeit" (neutral). -->
+        <div v-if="selMarker && selBookingConflict" class="av3verdict bad">⚠ {{ startTime }}–{{ endTime }} ist (teils) belegt.</div>
+        <div v-else-if="selMarker && selOutside && avail" class="av3verdict info">⚠ {{ startTime }}–{{ endTime }} liegt (teils) außerhalb der buchbaren Tageszeit ({{ avail.dayStart }}–{{ avail.dayEnd }}). Reservieren ist trotzdem möglich.</div>
         <div v-if="fiId" class="av3legend">
           <span class="note">Fluglehrer: Vollton = direkt buchbar · gestreift = nach Absprache · grau = nicht buchbar</span>
           <span><i class="s-frei"></i>frei</span><span><i class="s-anfrageD"></i>auf Anfrage (buchbar)</span><span><i class="s-anfrageA"></i>n. Absprache (erst nach Freigabe FI buchbar)</span><span><i class="s-solo"></i>Solo</span><span><i class="s-ausgebucht"></i>verfügbar, aber ausgebucht</span><span><i class="s-nichtverfuegbar"></i>nicht verfügbar</span><span><i class="nb"></i>nicht buchbar</span>

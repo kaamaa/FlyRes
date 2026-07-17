@@ -40,3 +40,13 @@ yarn-error.log
 /phpunit.xml
 /.phpunit.cache/
 ###< phpunit/phpunit ###
+
+# Lokale Dev-/Test-Artefakte – NICHT ins (oeffentliche) Repo
+/dev-router.php
+/.vscode/
+/.claude/
+/tests/golive/
+
+# macOS Finder-Metadaten
+.DS_Store
+/env.local
