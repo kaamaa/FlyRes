@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\RateLimiter\RateLimiterFactory;
+use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
 use Symfony\Component\Security\Core\User\UserCheckerInterface;
 
 /**
@@ -31,7 +31,7 @@ class TokenController extends ApiController
         private readonly ApiTokenService $tokenService,
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly UserCheckerInterface $userChecker,
-        private readonly RateLimiterFactory $apiTokenLoginLimiter,
+        private readonly RateLimiterFactoryInterface $apiTokenLoginLimiter,
     ) {}
 
     public function create(Request $request): JsonResponse
