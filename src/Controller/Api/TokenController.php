@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 use App\Entities\Clients;
 use App\Entities\Users;
 use App\Entity\FresApiToken;
+use App\Entity\FresClient;
 use App\Repository\FresApiTokenRepository;
 use App\Security\BearerTokenAuthenticator;
 use App\Service\ApiTokenService;
@@ -63,6 +64,13 @@ class TokenController extends ApiController
             return $this->json(['error' => 'invalid_credentials'], Response::HTTP_UNAUTHORIZED);
         }
         if (Users::isDeleted($user) || Users::isLocked($user)) {
+            return $this->json(['error' => 'account_locked'], Response::HTTP_FORBIDDEN);
+        }
+        // Konsistent zum Per-Request-Gate im BearerTokenAuthenticator: kein Token
+        // fuer Nutzer eines deaktivierten Mandanten ausstellen (sonst wuerde der
+        // Login gelingen, aber jeder Folge-Request 401en).
+        $client = $this->em->getRepository(FresClient::class)->find($user->getClientid());
+        if ($client !== null && !$client->isActive()) {
             return $this->json(['error' => 'account_locked'], Response::HTTP_FORBIDDEN);
         }
         try {
