@@ -45,4 +45,36 @@ class FresApiTokenRepository extends ServiceEntityRepository
             ->setParameter('userId', $userId)
             ->execute();
     }
+
+    /**
+     * Begrenzt die Anzahl Tokens pro Nutzer: behaelt die $keep neuesten
+     * (nach created_at, dann id) und loescht aeltere. Nach jedem Login
+     * aufgerufen, damit sich nicht bei jeder Anmeldung eine weitere Zeile
+     * dauerhaft ansammelt.
+     *
+     * @return int Anzahl geloeschter Zeilen
+     */
+    public function pruneForUser(int $userId, int $keep): int
+    {
+        $keepIds = $this->createQueryBuilder('t')
+            ->select('t.id')
+            ->where('t.user = :userId')
+            ->setParameter('userId', $userId)
+            ->orderBy('t.createdAt', 'DESC')
+            ->addOrderBy('t.id', 'DESC')
+            ->setMaxResults($keep)
+            ->getQuery()
+            ->getSingleColumnResult();
+
+        // Limit noch nicht erreicht -> nichts zu loeschen.
+        if (count($keepIds) < $keep) {
+            return 0;
+        }
+
+        return (int) $this->getEntityManager()
+            ->createQuery('DELETE FROM App\Entity\FresApiToken t WHERE t.user = :userId AND t.id NOT IN (:keepIds)')
+            ->setParameter('userId', $userId)
+            ->setParameter('keepIds', $keepIds)
+            ->execute();
+    }
 }

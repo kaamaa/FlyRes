@@ -25,6 +25,10 @@ use Symfony\Component\Security\Core\User\UserCheckerInterface;
  */
 class TokenController extends ApiController
 {
+    /** Maximale Anzahl gleichzeitig aktiver Tokens (Geraete) pro Nutzer. */
+    private const MAX_TOKENS_PER_USER = 10;
+
+
     public function __construct(
         private readonly EntityManagerInterface $em,
         private readonly FresApiTokenRepository $tokens,
@@ -75,6 +79,9 @@ class TokenController extends ApiController
         $token->setUserAgent(substr((string) $request->headers->get('User-Agent', ''), 0, 255));
         $token->setLastIp($request->getClientIp());
         $this->tokens->save($token);
+
+        // Alte Tokens kappen, damit sich pro Nutzer nicht unbegrenzt Zeilen ansammeln.
+        $this->tokens->pruneForUser((int) $user->getId(), self::MAX_TOKENS_PER_USER);
 
         $roles = $user->getRoles();
         return $this->json([
