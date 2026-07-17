@@ -1,8 +1,11 @@
 <?php
 namespace App\Security;
 
+use App\Entities\Users;
+use App\Entity\FresClient;
 use App\Repository\FresApiTokenRepository;
 use App\Service\ApiTokenService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -30,6 +33,7 @@ class BearerTokenAuthenticator extends AbstractAuthenticator
     public function __construct(
         private readonly FresApiTokenRepository $tokens,
         private readonly ApiTokenService $tokenService,
+        private readonly EntityManagerInterface $em,
     ) {}
 
     public function supports(Request $request): ?bool
@@ -52,6 +56,21 @@ class BearerTokenAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('token_expired');
         }
 
+        $user = $apiToken->getUser();
+
+        // Sicherheits-Gate PRO REQUEST (nicht nur beim Login): Es gibt keinen
+        // UserChecker fuer FresAccounts, daher wuerden bereits ausgegebene Tokens
+        // sonst weiterlaufen, obwohl der Nutzer inzwischen gesperrt/geloescht wurde
+        // oder sein Mandant deaktiviert ist (Letzteres sperrt die Einzelnutzer nicht).
+        // Kein Audit-Write fuer abgewiesene Requests -> Pruefung vor dem save().
+        if (Users::isLocked($user) || Users::isDeleted($user)) {
+            throw new CustomUserMessageAuthenticationException('account_locked');
+        }
+        $client = $this->em->getRepository(FresClient::class)->find($user->getClientid());
+        if ($client !== null && !$client->isActive()) {
+            throw new CustomUserMessageAuthenticationException('account_locked');
+        }
+
         // Last-used + Audit-Update (synchron, 1 Write pro Request)
         $apiToken->setLastUsedAt(new \DateTime());
         $apiToken->setLastIp($request->getClientIp());
@@ -61,8 +80,6 @@ class BearerTokenAuthenticator extends AbstractAuthenticator
         // Markierung fuer ApiController::denyCrossOrigin() - Bearer-Requests
         // brauchen keinen Origin-Check (mobile App sendet keinen Origin-Header).
         $request->attributes->set(self::REQUEST_ATTR, $apiToken->getId());
-
-        $user = $apiToken->getUser();
         return new SelfValidatingPassport(new UserBadge(
             $user->getUserIdentifier(),
             fn () => $user
