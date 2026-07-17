@@ -7,6 +7,7 @@ use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entities\Clients;
 use App\Logging;
+use App\Entity\FresApiToken;
 
 class Users
 {
@@ -92,6 +93,12 @@ class Users
       
       $em->persist($user);
       $em->flush();
+
+      // FK-loses Schema: Tokens des Nutzers aktiv entfernen (ersetzt ON DELETE CASCADE).
+      // Bewusst best-effort/nicht-transaktional nach dem Flush: der Bearer-Authenticator
+      // weist geloeschte Nutzer ohnehin bei jedem Request ab, daher ist die Bereinigung
+      // Hygiene, kein Sicherheits-Gate. Nicht in die Soft-Delete-Transaktion ziehen.
+      $em->getRepository(FresApiToken::class)->deleteAllForUser((int) $id);
     }
   }
   
@@ -442,7 +449,17 @@ class Users
     if($user->getIslocked() == 1) return TRUE;
       else return FALSE;
   }
-  
+
+  /**
+   * True, wenn ein Nutzer beim Speichern von "entsperrt" auf "gesperrt"
+   * wechselt. Verhindert wiederholtes Aufraeumen bei jedem Save eines
+   * bereits gesperrten Nutzers.
+   */
+  public static function isNewlyLocked(bool $wasLocked, bool $isNowLocked): bool
+  {
+    return !$wasLocked && $isNowLocked;
+  }
+
   public static function isDeleted ($user)
   {
     if (strcmp($user->getStatus(), 'geloescht') == 0) return TRUE;

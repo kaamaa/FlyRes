@@ -50,6 +50,12 @@ abstract class ApiController extends AbstractController
      */
     protected function denyCrossOrigin(Request $request): ?JsonResponse
     {
+        // Bearer-authentifizierte Requests sind nicht browser-basiert und
+        // brauchen keinen Origin-/Referer-Check (mobile Apps senden keinen Origin).
+        if ($request->attributes->has(\App\Security\BearerTokenAuthenticator::REQUEST_ATTR)) {
+            return null;
+        }
+
         $expectedHost = $request->getHost();
         // Vertrauenswuerdige Fremd-Origins (z. B. Joomla-Einbettung) zusaetzlich erlauben.
         $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', (string) $this->getParameter('app.cors_allowed_origins')))));

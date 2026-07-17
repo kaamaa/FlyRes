@@ -99,3 +99,26 @@ api_booking_delete:
     methods: DELETE
     requirements:
         id: '\d+'
+
+# --- Bearer-Token fuer App-Login (NEU) ---
+api_tokens_create:
+    path: /api/tokens
+    controller: App\Controller\Api\TokenController::create
+    methods: POST
+
+api_tokens_revoke_current:
+    path: /api/tokens/current
+    controller: App\Controller\Api\TokenController::revokeCurrent
+    methods: DELETE
+
+api_tokens_list:
+    path: /api/tokens
+    controller: App\Controller\Api\TokenController::list
+    methods: GET
+
+api_tokens_revoke:
+    path: /api/tokens/{id}
+    controller: App\Controller\Api\TokenController::revoke
+    methods: DELETE
+    requirements:
+        id: '\d+'

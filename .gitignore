@@ -41,3 +41,6 @@
 # macOS Finder-Metadaten
 .DS_Store
 /env.local
+
+# Interne Planungs-/Design-Artefakte (nicht Teil des Repos)
+docs/superpowers/

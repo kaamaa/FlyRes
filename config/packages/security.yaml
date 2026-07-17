@@ -20,7 +20,8 @@ security:
               
         main:
             custom_authenticators:
-              - App\Security\LoginFormAuthenticator 
+              - App\Security\BearerTokenAuthenticator
+              - App\Security\LoginFormAuthenticator
       
             entry_point: App\Security\LoginFormAuthenticator   # <- WICHTIG
             lazy: true
@@ -71,10 +72,11 @@ security:
         - { path: ^/api/login, roles: PUBLIC_ACCESS }
         - { path: ^/api/logout, roles: PUBLIC_ACCESS }
         - { path: ^/api/verify, roles: PUBLIC_ACCESS }
+        - { path: ^/api/tokens$, methods: [POST], roles: PUBLIC_ACCESS }
         # iPhone-PWA JSON-API (M1): PUBLIC_ACCESS, damit die Controller bei fehlendem
         # Login sauberes JSON (401) statt eines HTML-Login-Redirects liefern koennen.
         # Die Zugriffspruefung (angemeldet + ROLE_PILOT) erfolgt in App\Controller\Api.
-        - { path: ^/api/(clients|me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability|comparematrix|nextslots|fleet)(/|$), roles: PUBLIC_ACCESS }
+        - { path: ^/api/(clients|me|aircraft|instructors|pilots|flightpurposes|airfields|bookings|availability|comparematrix|nextslots|fleet|tokens)(/|$), roles: PUBLIC_ACCESS }
         # Oeffentliche Flugvorbereitungs-Werkzeuge (ohne Login, z.B. Einbindung auf
         # der Homepage). Rechnung/Aufloesung laeuft server-seitig -> keine Rohdaten
         # werden ausgeliefert. CSRF-Origin-Schutz (CsrfOriginSubscriber) greift weiter.

@@ -40,7 +40,14 @@ framework:
 
     default_locale:  "%locale%"
     # trusted_hosts:   ~
-    # trusted_proxies: ~
+
+    # Apache-Reverse-Proxy laeuft auf demselben Host: nur localhost als Proxy
+    # vertrauen, damit X-Forwarded-For (die echte Client-IP) ausgewertet wird
+    # -- Grundlage fuers IP-basierte Rate-Limit von POST /api/tokens. Von aussen
+    # gesetzte X-Forwarded-*-Header werden NICHT vertraut (kein IP-Spoofing).
+    # Bei Wechsel auf einen vorgelagerten LB dessen IP/Range hier ergaenzen.
+    trusted_proxies: '127.0.0.1,::1'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port']
 
     fragments:       ~
     http_method_override: true    
