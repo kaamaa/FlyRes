@@ -467,6 +467,22 @@ body.fr-modern{margin:0;background:var(--fr-bg);
 .fr-dash-empty{color:var(--fr-mut);font-size:13px;padding:14px 4px;}
 .fr-dash-empty a{color:var(--fr-blue);font-weight:700;}
 
+/* --- Dashboard: Meine Verfuegbarkeit (nur Fluglehrer, rein lesend) --- */
+.fr-dash-chx{display:flex;align-items:center;gap:10px;}
+.fr-avli{display:flex;align-items:center;gap:11px;border:1px solid var(--fr-line);border-radius:10px;padding:9px 12px;margin-bottom:7px;background:#fff;}
+.fr-avli:last-of-type{margin-bottom:0;}
+.fr-avli .bar{width:5px;align-self:stretch;min-height:34px;border-radius:4px;background:#c4ccd6;flex:0 0 auto;}
+.fr-avli.frei .bar{background:#2e9e5b;}
+.fr-avli.anfrage .bar{background:#d79a1e;}
+.fr-avli.abw .bar{background:#9aa6b4;}
+.fr-avli .info{flex:1;min-width:0;}
+.fr-avli .info .t{font-weight:600;font-size:13.5px;}
+.fr-avli .info .m{color:var(--fr-mut);font-size:11.5px;margin-top:2px;}
+.fr-avli .tag{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px;white-space:nowrap;}
+.fr-avli .tag.frei{background:#e7f6ee;color:#1e7a44;}
+.fr-avli .tag.anfrage{background:#fdf3dd;color:#9a6c12;}
+.fr-avli .tag.abw{background:#eef1f4;color:#7a8698;}
+
 /* --- Anleitung --- */
 .fr-help{max-width:780px;}
 .fr-help-intro{font-size:13.5px;color:var(--fr-mut);margin:0 0 16px;}

@@ -30,18 +30,7 @@
     </div>
   </div>
 
-  {# Auto-Hoehe an ein einbettendes iframe melden (Joomla), schlank gehalten. #}
-  <script>
-  (function(){
-    if (window.parent === window) return;
-    var last = 0;
-    function send(){
-      var h = Math.ceil(document.documentElement.scrollHeight) + 8;
-      if (Math.abs(h - last) > 2){ last = h; window.parent.postMessage({ flyresHeight: h }, '*'); }
-    }
-    window.addEventListener('load', send);
-    if (window.ResizeObserver){ try { new ResizeObserver(send).observe(document.body); } catch(e){} }
-  })();
-  </script>
+  {# Hoehe an eine einbettende Seite melden - siehe modern/_iframeheight.html.twig #}
+  {{ include('modern/_iframeheight.html.twig') }}
 </body>
 </html>

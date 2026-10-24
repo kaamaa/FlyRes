@@ -1,0 +1,175 @@
+{# ===========================================================================
+   Hoehenmeldung an eine einbettende Seite (Joomla-Modul mod_flyresiframe).
+
+   Einbindung in den Layouts unmittelbar vor dem schliessenden body-Tag:
+       {{ include('modern/_iframeheight.html.twig') }}
+
+   Wirkt nur, wenn FlyRes in einem iframe laeuft - beim direkten Aufruf
+   passiert nichts. Eingebunden in:
+       templates/modern/layout.html.twig          /web mit Seitenleiste
+       templates/modern/public_layout.html.twig   Aufrufe mit ?embed=1
+       templates/login/modern.html.twig           Anmeldeseite
+
+   Hintergrund, Messwerte und die Fallstricke, die man nicht wieder einbauen
+   darf: DOKUMENTATION.md im Joomla-Modul mod_flyresiframe.
+   =========================================================================== #}
+<script>
+/* FlyRes -> Joomla: Hoehenmeldung an das eingebettete iframe  (Snippet v1.3.2)
+
+   WARUM DAS SO AUSSIEHT:
+   Das FlyRes-Layout fuellt die verfuegbare Hoehe (body hat min-height:100vh).
+   Im iframe ist "100vh" aber die HOEHE DES IFRAMES, nicht die des Browser-
+   fensters. Eine normale Messung meldet deshalb immer "so hoch wie der Rahmen
+   ohnehin schon ist" – der Wert bestaetigt sich selbst und kann nie wieder
+   kleiner werden. Genau daraus entsteht der Leerraum unter dem Inhalt, den es
+   beim direkten Aufruf von FlyRes nicht gibt.
+
+   Deshalb wird vor jeder Messung alles, was an der Fensterhoehe haengt, kurz
+   auf height:auto / min-height:0 gesetzt und danach exakt wiederhergestellt.
+   Sichtbar ist davon nichts – es liegt kein Repaint dazwischen.
+*/
+(function () {
+    if (window.parent === window) { return; }   // nur im iframe aktiv
+
+    var RESERVE  = 4;    // px gegen abschliessende Abstaende / Sub-Pixel
+    var MAXDEPTH = 5;    // Layout-Huellen liegen dicht an der Wurzel
+    var MAXNODES = 250;  // harte Obergrenze fuer den Scan
+    var last     = 0;
+    var timer    = null;
+    var lastRun  = 0;
+
+    // Elemente, deren Hoehe an der Viewport-Hoehe haengt (min-height:100vh,
+    // height:100% durchgereicht usw.). Im iframe ist das immer die iframe-Hoehe
+    // -> sie duerfen die Messung nicht bestimmen.
+    //
+    // Gescannt wird NUR bis MAXDEPTH Ebenen unter <body>: nur Layout-Huellen
+    // nahe der Wurzel koennen die Dokumenthoehe aufspannen. Das haelt die
+    // Messung auch bei sehr langen Seiten (tausende Listenzeilen) billig –
+    // ein Scan ueber alle Elemente waere dort bei 1 Messung/s spuerbar.
+    function stretchers() {
+        var vh = window.innerHeight, out = [], seen = 0;
+        if (!document.body) { return out; }
+
+        var level = [document.body];
+        for (var d = 0; d < MAXDEPTH && level.length && seen < MAXNODES; d++) {
+            var next = [];
+            for (var i = 0; i < level.length && seen < MAXNODES; i++) {
+                var el = level[i], cs;
+                seen++;
+                try { cs = window.getComputedStyle(el); } catch (e) { continue; }
+                if (!cs) { continue; }
+                var mh = parseFloat(cs.minHeight) || 0;
+                var h  = parseFloat(cs.height)    || 0;
+                if (Math.abs(mh - vh) <= 2 || (cs.height !== 'auto' && Math.abs(h - vh) <= 2)) {
+                    out.push(el);
+                }
+                var kids = el.children;
+                for (var k = 0; k < kids.length; k++) { next.push(kids[k]); }
+            }
+            level = next;
+        }
+        return out;
+    }
+
+    function measure() {
+        // Ohne Entdopplung wuerde ein zweites Vorkommen desselben Elements den
+        // bereits entstreckten Zustand als "Original" sichern und beim
+        // Zuruecksetzen festschreiben – der Rahmen waechst dann endlos.
+        var nodes = [];
+        [document.documentElement, document.body].concat(stretchers()).forEach(function (n) {
+            if (n && nodes.indexOf(n) === -1) { nodes.push(n); }
+        });
+
+        // 1) entstrecken
+        var saved = [];
+        nodes.forEach(function (n, i) {
+            if (!n) { saved[i] = null; return; }
+            saved[i] = n.getAttribute('style');
+            n.style.setProperty('height', 'auto', 'important');
+            n.style.setProperty('min-height', '0', 'important');
+        });
+
+        // 2) messen
+        // ACHTUNG: documentElement.scrollHeight/offsetHeight taugen hier NICHT –
+        // sie sind nach unten auf die Viewport-Hoehe geklemmt und liefern im
+        // iframe darum immer mindestens die iframe-Hoehe. Gemessen wird deshalb
+        // ueber body und dessen Kinder.
+        var b = document.body;
+        var off = window.pageYOffset || 0;
+        var v = 0;
+        if (b) {
+            v = Math.max(b.scrollHeight, b.offsetHeight, b.getBoundingClientRect().bottom + off);
+            var kids = b.children || [];
+            for (var k = 0; k < kids.length; k++) {
+                var cs2 = window.getComputedStyle(kids[k]);
+                // Offscreen-Menues (left:-9999px o. ae.) nicht mitzaehlen
+                if (cs2.position === 'absolute' || cs2.position === 'fixed') { continue; }
+                v = Math.max(v, kids[k].getBoundingClientRect().bottom + off);
+            }
+        }
+
+        // 3) exakt zuruecksetzen
+        nodes.forEach(function (n, i) {
+            if (!n) { return; }
+            if (!saved[i]) { n.removeAttribute('style'); }
+            else { n.setAttribute('style', saved[i]); }
+        });
+
+        return Math.ceil(v + RESERVE);
+    }
+
+    function run() {
+        timer = null;
+        var v = measure();
+        lastRun = Date.now();
+        if (v > 50 && Math.abs(v - last) > 2) {
+            last = v;
+            window.parent.postMessage({ flyresHeight: v }, '*');
+        }
+    }
+
+    function schedule() {
+        if (timer) { return; }
+        timer = setTimeout(run, 120);
+    }
+
+    // Ereignisse unmittelbar nach einer eigenen Messung stammen von unserem
+    // eigenen Entstrecken -> ignorieren, sonst Endlosschleife.
+    function onObserved() {
+        if (Date.now() - lastRun < 300) { return; }
+        schedule();
+    }
+
+    function init() {
+        schedule();
+
+        if (window.ResizeObserver) {
+            try {
+                var ro = new ResizeObserver(onObserved);
+                ro.observe(document.documentElement);
+                if (document.body) { ro.observe(document.body); }
+            } catch (e) {}
+        }
+        if (window.MutationObserver && document.body) {
+            try {
+                new MutationObserver(onObserved).observe(document.body, {
+                    childList: true, subtree: true, attributes: true, characterData: true
+                });
+            } catch (e) {}
+        }
+        var imgs = document.images || [];
+        for (var i = 0; i < imgs.length; i++) {
+            if (!imgs[i].complete) { imgs[i].addEventListener('load', schedule); }
+        }
+        setInterval(schedule, 1000);   // robuster Rueckfall
+    }
+
+    window.addEventListener('resize', schedule);
+    window.addEventListener('load', schedule);
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+})();
+</script>

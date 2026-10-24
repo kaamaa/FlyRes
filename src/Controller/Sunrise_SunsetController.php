@@ -226,15 +226,15 @@ class Sunrise_SunsetController extends AbstractController
       $sr = $info['sunrise'];   $ss = $info['sunset'];
       $dawn = $info['civil_twilight_begin']; $dusk = $info['civil_twilight_end'];
 
-      // Offset je nach gewaehlter Zeitform (beruecksichtigt Sommerzeit pro Tag).
-      if ($tzMode === 'utc') {
-        $off = 0;
-      } else {
-        $ref = clone $date;
-        $ref->setTimezone(new DateTimeZone($tzMode === 'mez' ? 'Europe/Berlin' : $timezone));
-        $off = $ref->getOffset();
-      }
-      $mod = static fn ($ts) => (int) (((($ts + $off) % 86400) + 86400) % 86400 / 60);
+      // Offset je nach gewaehlter Zeitform. WICHTIG: Der Offset wird je Ereignis-Zeitpunkt
+      // ($ts = SR/SS/Daemmerung) bestimmt, nicht einmal pauschal fuer den Tagesanker $date
+      // (00:00 UTC). Sonst greift die Sommerzeit-Umstellung (EU: 01:00 UTC) am Umstelltag zu
+      // spaet, weil der Tagesanker noch vor der Umstellung liegt, SR/SS aber schon danach.
+      $tzName = $tzMode === 'mez' ? 'Europe/Berlin' : $timezone;
+      $mod = static function ($ts) use ($tzMode, $tzName) {
+        $off = $tzMode === 'utc' ? 0 : (new \DateTime('@' . $ts))->setTimezone(new DateTimeZone($tzName))->getOffset();
+        return (int) ((($ts + $off) % 86400 + 86400) % 86400 / 60);
+      };
 
       $N = (int) $date->format('N'); // 1=Mo .. 7=So
       $row = [

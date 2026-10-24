@@ -479,23 +479,29 @@ class Bookings
     // Parallel Soloflüge von Flugschülern werden in Abhängigkeit der Einstellung $parallelSoloAndDual zugelassen
     // Rückgabe ist NULL, wenn der Fluglehrer frei ist, ansonsten eine Fehlermeldung
     
-    define('message1', 'Zu diesem Zeitpunkt hat der ausgewählte Fluglehrer bereits eine eigene Reservierung.');
-    define('message2', 'Zu diesem Zeitpunkt ist der ausgewählte Fluglehrer schon für einen anderen Schulflug gebucht.');
+    $message1 = 'Zu diesem Zeitpunkt hat der ausgewählte Fluglehrer bereits eine eigene Reservierung.';
+    $message2 = 'Zu diesem Zeitpunkt ist der ausgewählte Fluglehrer schon für einen anderen Schulflug gebucht.';
 
-    // Wenn parallele Solo- und Dualflüge zugelassen sind und der Flugschüler der neuen Buchung Solo fliegt, 
-    // dann gilt der Fluglehrer als frei
-    if ($parallelSoloAndDual && FlightPurposes::IsSolo($newBooking->getFlightpurposeid())) return NULL;
-    
     $bookings = NULL;
-    $fid = $newBooking->getFlightinstructor();  
+    $fid = $newBooking->getFlightinstructor();
     // Kein FI gesetzt -> kein Konflikt
     if (empty($fid)) return NULL;
-    
-    // Prüfen ob der Fluglehrer Doppelbuchungen zulässt
-    if (Users::AllowDoubleBookingsforFlightinstructor($em, $fid)) return Null;
-    
+
+    // Platzhalter-Account "Fluglehrer offen" (noch kein Lehrer zugeteilt) darf beliebig
+    // parallel gebucht werden – gleiche Namens-Heuristik wie fiOpen im BookingController
+    $fiUser = Users::GetUserObject2($em, $fid);
+    if ($fiUser && stripos(trim($fiUser->getFirstname() . ' ' . $fiUser->getLastname()), 'Fluglehrer') !== false) return NULL;
+
+    // Das Profil-Flag des Fluglehrers ("Parallel-Buchungen zu Solo-Schulungsflügen erlaubt")
+    // erlaubt nur parallele Solo-Schulungsflüge, keine generellen Doppelbuchungen
+    if (Users::AllowDoubleBookingsforFlightinstructor($em, $fid)) $parallelSoloAndDual = true;
+
+    // Wenn parallele Solo- und Dualflüge zugelassen sind und der Flugschüler der neuen Buchung Solo fliegt,
+    // dann gilt der Fluglehrer als frei
+    if ($parallelSoloAndDual && FlightPurposes::IsSolo($newBooking->getFlightpurposeid())) return NULL;
+
     // Prüfen ob der Fluglehrer eine eigene Reservierung hat
-    if (Bookings::HasFlightinstructorOwnBooking($em, $newBooking)) return message1;
+    if (Bookings::HasFlightinstructorOwnBooking($em, $newBooking)) return $message1;
     
     // Doctrine kann nicht mit Null umgehen, daher den Wert 0 setzen
     $id = $newBooking->getId();
@@ -540,7 +546,7 @@ class Bookings
     $query->setCacheable(true);
     $bookings = $query->getResult();
     //var_dump($bookings);
-    if ($bookings) return message2;
+    if ($bookings) return $message2;
      
     return null;
   }

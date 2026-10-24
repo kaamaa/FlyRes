@@ -98,6 +98,22 @@
         <div class="fr-dash-empty">Keine anstehenden Schulungstermine.</div>
       {% endfor %}
     </section>
+
+    {# Meine Verfügbarkeit (nur Fluglehrer, rein lesend) #}
+    <section class="fr-dash-card">
+      <div class="fr-dash-ch">
+        <h3>Meine Verfügbarkeit</h3>
+        <span class="fr-dash-chx"><span class="fr-roletag fi">Fluglehrer</span><a href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">alle ›</a></span>
+      </div>
+      {% for a in fiAvail %}
+        <div class="fr-avli {{ a.st }}"><span class="bar"></span>
+          <div class="info"><div class="t">{{ a.t }}</div><div class="m">{{ a.m }}</div></div>
+          <span class="tag {{ a.st }}">{{ a.tag }}</span>
+        </div>
+      {% else %}
+        <div class="fr-dash-empty">Du hast aktuell keine Freigaben eingetragen. <a href="{{ path('modern_fiweek', {tab: 'meine', view: 'liste'}) }}">Zur Verfügbarkeit ›</a></div>
+      {% endfor %}
+    </section>
     {% endif %}
 
     {# Pinnwand #}

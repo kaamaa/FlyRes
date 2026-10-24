@@ -129,6 +129,39 @@ class ModernPreviewController extends AbstractController
              ->setMaxResults(5)->getResult());
         }
 
+        // --- Meine Verfuegbarkeit (nur Fluglehrer, rein lesend; Pflege auf der Verfuegbarkeits-Seite) ---
+        $fiAvail = [];
+        if ($isFi) {
+            $availRows = FIAvailability::GetAvailabilitiesForRange(
+                $em, $clientid, $now, (clone $today)->modify('+1 year'), $myId
+            );
+            foreach ($availRows as $a) {
+                if (count($fiAvail) >= 4) { break; }
+                $typObj  = $a->getTyp();
+                $typId   = is_object($typObj) ? (int) $typObj->getId() : (int) $typObj;
+                $st      = ($typId === 2) ? 'anfrage' : (($typId === 3) ? 'abw' : 'frei');
+                $start   = $a->getItemstart();
+                $stop    = $a->getItemstop();
+                $sameDay = $start->format('Y-m-d') === $stop->format('Y-m-d');
+                if ($sameDay) {
+                    $day = ($start->format('Y-m-d') === $today->format('Y-m-d'))
+                         ? 'Heute' : $wd[(int) $start->format('N')] . ' ' . $start->format('d.m.');
+                    $t = $day . ' · ' . $start->format('H:i') . ' – ' . $stop->format('H:i');
+                } else {
+                    $t = $wd[(int) $start->format('N')] . ' ' . $start->format('d.m.') . ' ' . $start->format('H:i')
+                       . ' – ' . $wd[(int) $stop->format('N')] . ' ' . $stop->format('d.m.') . ' ' . $stop->format('H:i');
+                }
+                $comment = trim((string) $a->getComment());
+                $fiAvail[] = [
+                    'st'  => $st,
+                    't'   => $t,
+                    'm'   => $comment !== '' ? $comment
+                             : ($st === 'frei' ? 'direkt buchbar' : ($st === 'anfrage' ? 'bitte kurz anfragen' : 'als abwesend eingetragen')),
+                    'tag' => $st === 'frei' ? 'frei' : ($st === 'anfrage' ? 'auf Anfrage' : 'abwesend'),
+                ];
+            }
+        }
+
         // --- Meine Lizenzen (Ampel + Warnung) ---
         $kpi = ['green' => 0, 'amber' => 0, 'red' => 0, 'inf' => 0];
         $myLicences = [];
@@ -409,6 +442,7 @@ class ModernPreviewController extends AbstractController
             'notes'      => $notes,
             'isFi'       => $isFi,
             'fiBookings' => $fiBookings,
+            'fiAvail'    => $fiAvail,
             'isAdmin'    => $isAdmin,
             'adminLic'   => $adminLic,
             'stats'      => $stats,
