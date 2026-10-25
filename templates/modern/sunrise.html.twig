@@ -17,7 +17,7 @@
   .srss-title{font-weight:800;color:var(--fr-ink);font-size:16px;margin:4px 0 1px;}
   .srss-sub{color:var(--fr-mut);font-size:12.5px;margin:0 0 14px;}
 
-  .srss-axis,.srss-row{display:grid;grid-template-columns:60px 1fr 188px;align-items:center;gap:10px;}
+  .srss-axis,.srss-row{display:grid;grid-template-columns:60px 1fr 210px;align-items:center;gap:10px;}
   .srss-axis{color:var(--fr-mut);font-size:11px;margin-bottom:3px;}
   .srss-ticks{position:relative;height:14px;}
   .srss-ticks span{position:absolute;transform:translateX(-50%);}
@@ -88,7 +88,7 @@
       <div class="srss-times">
         {% if d.polar == 'day' %}<span class="srss-polar">Polartag (durchgehend hell)</span>
         {% elseif d.polar == 'night' %}<span class="srss-polar">Polarnacht (durchgehend dunkel)</span>
-        {% elseif d.noSunrise is defined %}<span class="srss-polar">Nur Dämmerung, kein Sonnenaufgang</span>
+        {% elseif d.noSunrise is defined %}<span class="srss-polar">Dämmerung, kein Sonnenaufgang</span>
         {% else %}🌅 {{ d.srStr }} · 🌇 {{ d.ssStr }} · <b>{{ d.lenStr }}</b> h{% endif %}
       </div>
     </div>
