@@ -88,6 +88,7 @@
       <div class="srss-times">
         {% if d.polar == 'day' %}<span class="srss-polar">Polartag (durchgehend hell)</span>
         {% elseif d.polar == 'night' %}<span class="srss-polar">Polarnacht (durchgehend dunkel)</span>
+        {% elseif d.noSunrise is defined %}<span class="srss-polar">Nur Dämmerung, kein Sonnenaufgang</span>
         {% else %}🌅 {{ d.srStr }} · 🌇 {{ d.ssStr }} · <b>{{ d.lenStr }}</b> h{% endif %}
       </div>
     </div>

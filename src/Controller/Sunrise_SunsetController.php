@@ -329,7 +329,7 @@ class Sunrise_SunsetController extends AbstractController
       return [
         'polar' => null,
         'dawnMin' => $dawnMin, 'srMin' => $duskMin, 'ssMin' => $duskMin, 'duskMin' => $duskMin,
-        'srStr' => '–', 'ssStr' => '–', 'lenStr' => '00:00',
+        'noSunrise' => true,
       ];
     }
 
