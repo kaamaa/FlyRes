@@ -109,7 +109,7 @@ class Sunrise_SunsetController extends AbstractController
   }
   
 
-  public function convertToDecimal($s_coordinate) 
+  public function convertToDecimal($s_coordinate)
   {
     // Konvertiert die Koordinaten aus der Datenbank in das Format das in den Berechungen verwendet werden kann
     // Machnmal befinden sich "/" in den Koordinaten
@@ -117,23 +117,24 @@ class Sunrise_SunsetController extends AbstractController
     // Extrahiert das Himmelsrichtungszeichen
     $direction = substr($coordinate, 0, 1);
 
-    // Extrahiert die Grad-, Minuten- und Sekundenkomponenten
-    $length = strlen($coordinate);
-    if ($length == 10) {
-        // Längengerade (Longitude) haben in der Datenbank eine Länge von 10 Zeichen
-        $degrees = substr($coordinate, 1, 3);
-        $minutes = substr($coordinate, 4, 2);
-        $seconds = substr($coordinate, 6, 2) . '.' . substr($coordinate, 8, 2);
-        
-    } else { // length == 9
-        // Breitengerade (Latitude) haben in der Datebank eine Länge von 9 Zeichen
-        $degrees = substr($coordinate, 1, 2);
-        $minutes = substr($coordinate, 3, 2);
-        $seconds = substr($coordinate, 5, 2) . '.' . substr($coordinate, 7, 2);
+    // Der Grad-Anteil ist NICHT fest auf 2 (Breite) bzw. 3 Ziffern (Laenge) gepolstert -
+    // z.B. deutsche Laengengrade wie "E13073500" (13,126 Grad) sind nur 9 statt 10 Zeichen
+    // lang, weil die 3 Grad-Stellen nicht mit einer fuehrenden Null aufgefuellt wurden.
+    // Die bisherige feste Laengenpruefung (==10 Laenge, sonst Breite mit 2 Grad-Stellen)
+    // parste solche Faelle nur zufaellig richtig, wenn die Grad-Zahl genau 2-stellig war.
+    // Robuster: von hinten parsen, da Minuten/Sekunden/Hundertstel immer je 2 Ziffern sind,
+    // und alles davor (beliebig lang) die Gradzahl ist.
+    $digits = substr($coordinate, 1);
+    if (strlen($digits) < 7 || !ctype_digit($digits)) {
+        return null;
     }
+    $hundredths = substr($digits, -2);
+    $seconds    = substr($digits, -4, 2);
+    $minutes    = substr($digits, -6, 2);
+    $degrees    = substr($digits, 0, -6);
 
     // Konvertiert die Komponenten in Dezimalgrad
-    $decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
+    $decimal = (float) $degrees + ((float) $minutes / 60) + ((float) ($seconds . '.' . $hundredths) / 3600);
 
     // Wendet das Vorzeichen entsprechend der Himmelsrichtung an
     if ($direction == 'S' || $direction == 'W') {
