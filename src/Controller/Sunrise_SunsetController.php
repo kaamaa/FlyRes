@@ -14,6 +14,7 @@ use App\Entity\ToolsCountry;
 use App\Entities\Users;
 use App\Repository\ToolsCountryRepository;
 use App\Repository\ToolsAirportRepository;
+use App\Repository\ToolsAirportTimezoneMapRepository;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
@@ -355,7 +356,14 @@ class Sunrise_SunsetController extends AbstractController
     
       $decimalLatitude = $this->convertToDecimal($firstElement->getsLat());
       $decimalLongitude = $this->convertToDecimal($firstElement->getsLong());
-      $timezone = ToolsCountryRepository::GetTimeZone($em, $firstElement->getCountry());
+      // Laender mit mehreren Zeitzonen (USA, Russland, Kanada, Australien, ...) haben in
+      // tools_countries nur EINE Zeitzone hinterlegt - das ist fuer die meisten Flugplaetze
+      // dort falsch. tools_airports.TIME traegt pro Flugplatz bereits den richtigen
+      // Offset (z.B. "UTC-6(-5DT)"); ueber tools_airport_timezone_map wird daraus die
+      // echte IANA-Zeitzone aufgeloest. Nur wenn das fehlschlaegt (TIME leer oder Muster
+      // noch nicht erfasst), faellt es auf die eine Zeitzone des Landes zurueck.
+      $timezone = ToolsAirportTimezoneMapRepository::GetTimezoneForAirport($em, $firstElement->getCountry(), $firstElement->getTime())
+        ?? ToolsCountryRepository::GetTimeZone($em, $firstElement->getCountry());
       $days = $this->generateMonthlyData($dateTime, $decimalLatitude, $decimalLongitude, $timezone, $tzMode);
       $title = $airport . ' · ' . $dateTime->format('m.Y');
       $tzLabel = $tzMode === 'utc' ? 'UTC' : ($tzMode === 'mez' ? 'MEZ/MESZ (Deutschland)' : 'Ortszeit ' . $timezone);
