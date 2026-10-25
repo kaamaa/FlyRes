@@ -466,7 +466,10 @@ class Sunrise_SunsetController extends AbstractController
 
     $monthChoices = array_combine($t['months'], range(1, 12));
     $tzChoices    = [$t['tz_local'] => 'local', $t['tz_mez'] => 'mez', $t['tz_utc'] => 'utc'];
-    $langChoices  = ['Deutsch' => 'de', 'English' => 'en'];
+    // Flaggen-Emoji statt ausgeschriebenem Sprachnamen, damit das Auswahlfeld (auch
+    // geschlossen/zusammengeklappt zeigt ein <select> immer die aktuell gewaehlte Option)
+    // weniger Platz braucht und die aktive Sprache auf einen Blick erkennbar ist.
+    $langChoices  = ['🇩🇪 DE' => 'de', '🇬🇧 EN' => 'en'];
 
     $form = $this->createFormBuilder()
     ->add('Country_Name', ChoiceType::class, array ('choices' => $countrylist,
