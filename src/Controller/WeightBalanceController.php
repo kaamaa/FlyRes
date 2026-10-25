@@ -27,6 +27,48 @@ class WeightBalanceController extends AbstractController
         return is_array($data) ? $data : [];
     }
 
+    /**
+     * Oberflaechentexte fuer beide Sprachen. Diese Seite rechnet clientseitig (kein
+     * Form-Submit/Reload bei Eingabeaenderung), die Sprachumschaltung passiert daher wie
+     * beim Flugplanungs-Tool komplett im Browser per data-i18n-Attributen + diesem als
+     * JSON mitgelieferten Woerterbuch - nur die serverseitig berechneten Warnungen/
+     * Achsenbeschriftungen (siehe WbCalc::strings()) bekommen die Sprache explizit als
+     * Request-Parameter mitgeschickt, weil die aus der Rechnung selbst stammen.
+     */
+    private function wbTranslations(): array
+    {
+        return [
+            'de' => [
+                'title' => 'Weight & Balance', 'tab' => 'Weight & Balance',
+                'print' => '🖨 Als PDF / drucken', 'print_short' => 'Drucken',
+                'ac_type' => 'Flugzeugmuster', 'ac_choose' => '— Muster wählen —',
+                'empty_mass' => 'Leermasse', 'empty_arm' => 'Leerarm', 'trip_fuel' => 'Trip-Fuel',
+                'units' => 'Einheiten', 'metric' => 'metrisch', 'imperial' => 'imperial',
+                'th_station' => 'Station', 'th_input' => 'Eingabe', 'th_mass' => 'Masse',
+                'row_takeoff' => 'Start (Take-off)', 'max_short' => 'max',
+                'kpi_takeoff_mtom' => 'Startmasse · MTOM', 'kpi_cg_to' => 'Schwerpunkt Start', 'kpi_ldg_mass' => 'Landemasse',
+                'verdict_ok' => '✓ Innerhalb der Grenzen', 'verdict_bad' => '✕ Grenzen verletzt',
+                'source' => 'Quelle', 'as_of' => 'Stand',
+                'note' => '<b>Achtung:</b> Prototyp. Für den Betrieb das verifizierte AFM/Wägeblatt des konkreten Flugzeugs verwenden – Leermasse/-arm oben anpassen. Benutzung auf eigene Gefahr.',
+                'empty_hint' => 'Bitte oben ein Flugzeugmuster wählen.',
+            ],
+            'en' => [
+                'title' => 'Weight & Balance', 'tab' => 'Weight & Balance',
+                'print' => '🖨 Save as PDF / print', 'print_short' => 'Print',
+                'ac_type' => 'Aircraft type', 'ac_choose' => '— choose type —',
+                'empty_mass' => 'Empty mass', 'empty_arm' => 'Empty arm', 'trip_fuel' => 'Trip fuel',
+                'units' => 'Units', 'metric' => 'metric', 'imperial' => 'imperial',
+                'th_station' => 'Station', 'th_input' => 'Input', 'th_mass' => 'Mass',
+                'row_takeoff' => 'Take-off', 'max_short' => 'max',
+                'kpi_takeoff_mtom' => 'Take-off mass · MTOM', 'kpi_cg_to' => 'CG take-off', 'kpi_ldg_mass' => 'Landing mass',
+                'verdict_ok' => '✓ Within limits', 'verdict_bad' => '✕ Limits exceeded',
+                'source' => 'Source', 'as_of' => 'As of',
+                'note' => '<b>Note:</b> Prototype. For actual operations, use the verified AFM/weighing sheet of the specific aircraft – adjust empty mass/arm above. Use at your own risk.',
+                'empty_hint' => 'Please select an aircraft type above.',
+            ],
+        ];
+    }
+
     public function index(): Response
     {
         // Oeffentlich zugaenglich (siehe security.yaml) – kein Login noetig.
@@ -39,7 +81,7 @@ class WeightBalanceController extends AbstractController
         }
         usort($list, static fn ($a, $b) => strcasecmp($a['label'], $b['label']));
 
-        return $this->render('modern/weightbalance.html.twig', ['aircraft' => $list]);
+        return $this->render('modern/weightbalance.html.twig', ['aircraft' => $list, 'langDict' => $this->wbTranslations()]);
     }
 
     /**
@@ -69,8 +111,9 @@ class WeightBalanceController extends AbstractController
 
         $loadRaw = $request->request->all('load');
         $load = is_array($loadRaw) ? array_map(static fn ($v) => (float) $v, $loadRaw) : [];
+        $lang = $request->request->get('lang') === 'en' ? 'en' : 'de';
 
-        $result = WbCalc::calculate($type, $em, $ea, $trip, $load, $units);
+        $result = WbCalc::calculate($type, $em, $ea, $trip, $load, $units, $lang);
         // Default-Leerwerte (metrisch gespeichert) in die gewaehlte Einheit umrechnen.
         $dm = $type['defaultEmptyMass'] ?? null;
         $da = $type['defaultEmptyArm'] ?? null;

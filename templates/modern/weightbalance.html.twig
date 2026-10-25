@@ -6,7 +6,11 @@
 {% block pagehead %}{% endblock %}
 
 {% block topactions %}
-  <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF / drucken</button>
+  <span class="wb-lang no-print" id="wb-lang">
+    <button type="button" class="on" data-lang="de" title="Deutsch">🇩🇪</button>
+    <button type="button" data-lang="en" title="English">🇬🇧</button>
+  </span>
+  <button type="button" class="fr-btn ghost" onclick="window.print()" data-i18n="print">🖨 Als PDF / drucken</button>
 {% endblock %}
 
 {% block content %}
@@ -21,6 +25,9 @@
   .wb-top label{display:block;font-size:10.5px;font-weight:800;color:var(--fr-blue-d);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;}
   .wb-top select,.wb-top input{height:38px;padding:0 10px;border:1px solid #c9d3e0;border-radius:9px;font:inherit;font-size:13px;background:#fff;}
   .wb-top select{min-width:220px;} .wb-top input{width:92px;}
+  .wb-lang{display:inline-flex;gap:4px;margin-right:8px;}
+  .wb-lang button{border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:7px;width:34px;height:34px;font-size:15px;line-height:1;cursor:pointer;opacity:.5;vertical-align:middle;}
+  .wb-lang button.on{opacity:1;border-color:var(--fr-blue);}
   .seg{display:inline-flex;align-items:center;height:38px;padding:3px;gap:2px;background:#eef2f6;border-radius:9px;}
   .seg button{border:none;background:none;height:32px;padding:0 12px;border-radius:7px;font:inherit;font-weight:700;color:var(--fr-mut);cursor:pointer;}
   .seg button.on{background:#fff;color:var(--fr-blue-d);box-shadow:0 1px 3px rgba(0,0,0,.1);}
@@ -76,22 +83,22 @@
 
 <div class="wb-top{% if fr_full %} fr-phead{% endif %}">
   <div>
-    <label>Flugzeugmuster ({{ aircraft|length }})</label>
+    <label data-i18n="ac_type">Flugzeugmuster ({{ aircraft|length }})</label>
     <select id="wb-ac">
-      <option value="">— Muster wählen —</option>
+      <option value="" data-i18n="ac_choose">— Muster wählen —</option>
       {% for a in aircraft %}<option value="{{ a.id }}">{{ a.label }}</option>{% endfor %}
     </select>
   </div>
-  <div><label>Leermasse (<span id="u-em">kg</span>)</label><input type="number" id="wb-em" step="0.1"></div>
-  <div><label>Leerarm (<span id="u-ea">m</span>)</label><input type="number" id="wb-ea" step="0.001"></div>
-  <div><label>Trip-Fuel (<span id="u-trip">l</span>)</label><input type="number" id="wb-trip" step="1" value="0"></div>
+  <div><label><span data-i18n="empty_mass">Leermasse</span> (<span id="u-em">kg</span>)</label><input type="number" id="wb-em" step="0.1"></div>
+  <div><label><span data-i18n="empty_arm">Leerarm</span> (<span id="u-ea">m</span>)</label><input type="number" id="wb-ea" step="0.001"></div>
+  <div><label><span data-i18n="trip_fuel">Trip-Fuel</span> (<span id="u-trip">l</span>)</label><input type="number" id="wb-trip" step="1" value="0"></div>
   <div>
-    <label>Einheiten</label>
-    <span class="seg" id="wb-units"><button type="button" data-u="metric" class="on">metrisch</button><button type="button" data-u="imperial">imperial</button></span>
+    <label data-i18n="units">Einheiten</label>
+    <span class="seg" id="wb-units"><button type="button" data-u="metric" class="on" data-i18n="metric">metrisch</button><button type="button" data-u="imperial" data-i18n="imperial">imperial</button></span>
   </div>
 </div>
 {% if fr_full %}
-  <div class="fr-pactions"><button type="button" class="fr-btn" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
+  <div class="fr-pactions"><button type="button" class="fr-btn" onclick="window.print()">{{ icon.ic('printer') }} <span data-i18n="print_short">Drucken</span></button></div>
   <div class="fr-pbody">
 {% endif %}
 
@@ -109,20 +116,52 @@
       <ul class="wb-warn" id="wb-warn"></ul>
     </div>
   </div>
-  <div class="wb-note"><b>Achtung:</b> Prototyp. Für den Betrieb das verifizierte AFM/Wägeblatt des konkreten Flugzeugs verwenden – Leermasse/-arm oben anpassen. Benutzung auf eigene Gefahr.</div>
+  <div class="wb-note" id="wb-note" data-i18n-html="note"><b>Achtung:</b> Prototyp. Für den Betrieb das verifizierte AFM/Wägeblatt des konkreten Flugzeugs verwenden – Leermasse/-arm oben anpassen. Benutzung auf eigene Gefahr.</div>
 </div>
-<div id="wb-empty" class="wb-note">Bitte oben ein Flugzeugmuster wählen.</div>
+<div id="wb-empty" class="wb-note" data-i18n="empty_hint">Bitte oben ein Flugzeugmuster wählen.</div>
 
 <script>
 (function () {
+  var LANG_DICT = {{ langDict|json_encode|raw }};
+  var lang = (function () { try { var s = localStorage.getItem('fr_wb_lang'); return (s === 'en') ? 'en' : 'de'; } catch (e) { return 'de'; } })();
+  function T(key) { return (LANG_DICT[lang] && LANG_DICT[lang][key]) || (LANG_DICT.de && LANG_DICT.de[key]) || key; }
+
   var CALC_URL = '{{ path('modern_wb_calc') }}';
   var acSel = document.getElementById('wb-ac');
   var emEl = document.getElementById('wb-em'), eaEl = document.getElementById('wb-ea'), tripEl = document.getElementById('wb-trip');
   var unitSys = 'metric', timer = null;
   var C = { kgPerLb: 0.45359237, lbPerKg: 2.20462262, mPerIn: 0.0254, inPerM: 39.3700787, lPerGal: 3.785411784, galPerL: 0.264172 };
+  var lastStations = null;   // fuer Tabellen-Neuaufbau bei Sprachwechsel (Spaltenkoepfe)
+
+  function applyStaticLang() {
+    document.title = T('title') + ' · FlyRes';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = T(el.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { el.innerHTML = T(el.getAttribute('data-i18n-html')); });
+    document.querySelectorAll('.wb-lang button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-lang') === lang); });
+  }
+  function setLang(newLang) {
+    if (newLang !== 'de' && newLang !== 'en') { return; }
+    lang = newLang;
+    try { localStorage.setItem('fr_wb_lang', lang); } catch (e) {}
+    // Eingegebene Stationswerte sichern, denn buildTable() (neue Spaltenkoepfe) setzt die
+    // Eingabefelder sonst auf 0 zurueck.
+    var saved = {};
+    document.querySelectorAll('#wb-load input.st').forEach(function (el) { saved[el.getAttribute('data-id')] = el.value; });
+    applyStaticLang();
+    if (lastStations) {
+      buildTable(lastStations);
+      document.querySelectorAll('#wb-load input.st').forEach(function (el) {
+        var id = el.getAttribute('data-id');
+        if (saved[id] !== undefined) { el.value = saved[id]; }
+      });
+    }
+    if (acSel.value) { post(true).then(function (r) { if (r) render(r); }); }   // Warnungen/Achsen neu vom Server (sprachabhaengig)
+  }
+  document.querySelectorAll('.wb-lang button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); }); });
+  applyStaticLang();
 
   function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function n1(x) { return (Math.round(x * 10) / 10).toLocaleString('de-DE'); }
+  function n1(x) { return (Math.round(x * 10) / 10).toLocaleString(lang === 'en' ? 'en-GB' : 'de-DE'); }
 
   function toMetric(v, kind, sys) { if (sys !== 'imperial') return v; return kind === 'mass' ? v * C.kgPerLb : kind === 'arm' ? v * C.mPerIn : kind === 'vol' ? v * C.lPerGal : v; }
   function fromMetric(m, kind, sys) { if (sys !== 'imperial') return m; return kind === 'mass' ? m * C.lbPerKg : kind === 'arm' ? m * C.inPerM : kind === 'vol' ? m * C.galPerL : m; }
@@ -130,7 +169,7 @@
 
   async function post(withLoad) {
     var b = new URLSearchParams();
-    b.append('id', acSel.value); b.append('units', unitSys);
+    b.append('id', acSel.value); b.append('units', unitSys); b.append('lang', lang);
     b.append('emptyMass', emEl.value); b.append('emptyArm', eaEl.value); b.append('tripFuel', tripEl.value);
     if (withLoad) { document.querySelectorAll('#wb-load input.st').forEach(function (el) { b.append('load[' + el.getAttribute('data-id') + ']', el.value || '0'); }); }
     var res = await fetch(CALC_URL, { method: 'POST', body: b, credentials: 'same-origin' });
@@ -138,14 +177,15 @@
   }
 
   function buildTable(stations) {
-    var h = '<tr><th class="l">Station</th><th>Eingabe</th><th>Masse</th></tr>';
+    lastStations = stations;
+    var h = '<tr><th class="l">' + esc(T('th_station')) + '</th><th>' + esc(T('th_input')) + '</th><th>' + esc(T('th_mass')) + '</th></tr>';
     for (var i = 0; i < stations.length; i++) {
       var s = stations[i];
       h += '<tr><td class="l"><b>' + esc(s.label) + '</b><small class="mx-' + i + '"></small></td>' +
            '<td><input class="st" type="number" step="0.1" min="0" data-id="' + esc(s.id) + '" data-kind="' + esc(s.kind) + '" value="0"> <span class="u-' + i + '"></span></td>' +
            '<td class="m-' + i + '"></td></tr>';
     }
-    h += '<tr class="sum"><td class="l">Start (Take-off)</td><td></td><td id="wb-tom"></td></tr>';
+    h += '<tr class="sum"><td class="l">' + esc(T('row_takeoff')) + '</td><td></td><td id="wb-tom"></td></tr>';
     document.getElementById('wb-load').innerHTML = h;
     document.querySelectorAll('#wb-load input.st').forEach(function (el) { el.addEventListener('input', schedule); });
   }
@@ -160,25 +200,25 @@
       var s = r.stations[i];
       var mc = document.querySelector('#wb-load .m-' + i); if (mc) mc.textContent = n1(s.mass) + ' ' + r.units.mass;
       var uc = document.querySelector('#wb-load .u-' + i); if (uc) uc.textContent = s.unit;
-      var xc = document.querySelector('#wb-load .mx-' + i); if (xc) xc.innerHTML = s.max != null ? ('<br>max ' + n1(s.max) + ' ' + s.unit) : '';
+      var xc = document.querySelector('#wb-load .mx-' + i); if (xc) xc.innerHTML = s.max != null ? ('<br>' + esc(T('max_short')) + ' ' + n1(s.max) + ' ' + s.unit) : '';
       if (inputs[i]) inputs[i].classList.toggle('over', !!s.over);
     }
     var tom = document.getElementById('wb-tom'); if (tom) tom.textContent = n1(r.to.mass) + ' ' + r.units.mass;
 
     document.getElementById('wb-kpi').innerHTML =
-      '<div class="k hero"><div class="v">' + n1(r.to.mass) + ' ' + r.units.mass + '</div><div class="t">Startmasse · MTOM ' + n1(r.mtom) + '</div></div>' +
-      '<div class="k"><div class="v">' + n1(r.to.cg) + ' ' + r.units.cg + '</div><div class="t">Schwerpunkt Start</div></div>' +
-      '<div class="k"><div class="v">' + n1(r.ldg.mass) + ' ' + r.units.mass + '</div><div class="t">Landemasse</div></div>';
-    document.getElementById('wb-verdict').innerHTML = '<div class="verdict ' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? '✓ Innerhalb der Grenzen' : '✕ Grenzen verletzt') + '</div>';
+      '<div class="k hero"><div class="v">' + n1(r.to.mass) + ' ' + r.units.mass + '</div><div class="t">' + esc(T('kpi_takeoff_mtom')) + ' ' + n1(r.mtom) + '</div></div>' +
+      '<div class="k"><div class="v">' + n1(r.to.cg) + ' ' + r.units.cg + '</div><div class="t">' + esc(T('kpi_cg_to')) + '</div></div>' +
+      '<div class="k"><div class="v">' + n1(r.ldg.mass) + ' ' + r.units.mass + '</div><div class="t">' + esc(T('kpi_ldg_mass')) + '</div></div>';
+    document.getElementById('wb-verdict').innerHTML = '<div class="verdict ' + (r.ok ? 'ok' : 'bad') + '">' + (r.ok ? esc(T('verdict_ok')) : esc(T('verdict_bad'))) + '</div>';
     document.getElementById('wb-warn').innerHTML = (r.warnings || []).map(function (w) { return '<li>⚠ ' + esc(w) + '</li>'; }).join('');
     document.getElementById('wb-env').innerHTML = r.svg || '';
 
     var acOpt = acSel.options[acSel.selectedIndex];
     document.getElementById('wb-phead').innerHTML = 'Weight &amp; Balance · ' + esc(acOpt ? acOpt.text : '') +
-      ' <small>· Leermasse ' + esc(emEl.value || '0') + ' ' + r.units.mass +
-      ' · Leerarm ' + esc(eaEl.value || '0') + ' ' + r.units.arm +
-      ' · Trip-Fuel ' + esc(tripEl.value || '0') + ' ' + r.units.vol +
-      ' · Stand ' + new Date().toLocaleDateString('de-DE') + '</small>';
+      ' <small>· ' + esc(T('empty_mass')) + ' ' + esc(emEl.value || '0') + ' ' + r.units.mass +
+      ' · ' + esc(T('empty_arm')) + ' ' + esc(eaEl.value || '0') + ' ' + r.units.arm +
+      ' · ' + esc(T('trip_fuel')) + ' ' + esc(tripEl.value || '0') + ' ' + r.units.vol +
+      ' · ' + esc(T('as_of')) + ' ' + new Date().toLocaleDateString(lang === 'en' ? 'en-GB' : 'de-DE') + '</small>';
   }
 
   function schedule() { clearTimeout(timer); timer = setTimeout(function () { post(true).then(function (r) { if (r) render(r); }); }, 200); }
@@ -192,7 +232,7 @@
       eaEl.value = r.defaults.emptyArm != null ? r.defaults.emptyArm : '';
       if (r.defaults.tripFuel != null) { tripEl.value = r.defaults.tripFuel; }
     }
-    document.getElementById('wb-src').textContent = r.source ? ('Quelle: ' + r.source) : '';
+    document.getElementById('wb-src').textContent = r.source ? (T('source') + ': ' + r.source) : '';
     buildTable(r.stations);
     // Sinnvolle Start-Beladung in die Stationsfelder setzen.
     if (r.defaults && r.defaults.load) {

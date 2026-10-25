@@ -14,14 +14,43 @@ class WbCalc
     private const KGM_TO_LBIN1000 = 0.0867962;
 
     /**
+     * Warnungs-/Beschriftungstexte fuer beide Sprachen. Anders als beim
+     * Sonnenzeiten-/Flugplanungs-Tool kommen diese Texte aus einer serverseitigen
+     * Berechnung (Warnungen haengen von den Eingabewerten ab) - die Sprache wird daher
+     * als Parameter mitgeschickt (siehe WeightBalanceController::calc()), nicht
+     * clientseitig nachtraeglich eingesetzt.
+     */
+    private static function strings(string $lang): array
+    {
+        if ($lang === 'en') {
+            return [
+                'over_limit' => 'over limit', 'trip_over_fuel' => 'Trip fuel > take-off fuel',
+                'to_over_mtom' => 'Take-off mass > MTOM', 'ldg_over_mlm' => 'Landing mass > MLM',
+                'to_outside' => 'Take-off outside the envelope', 'ldg_outside' => 'Landing outside the envelope',
+                'axis_moment' => 'Moment', 'axis_cg' => 'CG', 'axis_mass' => 'Mass',
+                'svg_ldg' => 'Ldg', 'svg_to' => 'T/O',
+            ];
+        }
+
+        return [
+            'over_limit' => 'über Limit', 'trip_over_fuel' => 'Trip-Fuel > Start-Kraftstoff',
+            'to_over_mtom' => 'Startmasse > MTOM', 'ldg_over_mlm' => 'Landemasse > MLM',
+            'to_outside' => 'Start außerhalb des Envelopes', 'ldg_outside' => 'Landung außerhalb des Envelopes',
+            'axis_moment' => 'Moment', 'axis_cg' => 'Schwerpunkt', 'axis_mass' => 'Masse',
+            'svg_ldg' => 'Ldg', 'svg_to' => 'Start',
+        ];
+    }
+
+    /**
      * Vollstaendige Rechnung fuer ein Muster. Gibt nur anzeige-taugliche Werte
      * zurueck (Massen/CG/Verdikt/Stationsmassen) plus das gerenderte SVG — keine
      * Arme, keine Momente, keine Envelope-Rohzahlen.
      *
      * @return array<string,mixed>
      */
-    public static function calculate(array $type, float $emptyMass, float $emptyArm, float $tripFuel, array $load, string $units = 'metric'): array
+    public static function calculate(array $type, float $emptyMass, float $emptyArm, float $tripFuel, array $load, string $units = 'metric', string $lang = 'de'): array
     {
+        $L = self::strings($lang);
         $imp = ($units === 'imperial');
         $mU = $imp ? 'lb' : 'kg'; $aU = $imp ? 'in' : 'm'; $vU = $imp ? 'gal' : 'l'; $cU = $imp ? 'in' : 'mm';
 
@@ -51,7 +80,7 @@ class WbCalc
             $capM = $isFuel ? ($s['maxLiters'] ?? null) : ($s['maxKg'] ?? null);
             $over = ($capM !== null && $vm > $capM + 1e-9);
             if ($over) {
-                $warnings[] = $s['label'] . ' über Limit (' . self::num(self::fromM($capM, $kind, $imp)) . ' ' . ($isFuel ? $vU : $mU) . ')';
+                $warnings[] = $s['label'] . ' ' . $L['over_limit'] . ' (' . self::num(self::fromM($capM, $kind, $imp)) . ' ' . ($isFuel ? $vU : $mU) . ')';
             }
             $stationsOut[] = [
                 'id'    => $id,
@@ -63,22 +92,22 @@ class WbCalc
                 'over'  => $over,
             ];
         }
-        if ($trip > $totalFuel + 1e-9) { $warnings[] = 'Trip-Fuel > Start-Kraftstoff'; }
+        if ($trip > $totalFuel + 1e-9) { $warnings[] = $L['trip_over_fuel']; }
 
         $to  = self::computePoint($type, $em, $ea, $loadM, 0.0);
         $ldg = self::computePoint($type, $em, $ea, $loadM, $trip);
 
         $mtom = (float) $type['limits']['mtom'];
         $mlm  = isset($type['limits']['mlm']) ? (float) $type['limits']['mlm'] : $mtom;
-        if ($to['mass']  > $mtom) { $warnings[] = 'Startmasse > MTOM (' . self::num(self::fromM($mtom, 'mass', $imp)) . ' ' . $mU . ')'; }
-        if ($ldg['mass'] > $mlm)  { $warnings[] = 'Landemasse > MLM (' . self::num(self::fromM($mlm, 'mass', $imp)) . ' ' . $mU . ')'; }
+        if ($to['mass']  > $mtom) { $warnings[] = $L['to_over_mtom'] . ' (' . self::num(self::fromM($mtom, 'mass', $imp)) . ' ' . $mU . ')'; }
+        if ($ldg['mass'] > $mlm)  { $warnings[] = $L['ldg_over_mlm'] . ' (' . self::num(self::fromM($mlm, 'mass', $imp)) . ' ' . $mU . ')'; }
 
         $toX = self::envX($type, $to);   $toY = self::envY($type, $to);
         $lX  = self::envX($type, $ldg);  $lY  = self::envY($type, $ldg);
         $toIn = self::inside($type, $toX, $toY);
         $lIn  = self::inside($type, $lX, $lY);
-        if (!$toIn) { $warnings[] = 'Start außerhalb des Envelopes'; }
-        if (!$lIn)  { $warnings[] = 'Landung außerhalb des Envelopes'; }
+        if (!$toIn) { $warnings[] = $L['to_outside']; }
+        if (!$lIn)  { $warnings[] = $L['ldg_outside']; }
 
         return [
             'ok'        => count($warnings) === 0,
@@ -89,7 +118,7 @@ class WbCalc
             'to'        => ['mass' => round(self::fromM($to['mass'], 'mass', $imp), 1),  'cg' => round(self::cgDisp($to['cg'], $imp), $imp ? 1 : 0)],
             'ldg'       => ['mass' => round(self::fromM($ldg['mass'], 'mass', $imp), 1), 'cg' => round(self::cgDisp($ldg['cg'], $imp), $imp ? 1 : 0)],
             'stations'  => $stationsOut,
-            'svg'       => self::renderSvg($type, $toX, $toY, $toIn, $lX, $lY, $lIn, $imp),
+            'svg'       => self::renderSvg($type, $toX, $toY, $toIn, $lX, $lY, $lIn, $imp, $L),
         ];
     }
 
@@ -244,14 +273,14 @@ class WbCalc
     //  NICHT im ausgelieferten Markup. Nur die Achsen-Ticks zeigen den Bereich.
     // -------------------------------------------------------------------------
 
-    private static function renderSvg(array $t, float $toX, float $toY, bool $toIn, float $lX, float $lY, bool $lIn, bool $imp): string
+    private static function renderSvg(array $t, float $toX, float $toY, bool $toIn, float $lX, float $lY, bool $lIn, bool $imp, array $L): string
     {
         $e = $t['envelope']; $v = $e['view'];
         // Achsen in die gewaehlte Einheit umrechnen. Nur Tick-Zahlen + Titel aendern sich;
         // die Form bleibt identisch, weil Ansichtsfenster UND Punkte gleich skalieren
         // (dieselben Pixelpositionen) -> wir skalieren daher nur die angezeigten Werte.
-        [$xFactor, $xUnit, $xPrefix] = self::axisScale($e['xAxis'] ?? null, $imp, 'Schwerpunkt');
-        [$yFactor, $yUnit, $yPrefix] = self::axisScale($e['yAxis'] ?? null, $imp, 'Masse');
+        [$xFactor, $xUnit, $xPrefix] = self::axisScale($e['xAxis'] ?? null, $imp, $L['axis_cg'], $L);
+        [$yFactor, $yUnit, $yPrefix] = self::axisScale($e['yAxis'] ?? null, $imp, $L['axis_mass'], $L);
         $w = 430; $h = 300; $ml = 52; $mr = 14; $mt = 12; $mb = 34;
         $pw = $w - $ml - $mr; $ph = $h - $mt - $mb;
         $X = static fn ($x) => $ml + ($x - $v['xMin']) / ($v['xMax'] - $v['xMin']) * $pw;
@@ -278,8 +307,8 @@ class WbCalc
         }
         // Punkte
         $s .= '<line x1="' . self::f($X($lX)) . '" y1="' . self::f($Y($lY)) . '" x2="' . self::f($X($toX)) . '" y2="' . self::f($Y($toY)) . '" stroke="#9db4c9" stroke-dasharray="3 3"/>';
-        $s .= self::dot($X($lX), $Y($lY), 4.5, $lIn ? '#3b6ea5' : '#c9453b') . '<text x="' . self::f($X($lX) + 8) . '" y="' . self::f($Y($lY) + 12) . '" font-size="10" fill="#3b6ea5">Ldg</text>';
-        $s .= self::dot($X($toX), $Y($toY), 5.5, $toIn ? '#2e9e5b' : '#c9453b', '#fff') . '<text x="' . self::f($X($toX) + 8) . '" y="' . self::f($Y($toY) + 3) . '" font-size="10" fill="' . ($toIn ? '#2e9e5b' : '#c9453b') . '" font-weight="700">Start</text>';
+        $s .= self::dot($X($lX), $Y($lY), 4.5, $lIn ? '#3b6ea5' : '#c9453b') . '<text x="' . self::f($X($lX) + 8) . '" y="' . self::f($Y($lY) + 12) . '" font-size="10" fill="#3b6ea5">' . $L['svg_ldg'] . '</text>';
+        $s .= self::dot($X($toX), $Y($toY), 5.5, $toIn ? '#2e9e5b' : '#c9453b', '#fff') . '<text x="' . self::f($X($toX) + 8) . '" y="' . self::f($Y($toY) + 3) . '" font-size="10" fill="' . ($toIn ? '#2e9e5b' : '#c9453b') . '" font-weight="700">' . $L['svg_to'] . '</text>';
         // Achsentitel
         $s .= '<text x="' . self::f($ml + $pw / 2) . '" y="' . ($h - 3) . '" font-size="10" fill="#7a8698" text-anchor="middle">' . $xPrefix . ' (' . $xUnit . ')</text>';
         $s .= '<text x="12" y="' . self::f($mt + $ph / 2) . '" font-size="10" fill="#7a8698" text-anchor="middle" transform="rotate(-90 12 ' . self::f($mt + $ph / 2) . ')">' . $yPrefix . ' (' . $yUnit . ')</text>';
@@ -296,11 +325,11 @@ class WbCalc
      * Achsen-Skalierung nativ -> gewaehlte Anzeige-Einheit.
      * @return array{0:float,1:string,2:string} [Faktor, Einheiten-Label, Kind-Prefix]
      */
-    private static function axisScale(?array $ax, bool $imp, string $fbPrefix): array
+    private static function axisScale(?array $ax, bool $imp, string $fbPrefix, array $L): array
     {
         if ($ax === null) { return [1.0, $imp ? 'lb' : 'kg', $fbPrefix]; }
         $kind = $ax['kind'] ?? null; $unit = $ax['unit'] ?? null;
-        $prefix = ['moment' => 'Moment', 'cg' => 'Schwerpunkt', 'cgPercentMac' => 'Schwerpunkt', 'mass' => 'Masse'][$kind] ?? $fbPrefix;
+        $prefix = ['moment' => $L['axis_moment'], 'cg' => $L['axis_cg'], 'cgPercentMac' => $L['axis_cg'], 'mass' => $L['axis_mass']][$kind] ?? $fbPrefix;
 
         if ($kind === 'mass') {
             $n2c = ($unit === 'lb') ? 0.45359237 : 1.0;                 // nativ -> kg
