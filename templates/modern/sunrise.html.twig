@@ -74,6 +74,11 @@
           <div class="srss-sun" style="left:0;width:100%"></div>
         {% elseif d.polar == 'night' %}
         {% else %}
+          {# Tageslicht/Daemmerung vom Vorabend, die ueber Mitternacht in diesen Tag hineinragt
+             (z.B. JFK in MESZ: Sonnenuntergang faellt erst nach Mitternacht) - sonst wirkt der
+             fruehe Morgen faelschlich komplett dunkel. #}
+          {% if d.carryTwiEnd is defined %}<div class="srss-twi" style="left:0%;width:{{ (d.carryTwiEnd*L)|round(2) }}%"></div>{% endif %}
+          {% if d.carrySunEnd is defined %}<div class="srss-sun" style="left:0%;width:{{ (d.carrySunEnd*L)|round(2) }}%"></div>{% endif %}
           <div class="srss-twi" style="left:{{ (d.dawnMin*L)|round(2) }}%;width:{{ ((d.srMin-d.dawnMin)*L)|round(2) }}%"></div>
           <div class="srss-sun" style="left:{{ (d.srMin*L)|round(2) }}%;width:{{ ((d.ssMin-d.srMin)*L)|round(2) }}%"></div>
           <div class="srss-twi" style="left:{{ (d.ssMin*L)|round(2) }}%;width:{{ ((d.duskMin-d.ssMin)*L)|round(2) }}%"></div>

@@ -221,121 +221,147 @@ class Sunrise_SunsetController extends AbstractController
     $endOfMonth = (clone $date)->modify('last day of this month');
     $wdShort = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
     $today = (new \DateTime('now'))->format('Y-m-d');
+    $tzName = $tzMode === 'mez' ? 'Europe/Berlin' : $timezone;
+
+    // Vortag vorab berechnen (auch ueber den Monatsanfang hinweg): dessen Sonnenuntergang/
+    // Daemmerungsende kann - in der Anzeige-Zeitzone - erst NACH Mitternacht liegen (z.B.
+    // JFK in MESZ: Sonnenuntergang faellt auf ca. 00:30 "morgen") und muss dann als
+    // Fortsetzung am Anfang des naechsten Tages sichtbar bleiben (siehe $carry* unten).
+    $prevInfo = $this->computeDaySunInfo((clone $date)->modify('-1 day'), $decimalLatitude, $decimalLongitude, $tzMode, $tzName);
 
     $rows = [];
     while ($date <= $endOfMonth) {
-      $info = date_sun_info($date->getTimestamp(), $decimalLatitude, $decimalLongitude);
-      $sr = $info['sunrise'];   $ss = $info['sunset'];
-      $dawn = $info['civil_twilight_begin']; $dusk = $info['civil_twilight_end'];
-
-      // Offset je nach gewaehlter Zeitform. WICHTIG: Der Offset wird je Ereignis-Zeitpunkt
-      // ($ts = SR/SS/Daemmerung) bestimmt, nicht einmal pauschal fuer den Tagesanker $date
-      // (00:00 UTC). Sonst greift die Sommerzeit-Umstellung (EU: 01:00 UTC) am Umstelltag zu
-      // spaet, weil der Tagesanker noch vor der Umstellung liegt, SR/SS aber schon danach.
-      $tzName = $tzMode === 'mez' ? 'Europe/Berlin' : $timezone;
-      $dayStartTs = $date->getTimestamp();
-
-      // Minuten seit Tagesbeginn (UTC-Tagesanker) - OHNE Modulo-Umbruch auf 0..1440. Bei
-      // weit oestlich/westlich der Anzeige-Zeitzone liegenden Flugplaetzen (z.B. JFK in
-      // MESZ angezeigt) kann ein Ereignis nach Offset-Anwendung auf den naechsten Kalender-
-      // tag fallen (Sonnenuntergang 00:29 UTC + 2h MESZ = 02:29 "morgen"). Mit Modulo wuerde
-      // das faelschlich VOR den Sonnenaufgang dieses Tages zurueckfallen (negative Balken-
-      // breite). Ohne Modulo bleibt Daemmerung<=SA<=SU<=Daemmerung immer erhalten; der
-      // Tages-Container (`overflow:hidden`) blendet den ueberstehenden Teil optisch aus.
-      $elapsed = static function ($ts) use ($tzMode, $tzName, $dayStartTs) {
-        $off = $tzMode === 'utc' ? 0 : (new \DateTime('@' . $ts))->setTimezone(new DateTimeZone($tzName))->getOffset();
-        return (int) (($ts + $off - $dayStartTs) / 60);
-      };
-      // Fuer die "jetzt"-Markierung brauchen wir dagegen die auf [0,1440) umgebrochene
-      // Minute des heutigen Tages.
-      $wrapToday = static function ($ts) use ($tzMode, $tzName) {
-        $off = $tzMode === 'utc' ? 0 : (new \DateTime('@' . $ts))->setTimezone(new DateTimeZone($tzName))->getOffset();
-        return (int) ((($ts + $off) % 86400 + 86400) % 86400 / 60);
-      };
-      // true = Ereignis gilt bereits seit/bis zum Rand des Tages (z.B. Daemmerung haelt
-      // durch), false = Ereignis tritt an diesem Tag gar nicht ein. date_sun_info() liefert
-      // in beiden Faellen einen Bool statt eines Zeitstempels - vorher wurde der Bool
-      // versehentlich als Unix-Zeitstempel missbraucht (true -> 1, false -> Parse-Fehler),
-      // was an Tagen mit durchgehender Daemmerung (keine echte Polarnacht/-tag, aber z.B.
-      // "helle Naechte" in Nordskandinavien/-kanada) zu kaputten (teils negativen)
-      // Balkenbreiten fuehrte.
-      $edge = static function ($value, int $ifTrue, int $ifFalse) use ($elapsed) {
-        if ($value === true) return $ifTrue;
-        if ($value === false) return $ifFalse;
-        return $elapsed($value);
-      };
+      $info = $this->computeDaySunInfo($date, $decimalLatitude, $decimalLongitude, $tzMode, $tzName);
 
       $N = (int) $date->format('N'); // 1=Mo .. 7=So
-      $row = [
+      $row = $info + [
         'date'    => $date->format('d.m.'),
         'day'     => $date->format('d'),
         'wd'      => $wdShort[$N - 1],
         'weekend' => $N >= 6,
         'today'   => $date->format('Y-m-d') === $today,
-        'polar'   => null,
       ];
 
-      if ($dawn === false && $dusk === false) {
-        // Keinerlei Daemmerung - durchgehend dunkel (echte Polarnacht).
-        $row['polar'] = 'night';
-      } elseif ($sr === true && $ss === true) {
-        // Sonne sinkt nie unter -0,833 Grad - durchgehend hell (Polartag/Mitternachtssonne).
-        $row['polar'] = 'day';
-      } else {
-        if ($sr === false) {
-          // Sonne geht an diesem Tag gar nicht auf (bleibt unter -0,833 Grad), aber es gibt
-          // noch eine Daemmerungsphase (buergerliche Daemmerung) um die flache Mittagshoehe
-          // der Sonne - ein durchgehendes Daemmerungsband statt der sonst ueblichen drei
-          // Segmente, kein separates Tageslicht-Segment.
-          $dawnMin = $edge($dawn, 0, 0);
-          $duskMin = $edge($dusk, 1440, 1440);
-          $row['dawnMin'] = $dawnMin;
-          $row['srMin']   = $duskMin;
-          $row['ssMin']   = $duskMin;
-          $row['duskMin'] = $duskMin;
-          $row['srStr']   = '–';
-          $row['ssStr']   = '–';
-          $row['lenStr']  = '00:00';
-        } else {
-          $srMin = $elapsed($sr);
-          $ssMin = $elapsed($ss);
-          // Wenn die Daemmerung durchgaengig anhaelt (true), muss ihre Grenze mindestens bis
-          // zum tatsaechlichen SA/SU reichen - sonst waere die feste Grenze (0 bzw. 1440) an
-          // Tagen/Orten, an denen SA oder SU selbst schon auf den Nachbartag faellt (z.B.
-          // Flugplaetze nahe den Polarkreisen mit sehr frueher/spaeter Sonnenauf-/
-          // untergangszeit), enger als SA/SU selbst - und die Balkenbreite wuerde wieder
-          // negativ.
-          $dawnMin = $edge($dawn, min(0, $srMin), 0);
-          $duskMin = $edge($dusk, max(1440, $ssMin), 1440);
-          // Letzte Absicherung: Faellt der Umrechnungs-Zeitpunkt von SA/SU und Daemmerung in
-          // der Anzeige-Zeitzone auf verschiedene Seiten von DEREN eigener Sommerzeit-
-          // Umstellung (z.B. SU noch vor, Daemmerungsende schon nach der Umstellung), kann
-          // die Uhrzeit der Daemmerung trotz spaeterem Zeitpunkt "frueher" wirken (gleiche
-          // Mehrdeutigkeit wie beim Uhren-Zurueckstellen). Reihenfolge erzwingen, statt eine
-          // negative Balkenbreite zu riskieren.
-          $dawnMin = min($dawnMin, $srMin);
-          $duskMin = max($duskMin, $ssMin);
-          $row['dawnMin'] = $dawnMin;
-          $row['srMin']   = $srMin;
-          $row['ssMin']   = $ssMin;
-          $row['duskMin'] = $duskMin;
-          $wrap = static fn (int $m): int => (($m % 1440) + 1440) % 1440;
-          $srWrapped = $wrap($srMin);
-          $ssWrapped = $wrap($ssMin);
-          $row['srStr']  = sprintf('%02d:%02d', intdiv($srWrapped, 60), $srWrapped % 60);
-          $row['ssStr']  = sprintf('%02d:%02d', intdiv($ssWrapped, 60), $ssWrapped % 60);
-          $row['lenStr'] = gmdate('H:i', (int) ($ss - $sr));
+      // Ragt der Sonnenuntergang/das Daemmerungsende des VORTAGS (in der Anzeige-Zeitzone)
+      // ueber Mitternacht in den heutigen Tag hinein, muss dessen letzter Rest hier als
+      // eigenes Segment am Tagesanfang gezeigt werden - sonst wirkt der fruehe Morgen
+      // faelschlich komplett dunkel, obwohl es eigentlich noch Tageslicht/Daemmerung vom
+      // Vorabend ist.
+      if ($row['polar'] === null && $prevInfo['polar'] === null) {
+        if (($prevInfo['ssMin'] ?? 0) > 1440) {
+          $row['carrySunEnd'] = $prevInfo['ssMin'] - 1440;
+        }
+        if (($prevInfo['duskMin'] ?? 0) > 1440) {
+          $row['carryTwiEnd'] = $prevInfo['duskMin'] - 1440;
         }
       }
+
       if ($row['today'] && $row['polar'] === null) {
-        $row['nowMin'] = $wrapToday(time());
+        $off = $tzMode === 'utc' ? 0 : (new \DateTime())->setTimezone(new DateTimeZone($tzName))->getOffset();
+        $row['nowMin'] = (int) (((time() + $off) % 86400 + 86400) % 86400 / 60);
       }
 
       $rows[] = $row;
+      $prevInfo = $info;
       $date->modify('+1 day');
     }
 
     return $rows;
+  }
+
+  /**
+   * Berechnet Sonnenaufgang/-untergang und buergerliche Daemmerung fuer EINEN Tag, als
+   * Minuten seit Tagesbeginn (UTC-Tagesanker) in der gewaehlten Anzeige-Zeitzone - siehe
+   * generateMonthlyData() fuer den Hintergrund zu Polarnacht/-tag und dem Datumsumbruch.
+   *
+   * @return array{polar: string|null, dawnMin?: int, srMin?: int, ssMin?: int, duskMin?: int, srStr?: string, ssStr?: string, lenStr?: string}
+   */
+  private function computeDaySunInfo(\DateTime $date, float $lat, float $lon, string $tzMode, string $tzName): array
+  {
+    $info = date_sun_info($date->getTimestamp(), $lat, $lon);
+    $sr = $info['sunrise'];   $ss = $info['sunset'];
+    $dawn = $info['civil_twilight_begin']; $dusk = $info['civil_twilight_end'];
+    $dayStartTs = $date->getTimestamp();
+
+    // Offset je Ereignis-Zeitpunkt bestimmt (nicht einmal pauschal fuer den Tagesanker),
+    // damit die Sommerzeit-Umstellung immer exakt zum richtigen Zeitpunkt greift. Minuten
+    // seit Tagesbeginn OHNE Modulo-Umbruch auf 0..1440: Bei weit oestlich/westlich der
+    // Anzeige-Zeitzone liegenden Flugplaetzen (z.B. JFK in MESZ angezeigt) kann ein Ereignis
+    // nach Offset-Anwendung auf den naechsten Kalendertag fallen. Mit Modulo wuerde das
+    // faelschlich VOR den Sonnenaufgang dieses Tages zurueckfallen (negative Balkenbreite).
+    // Ohne Modulo bleibt Daemmerung<=SA<=SU<=Daemmerung immer erhalten; der Tages-Container
+    // (`overflow:hidden`) blendet den ueberstehenden Teil optisch aus - der Rest wird von
+    // generateMonthlyData() als "carry"-Segment im naechsten Tag wieder sichtbar gemacht.
+    $elapsed = static function ($ts) use ($tzMode, $tzName, $dayStartTs) {
+      $off = $tzMode === 'utc' ? 0 : (new \DateTime('@' . $ts))->setTimezone(new DateTimeZone($tzName))->getOffset();
+      return (int) (($ts + $off - $dayStartTs) / 60);
+    };
+    // true = Ereignis gilt bereits seit/bis zum Rand des Tages (z.B. Daemmerung haelt
+    // durch), false = Ereignis tritt an diesem Tag gar nicht ein. date_sun_info() liefert
+    // in beiden Faellen einen Bool statt eines Zeitstempels - vorher wurde der Bool
+    // versehentlich als Unix-Zeitstempel missbraucht (true -> 1, false -> Parse-Fehler),
+    // was an Tagen mit durchgehender Daemmerung (keine echte Polarnacht/-tag, aber z.B.
+    // "helle Naechte" in Nordskandinavien/-kanada) zu kaputten (teils negativen)
+    // Balkenbreiten fuehrte.
+    $edge = static function ($value, int $ifTrue, int $ifFalse) use ($elapsed) {
+      if ($value === true) return $ifTrue;
+      if ($value === false) return $ifFalse;
+      return $elapsed($value);
+    };
+
+    if ($dawn === false && $dusk === false) {
+      // Keinerlei Daemmerung - durchgehend dunkel (echte Polarnacht).
+      return ['polar' => 'night'];
+    }
+    if ($sr === true && $ss === true) {
+      // Sonne sinkt nie unter -0,833 Grad - durchgehend hell (Polartag/Mitternachtssonne).
+      return ['polar' => 'day'];
+    }
+
+    if ($sr === false) {
+      // Sonne geht an diesem Tag gar nicht auf (bleibt unter -0,833 Grad), aber es gibt noch
+      // eine Daemmerungsphase (buergerliche Daemmerung) um die flache Mittagshoehe der Sonne
+      // - ein durchgehendes Daemmerungsband statt der sonst ueblichen drei Segmente, kein
+      // separates Tageslicht-Segment.
+      $dawnMin = $edge($dawn, 0, 0);
+      $duskMin = $edge($dusk, 1440, 1440);
+
+      return [
+        'polar' => null,
+        'dawnMin' => $dawnMin, 'srMin' => $duskMin, 'ssMin' => $duskMin, 'duskMin' => $duskMin,
+        'srStr' => '–', 'ssStr' => '–', 'lenStr' => '00:00',
+      ];
+    }
+
+    $srMin = $elapsed($sr);
+    $ssMin = $elapsed($ss);
+    // Wenn die Daemmerung durchgaengig anhaelt (true), muss ihre Grenze mindestens bis zum
+    // tatsaechlichen SA/SU reichen - sonst waere die feste Grenze (0 bzw. 1440) an Tagen/
+    // Orten, an denen SA oder SU selbst schon auf den Nachbartag faellt (z.B. Flugplaetze
+    // nahe den Polarkreisen mit sehr frueher/spaeter Sonnenauf-/untergangszeit), enger als
+    // SA/SU selbst - und die Balkenbreite waere wieder negativ.
+    $dawnMin = $edge($dawn, min(0, $srMin), 0);
+    $duskMin = $edge($dusk, max(1440, $ssMin), 1440);
+    // Letzte Absicherung: Faellt der Umrechnungs-Zeitpunkt von SA/SU und Daemmerung in der
+    // Anzeige-Zeitzone auf verschiedene Seiten von DEREN eigener Sommerzeit-Umstellung (z.B.
+    // SU noch vor, Daemmerungsende schon nach der Umstellung), kann die Uhrzeit der
+    // Daemmerung trotz spaeterem Zeitpunkt "frueher" wirken (gleiche Mehrdeutigkeit wie beim
+    // Uhren-Zurueckstellen). Reihenfolge erzwingen, statt eine negative Balkenbreite zu
+    // riskieren.
+    $dawnMin = min($dawnMin, $srMin);
+    $duskMin = max($duskMin, $ssMin);
+
+    $wrap = static fn (int $m): int => (($m % 1440) + 1440) % 1440;
+    $srWrapped = $wrap($srMin);
+    $ssWrapped = $wrap($ssMin);
+
+    return [
+      'polar' => null,
+      'dawnMin' => $dawnMin, 'srMin' => $srMin, 'ssMin' => $ssMin, 'duskMin' => $duskMin,
+      'srStr' => sprintf('%02d:%02d', intdiv($srWrapped, 60), $srWrapped % 60),
+      'ssStr' => sprintf('%02d:%02d', intdiv($ssWrapped, 60), $ssWrapped % 60),
+      'lenStr' => gmdate('H:i', (int) ($ss - $sr)),
+    ];
   }
 
   /**
