@@ -100,6 +100,13 @@ class ToolsAirport
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $DAYLIGHT_SAVE;
 
+    // IANA-Zeitzone, einmalig per Geo-Lookup aus sLat/sLong ermittelt (siehe
+    // bin/update-airport-timezones.php bzw. app:update-airport-timezones). Deckt auch
+    // Flugplaetze ohne brauchbares TIME-Feld ab und ist genauer als sowohl TIME als auch
+    // die eine Zeitzone pro Land aus tools_countries.
+    #[ORM\Column(type: 'string', length: 40, nullable: true)]
+    private $Timezone;
+
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private $FLIP_PUB;
 
@@ -481,6 +488,18 @@ class ToolsAirport
     public function setCycleDate(?int $CYCLE_DATE): self
     {
         $this->CYCLE_DATE = $CYCLE_DATE;
+
+        return $this;
+    }
+
+    public function getTimezone(): ?string
+    {
+        return $this->Timezone;
+    }
+
+    public function setTimezone(?string $Timezone): self
+    {
+        $this->Timezone = $Timezone;
 
         return $this;
     }
