@@ -42,7 +42,10 @@
   .fp-hint{font-size:12px;color:var(--fr-mut);margin:12px 0 0;}
   .fp-disc{font-size:11.5px;color:var(--fr-mut);margin-top:12px;border-top:1px dashed var(--fr-line);padding-top:8px;}
   .fp-print-head{display:none;}
-  .fp-top{display:flex;justify-content:flex-end;margin-bottom:12px;}
+  .fp-top{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:12px;}
+  .fp-lang{display:flex;gap:4px;}
+  .fp-lang button{border:1px solid var(--fr-line,#d8d8d8);background:#fff;border-radius:7px;width:34px;height:30px;font-size:15px;line-height:1;cursor:pointer;opacity:.5;}
+  .fp-lang button.on{opacity:1;border-color:var(--fr-blue);}
 
   @media print {
     .fr-side,.fr-top,.fr-tabrow,.fr-pactions,.fr-pubside,.fr-pub-top,.fp-params,.fp-hint,.wp-act,.no-print{display:none !important;}
@@ -62,48 +65,50 @@
 </style>
 
 <div class="fp-print-head">
-  <h2>VFR-Flugplan</h2>
+  <h2 data-i18n="print_title">VFR-Flugplan</h2>
   <div class="m" id="fp-print-route"></div>
   <div class="m" id="fp-print-meta"></div>
 </div>
 
-{% if not fr_full %}
 <div class="fp-top no-print">
-  <button type="button" class="fr-btn ghost" onclick="window.print()">🖨 Als PDF speichern / drucken</button>
+  {% if not fr_full %}<button type="button" class="fr-btn ghost" onclick="window.print()" data-i18n="print">🖨 Als PDF speichern / drucken</button>{% endif %}
+  <span class="fp-lang" id="fp-lang">
+    <button type="button" class="on" data-lang="de" title="Deutsch">🇩🇪</button>
+    <button type="button" data-lang="en" title="English">🇬🇧</button>
+  </span>
 </div>
-{% endif %}
 
 <div class="fp-params{% if fr_full %} fr-phead{% endif %}">
-  <span class="fp-grp">Flugzeug &amp; Wind</span>
-  <div><label>TAS (kt)</label><input type="number" id="p-tas" value="{{ tas }}" min="1" step="1"></div>
-  <div><label>Verbrauch (l/h)</label><input type="number" id="p-fuel" value="{{ fuelRate }}" min="0" step="0.5"></div>
-  <div><label>Wind aus (°)</label><input type="number" id="p-wdir" value="{{ windDir }}" min="0" max="360" step="1"></div>
-  <div><label>Wind (kt)</label><input type="number" id="p-wspd" value="{{ windSpeed }}" min="0" step="1"></div>
-  <div><label>Missweisung (°)</label><input type="number" id="p-var" value="{{ variation }}" step="1" title="Ortsmissweisung (Ost = positiv). MC = TC − Missweisung."></div>
+  <span class="fp-grp" data-i18n="grp_aircraft">Flugzeug &amp; Wind</span>
+  <div><label data-i18n="tas">TAS (kt)</label><input type="number" id="p-tas" value="{{ tas }}" min="1" step="1"></div>
+  <div><label data-i18n="fuel_rate">Verbrauch (l/h)</label><input type="number" id="p-fuel" value="{{ fuelRate }}" min="0" step="0.5"></div>
+  <div><label data-i18n="wind_dir">Wind aus (°)</label><input type="number" id="p-wdir" value="{{ windDir }}" min="0" max="360" step="1"></div>
+  <div><label data-i18n="wind_speed">Wind (kt)</label><input type="number" id="p-wspd" value="{{ windSpeed }}" min="0" step="1"></div>
+  <div><label data-i18n="variation">Missweisung (°)</label><input type="number" id="p-var" value="{{ variation }}" step="1" data-i18n-title="variation_title" title="Ortsmissweisung (Ost = positiv). MC = TC − Missweisung."></div>
   <span class="fp-brk"></span>
-  <span class="fp-grp">Suche</span>
-  <div><label>Suchraum</label>
+  <span class="fp-grp" data-i18n="grp_search">Suche</span>
+  <div><label data-i18n="region">Suchraum</label>
     <select id="p-region">
-      <option value="de"{{ region == 'de' ? ' selected' : '' }}>Deutschland</option>
-      <option value="eu"{{ region == 'eu' ? ' selected' : '' }}>Europa</option>
-      <option value="all"{{ region == 'all' ? ' selected' : '' }}>Weltweit</option>
+      <option value="de" data-i18n="region_de"{{ region == 'de' ? ' selected' : '' }}>Deutschland</option>
+      <option value="eu" data-i18n="region_eu"{{ region == 'eu' ? ' selected' : '' }}>Europa</option>
+      <option value="all" data-i18n="region_all"{{ region == 'all' ? ' selected' : '' }}>Weltweit</option>
     </select>
   </div>
-  <div><label>Punktarten</label>
+  <div><label data-i18n="types">Punktarten</label>
     <select id="p-types">
-      <option value="AW"{{ types == 'AW' ? ' selected' : '' }}>Flugplätze + Waypoints</option>
-      <option value="A"{{ types == 'A' ? ' selected' : '' }}>Nur Flugplätze</option>
-      <option value="W"{{ types == 'W' ? ' selected' : '' }}>Nur Waypoints</option>
+      <option value="AW" data-i18n="types_aw"{{ types == 'AW' ? ' selected' : '' }}>Flugplätze + Waypoints</option>
+      <option value="A" data-i18n="types_a"{{ types == 'A' ? ' selected' : '' }}>Nur Flugplätze</option>
+      <option value="W" data-i18n="types_w"{{ types == 'W' ? ' selected' : '' }}>Nur Waypoints</option>
     </select>
   </div>
   <span class="fp-brk"></span>
-  <span class="fp-grp">Zuschläge (min)</span>
-  <div><label>Start/Rollen</label><input type="number" id="p-add-start" value="{{ addStart }}" min="0" step="1"></div>
-  <div><label>Anflug/Landung</label><input type="number" id="p-add-land" value="{{ addLand }}" min="0" step="1"></div>
-  <div><label>Alternate</label><input type="number" id="p-add-alt" value="{{ addAlt }}" min="0" step="1"></div>
+  <span class="fp-grp" data-i18n="grp_add">Zuschläge (min)</span>
+  <div><label data-i18n="add_start">Start/Rollen</label><input type="number" id="p-add-start" value="{{ addStart }}" min="0" step="1"></div>
+  <div><label data-i18n="add_land">Anflug/Landung</label><input type="number" id="p-add-land" value="{{ addLand }}" min="0" step="1"></div>
+  <div><label data-i18n="add_alt">Alternate</label><input type="number" id="p-add-alt" value="{{ addAlt }}" min="0" step="1"></div>
 </div>
 {% if fr_full %}
-  <div class="fr-pactions"><button type="button" class="fr-btn no-print" onclick="window.print()">{{ icon.ic('printer') }} Drucken</button></div>
+  <div class="fr-pactions"><button type="button" class="fr-btn no-print" onclick="window.print()">{{ icon.ic('printer') }} <span data-i18n="print_short">Drucken</span></button></div>
   <div class="fr-pbody">
 {% endif %}
 
@@ -111,10 +116,10 @@
   <table class="fp" id="fp-table">
     <thead>
       <tr>
-        <th></th><th class="l">Wegpunkt</th><th class="l">Name / Info</th>
-        <th>Distanz</th><th>Kurs&nbsp;TC</th><th>Steuerkurs&nbsp;TH</th>
-        <th class="mag">MC</th><th class="mag">MH</th>
-        <th>GS</th><th>Zeit</th><th>Sprit</th><th></th>
+        <th></th><th class="l" data-i18n="th_wp">Wegpunkt</th><th class="l" data-i18n="th_name">Name / Info</th>
+        <th data-i18n="th_dist">Distanz</th><th data-i18n="th_tc">Kurs&nbsp;TC</th><th data-i18n="th_th">Steuerkurs&nbsp;TH</th>
+        <th class="mag" data-i18n="th_mc">MC</th><th class="mag" data-i18n="th_mh">MH</th>
+        <th data-i18n="th_gs">GS</th><th data-i18n="th_time">Zeit</th><th data-i18n="th_fuel">Sprit</th><th></th>
       </tr>
     </thead>
     <tbody id="wp-body">
@@ -126,31 +131,52 @@
           <td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td>
           <td class="v-mc mag"></td><td class="v-mh mag"></td>
           <td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>
-          <td class="wp-act"><button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" title="Zeile löschen">✕</button></td>
+          <td class="wp-act"><button type="button" class="wp-btn ins" data-i18n-title="ins_row" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" data-i18n-title="del_row" title="Zeile löschen">✕</button></td>
         </tr>
       {% endfor %}
     </tbody>
     <tfoot>
       <tr>
-        <td></td><td class="l" colspan="2">Gesamt Strecke <span id="tot-flag"></span></td>
+        <td></td><td class="l" colspan="2"><span data-i18n="tot_dist">Gesamt Strecke</span> <span id="tot-flag"></span></td>
         <td id="tot-dist">–</td><td></td><td></td><td class="mag"></td><td class="mag"></td><td></td><td id="tot-time">–</td><td id="tot-fuel">–</td><td></td>
       </tr>
     </tfoot>
   </table>
 
   <div class="fp-foot">
-    <span class="k"><b id="f-legtime">–</b><small>Streckenzeit</small></span>
-    <span class="k"><b id="f-addtime">–</b><small>Zuschläge (Start · Landung · Alternate)</small></span>
-    <span class="k"><b id="f-block">–</b><small>Blockzeit gesamt</small></span>
-    <span class="k"><b id="f-fuel">–</b><small>Sprit gesamt (inkl. Zuschläge)</small></span>
+    <span class="k"><b id="f-legtime">–</b><small data-i18n="f_legtime">Streckenzeit</small></span>
+    <span class="k"><b id="f-addtime">–</b><small data-i18n="f_addtime">Zuschläge (Start · Landung · Alternate)</small></span>
+    <span class="k"><b id="f-block">–</b><small data-i18n="f_block">Blockzeit gesamt</small></span>
+    <span class="k"><b id="f-fuel">–</b><small data-i18n="f_fuel">Sprit gesamt (inkl. Zuschläge)</small></span>
   </div>
 
-  <div class="fp-hint">Je Zeile ein Wegpunkt (ICAO <b>oder</b> Name). Werte rechts werden <b>automatisch</b> berechnet. Bei mehreren Treffern erscheint ein Auswahlfeld. MC/MH = missweisend (aus TC/TH − Missweisung). ＋ fügt eine Zeile ein, ✕ löscht, <b>Enter</b> springt weiter.</div>
-  <div class="fp-disc"><b>Achtung:</b> Die verwendeten Navigationsdaten sind nicht auf dem aktuellen Stand (nur Flugplätze/Waypoints, Elevation; keine Frequenzen/Pisten). Ergebnisse vor Flugantritt anhand der offiziell gültigen Unterlagen (AIP, ICAO-Karten, Flughandbuch) überprüfen. Benutzung auf eigene Gefahr.</div>
+  <div class="fp-hint" data-i18n-html="hint">Je Zeile ein Wegpunkt (ICAO <b>oder</b> Name). Werte rechts werden <b>automatisch</b> berechnet. Bei mehreren Treffern erscheint ein Auswahlfeld. MC/MH = missweisend (aus TC/TH − Missweisung). ＋ fügt eine Zeile ein, ✕ löscht, <b>Enter</b> springt weiter.</div>
+  <div class="fp-disc" data-i18n-html="disc"><b>Achtung:</b> Die verwendeten Navigationsdaten sind nicht auf dem aktuellen Stand (nur Flugplätze/Waypoints, Elevation; keine Frequenzen/Pisten). Ergebnisse vor Flugantritt anhand der offiziell gültigen Unterlagen (AIP, ICAO-Karten, Flughandbuch) überprüfen. Benutzung auf eigene Gefahr.</div>
 </div>
 
 <script>
 (function () {
+  var LANG_DICT = {{ langDict|json_encode|raw }};
+  var lang = (function () { try { var s = localStorage.getItem('fr_fp_lang'); return (s === 'en') ? 'en' : 'de'; } catch (e) { return 'de'; } })();
+  function T(key) { return (LANG_DICT[lang] && LANG_DICT[lang][key]) || (LANG_DICT.de && LANG_DICT.de[key]) || key; }
+
+  function applyStaticLang() {
+    document.title = T('title') + ' · FlyRes';
+    document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = T(el.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n-html]').forEach(function (el) { el.innerHTML = T(el.getAttribute('data-i18n-html')); });
+    document.querySelectorAll('[data-i18n-title]').forEach(function (el) { el.title = T(el.getAttribute('data-i18n-title')); });
+    document.querySelectorAll('#fp-lang button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-lang') === lang); });
+  }
+  function setLang(newLang) {
+    if (newLang !== 'de' && newLang !== 'en') { return; }
+    lang = newLang;
+    try { localStorage.setItem('fr_fp_lang', lang); } catch (e) {}
+    applyStaticLang();
+    recompute();   // dynamisch erzeugte Texte (Fehlermeldungen, Badges, …) neu rendern
+  }
+  document.querySelectorAll('#fp-lang button').forEach(function (b) { b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); }); });
+  applyStaticLang();
+
   var RESOLVE_URL = '{{ path('modern_flightplan_resolve') }}';
   var body = document.getElementById('wp-body');
   var cache = {};              // "region|types|query" -> [candidates]
@@ -190,12 +216,12 @@
 
   function ROW_HTML() {
     return '<td class="wp-num"></td>' +
-      '<td class="l"><input class="wp-in" autocomplete="off" placeholder="ICAO / Name"></td>' +
+      '<td class="l"><input class="wp-in" autocomplete="off" placeholder="' + esc(T('placeholder')) + '"></td>' +
       '<td class="wp-name"></td>' +
       '<td class="v-dist"></td><td class="v-tc"></td><td class="v-th"></td>' +
       '<td class="v-mc mag"></td><td class="v-mh mag"></td>' +
       '<td class="v-gs"></td><td class="v-time"></td><td class="v-fuel"></td>' +
-      '<td class="wp-act"><button type="button" class="wp-btn ins" title="Zeile darunter einfügen">＋</button> <button type="button" class="wp-btn del" title="Zeile löschen">✕</button></td>';
+      '<td class="wp-act"><button type="button" class="wp-btn ins" title="' + esc(T('ins_row')) + '">＋</button> <button type="button" class="wp-btn del" title="' + esc(T('del_row')) + '">✕</button></td>';
   }
   function makeRow(val) {
     var tr = document.createElement('tr'); tr.className = 'wp-row'; tr.innerHTML = ROW_HTML();
@@ -232,18 +258,18 @@
 
   function metaStr(cd) {
     var m = [];
-    if (cd.elev !== null && cd.elev !== undefined) m.push('Elev ' + cd.elev + ' ft');
+    if (cd.elev !== null && cd.elev !== undefined) m.push(T('elev') + ' ' + cd.elev + ' ft');
     if (cd.country) m.push(esc(cd.country));
     return m.join(' · ');
   }
   function renderName(tr, cands, pick) {
     var cell = tr.querySelector('.wp-name');
-    if (!cands || !cands.length) { cell.innerHTML = '<span class="bad">nicht gefunden</span>'; return null; }
+    if (!cands || !cands.length) { cell.innerHTML = '<span class="bad">' + esc(T('not_found')) + '</span>'; return null; }
     pick = Math.max(0, Math.min(pick, cands.length - 1));
     var ch = cands[pick];
     var badge = ch.type === 'W' ? '<span class="wp-type">WP</span>' : '';
-    var many = cands.length > 1 ? ('mehrere Treffer (' + cands.length + (cands.truncated ? '+' : '') + ') · ') : '';
-    var hint = cands.truncated ? ' · <b style="color:#c9781a">weitere – Suche verfeinern</b>' : '';
+    var many = cands.length > 1 ? (esc(T('multi_match')) + ' (' + cands.length + (cands.truncated ? '+' : '') + ') · ') : '';
+    var hint = cands.truncated ? (' · <b style="color:#c9781a">' + esc(T('more_refine')) + '</b>') : '';
     var meta = '<span class="wp-meta">' + many + metaStr(ch) + hint + '</span>';
     if (cands.length === 1) {
       cell.innerHTML = '<b>' + esc(ch.icao || '?') + '</b> ' + esc(ch.name) + badge + meta;
@@ -346,8 +372,8 @@
             var t = dist / wt.gs * 60, fuel = t / 60 * fr;
             setLeg(r, { dist: dist, tc: tc, th: wt.hdg, gs: wt.gs, time: t, fuel: fuel });
             totD += dist; totT += t; totF += fuel; legcount++;
-          } else { setLegErr(r, 'Wind zu stark – nicht fliegbar'); ok = false; }
-        } else { setLegErr(r, 'Wegpunkt nicht gefunden'); ok = false; }
+          } else { setLegErr(r, T('wind_too_strong')); ok = false; }
+        } else { setLegErr(r, T('wp_not_found')); ok = false; }
       }
     }
 
@@ -357,7 +383,7 @@
     document.getElementById('tot-dist').textContent = legcount ? totD.toFixed(1) + ' NM' : '–';
     document.getElementById('tot-time').textContent = legcount ? fmtTime(totT) : '–';
     document.getElementById('tot-fuel').textContent = legcount ? totF.toFixed(1) + ' l' : '–';
-    document.getElementById('tot-flag').innerHTML = (!ok && pts.length >= 2) ? '<span class="fp-badge">unvollständig</span>' : '';
+    document.getElementById('tot-flag').innerHTML = (!ok && pts.length >= 2) ? ('<span class="fp-badge">' + esc(T('incomplete')) + '</span>') : '';
 
     document.getElementById('f-legtime').textContent = legcount ? fmtTime(totT) : '–';
     document.getElementById('f-addtime').textContent = addMin > 0 ? '+' + fmtTime(addMin) : '0:00';
@@ -415,13 +441,13 @@
     var pad = function (n) { return ('0' + n).slice(-2); };
     var d = new Date();
     document.getElementById('fp-print-meta').textContent =
-      'TAS ' + param('p-tas') + ' kt · Wind ' + param('p-wdir') + '°/' + param('p-wspd') + ' kt · Verbrauch ' + param('p-fuel') +
-      ' l/h · Missweisung ' + param('p-var') + '° · Blockzeit ' + document.getElementById('f-block').textContent +
-      ' · Sprit ' + document.getElementById('f-fuel').textContent + ' · Stand ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
+      T('print_tas') + ' ' + param('p-tas') + ' kt · ' + T('print_wind') + ' ' + param('p-wdir') + '°/' + param('p-wspd') + ' kt · ' + T('print_fuelrate') + ' ' + param('p-fuel') +
+      ' l/h · ' + T('print_var') + ' ' + param('p-var') + '° · ' + T('print_block') + ' ' + document.getElementById('f-block').textContent +
+      ' · ' + T('print_fuel') + ' ' + document.getElementById('f-fuel').textContent + ' · ' + T('print_asof') + ' ' + pad(d.getDate()) + '.' + pad(d.getMonth() + 1) + '.' + d.getFullYear();
     var names = [].slice.call(body.querySelectorAll('.wp-row')).map(function (r) { return query(r); }).filter(Boolean);
     var route = names.length >= 2 ? (names[0] + ' → ' + names[names.length - 1]) : (names[0] || '');
     document.getElementById('fp-print-route').textContent = names.length >= 2
-      ? route + ' · ' + names.length + ' Wegpunkte · ' + document.getElementById('tot-dist').textContent
+      ? route + ' · ' + names.length + ' ' + T('waypoints_word') + ' · ' + document.getElementById('tot-dist').textContent
       : route;
     var rows = body.querySelectorAll('.wp-row');
     for (var i = 0; i < rows.length; i++) if (query(rows[i]) === '') rows[i].classList.add('no-print');
