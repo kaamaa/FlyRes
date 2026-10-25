@@ -42,10 +42,11 @@
 </style>
 
 <form id="srssForm" class="srss-form{% if fr_full %} fr-phead{% endif %}" method="post" action="{{ path('modern_sunrise', app.request.query.all) }}">
-  <div><label for="form_Country_Name">Land</label>{{ form_widget(form.Country_Name) }}</div>
-  <div><label for="form_Airport_Name">Flugplatz</label>{{ form_widget(form.Airport_Name) }}</div>
-  <div><label for="form_SRSSMonth">Monat</label>{{ form_widget(form.SRSSMonth) }}</div>
-  <div><label for="form_TimeZone_Mode">Zeitform</label>{{ form_widget(form.TimeZone_Mode) }}</div>
+  <div><label for="form_Country_Name">{{ t.country }}</label>{{ form_widget(form.Country_Name) }}</div>
+  <div><label for="form_Airport_Name">{{ t.airport }}</label>{{ form_widget(form.Airport_Name) }}</div>
+  <div><label for="form_SRSSMonth">{{ t.month }}</label>{{ form_widget(form.SRSSMonth) }}</div>
+  <div><label for="form_TimeZone_Mode">{{ t.tzmode }}</label>{{ form_widget(form.TimeZone_Mode) }}</div>
+  <div><label for="form_Language">{{ t.language }}</label>{{ form_widget(form.Language) }}</div>
   {{ form_rest(form) }}
 </form>
 {% if fr_full %}
@@ -63,12 +64,12 @@
     <div class="srss-ticks">
       {% for h in [0,3,6,9,12,15,18,21,24] %}<span style="left:{{ (h/24*100)|round(2) }}%">{{ h }}</span>{% endfor %}
     </div>
-    <span style="text-align:right;">🌅 Aufgang · 🌇 Untergang · Länge</span>
+    <span style="text-align:right;">🌅 {{ t.axis_sunrise }} · 🌇 {{ t.axis_sunset }} · {{ t.axis_length }}</span>
   </div>
 
   {% for d in days %}
     <div class="srss-row {{ d.today ? 'today' : (d.weekend ? 'we' : '') }}">
-      <div class="srss-lbl"><b>{{ d.day }}.</b> <span class="w">{{ d.wd }}</span>{% if d.today %} <span class="srss-heute">heute</span>{% endif %}</div>
+      <div class="srss-lbl"><b>{{ d.day }}.</b> <span class="w">{{ d.wd }}</span>{% if d.today %} <span class="srss-heute">{{ t.today }}</span>{% endif %}</div>
       <div class="srss-track">
         {% if d.polar == 'day' %}
           <div class="srss-sun" style="left:0;width:100%"></div>
@@ -86,19 +87,19 @@
         {% endif %}
       </div>
       <div class="srss-times">
-        {% if d.polar == 'day' %}<span class="srss-polar">Polartag (durchgehend hell)</span>
-        {% elseif d.polar == 'night' %}<span class="srss-polar">Polarnacht (durchgehend dunkel)</span>
-        {% elseif d.noSunrise is defined %}<span class="srss-polar">Dämmerung, kein Sonnenaufgang</span>
+        {% if d.polar == 'day' %}<span class="srss-polar">{{ t.polar_day }}</span>
+        {% elseif d.polar == 'night' %}<span class="srss-polar">{{ t.polar_night }}</span>
+        {% elseif d.noSunrise is defined %}<span class="srss-polar">{{ t.no_sunrise }}</span>
         {% else %}🌅 {{ d.srStr }} · 🌇 {{ d.ssStr }} · <b>{{ d.lenStr }}</b> h{% endif %}
       </div>
     </div>
   {% endfor %}
 
   <div class="srss-legend">
-    <span><i style="background:#dfe7f0"></i>Nacht</span>
-    <span><i style="background:#ffe3a8"></i>Bürgerliche Dämmerung</span>
-    <span><i style="background:linear-gradient(90deg,#ffcf5c,#ff9d3c)"></i>Tageslicht (Sonnenauf- bis -untergang)</span>
-    <span><i style="background:var(--fr-blue-d);width:3px;"></i>jetzt</span>
+    <span><i style="background:#dfe7f0"></i>{{ t.legend_night }}</span>
+    <span><i style="background:#ffe3a8"></i>{{ t.legend_twilight }}</span>
+    <span><i style="background:linear-gradient(90deg,#ffcf5c,#ff9d3c)"></i>{{ t.legend_daylight }}</span>
+    <span><i style="background:var(--fr-blue-d);width:3px;"></i>{{ t.legend_now }}</span>
   </div>
 </div>
 {% endif %}
@@ -106,7 +107,7 @@
 <script>
   (function () {
     var f = document.getElementById('srssForm');
-    ['form_Country_Name', 'form_Airport_Name', 'form_SRSSMonth', 'form_TimeZone_Mode'].forEach(function (id) {
+    ['form_Country_Name', 'form_Airport_Name', 'form_SRSSMonth', 'form_TimeZone_Mode', 'form_Language'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) { el.addEventListener('change', function () { f.submit(); }); }
     });
